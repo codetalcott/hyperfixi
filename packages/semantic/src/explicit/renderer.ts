@@ -100,6 +100,7 @@ import {
 } from '../parser/utils/expression-lexicon';
 import { OR_WORDS_BY_LANG } from '../parser/utils/or-words';
 import { notThrowWords } from '../parser/utils/not-throw';
+import { grammarWord } from '../parser/utils/grammar-words';
 import { PatternMatcher } from '../parser/pattern-matcher';
 import { localizeValueInterior, outsideCallArguments } from './value-lexicon';
 import { expressionNames, isVariableName } from './expression-variables';
@@ -466,11 +467,12 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     if (node.bottomTested) return this.renderBottomTestedLoop(node, language);
     const head = createCommandNode(node.action, Object.fromEntries(node.roles), node.metadata);
     const parts = [this.render(head, language)];
-    // `index i`, in English in every language: the parser reads it right
-    // after the loop head. Core's `with index` (it binds `index`) is read too
-    // and written the same way, `index index`: upstream has only this form.
+    // `index i`, in the language's own word (grammar-words.ts): the parser
+    // reads it right after the loop head. Core's `with index` (it binds
+    // `index`) is read too and written the same way, `index index`: upstream
+    // has only this form.
     if (node.indexVariable) {
-      parts.push(`index ${node.indexVariable}`);
+      parts.push(`${grammarWord(language, 'index')} ${node.indexVariable}`);
     }
     const body = this.joinStatements(node.body, language);
     if (body) parts.push(body);

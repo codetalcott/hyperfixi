@@ -56,6 +56,7 @@ import {
 import { blankComments } from './utils/comments';
 import { isOrWordToken } from './utils/or-words';
 import { NOT_THROW_BY_LANG } from './utils/not-throw';
+import { grammarWordForms } from './utils/grammar-words';
 import { ROLE_MARKER_CONCEPTS } from './utils/marker-resolution';
 import { patternMatcher } from './pattern-matcher';
 import { CONDITION_PREDICATES, copulaHoldsCondition } from './value-reading';
@@ -6864,11 +6865,12 @@ export class SemanticParserImpl implements ISemanticParser {
    * body's `i` was unbound. As with tryTellTo, the phrase is excised before any
    * pattern sees it, the rest re-parsed, and the variable set on the loop it
    * follows: the one whose head's last value ends last before it, when only
-   * that loop's own words sit in between (`3 times を repeat index i`). It is
-   * English in every language, as the renderer writes it, after the loop
-   * head; `with index` is read and written back as `index index`, the same
-   * binding in the form both engines accept (2026-10-01). One phrase per
-   * call: the re-parse takes the next.
+   * that loop's own words sit in between (`3 times を repeat index i`). Each
+   * language writes its own word for `index` (grammar-words.ts, M2 sheet B5)
+   * after the loop head, and English's is read in every language; `with index`
+   * is read and written back as `index index`, the same binding in the form
+   * both engines accept (2026-10-01). One phrase per call: the re-parse takes
+   * the next.
    */
   private tryLoopIndex(
     arr: readonly LanguageToken[],
@@ -6897,13 +6899,21 @@ export class SemanticParserImpl implements ISemanticParser {
     const withWord = tryGetProfile(language)?.roleMarkers?.style?.primary?.toLowerCase();
     const isWith = (t: LanguageToken | undefined): boolean =>
       word(t) === 'with' || (!!withWord && word(t) === withWord);
+    // `index` in English or in the language's own word (grammar-words.ts),
+    // as the tokens it is written in: how many it takes at `at`, or 0.
+    const indexForms = grammarWordForms(language, 'index', w =>
+      tokenizeInternal(w, language).tokens.map(t => t.value)
+    );
+    const indexWordAt = (at: number): number =>
+      indexForms.find(form => form.every((w, j) => word(arr[at + j]) === w))?.length ?? 0;
     for (let at = 0; at + 1 < arr.length; at++) {
       const withIndex = isWith(arr[at]) && word(arr[at + 1]) === 'index';
       // Upstream's other spelling, `indexed by i`: the same binding.
       const indexedBy = word(arr[at]) === 'indexed' && word(arr[at + 1]) === 'by' && !!arr[at + 2];
-      const named = word(arr[at]) === 'index' || indexedBy;
+      const indexWord = indexWordAt(at);
+      const named = (indexWord > 0 && !!arr[at + indexWord]) || indexedBy;
       if (!withIndex && !named) continue;
-      const nameTok = arr[indexedBy ? at + 2 : at + 1]!;
+      const nameTok = arr[indexedBy ? at + 2 : withIndex ? at + 1 : at + indexWord]!;
       const phraseStart = arr[at].position.start;
       const reduced = (
         input.slice(0, phraseStart).trimEnd() +
