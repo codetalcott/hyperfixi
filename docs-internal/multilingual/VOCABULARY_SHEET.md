@@ -5,7 +5,7 @@ kept English (`KEPT_ENGLISH`, `packages/testing-framework/src/multilingual/engli
 deferred (kept English for now, still counted against the target).
 
 **Implemented:** A1 (#1431; for-loops keep the verb, es `repetir para x en`: a bare `para x en` is the
-separate `for` command), A2 (#1432), A8 (#1433), A7 and B3–B6 (2026-10-08). Open: A3–A6, A9, A10, B1, B2,
+separate `for` command), A2 (#1432; its negation `I do not match`, 2026-10-09), A8 (#1433), A7 and B3–B6 (#1434). Open: A3–A6, A9, A10, B1, B2,
 B7. B3–B6's words are in `packages/semantic/src/parser/utils/grammar-words.ts`, held to the dictionaries
 by a test.
 
