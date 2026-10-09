@@ -169,6 +169,8 @@ export const thaiDictionary: Dictionary = {
     back: 'ย้อน',
     elsewhere: 'ภายนอก',
     start: 'เริ่ม',
+    catch: 'จับ',
+    finally: 'ท้ายที่สุด',
     characters: 'อักขระ',
     inclusive: 'รวม',
     exclusive: 'ยกเว้น',

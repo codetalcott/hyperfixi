@@ -197,6 +197,8 @@ export const it: Dictionary = {
     elsewhere: 'altrove',
     index: 'indice',
     start: 'avvia',
+    catch: 'catturare',
+    finally: 'infine',
     characters: 'caratteri',
     inclusive: 'inclusivo',
     exclusive: 'esclusivo',

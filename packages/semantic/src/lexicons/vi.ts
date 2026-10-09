@@ -130,6 +130,8 @@ export const vietnameseLexicon: LanguageLexicon = {
     'sorted by': { primary: 'sắp xếp theo' },
     'split by': { primary: 'tách bởi' },
     start: { primary: 'bắt đầu' },
+    catch: { primary: 'bắt' },
+    finally: { primary: 'rốt cuộc' },
     'starts with': { primary: 'bắt đầu bằng' },
     target: { primary: 'mục tiêu' },
   },

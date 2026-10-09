@@ -637,6 +637,7 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     return tryGetProfile(language)?.keywords?.[action]?.primary ?? action;
   }
 
+
   /** `Name` or `Name(p1, p2)` — the parameter list renders verbatim (identifiers). */
   private renderBlockHeader(keyword: string, name: string, parameters: readonly string[]): string {
     return parameters.length > 0
@@ -681,11 +682,11 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     ];
     for (const cmd of node.body) lines.push(`  ${this.render(cmd, language)}`);
     if (node.catchBody) {
-      lines.push(`${this.keyword(language, 'catch')} ${node.catchName ?? 'e'}`);
+      lines.push(`${grammarWord(language, 'catch')} ${node.catchName ?? 'e'}`);
       for (const cmd of node.catchBody) lines.push(`  ${this.render(cmd, language)}`);
     }
     if (node.finallyBody) {
-      lines.push(this.keyword(language, 'finally'));
+      lines.push(grammarWord(language, 'finally'));
       for (const cmd of node.finallyBody) lines.push(`  ${this.render(cmd, language)}`);
     }
     lines.push(this.keyword(language, 'end'));
@@ -695,7 +696,8 @@ export class SemanticRendererImpl implements ISemanticRenderer {
   /**
    * A handler's error clauses after its commands: ` catch e <commands>` and
    * ` finally <commands>`, the commands chained as a body's are. The words are
-   * the language's, or English's where it has none (keyword falls back).
+   * the language's (grammar-words.ts, M2 sheet A9, B2), or English's where it
+   * has none.
    */
   private renderErrorClauses(node: ErrorClauses, language: string): string {
     const chain = this.getChainWord('then', language);
@@ -703,11 +705,11 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       body.map(cmd => this.render(cmd, language)).join(` ${chain} `);
     let out = '';
     if (node.catchBody) {
-      out += ` ${this.keyword(language, 'catch')} ${node.catchName ?? 'e'}`;
+      out += ` ${grammarWord(language, 'catch')} ${node.catchName ?? 'e'}`;
       if (node.catchBody.length) out += ` ${statements(node.catchBody)}`;
     }
     if (node.finallyBody) {
-      out += ` ${this.keyword(language, 'finally')}`;
+      out += ` ${grammarWord(language, 'finally')}`;
       if (node.finallyBody.length) out += ` ${statements(node.finallyBody)}`;
     }
     return out;

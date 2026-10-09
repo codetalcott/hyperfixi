@@ -34,7 +34,7 @@ import { tokenize } from '../tokenizers';
 import { commandSchemas } from '../generators/command-schemas';
 import { joinExpressionTokens } from './utils/expression-lexicon';
 import { isOrWordToken } from './utils/or-words';
-import { grammarWord } from './utils/grammar-words';
+import { grammarWord, grammarWordForms } from './utils/grammar-words';
 
 /**
  * NESTED block-opening keywords balanced by a matching `end`. Deliberately
@@ -1042,21 +1042,32 @@ export interface ErrorClauseText {
  * when it has neither.
  */
 export function splitErrorClauses(text: string, language: string): ErrorClauseText | null {
-  const catchForms = keywordForms(language, 'catch');
-  const finallyForms = keywordForms(language, 'finally');
+  const catchForms = errorClauseForms(language, 'catch');
+  const finallyForms = errorClauseForms(language, 'finally');
   const lower = text.toLowerCase();
-  if (![...catchForms, ...finallyForms].some(form => lower.includes(form))) return null;
+  if (![...catchForms.words, ...finallyForms.words].some(form => lower.includes(form))) return null;
 
   const tokens = tokenize(text, language).tokens as readonly LanguageToken[];
+  // How many tokens a clause word takes at `j`, or 0.
+  const isWord = (tok: LanguageToken | undefined, w: string): boolean =>
+    !!tok && (tok.value.toLowerCase() === w || tok.normalized?.toLowerCase() === w);
+  const wordAt = (forms: ErrorClauseForms, j: number): number =>
+    forms.runs.find(run => run.every((w, i) => isWord(tokens[j + i], w)))?.length ?? 0;
   let catchAt = -1;
+  let catchLength = 0;
   let finallyAt = -1;
+  let finallyLength = 0;
   for (let j = 0; j < tokens.length; j++) {
-    const tok = tokens[j]!;
-    if (catchAt < 0 && finallyAt < 0 && tokenMatches(tok, catchForms)) {
+    const catchWord = catchAt < 0 && finallyAt < 0 ? wordAt(catchForms, j) : 0;
+    if (catchWord > 0) {
       // JavaScript's `catch(e)` in a js body has no name after it.
-      if (/^[A-Za-z_$][\w$]*$/.test(tokens[j + 1]?.value ?? '')) catchAt = j;
-    } else if (finallyAt < 0 && tokenMatches(tok, finallyForms)) {
-      finallyAt = j;
+      if (/^[A-Za-z_$][\w$]*$/.test(tokens[j + catchWord]?.value ?? '')) {
+        catchAt = j;
+        catchLength = catchWord;
+      }
+    } else if (finallyAt < 0) {
+      finallyLength = wordAt(finallyForms, j);
+      if (finallyLength > 0) finallyAt = j;
     }
   }
   if (catchAt < 0 && finallyAt < 0) return null;
@@ -1066,13 +1077,36 @@ export function splitErrorClauses(text: string, language: string): ErrorClauseTe
   const firstClause = catchAt >= 0 ? catchAt : finallyAt;
   const out: ErrorClauseText = { main: text.slice(0, startOf(firstClause)).trim() };
   if (catchAt >= 0) {
-    out.catchName = tokens[catchAt + 1]!.value;
+    out.catchName = tokens[catchAt + catchLength]!.value;
     out.catchText = text
-      .slice(startOf(catchAt + 2), finallyAt >= 0 ? startOf(finallyAt) : text.length)
+      .slice(startOf(catchAt + catchLength + 1), finallyAt >= 0 ? startOf(finallyAt) : text.length)
       .trim();
   }
-  if (finallyAt >= 0) out.finallyText = text.slice(startOf(finallyAt + 1)).trim();
+  if (finallyAt >= 0) out.finallyText = text.slice(startOf(finallyAt + finallyLength)).trim();
   return out;
+}
+
+/** A clause word's spellings: as written, for a quick look, and as the token runs it reads as. */
+interface ErrorClauseForms {
+  readonly words: readonly string[];
+  readonly runs: ReadonlyArray<readonly string[]>;
+}
+
+/**
+ * `catch` or `finally`: the profile's words and English's, and the language's
+ * own (grammar-words.ts, M2 sheet A9, B2), as the tokens it is written in (vi
+ * `rốt cuộc`).
+ */
+function errorClauseForms(language: string, key: 'catch' | 'finally'): ErrorClauseForms {
+  const words = [...keywordForms(language, key)];
+  const runs: string[][] = words.map(word => [word]);
+  for (const form of grammarWordForms(language, key, w =>
+    tokenize(w, language).tokens.map(t => t.value)
+  )) {
+    runs.push(form);
+  }
+  const native = grammarWord(language, key).toLowerCase();
+  return { words: words.includes(native) ? words : [...words, native], runs };
 }
 
 /** Parse the clauses `splitErrorClauses` found into a node's fields. */

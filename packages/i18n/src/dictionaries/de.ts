@@ -210,6 +210,8 @@ export const de: Dictionary = {
     elsewhere: 'außerhalb',
     index: 'index',
     start: 'starte',
+    catch: 'fangen',
+    finally: 'schließlich',
     characters: 'Zeichen',
     inclusive: 'inklusiv',
     exclusive: 'exklusiv',

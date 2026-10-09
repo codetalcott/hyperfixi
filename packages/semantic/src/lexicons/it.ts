@@ -133,6 +133,8 @@ export const italianLexicon: LanguageLexicon = {
     'sorted by': { primary: 'ordinato per' },
     'split by': { primary: 'diviso per' },
     start: { primary: 'avvia' },
+    catch: { primary: 'catturare' },
+    finally: { primary: 'infine' },
     'starts with': { primary: 'inizia con' },
     within: { primary: 'dentro' },
   },

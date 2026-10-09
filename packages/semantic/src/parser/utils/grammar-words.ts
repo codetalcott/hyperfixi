@@ -1,7 +1,8 @@
 /**
  * Words upstream's grammar fixes in one place, in each language's own words
  * (M2, vocabulary sheet B3–B6): `go back`, `from elsewhere`, `index i` after
- * a loop head, and the `start` of `start view transition`.
+ * a loop head, and the `start` of `start view transition`; and a handler's or
+ * a function's error clauses, `catch e` and `finally` (A9, B2).
  *
  * Each stayed English in every translation: no profile had a word for it. The
  * words are the dictionaries' (`expressions`, which `lexicon-parity.test.ts`
@@ -16,32 +17,55 @@
  * language writes it in (vi `chỉ số`, ko `뒤로`). Every reader still takes the
  * English word.
  */
-export type GrammarWordKey = 'back' | 'elsewhere' | 'index' | 'start';
+export type GrammarWordKey = 'back' | 'elsewhere' | 'index' | 'start' | 'catch' | 'finally';
 
 export const GRAMMAR_WORDS: Readonly<Record<string, Readonly<Record<GrammarWordKey, string>>>> = {
-  ar: { back: 'خلفا', elsewhere: 'الخارج', index: 'مؤشر', start: 'ابدأ' },
-  bn: { back: 'পিছনে', elsewhere: 'বাইরে', index: 'সূচক', start: 'আরম্ভ' },
-  de: { back: 'zurück', elsewhere: 'außerhalb', index: 'index', start: 'starte' },
-  es: { back: 'atrás', elsewhere: 'afuera', index: 'índice', start: 'comenzar' },
-  fr: { back: 'arrière', elsewhere: 'ailleurs', index: 'indice', start: 'démarrer' },
-  he: { back: 'אחורה', elsewhere: 'חוץ', index: 'אינדקס', start: 'יזום' },
-  hi: { back: 'पीछे', elsewhere: 'अन्यत्र', index: 'सूचकांक', start: 'शुरू' },
-  id: { back: 'mundur', elsewhere: 'luaran', index: 'indeks', start: 'memulai' },
-  it: { back: 'indietro', elsewhere: 'altrove', index: 'indice', start: 'avvia' },
-  ja: { back: 'バック', elsewhere: '外側', index: 'インデックス', start: '開始' },
-  ko: { back: '뒤로', elsewhere: '바깥', index: '인덱스', start: '시작' },
-  ms: { back: 'undur', elsewhere: 'luar', index: 'indeks', start: 'memulakan' },
-  pl: { back: 'wstecz', elsewhere: 'zewnątrz', index: 'indeks', start: 'rozpocznij' },
-  pt: { back: 'atrás', elsewhere: 'exterior', index: 'índice', start: 'começar' },
-  qu: { back: 'kutiy', elsewhere: 'hawa', index: 'yupay', start: 'qallay' },
-  ru: { back: 'назад', elsewhere: 'снаружи', index: 'индекс', start: 'начать' },
-  sw: { back: 'kurudi', elsewhere: 'kwingineko', index: 'faharasa', start: 'zindua' },
-  th: { back: 'ย้อน', elsewhere: 'ภายนอก', index: 'ดัชนี', start: 'เริ่ม' },
-  tl: { back: 'pabalik', elsewhere: 'labas', index: 'indeks', start: 'umpisahan' },
-  tr: { back: 'geri', elsewhere: 'dışarı', index: 'indeks', start: 'başla' },
-  uk: { back: 'назад', elsewhere: 'ззовні', index: 'індекс', start: 'почати' },
-  vi: { back: 'lùi', elsewhere: 'ngoài', index: 'chỉ số', start: 'bắt đầu' },
-  zh: { back: '后退', elsewhere: '外部', index: '索引', start: '开始' },
+  ar: { back: 'خلفا', elsewhere: 'الخارج', index: 'مؤشر', start: 'ابدأ',
+    catch: 'التقط', finally: 'أخيرا' },
+  bn: { back: 'পিছনে', elsewhere: 'বাইরে', index: 'সূচক', start: 'আরম্ভ',
+    catch: 'ধরুন', finally: 'অবশেষে' },
+  de: { back: 'zurück', elsewhere: 'außerhalb', index: 'index', start: 'starte',
+    catch: 'fangen', finally: 'schließlich' },
+  es: { back: 'atrás', elsewhere: 'afuera', index: 'índice', start: 'comenzar',
+    catch: 'atrapar', finally: 'finalmente' },
+  fr: { back: 'arrière', elsewhere: 'ailleurs', index: 'indice', start: 'démarrer',
+    catch: 'attraper', finally: 'finalement' },
+  he: { back: 'אחורה', elsewhere: 'חוץ', index: 'אינדקס', start: 'יזום',
+    catch: 'תפוס', finally: 'סופית' },
+  hi: { back: 'पीछे', elsewhere: 'अन्यत्र', index: 'सूचकांक', start: 'शुरू',
+    catch: 'पकड़ें', finally: 'अंततः' },
+  id: { back: 'mundur', elsewhere: 'luaran', index: 'indeks', start: 'memulai',
+    catch: 'menangkap', finally: 'akhirnya' },
+  it: { back: 'indietro', elsewhere: 'altrove', index: 'indice', start: 'avvia',
+    catch: 'catturare', finally: 'infine' },
+  ja: { back: 'バック', elsewhere: '外側', index: 'インデックス', start: '開始',
+    catch: '捕まえる', finally: '最終的に' },
+  ko: { back: '뒤로', elsewhere: '바깥', index: '인덱스', start: '시작',
+    catch: '잡다', finally: '결국' },
+  ms: { back: 'undur', elsewhere: 'luar', index: 'indeks', start: 'memulakan',
+    catch: 'tangkap', finally: 'akhirnya' },
+  pl: { back: 'wstecz', elsewhere: 'zewnątrz', index: 'indeks', start: 'rozpocznij',
+    catch: 'złap', finally: 'ostatecznie' },
+  pt: { back: 'atrás', elsewhere: 'exterior', index: 'índice', start: 'começar',
+    catch: 'capturar', finally: 'finalmente' },
+  qu: { back: 'kutiy', elsewhere: 'hawa', index: 'yupay', start: 'qallay',
+    catch: 'hapsiy', finally: 'qhipamanqa' },
+  ru: { back: 'назад', elsewhere: 'снаружи', index: 'индекс', start: 'начать',
+    catch: 'поймать', finally: 'наконец' },
+  sw: { back: 'kurudi', elsewhere: 'kwingineko', index: 'faharasa', start: 'zindua',
+    catch: 'shika', finally: 'mwishowe' },
+  th: { back: 'ย้อน', elsewhere: 'ภายนอก', index: 'ดัชนี', start: 'เริ่ม',
+    catch: 'จับ', finally: 'ท้ายที่สุด' },
+  tl: { back: 'pabalik', elsewhere: 'labas', index: 'indeks', start: 'umpisahan',
+    catch: 'saluhin', finally: 'panghuli' },
+  tr: { back: 'geri', elsewhere: 'dışarı', index: 'indeks', start: 'başla',
+    catch: 'yakalarsa', finally: 'sonunda' },
+  uk: { back: 'назад', elsewhere: 'ззовні', index: 'індекс', start: 'почати',
+    catch: 'зловити', finally: 'нарешті' },
+  vi: { back: 'lùi', elsewhere: 'ngoài', index: 'chỉ số', start: 'bắt đầu',
+    catch: 'bắt', finally: 'rốt cuộc' },
+  zh: { back: '后退', elsewhere: '外部', index: '索引', start: '开始',
+    catch: '捕获', finally: '最终' },
 };
 
 /** The word a translation writes: the language's own, or English's. */

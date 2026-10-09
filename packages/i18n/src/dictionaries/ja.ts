@@ -201,6 +201,8 @@ export const ja: Dictionary = {
     elsewhere: '外側',
     index: 'インデックス',
     start: '開始',
+    catch: '捕まえる',
+    finally: '最終的に',
     characters: '文字',
     inclusive: '含む',
     exclusive: '除く',

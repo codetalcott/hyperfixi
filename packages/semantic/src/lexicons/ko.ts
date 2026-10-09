@@ -134,6 +134,8 @@ export const koreanLexicon: LanguageLexicon = {
     'sorted by': { primary: '로_정렬' },
     'split by': { primary: '로_분할' },
     start: { primary: '시작' },
+    catch: { primary: '잡다' },
+    finally: { primary: '결국' },
     'starts with': { primary: '로시작' },
     within: { primary: '이내' },
   },

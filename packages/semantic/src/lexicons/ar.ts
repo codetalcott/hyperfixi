@@ -134,6 +134,8 @@ export const arabicLexicon: LanguageLexicon = {
     'sorted by': { primary: 'مرتب حسب' },
     'split by': { primary: 'مقسم بواسطة' },
     start: { primary: 'ابدأ' },
+    catch: { primary: 'التقط' },
+    finally: { primary: 'أخيرا' },
     'starts with': { primary: 'يبدأ بـ' },
     within: { primary: 'داخل' },
   },

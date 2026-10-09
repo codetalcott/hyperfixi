@@ -133,6 +133,8 @@ export const spanishLexicon: LanguageLexicon = {
     'sorted by': { primary: 'ordenado por' },
     'split by': { primary: 'dividido por' },
     start: { primary: 'comenzar' },
+    catch: { primary: 'atrapar' },
+    finally: { primary: 'finalmente' },
     'starts with': { primary: 'empieza con' },
     within: { primary: 'dentro' },
   },

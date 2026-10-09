@@ -149,6 +149,8 @@ export const malayLexicon: LanguageLexicon = {
     'sorted by': { primary: 'disusun_mengikut' },
     'split by': { primary: 'dipecah_oleh' },
     start: { primary: 'memulakan' },
+    catch: { primary: 'tangkap' },
+    finally: { primary: 'akhirnya' },
     'starts with': { primary: 'bermula_dengan' },
     within: { primary: 'dalam' },
   },

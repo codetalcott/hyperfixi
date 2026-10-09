@@ -209,6 +209,8 @@ export const id: Dictionary = {
     elsewhere: 'luaran',
     index: 'indeks',
     start: 'memulai',
+    catch: 'menangkap',
+    finally: 'akhirnya',
     characters: 'karakter',
     inclusive: 'inklusif',
     exclusive: 'eksklusif',

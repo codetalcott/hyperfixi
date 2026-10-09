@@ -153,6 +153,8 @@ export const ukrainianLexicon: LanguageLexicon = {
     'sorted by': { primary: 'відсортовано_за' },
     'split by': { primary: 'розділено_за' },
     start: { primary: 'почати' },
+    catch: { primary: 'зловити' },
+    finally: { primary: 'нарешті' },
     'starts with': { primary: 'починається_з' },
     within: { primary: 'всередині' },
   },

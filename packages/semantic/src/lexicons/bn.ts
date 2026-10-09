@@ -112,6 +112,8 @@ export const bengaliLexicon: LanguageLexicon = {
     'sorted by': { primary: 'দ্বারা_সাজানো' },
     'split by': { primary: 'দ্বারা_বিভক্ত' },
     start: { primary: 'আরম্ভ' },
+    catch: { primary: 'ধরুন' },
+    finally: { primary: 'অবশেষে' },
     'starts with': { primary: 'দিয়ে_শুরু' },
   },
 };

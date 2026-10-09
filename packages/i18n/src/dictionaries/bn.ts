@@ -171,6 +171,8 @@ export const bengaliDictionary: Dictionary = {
     back: 'পিছনে',
     elsewhere: 'বাইরে',
     start: 'আরম্ভ',
+    catch: 'ধরুন',
+    finally: 'অবশেষে',
     characters: 'অক্ষর',
     inclusive: 'অন্তর্ভুক্ত',
     exclusive: 'বাদ',

@@ -131,6 +131,8 @@ export const swahiliLexicon: LanguageLexicon = {
     'sorted by': { primary: 'kupangwa kwa' },
     'split by': { primary: 'kugawanywa kwa' },
     start: { primary: 'zindua' },
+    catch: { primary: 'shika' },
+    finally: { primary: 'mwishowe' },
     'starts with': { primary: 'huanza na' },
     within: { primary: 'ndani_ya' },
   },

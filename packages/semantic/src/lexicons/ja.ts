@@ -134,6 +134,8 @@ export const japaneseLexicon: LanguageLexicon = {
     'sorted by': { primary: 'でソート' },
     'split by': { primary: 'で分割' },
     start: { primary: '開始' },
+    catch: { primary: '捕まえる' },
+    finally: { primary: '最終的に' },
     'starts with': { primary: 'で始まる' },
     within: { primary: '以内' },
   },

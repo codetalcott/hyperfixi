@@ -201,6 +201,8 @@ export const pt: Dictionary = {
     elsewhere: 'exterior',
     index: 'índice',
     start: 'começar',
+    catch: 'capturar',
+    finally: 'finalmente',
     characters: 'caracteres',
     inclusive: 'inclusivo',
     exclusive: 'exclusivo',

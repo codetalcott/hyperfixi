@@ -10,13 +10,13 @@ separate `for` command), A2 (#1432; its negation `I do not match`, #1435), A8 (#
 <input/> en yo`, the translation keeps English's), A4 (#1437; the word stands before the type, as
 English's does, in every language, where the reader takes it; it keeps English's where it would read as
 something else: ko `로` is also a marker, th `เป็น` is also `is` before a type core does not have built
-in), A3 (2026-10-09; inside an expression, with an element owner, in the construction a top-level
+in), A3 (#1438; inside an expression, with an element owner, in the construction a top-level
 property path already used: es `valor de #price`, ja `#priceの値`; only where the property comes first
 before `as`, which converts the owner, and for a one-link phrase that is the whole value (`set @role of
 #x`, which ja would read back as a property path); `toggle the *X of Y`, a kept clause, and an owner that
-is not an element, `the length of my value`, stay English). Open: A6, A9, A10, B1, B2, B7. The words of B3–B6,
-A5 and A4 are in `packages/semantic/src/parser/utils/grammar-words.ts`, held to the dictionaries by a
-test.
+is not an element, `the length of my value`, stay English), A9 and B2 (2026-10-09; a handler's and a
+function's `catch e` and `finally`). Open: A6, A10, B1, B7. The words of B3–B6, A5, A4, A9 and B2 are in
+`packages/semantic/src/parser/utils/grammar-words.ts`, held to the dictionaries by a test.
 
 **Words changed from the appendix while implementing.** Each proposed word below was already another word
 of its language (a keyword or a role marker), or the tokenizer split it into one; the table has the word
@@ -28,6 +28,8 @@ used instead. The native review checks these too.
 | B4 elsewhere | es `afuera`, pt `exterior`, sw `kwingineko` (`fuera`, `fora`, `nje` are markers); he `חוץ` (`ב` + word); hi `अन्यत्र` (`बाहर` is `exit`); id `luaran`, ms `luar` (`di` is a marker); pl `zewnątrz` (`gdzie` is `where`); qu `hawa` (`-pi` is a marker); vi `ngoài`; ar `الخارج`, tr `dışarı` (read after `من` / before `den`) |
 | B5 index | ar `مؤشر` (`فهرس` reads as `ف`, `then`) |
 | B6 start | bn `আরম্ভ`, es `comenzar`, he `יזום`, id `memulai`, ms `memulakan`, pt `começar`, sw `zindua`, tl `umpisahan`, tr `başla` (the proposed word is the language's `init`); qu `qallay` (`qallariy` is `default`) |
+| A9 catch | id `menangkap`, tr `yakalarsa` (the dictionary's `tangkap`, `yakala` are `intercept`); tl `saluhin` (`hulihin` reads as `last`) |
+| B2 finally | he `סופית` (`לבסוף` reads as `ל` + `ב` + `סוף`, to/on/end); ja `最終的に`, ko `결국`, th `ท้ายที่สุด`, vi `rốt cuộc` (`最後に`, `마지막으로`, `สุดท้าย`, `cuối cùng` are `last`); qu `qhipamanqa` (`puchukaypi` reads as `end`) |
 
 > For the owner, 2026-10-08. Each row is one decision. The words target in M2's exit
 > (`MULTILINGUAL_NEXT_STEPS.md`, M2 step 1) waits on it: without these words, 13.3% of corpus
