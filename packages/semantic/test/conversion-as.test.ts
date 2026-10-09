@@ -8,6 +8,7 @@
 import { describe, it, expect } from 'vitest';
 import { getSupportedLanguages, parse, render, translate } from '../src/index';
 import { CONVERSION_AS } from '../src/parser/utils/grammar-words';
+import { localizeValueInterior } from '../src/explicit/value-lexicon';
 import { dictionaries } from '../../i18n/src/dictionaries';
 
 // he has no word yet (sheet B7).
@@ -45,10 +46,20 @@ describe.each([
   'on click fetch /test as json',
   'on click fetch /test as JSON then put it into me',
   'on click if x is a String then log 1 end',
+  'on click put x is a Number into me',
 ])('%s still reads', source => {
   it.each(NATIVE)('%s', language => {
     const rendered = translate(source, 'en', language);
     expect(translate(rendered, language, 'en')).toBe(translate(source, 'en', 'en'));
+  });
+});
+
+// The type check's `a` follows the copula, not `as` (th's copula is its `as`).
+describe('`is a` keeps its copula', () => {
+  it.each(NATIVE.filter(l => l !== 'th'))('%s', language => {
+    expect(words(localizeValueInterior('x is a String', language))).not.toContain(
+      CONVERSION_AS[language]
+    );
   });
 });
 
