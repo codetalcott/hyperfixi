@@ -44,7 +44,11 @@ export function getViewTransitionPatterns(
   // `transition` is that command's keyword, which read the block's verb as its
   // patient. The language's own head is above English's, so it is the one
   // written.
-  const head = (tokens: LanguagePattern['template']['tokens'], id: string, priority: number) => [
+  const head = (
+    tokens: LanguagePattern['template']['tokens'],
+    id: string,
+    priority: number
+  ): LanguagePattern[] => [
     {
       id: `${id}-using`,
       language,
