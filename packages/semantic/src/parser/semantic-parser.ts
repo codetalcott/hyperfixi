@@ -55,6 +55,7 @@ import {
 } from './utils/expression-lexicon';
 import { blankComments } from './utils/comments';
 import { isOrWordToken } from './utils/or-words';
+import { NOT_THROW_BY_LANG } from './utils/not-throw';
 import { ROLE_MARKER_CONCEPTS } from './utils/marker-resolution';
 import { patternMatcher } from './pattern-matcher';
 import { CONDITION_PREDICATES, copulaHoldsCondition } from './value-reading';
@@ -6712,9 +6713,9 @@ export class SemanticParserImpl implements ISemanticParser {
    * whose source starts last before the phrase (the text before the phrase keeps
    * its offsets in the re-parse). By position, not by counting fetch verbs: he
    * `הבא` and id `muat` do not normalize to `fetch`, though their patterns read
-   * them as it. It is fixed English in every language, as the renderer writes
-   * it, after the whole command. One phrase per call: the re-parse takes the
-   * next.
+   * them as it. Each language writes its own words for it (not-throw.ts),
+   * after the whole command, and English's phrase is read in every language.
+   * One phrase per call: the re-parse takes the next.
    */
   private tryDoNotThrow(
     arr: readonly LanguageToken[],
@@ -6722,10 +6723,15 @@ export class SemanticParserImpl implements ISemanticParser {
     language: string
   ): SemanticNode | null {
     const word = (t: LanguageToken | undefined) => t?.value.toLowerCase();
-    // `do not throw`, or upstream's contraction `don't throw` (`don`, `'`, `t`).
+    const native = language === 'en' ? [] : (NOT_THROW_BY_LANG[language] ?? []);
+    // `do not throw`, or upstream's contraction `don't throw` (`don`, `'`, `t`),
+    // or the language's own words (not-throw.ts).
     const phraseEnd = (k: number): number => {
       if (word(arr[k]) === 'do' && word(arr[k + 1]) === 'not' && word(arr[k + 2]) === 'throw') {
         return k + 2;
+      }
+      if (native.length && native.every((w, j) => word(arr[k + j]) === w.toLowerCase())) {
+        return k + native.length - 1;
       }
       const contracted =
         word(arr[k]) === 'don' &&
