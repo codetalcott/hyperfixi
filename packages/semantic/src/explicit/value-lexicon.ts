@@ -225,14 +225,21 @@ function restoreSpans(text: string, spans: readonly string[]): string {
  * the lexicon has words for: `me matches .x`, `me is a Node` (both engines read
  * the pairs alike). The word pass then writes each language's own: es `yo
  * coincide .x`, where `I match .x` stayed English in every language (M2,
- * vocabulary sheet A2). `I do not match` is a phrase no lexicon has yet.
+ * vocabulary sheet A2). The negation, `I do not match` or `X does not match`,
+ * is written `not matches` (es `yo no coincide .x`), which the reader takes
+ * back as `does not match` (joinExpressionTokens).
  */
 const FIRST_PERSON = /(^|[^\w$.#@*:-])I\s+(match|am)\b/g;
+const NOT_MATCH = /(^|[^\w$.#@*:-])(?:I\s+do|does)\s+not\s+match\b/g;
 function thirdPerson(text: string): string {
-  return text.replace(
-    FIRST_PERSON,
-    (_, lead: string, verb: string) => `${lead}me ${verb === 'match' ? 'matches' : 'is'}`
-  );
+  return text
+    .replace(NOT_MATCH, (whole: string, lead: string) =>
+      /\bI\s+do/.test(whole) ? `${lead}me not matches` : `${lead}not matches`
+    )
+    .replace(
+      FIRST_PERSON,
+      (_, lead: string, verb: string) => `${lead}me ${verb === 'match' ? 'matches' : 'is'}`
+    );
 }
 
 /**

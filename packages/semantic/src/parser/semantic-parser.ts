@@ -4623,7 +4623,13 @@ export class SemanticParserImpl implements ISemanticParser {
           const action =
             verbLookup.get(t.value.toLowerCase()) ??
             (t.normalized ? verbLookup.get(t.normalized.toLowerCase()) : undefined);
-          if (action && !SemanticParserImpl.CONDITION_OPERATORS.has(action)) {
+          // A command verb: tr's profile lists `değil` (`not`) as a keyword,
+          // which split `ben değil eşleşir .bar` (I do not match .bar) after `ben`.
+          if (
+            action &&
+            !SemanticParserImpl.CONDITION_OPERATORS.has(action) &&
+            getSchema(action as ActionType)
+          ) {
             presetCondition = bodyTokens.slice(0, i);
             bodyTokens = bodyTokens.slice(i);
             break;

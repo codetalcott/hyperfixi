@@ -12,6 +12,13 @@
  * only its condition no longer reads the condition's operator as a command (ja
  * `それ 一致する .bar ない限り` added a phantom `matches`; refused on main for
  * `unless it matches` too).
+ *
+ * The negation, `I do not match` or `X does not match`, is written with the
+ * language's `not` and `matches` (es `yo no coincide .x`) and read back as
+ * `does not match`. Three readers had to learn it: a connective is never a
+ * property (id `saya bukan` read as `my bukan`), qu `mana` before `tupan` is
+ * `not` (it read `false`), and tr's trailing `unless` splits its condition only
+ * at a command (it split at `değil`, the profile's `not`).
  */
 import { describe, it, expect } from 'vitest';
 import { getSupportedLanguages, translate } from '../src/index';
@@ -24,12 +31,19 @@ describe.each([
   'on click if I match .disabled halt else toggle .active end',
   'on click if I am a Node put "yes" into me end',
   'on click toggle .foo unless I match .bar',
+  // The negation: the language's `not` and `matches` (es `yo no coincide .x`),
+  // read back as `does not match`.
+  'on click if I do not match .disabled toggle .selected',
+  'on click toggle .foo unless I do not match .bar',
+  'on click if it does not match .x add .a end',
+  'on click if #a does not match .x and I match .y log 1 end',
 ])('%s', source => {
   // he has no word for `matches` yet (sheet B7).
   it.each(FOREIGN.filter(l => l !== 'he'))('%s', language => {
     const rendered = translate(source, 'en', language);
     expect(words(rendered)).not.toContain('I');
     expect(words(rendered)).not.toContain('match');
+    expect(words(rendered)).not.toContain('does');
     expect(translate(rendered, language, 'en')).toBe(translate(source, 'en', 'en'));
   });
 });
@@ -40,6 +54,7 @@ describe('English writes the third person back in the first', () => {
     ['on click if me is a Node add .a end', 'on click if I am a Node add .a end'],
     ['on click if me is not a Node add .a end', 'on click if I am not a Node add .a end'],
     ['on click toggle .foo unless me matches .bar', 'on click toggle .foo unless I match .bar'],
+    ['on click if me does not match .x add .a end', 'on click if I do not match .x add .a end'],
     // Not a name that ends in `me`, nor a property.
     ['on click if #me matches .x add .a end', 'on click if #me matches .x add .a end'],
   ])('%s', (source, english) => {

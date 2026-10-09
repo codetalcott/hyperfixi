@@ -442,6 +442,7 @@ export function rewriteExpression(raw: string): string {
       .replace(/\bhave(\s+)(?=[.#[])/g, 'match$1')
       // The third person a translation writes for upstream's first (M2, A2).
       .replace(/(^|[^\w$.#@*:-])me matches\b/g, '$1I match')
+      .replace(/(^|[^\w$.#@*:-])me does not match\b/g, '$1I do not match')
       .replace(/(^|[^\w$.#@*:-])me is(\s+not)?(\s+an?\s)/g, '$1I am$2$3')
   );
 }
