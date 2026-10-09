@@ -914,16 +914,11 @@ export class SemanticRendererImpl implements ISemanticRenderer {
           // The pinned form is the whole reason this value exists — prefer it
           // decisively over the neutral pattern, whatever the parse priorities say.
           score += 60;
-        } else if (
-          actualKey === undefined ||
-          rule.valueIsExpression ||
-          pinnedValues.get(role)?.has(actualKey)
-        ) {
+        } else if (actualKey === undefined || pinnedValues.get(role)?.has(actualKey)) {
           // Either the node has no such value (so this pattern would invent one:
           // a plain `put X into Y` must never render as `put X at end of Y`), or it
-          // has a DIFFERENT value that the pattern set treats as an alternative,
-          // or one other than the word an expression pattern spells (`go x` is
-          // never `go back`). All are wrong surfaces; disqualify.
+          // has a DIFFERENT value that the pattern set treats as an alternative.
+          // Both are wrong surfaces; disqualify.
           score -= 200;
         }
         // Otherwise the node's value is not one of the pinned alternatives, so this

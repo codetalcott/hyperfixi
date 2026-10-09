@@ -50,9 +50,25 @@ describe('English’s words still read', () => {
   });
 });
 
+// A verb-final body that opened on a variable named `index` wrote its marker
+// next (ja `index を x に 置く`), which read as the loop's `index を` (refused in
+// ja, ko, tr, qu, bn and hi before the language had its own word).
+describe('a loop body that opens on a variable named index keeps it', () => {
+  it.each(FOREIGN)('%s', language => {
+    for (const source of [
+      'on click repeat for x in .items put index into x end',
+      'on click repeat for x in .items index index put index into x end',
+    ]) {
+      expect(translate(translate(source, 'en', language), language, 'en')).toBe(
+        translate(source, 'en', 'en')
+      );
+    }
+  });
+});
+
 describe('a destination other than back is never written as back', () => {
   it.each(FOREIGN)('%s', language => {
-    for (const source of ['on click go to #d1', 'on click go to url "/x"', 'go to me']) {
+    for (const source of ['on click go to #d1', 'on click go to url "/x"', 'go to me', 'on click go to $el', 'on click go to target']) {
       const rendered = render(parse(source, 'en')!, language);
       expect(rendered.replace(/\s+/g, '')).not.toContain(
         GRAMMAR_WORDS[language]!.back.replace(/\s+/g, '')

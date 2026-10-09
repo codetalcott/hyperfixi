@@ -6973,6 +6973,13 @@ export class SemanticParserImpl implements ISemanticParser {
       const named = (indexWord > 0 && !!arr[at + indexWord]) || indexedBy;
       if (!withIndex && !named) continue;
       const nameTok = arr[indexedBy ? at + 2 : withIndex ? at + 1 : at + indexWord]!;
+      // English's `index` before a marker, in a language with its own word, is
+      // a variable named `index`: a verb-final body that opens on one writes
+      // its marker next (ja `index を x に 置く`), which read as the loop's
+      // `index を` and lost the put. After the language's own word a marker's
+      // spelling can be the name (tr `indeks i`).
+      const english = indexWord > 0 && word(arr[at]) === 'index';
+      if (english && nameTok.kind === 'particle' && indexForms.length > 1) continue;
       const phraseStart = arr[at].position.start;
       const reduced = (
         input.slice(0, phraseStart).trimEnd() +

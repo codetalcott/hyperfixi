@@ -47,7 +47,6 @@ import { getPatternsForLanguage, tryGetProfile } from '../../registry';
 import { getEnglishPossessiveAdjective, getPossessiveReference } from './possessive-keywords';
 import { NATIVE_COUNT_WORDS } from '../../patterns/count-words';
 import { EVENT_NAMES } from './event-names';
-import { GRAMMAR_WORDS } from './grammar-words';
 
 // prettier-ignore
 export const PROPERTY_NAME_LEXICON: Record<string, Record<string, string>> = {
@@ -1476,15 +1475,8 @@ export function endWordIsValue(place: EndWordPlace, languageCode: string): boole
   if (BINARY_OPERATORS.has(prev.value)) return true;
   // The last word of a view transition's head, `start [a] view transition`, which
   // is not the `transition` command's verb and owes no value: the end word
-  // closes an empty block. A verb-final language ends it with its own `start`
-  // (ja `view transition 開始`, grammar-words.ts).
+  // closes an empty block.
   if (prev.value.toLowerCase() === 'transition' && beforePrev?.value.toLowerCase() === 'view') {
-    return false;
-  }
-  if (
-    beforePrev?.value.toLowerCase() === 'transition' &&
-    prev.value.toLowerCase() === GRAMMAR_WORDS[languageCode]?.start.toLowerCase()
-  ) {
     return false;
   }
   const word = wordOf(prev, languageCode);
