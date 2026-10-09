@@ -3,9 +3,9 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 24511,
-  "refused": 2702,
-  "silent": 27,
+  "pass": 24515,
+  "refused": 2700,
+  "silent": 25,
   "entries": {
     "6f60177037": {
       "src": "on click add .foo to .item when it matches .yes then if the result is empty show #none else hide #none",
@@ -16,12 +16,6 @@
       "src": "on click add .foo to .item when it matches .nope then if the result is empty remove @hidden from #none",
       "family": "add",
       "refused": "qu"
-    },
-    "87250fbc5e": {
-      "src": "on click set result to [1,2,3] append 4 put it as String into me",
-      "family": "append",
-      "silent": "ms qu",
-      "why": "value-words: a language's word inside a value reads back as another English word: `is not` → `it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms/pl `undefined`, ms `it` → `its`"
     },
     "ddd8e60406": {
       "src": "on click ask \"What is your name?\" then put it into #out",
@@ -86,11 +80,6 @@
       "src": "on click fetch \"/test\" {headers: {\"X-CustomHeader\": \"foo\"}} then put it into my.innerHTML end",
       "family": "fetch",
       "refused": "ja"
-    },
-    "ce4506efd5": {
-      "src": "on click fetch /test as Response then put (it as JSON).name into me",
-      "family": "fetch",
-      "refused": "ms qu"
     },
     "eff1f1e59f": {
       "src": "on click fetch `/test?bar=${1}` as JSON then get result as JSONString then put it into my.innerHTML",
