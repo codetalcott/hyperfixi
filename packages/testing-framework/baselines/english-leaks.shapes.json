@@ -1,12 +1,12 @@
 {
   "description": "English-leak gate, command-shape half (src/multilingual/english-leaks.ts): per command-shape case, the findings of each language's render (translate(src, 'en', L)): an English grammar word, `event:<name>` or `case:me`. `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts.",
   "renders": 23635,
-  "leaky": 7922,
-  "findings": 12425,
+  "leaky": 7902,
+  "findings": 12338,
   "kinds": {
     "word": {
-      "renders": 5153,
-      "findings": 8298
+      "renders": 5109,
+      "findings": 8211
     },
     "event": {
       "renders": 0,
@@ -19,9 +19,8 @@
   },
   "entries": {
     "00d90195c2": {
-      "case:me do not throw": "ar bn de es he hi it pt ru tl tr uk",
-      "case:me not throw": "pl",
-      "do not throw": "fr id ja ko ms qu sw th vi zh"
+      "case:me": "ar bn de es hi it pl pt ru tl tr uk",
+      "case:me do not throw": "he"
     },
     "00ecb58154": {
       "items": "*"
@@ -959,8 +958,8 @@
       "catch": "fr id ja ko ms qu sw th vi zh"
     },
     "83186964ec": {
-      "case:me throw": "ar bn de es he hi it pl pt ru tl tr uk",
-      "throw": "fr id ja ko ms qu sw th vi zh"
+      "case:me": "ar bn de es hi it pl pt ru tl tr uk",
+      "case:me throw": "he"
     },
     "834d9defce": {
       "for": "*"
