@@ -1,20 +1,20 @@
 {
   "description": "English-leak gate, corpus half (src/multilingual/english-leaks.ts): per corpus row, the findings of each language's render (render(parse(en), L)): an English grammar word, `event:<name>` (an English event the lexicon has a word for) or `case:me` (a nominative pronoun beside a marker). `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts after a fresh populate.",
   "renders": 3519,
-  "leaky": 628,
-  "findings": 978,
+  "leaky": 564,
+  "findings": 878,
   "kinds": {
     "word": {
-      "renders": 346,
-      "findings": 591
+      "renders": 276,
+      "findings": 483
     },
     "event": {
       "renders": 0,
       "findings": 0
     },
     "case": {
-      "renders": 314,
-      "findings": 387
+      "renders": 318,
+      "findings": 395
     }
   },
   "entries": {
@@ -103,18 +103,15 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "first-in-parent": {
-      "closest first in": "he",
-      "in": "ar bn es fr hi id ja ko ms pl pt qu ru sw th tl uk zh"
+      "closest first in": "he"
     },
     "focus-trap": {
       "first in in matches": "he",
-      "in in": "ar es fr hi id ja ko ms pl pt qu ru sw tl uk zh",
-      "in in matches": "bn th"
+      "matches": "bn th"
     },
     "form-disable-on-submit": {
-      "case:me case:me": "de it tr",
-      "case:me case:me in in": "bn hi",
-      "in in": "ar es fr he id ja ko ms pl pt qu ru sw th tl uk zh"
+      "case:me case:me": "ar bn de es hi it pl ru tr",
+      "in in": "he"
     },
     "form-submit-prevent": {
       "is": "he"
@@ -144,7 +141,7 @@
       "is": "ar de es fr id it ja ko ms pl pt qu ru sw th tl uk vi zh"
     },
     "last-in-collection": {
-      "in": "ar bn es fr he hi id ja ko ms pl pt qu ru sw th tl uk zh"
+      "in": "he"
     },
     "live-derived-value": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"

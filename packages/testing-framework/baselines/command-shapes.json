@@ -3,9 +3,9 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 24509,
+  "pass": 24511,
   "refused": 2702,
-  "silent": 29,
+  "silent": 27,
   "entries": {
     "6f60177037": {
       "src": "on click add .foo to .item when it matches .yes then if the result is empty show #none else hide #none",
@@ -823,7 +823,7 @@
     "2159462e64": {
       "src": "on click get the first .p1 in me then put its id into @result",
       "family": "expressions/in",
-      "silent": "it tr",
+      "silent": "it",
       "why": "it-locative: it `in me` (a query scope) reads back as `on me`"
     },
     "7ab4a541ee": {
@@ -835,7 +835,7 @@
     "0ff2f70080": {
       "src": "on click get the first <p/> in me then put its id into @result",
       "family": "expressions/in",
-      "silent": "it tr",
+      "silent": "it",
       "why": "it-locative: it `in me` (a query scope) reads back as `on me`"
     },
     "15c22f6ecd": {
