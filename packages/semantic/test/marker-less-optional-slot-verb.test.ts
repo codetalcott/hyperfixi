@@ -179,7 +179,7 @@ describe('render pattern selection ignores an implicit reference role', () => {
 
   it('repeat-forever still renders its loop word (implicit literal counts)', () => {
     const rendered = translate('repeat forever toggle .pulse wait 1s end', 'en', 'es');
-    expect(rendered).toContain('forever');
+    expect(rendered).toContain('siempre');
   });
 });
 
