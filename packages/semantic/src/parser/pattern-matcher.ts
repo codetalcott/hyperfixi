@@ -73,7 +73,7 @@ import {
 } from './value-reading';
 import type { LanguageProfile } from '../generators/profiles/types';
 import { tryGetProfile } from '../registry';
-import { isAtEndConnective } from '../patterns/put';
+import { isAtEndConnective, isAtEndNounBeforeOf } from '../patterns/put';
 import { isCuratedEndKeyword } from './end-keywords';
 import { foldNakedNamedArgsRaw } from './naked-args-fold';
 import { tokenValue } from './token-value';
@@ -693,6 +693,24 @@ export class PatternMatcher {
             (captured.get(patternToken.role) as { raw?: unknown }).raw ??
             ''
         ).toLowerCase()
+      )
+    ) {
+      tokens.reset(mark);
+      if (before) captured.set(patternToken.role, before);
+      else captured.delete(patternToken.role);
+      return false;
+    }
+    // put's `at end of` is its own pattern's: a destination that is the end noun
+    // before the of word is the phrase's head, never the destination.
+    if (
+      this.currentRoleCommand === 'put' &&
+      patternToken.role === 'destination' &&
+      captured.get(patternToken.role) !== before &&
+      tokens.position() === startIdx + 1 &&
+      isAtEndNounBeforeOf(
+        this.currentProfile?.code ?? '',
+        tokens.tokens[startIdx]?.value ?? '',
+        tokens.tokens[startIdx + 1]?.value
       )
     ) {
       tokens.reset(mark);

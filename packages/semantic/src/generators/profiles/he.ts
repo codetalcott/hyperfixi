@@ -29,6 +29,8 @@ export const hebrewProfile: LanguageProfile = {
     event: 'אירוע',
     target: 'יעד',
     body: 'גוף',
+    document: 'מסמך',
+    window: 'חלון',
   },
   possessive: {
     marker: 'של', // "of" - used for general possession
@@ -120,6 +122,13 @@ export const hebrewProfile: LanguageProfile = {
     // NATIVE_REVIEW_NEEDED.md § "Reactive `when … changes`".
     changes: { primary: 'משתנה', normalized: 'changes' },
     where: { primary: 'איפה', alternatives: ['היכן'], normalized: 'where' },
+    // Condition words (M2 sheet B7). Without a keyword each stayed an identifier
+    // and leaked verbatim into the condition's raw expression, as ar's and tr's
+    // did. Neither an ActionType nor a command schema, so no pattern is generated.
+    matches: { primary: 'תואם', normalized: 'matches' },
+    exists: { primary: 'קיים', normalized: 'exists' },
+    or: { primary: 'או', normalized: 'or' },
+    not: { primary: 'לא', normalized: 'not' },
     else: { primary: 'אחרת', alternatives: ['אם לא'], normalized: 'else' },
     repeat: { primary: 'חזור', normalized: 'repeat' },
     for: { primary: 'עבור', alternatives: ['לכל'], normalized: 'for' },

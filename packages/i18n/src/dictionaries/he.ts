@@ -60,6 +60,10 @@ export const he: Dictionary = {
     after: 'אחרי',
     before: 'לפני',
     from: 'מ',
+    in: 'בתוך',
+    as: 'כ',
+    of: 'של',
+    at: 'ב',
     into: 'לתוך',
     to: 'על',
     with: 'עם',
@@ -84,6 +88,11 @@ export const he: Dictionary = {
     changes: 'משתנה',
     when: 'כאשר',
     where: 'איפה',
+    or: 'או',
+    not: 'לא',
+    is: 'הוא',
+    exists: 'קיים',
+    matches: 'תואם',
   },
 
   temporal: {
@@ -91,6 +100,8 @@ export const he: Dictionary = {
   },
 
   values: {
+    document: 'מסמך',
+    window: 'חלון',
     element: 'אלמנט',
     body: 'גוף',
     event: 'אירוע',
@@ -119,5 +130,10 @@ export const he: Dictionary = {
     inclusive: 'כולל',
     exclusive: 'בלעדי',
     last: 'אחרון',
+    first: 'ראשון',
+    next: 'הבא',
+    previous: 'הקודם',
+    closest: 'הקרוב',
+    empty: 'ריק',
   },
 };

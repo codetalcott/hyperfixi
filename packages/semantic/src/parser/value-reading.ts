@@ -424,6 +424,7 @@ export const CONDITION_COPULAS: ReadonlySet<string> = new Set([
  */
 export const CONDITION_COPULAS_SURFACE: ReadonlySet<string> = new Set([
   'هو',
+  'הוא',
   'เป็น',
   'है',
   'नहीं',

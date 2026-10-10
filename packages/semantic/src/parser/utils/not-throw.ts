@@ -12,7 +12,7 @@
  *
  * Kept here, beside the reader, rather than read from the render lexicon: a
  * slim bundle parses without one. A test holds each entry to the dictionary's
- * words (policy 5). he has no `not` yet (sheet B7) and keeps English's phrase.
+ * words (policy 5).
  */
 export const NOT_THROW_BY_LANG: Readonly<Record<string, readonly string[]>> = {
   ar: ['ليس', 'ارم'],
@@ -21,6 +21,7 @@ export const NOT_THROW_BY_LANG: Readonly<Record<string, readonly string[]>> = {
   en: ['do', 'not', 'throw'],
   es: ['no', 'lanzar'],
   fr: ['non', 'lancer'],
+  he: ['לא', 'זרוק'],
   hi: ['नहीं', 'फेंकें'],
   id: ['bukan', 'lempar'],
   it: ['non', 'lanciare'],

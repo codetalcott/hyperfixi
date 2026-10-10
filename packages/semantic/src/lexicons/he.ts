@@ -27,11 +27,18 @@ export const hebrewLexicon: LanguageLexicon = {
     then: { primary: 'אז' },
     when: { primary: 'כאשר' },
     where: { primary: 'איפה' },
+    or: { primary: 'או' },
+    not: { primary: 'לא' },
+    is: { primary: 'הוא' },
+    exists: { primary: 'קיים' },
+    matches: { primary: 'תואם' },
   },
   temporal: {
     times: { primary: 'פעמים' },
   },
   values: {
+    document: { primary: 'מסמך' },
+    window: { primary: 'חלון' },
     element: { primary: 'אלמנט' },
     body: { primary: 'גוף' },
     event: { primary: 'אירוע' },
@@ -64,6 +71,11 @@ export const hebrewLexicon: LanguageLexicon = {
     catch: { primary: 'תפוס' },
     finally: { primary: 'סופית' },
     def: { primary: 'פונקציה' },
+    first: { primary: 'ראשון' },
+    next: { primary: 'הבא' },
+    previous: { primary: 'הקודם' },
+    closest: { primary: 'הקרוב' },
+    empty: { primary: 'ריק' },
   },
 };
 

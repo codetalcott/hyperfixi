@@ -65,7 +65,6 @@ const HEBREW_EXTRAS: KeywordEntry[] = [
   { native: 'אמת', normalized: 'true' },
   { native: 'שקר', normalized: 'false' },
   { native: 'null', normalized: 'null' },
-  { native: 'ריק', normalized: 'null' },
   { native: 'לא מוגדר', normalized: 'undefined' },
 
   // Positional
@@ -74,6 +73,9 @@ const HEBREW_EXTRAS: KeywordEntry[] = [
   { native: 'הבא', normalized: 'next' },
   { native: 'הקודם', normalized: 'previous' },
   { native: 'הקרוב', normalized: 'closest' },
+  // A query's scope and a loop's `in` (M2 sheet B7): whole, or the proclitic
+  // extractor reads ב + תוך.
+  { native: 'בתוך', normalized: 'in' },
   { native: 'הורה', normalized: 'parent' },
 
   // Events

@@ -292,8 +292,8 @@ const FOR_IN_HEADS: Array<
   ['uk', { forWords: ['для'], inWords: ['у'] }],
   ['pl', { forWords: ['dla'], inWords: ['w'] }],
   ['ar', { forWords: ['لكل'], inWords: ['في'] }],
-  // he keeps English `in` untranslated; stagger inserts `עבור את` before the var.
-  ['he', { forWords: ['עבור', 'את'], inWords: ['in'] }],
+  // stagger inserts `עבור את` before the var.
+  ['he', { forWords: ['עבור', 'את'], inWords: ['בתוך'] }],
   ['hi', { inWords: ['में'] }],
   ['bn', { inWords: ['এ'] }],
   // ja/ko/qu containment words tokenize WHOLE (keyword→in entries added for
