@@ -31,13 +31,20 @@ const OPERAND_KEYWORDS = new Set([
   'event',
   'target',
   'body',
+  'document',
+  'window',
 ]);
 
 function isOperand(token: LanguageToken): boolean {
   if (token.kind === 'literal' || token.kind === 'selector') return true;
   if ((token.kind as string) === 'reference') return true;
   if (token.kind === 'identifier') return /^[:$]?[\p{L}_][\p{L}\p{M}\p{N}_]*$/u.test(token.value);
-  return token.kind === 'keyword' && OPERAND_KEYWORDS.has((token.normalized ?? '').toLowerCase());
+  // A reference written in English (`window.tmp` keeps its base) carries no
+  // normalized form: its value is the word.
+  return (
+    token.kind === 'keyword' &&
+    OPERAND_KEYWORDS.has((token.normalized ?? token.value).toLowerCase())
+  );
 }
 
 function startsOperand(token: LanguageToken | undefined): boolean {

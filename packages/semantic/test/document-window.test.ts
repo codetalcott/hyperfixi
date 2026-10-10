@@ -27,6 +27,20 @@ describe.each([
   });
 });
 
+// bn `যদি না` and vi `nếu không` are `if not` and another keyword (bn `unless`,
+// vi `else`); they split where an operand follows, and `document` and `window`
+// are operands now that both languages read them as keywords.
+describe.each([
+  'on click if not window.tmp then put "a" into me end',
+  'on click if not document.body then put "a" into me end',
+  'on click if window.tmp then put "foo" into me else if not window.tmp then log "b" end',
+])('%s', source => {
+  it.each(LANGUAGES)('%s', language => {
+    const rendered = translate(source, 'en', language);
+    expect(translate(rendered, language, 'en')).toBe(translate(source, 'en', 'en'));
+  });
+});
+
 // Policy 5: a translation writes only the dictionary's words.
 describe('the words are the dictionaries’', () => {
   it.each(LANGUAGES)('%s', language => {
