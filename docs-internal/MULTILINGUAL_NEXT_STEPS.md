@@ -18,8 +18,8 @@ What the gates measure. Each claim carries its re-check command:
 | --------------------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | Corpus fidelity, 11 ratchet signals     | 1.000 in all 24 languages (baseline 2026-09-25)                     | `cd packages/testing-framework && npx tsx src/multilingual/cli.ts --full --bundle browser-priority --regression` (after `populate`) |
 | Value matrix (4,537 cells × 48 lanes)   | 6 failing, all ACCEPTED, 0 open (2026-10-07)                        | `npx tsx tools/regen-value-matrix-baseline.ts --dry-run` (testing-framework)                                                        |
-| Command shapes (1,135 scripts × 24)     | 24,502 pass, 2,709 refused, 29 silent; en 1,074 / 61 / 0 (10-08)    | `npx tsx tools/regen-command-shapes-baseline.ts --report` (testing-framework)                                                       |
-| English left in renders: words / events / `me` case | corpus 18.9% / 0.0% / 8.9% of renders; command shapes 23.3% / 0.0% / 16.2%. Words counted toward the target (kept English out), per language: corpus 11.8–19.0% (he 32.7%), shapes 17.1–23.8% (10-08) | `npx tsx tools/regen-english-leaks-baseline.ts --report` (testing-framework; corpus after `populate`) |
+| Command shapes (1,135 scripts × 24)     | 24,568 pass, 2,653 refused, 19 silent; en 1,074 / 61 / 0 (10-10)    | `npx tsx tools/regen-command-shapes-baseline.ts --report` (testing-framework)                                                       |
+| English left in renders: words / events / `me` case | corpus 5.4% / 0.0% / 9.0% of renders; command shapes 10.8% / 0.0% / 16.3%. Words counted toward the target (kept English out), per language: corpus 0.7–4.6%, shapes 3.9–6.2%, met in 23/23 (10-10) | `npx tsx tools/regen-english-leaks-baseline.ts --report` (testing-framework; corpus after `populate`) |
 | Canonical validity (upstream parses it) | both allowlists empty (3174/3174 foreign, 138/138 en on 2026-09-23) | `npm run test:canonical --prefix packages/testing-framework`                                                                        |
 | English reference preserved             | 162/163 units (1 allowlisted: async-block, by design; 2026-10-06)   | same                                                                                                                                |
 | Bare-form render fidelity               | 2978/2990 (12 allowlisted pairs; 2026-10-06)                        | `baselines/bare-render-fidelity.json`                                                                                               |
@@ -55,7 +55,7 @@ The corpus and value gates are saturated (each widening of the value matrix foun
 
 **Why.** For shapes no corpus row has, semantic's English parse dropped whole commands, and
 `translate()`, MCP `translate_code`, the corpus writer and the adapter inherited the loss (English on
-a page was fine: the engine reads it directly). Plan: `~/.claude/plans/m1-command-shape-gate.md`.
+a page was fine: the engine reads it directly). Plan: `~/.claude/plans/archive/m1-command-shape-gate.md`.
 
 **The gate** (#1401) reads 1,135 scripts the engine runs: upstream's 0.9.93 tests and core's reference
 and hover examples. Each goes through 24 lanes (`en`, and `en → L → en`), and the engine must parse
@@ -120,8 +120,9 @@ and vi where the lexicon's own word reads back; the rest denylisted with reasons
 `start`, he's gaps); C1–C4 keep English (`KEPT_ENGLISH` in `english-leaks.ts`; C4 deferred, still
 counted). Order, by corpus rows each clears in es: A1 (7), A5 (4), A2 (3), B4 (2), A3/A4 (2), then the
 rest; the shapes-heavy rows (`def`, `catch`/`finally`, `element`, `between`) after. Done: A1–A5, A7–A10,
-B1–B6, and B7's bn/th/vi `document`/`window` (the sheet lists the PRs and the words that changed);
-next A6 (`between`) and B7's he words.
+B1–B7 (B7: bn/th/vi `document`/`window`, and he's words with its `document`, `window` and `is`; the sheet
+lists the PRs and the words that changed). The words target is met in every language (2026-10-10); next
+A6 (`between`).
 
 **Step 4 — design:**
 

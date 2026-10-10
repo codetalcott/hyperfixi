@@ -17,8 +17,9 @@ would read back as a property path); `toggle the *X of Y`, a kept clause, and an
 element, `the length of my value`, stay English), A9 and B2 (#1439; a handler's and a function's `catch
 e` and `finally`), A10 (#1440; `the element's x` is written the same as `element x`, one name on both
 engines, except before an index, where only the possessive spelling reads), B1 (#1441; `def` as the
-noun "function", es `función greet(name)`), and B7's bn/th/vi `document`/`window` (2026-10-09; a dot
-access keeps the English base in every language, `window.scrollY`). Open: A6, and B7's he words. The
+noun "function", es `función greet(name)`), and B7: bn/th/vi `document`/`window` (#1442; a dot access
+keeps the English base in every language, `window.scrollY`), and he's words with its `document`, `window`
+and `is` (2026-10-10, the owner's call for those three; `between` comes with A6). Open: A6. The
 words of B3–B6, A5, A4, A9, B2 and B1 are in `packages/semantic/src/parser/utils/grammar-words.ts`, and
 A10's in `packages/semantic/src/element-scope.ts`, each held to the dictionaries by a test.
 
@@ -34,6 +35,7 @@ used instead. The native review checks these too.
 | B6 start | bn `আরম্ভ`, es `comenzar`, he `יזום`, id `memulai`, ms `memulakan`, pt `começar`, sw `zindua`, tl `umpisahan`, tr `başla` (the proposed word is the language's `init`); qu `qallay` (`qallariy` is `default`) |
 | A9 catch | id `menangkap`, tr `yakalarsa` (the dictionary's `tangkap`, `yakala` are `intercept`); tl `saluhin` (`hulihin` reads as `last`) |
 | B1 function | qu `rurana` (`ruray` is `make`) |
+| B7 he | `as` `כ`, the word he's `fetch … as` already wrote (`בתור` reads as `ב` + `תור`); `at end of` `ב סוף של` (`אצל` is "at someone's"); `in` `בתוך` and `document` `מסמך` read whole, as keywords (bare, the tokenizer reads `ב` + `תוך`, `מ` + `סמך`); `empty` `ריק` and `is` `הוא` are also the reader's `null` and `it`, and read as the copula's words beside it, as sw `tupu` and ar `هو` do; `next` `הבא` is also he's `fetch`, and position tells them apart |
 | B2 finally | he `סופית` (`לבסוף` reads as `ל` + `ב` + `סוף`, to/on/end); ja `最終的に`, ko `결국`, th `ท้ายที่สุด`, vi `rốt cuộc` (`最後に`, `마지막으로`, `สุดท้าย`, `cuối cùng` are `last`); qu `qhipamanqa` (`puchukaypi` reads as `end`) |
 
 > For the owner, 2026-10-08. Each row is one decision. The words target in M2's exit
@@ -131,7 +133,7 @@ Group A's missing words (A9, A10) and the lexicon gaps (B7):
 | bn   | catch ধরুন · element উপাদান · document ডকুমেন্ট · window উইন্ডো                                           |
 | th   | catch จับ · element องค์ประกอบ · document เอกสาร · window หน้าต่าง                                         |
 | vi   | element phần tử · document tài liệu · window cửa sổ                                                       |
-| he   | catch תפוס · element אלמנט · of של · as בתור · in בתוך · between בין · not לא · first ראשון · at אצל ? · matches תואם · closest הקרוב · next הבא · previous הקודם · empty ריק · exists קיים · or או |
+| he   | catch תפוס · element אלמנט · of של · as בתור · in בתוך · between בין · not לא · first ראשון · at אצל ? · matches תואם · closest הקרוב · next הבא · previous הקודם · empty ריק · exists קיים · or או · document מסמך · window חלון · is הוא (the last three: owner, 2026-10-10) |
 
 Not on this sheet: the pronoun case after a marker (N3, es `a mí`, de `zu mir`). Its forms are fixed by
 each language's grammar rather than chosen, so they come with the N3 design (M2 step 4) and the same

@@ -103,8 +103,7 @@ export function grammarWordForms(
  * <.message/> in #chat`. It was English in every translation. The word is the
  * dictionary's `modifiers.in` (a test holds the table to it), the one a loop's
  * `for x in` already writes; every reader takes it after a query, as it takes
- * English's (`LOCATIVE_SURFACES`). he has no word yet (sheet B7). The
- * comparison `x is in y` keeps English's.
+ * English's (`LOCATIVE_SURFACES`). The comparison `x is in y` keeps English's.
  */
 export const QUERY_IN: Readonly<Record<string, string>> = {
   ar: 'في',
@@ -145,8 +144,7 @@ export function queryInWord(language: string): string {
  * dictionary's `modifiers.as` (a test holds the table to it), the one most
  * languages' `fetch … as json` already writes. It stands where English's
  * does, before the type, in every language: that is where the reader takes it
- * (`CONNECTIVE_LEXICON`, and th's `เป็น`, also `is`, by its sense rule). he
- * has no word yet (sheet B7).
+ * (`CONNECTIVE_LEXICON`, and th's `เป็น`, also `is`, by its sense rule).
  */
 export const CONVERSION_AS: Readonly<Record<string, string>> = {
   ar: 'كـ',
