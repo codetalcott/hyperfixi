@@ -115,7 +115,7 @@ export const CONNECTIVE_LEXICON: Record<string, Record<string, string>> = {
   de: { "als": "as", "beinhaltet": "includes", "enthält": "contains", "gleicht": "equals", "nicht": "not", "oder": "or", "und": "and" },
   es: { "como": "as", "contiene": "contains", "iguala": "equals", "incluye": "includes", "no": "not", "o": "or", "y": "and" },
   fr: { "comme": "as", "contient": "contains", "égale": "equals", "et": "and", "inclut": "includes", "non": "not", "ou": "or" },
-  he: { "וגם": "and" },
+  he: { "או": "or", "וגם": "and", "כ": "as", "לא": "not" },
   hi: { "और": "and", "के_रूप_में": "as", "नहीं": "not", "बराबर": "equals", "में_है": "includes", "या": "or", "शामिल": "contains" },
   id: { "atau": "or", "berisi": "contains", "bukan": "not", "dan": "and", "sama": "equals", "sebagai": "as", "termasuk": "includes" },
   it: { "come": "as", "contiene": "contains", "e": "and", "include": "includes", "non": "not", "o": "or", "uguale": "equals" },
@@ -258,7 +258,7 @@ const LOCATIVE_SURFACES: Record<string, ReadonlySet<string>> = {
   de: new Set(["bei"]),
   es: new Set(["en"]),
   fr: new Set(["dans", "en", "à"]),
-  he: new Set(["לתוך"]),
+  he: new Set(["ב", "בתוך", "לתוך"]),
   hi: new Set(["पर", "में"]),
   id: new Set(["dalam", "di", "ke_dalam"]),
   it: new Set(["a"]),
@@ -835,11 +835,11 @@ function startsOperand(token: LanguageToken | undefined): boolean {
 /** A class reference (`.x`): what `has` takes, and a comparison does not. */
 const CLASS_REF = /^\.[\p{L}_-][\p{L}\p{N}_-]*$/u;
 
-/** A word-shaped identifier (`p`, `value`, `:count`, `$total`), not an operator
-    symbol that a tokenizer lexed as an identifier. A word may carry combining
-    marks: hi `मान` (value) spells its vowel with one. */
+/** A word-shaped identifier (`p`, `value`, `:count`, `$total`, `^color`), not an
+    operator symbol that a tokenizer lexed as an identifier. A word may carry
+    combining marks: hi `मान` (value) spells its vowel with one. */
 /** A variable's name, or one the reader fused, `(si)` (registry.tokenize). */
-const OPERAND_WORD = /^(?:[:$]?[\p{L}_][\p{L}\p{M}\p{N}_]*|\([\p{L}_$][\p{L}\p{M}\p{N}_$]*\))$/u;
+const OPERAND_WORD = /^(?:[:$^]?[\p{L}_][\p{L}\p{M}\p{N}_]*|\([\p{L}_$][\p{L}\p{M}\p{N}_$]*\))$/u;
 
 /**
  * core's `has` (and the first person's `have`), in the language's own word,
@@ -867,6 +867,12 @@ const AMBIGUOUS_SENSES: Readonly<Record<string, Readonly<Record<string, Ambiguou
     มี: HAS,
   },
   ja: { 空: { afterCopula: 'empty' }, ある: HAS },
+  // he הוא is also the pronoun `it` (the tokenizer's alias), as ar هو is; ריק
+  // is `null` elsewhere (the tokenizer's alias), as sw tupu is (M2 sheet B7).
+  he: {
+    הוא: { beforePredicate: 'is', afterOperand: 'is' },
+    ריק: { afterCopula: 'empty' },
+  },
   sw: {
     tupu: { afterCopula: 'empty', otherwise: 'null' },
     na: { betweenOperands: 'and' },

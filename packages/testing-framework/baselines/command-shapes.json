@@ -3,9 +3,9 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 24550,
-  "refused": 2665,
-  "silent": 25,
+  "pass": 24568,
+  "refused": 2653,
+  "silent": 19,
   "entries": {
     "6f60177037": {
       "src": "on click add .foo to .item when it matches .yes then if the result is empty show #none else hide #none",
@@ -167,11 +167,6 @@
       "family": "put",
       "refused": "*"
     },
-    "07108f5fc0": {
-      "src": "on click put \"foo\" at end of #d1",
-      "family": "put",
-      "refused": "es id it pt tl uk"
-    },
     "7896ec4b23": {
       "src": "on click put 'foo' into #div2's @bar",
       "family": "put",
@@ -185,7 +180,7 @@
     "2d9422b3af": {
       "src": "on click put \"<button id=\\\"b1\\\" _=\\\"on click put 42 into me\\\">40</button>\" at the end of me",
       "family": "put",
-      "refused": "es id it pt tl uk vi"
+      "refused": "vi"
     },
     "f460465218": {
       "src": "on click set :arr to [2,3] put 1 at start of :arr put :arr as String into me",
@@ -196,13 +191,13 @@
       "src": "on click set :obj to { a: 1, b: 2, c: 3 } remove :obj.b put :obj.a + ',' + (:obj.b is undefined) + ',' + :obj.c into me",
       "family": "remove",
       "silent": "ms pl",
-      "why": "value-words: a language's word inside a value reads back as another English word: `is not` → `it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms/pl `undefined`"
+      "why": "value-words: a language's word inside a value reads back as another English word: pl `to` → `it`, qu `where` → `target`, ms/pl `undefined`"
     },
     "54a65f4602": {
       "src": "on click set :obj to { a: 1, b: 2, c: 3 } remove b of :obj put :obj.a + ',' + (:obj.b is undefined) + ',' + :obj.c into…",
       "family": "remove",
       "silent": "ms pl",
-      "why": "value-words: a language's word inside a value reads back as another English word: `is not` → `it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms/pl `undefined`"
+      "why": "value-words: a language's word inside a value reads back as another English word: pl `to` → `it`, qu `where` → `target`, ms/pl `undefined`"
     },
     "db7fef03e9": {
       "src": "on click repeat for x in [1, 2, 3] put x at end of me end",
@@ -546,14 +541,14 @@
     "a30e7d6174": {
       "src": "init if ^color is not undefined put 'leaked' into me else put 'blocked' into me",
       "family": "core/dom-scope",
-      "silent": "ar hi ms pl th",
-      "why": "value-words: a language's word inside a value reads back as another English word: `is not` → `it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms/pl `undefined`"
+      "silent": "ms pl",
+      "why": "value-words: a language's word inside a value reads back as another English word: pl `to` → `it`, qu `where` → `target`, ms/pl `undefined`"
     },
     "69537d01ae": {
       "src": "init if ^val is not undefined put 'leaked' into me else put 'blocked' into me",
       "family": "core/dom-scope",
-      "silent": "ar hi ms pl th",
-      "why": "value-words: a language's word inside a value reads back as another English word: `is not` → `it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms/pl `undefined`"
+      "silent": "ms pl",
+      "why": "value-words: a language's word inside a value reads back as another English word: pl `to` → `it`, qu `where` → `target`, ms/pl `undefined`"
     },
     "394a7bfb45": {
       "src": "(on click (log me) (trigger foo)) (on foo (put \"clicked\" into my.innerHTML))",
@@ -725,7 +720,7 @@
       "src": "on click set (closest @foo to #d1) to \"doh\"",
       "family": "expressions/closest",
       "silent": "pl sw",
-      "why": "value-words: a language's word inside a value reads back as another English word: `is not` → `it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms/pl `undefined`"
+      "why": "value-words: a language's word inside a value reads back as another English word: pl `to` → `it`, qu `where` → `target`, ms/pl `undefined`"
     },
     "35f188d961": {
       "src": "set :others to <input[type=checkbox]/> in the closest <table/> where it is not me on click put :others.length into #out",
@@ -737,7 +732,7 @@
       "src": "on click add .doh to closest .bar to .foo",
       "family": "expressions/closest",
       "silent": "pl",
-      "why": "value-words: a language's word inside a value reads back as another English word: `is not` → `it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms/pl `undefined`"
+      "why": "value-words: a language's word inside a value reads back as another English word: pl `to` → `it`, qu `where` → `target`, ms/pl `undefined`"
     },
     "f76ff620e1": {
       "src": "on click set items to <li/> in #list then set matches to items where it matches .yes then put matches mapped to its tex…",
@@ -822,7 +817,7 @@
       "src": "on click if no <span/> in #box where it matches .c then put 'none' into #out else put 'found' into #out",
       "family": "expressions/no",
       "silent": "qu vi",
-      "why": "value-words: a language's word inside a value reads back as another English word: `is not` → `it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms/pl `undefined`"
+      "why": "value-words: a language's word inside a value reads back as another English word: pl `to` → `it`, qu `where` → `target`, ms/pl `undefined`"
     },
     "08702e835c": {
       "src": "on click put 'updated' into the next <div/>'s textContent",

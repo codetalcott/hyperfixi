@@ -9,7 +9,7 @@
  * - CSS selectors are LTR islands within RTL text
  */
 
-import type { TokenKind } from '../types';
+import type { TokenKind, TokenStream } from '../types';
 import { BaseTokenizer, type KeywordEntry } from './base';
 import { hebrewProfile } from '../generators/profiles/he';
 import {
@@ -21,6 +21,7 @@ import {
 import { getHyperscriptExtractors } from './extractor-helpers';
 import { createHebrewExtractors } from './extractors/hebrew-keyword';
 import { createHebrewProcliticExtractor } from './extractors/hebrew-proclitic';
+import { splitIfNot } from './if-not-split';
 import { AsciiIdentifierExtractor } from './extractors/ascii-identifier';
 
 // =============================================================================
@@ -74,6 +75,9 @@ const HEBREW_EXTRAS: KeywordEntry[] = [
   { native: 'הבא', normalized: 'next' },
   { native: 'הקודם', normalized: 'previous' },
   { native: 'הקרוב', normalized: 'closest' },
+  // A query's scope and a loop's `in` (M2 sheet B7): whole, or the proclitic
+  // extractor reads ב + תוך.
+  { native: 'בתוך', normalized: 'in' },
   { native: 'הורה', normalized: 'parent' },
 
   // Events
@@ -151,7 +155,12 @@ export class HebrewTokenizer extends BaseTokenizer {
     this.registerExtractor(new PunctuationExtractor()); // Punctuation
   }
 
-  // tokenize() method removed - now uses extractor-based tokenization from BaseTokenizer
+  /** `if not` is written `אם לא`, which is also an `else`: see splitIfNot. */
+  override tokenize(input: string): TokenStream {
+    return splitIfNot(super.tokenize(input), 'אם לא', word => super.tokenize(word).tokens);
+  }
+
+  // Tokenization is otherwise BaseTokenizer's extractor-based one.
   // All tokenization logic delegated to registered extractors (context-aware)
   // NOTE: do NOT drop את from the stream — ~40 generated he patterns embed it
   // as a required literal before {patient}. The send/trigger/tell/wait gap is

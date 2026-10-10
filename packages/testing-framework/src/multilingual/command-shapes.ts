@@ -727,8 +727,8 @@ export const SILENT_FAMILIES: readonly SilentFamily[] = [
   {
     name: 'value-words',
     reason:
-      "a language's word inside a value reads back as another English word: `is not` → " +
-      '`it not` (ar/hi/ms/pl/th), pl `to` → `it`, qu `where` → `target`, ms/pl `undefined`',
+      "a language's word inside a value reads back as another English word: pl `to` → " +
+      '`it`, qu `where` → `target`, ms/pl `undefined`',
     ids: [
       'a30e7d6174',
       '69537d01ae',

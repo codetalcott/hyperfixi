@@ -1,16 +1,16 @@
 /**
  * Split a merged `<if> <not>` keyword back into `if` and `not`.
  *
- * The renderer writes `if not flag` word by word, and in two languages the
+ * The renderer writes `if not flag` word by word, and in three languages the
  * pair is another keyword the tokenizer takes whole: bn `যদি না` is its
- * `unless`, and vi `nếu không` an alternative `else` ("otherwise"). So `if not
- * flag … else … end` read back bn `unless me`, vi a bare `put`, and the
- * condition and the branch structure were lost.
+ * `unless`, and vi `nếu không` and he `אם לא` an alternative `else`
+ * ("otherwise"). So `if not flag … else … end` read back bn `unless me`, vi a
+ * bare `put`, and the condition and the branch structure were lost.
  *
  * Position tells them apart. The condition of `if not` follows the pair, and
  * nothing that ends an operand comes before it: bn writes `unless` after its
- * condition (`flag যদি না`), and vi's `else` follows the branch before it
- * (`… vào #out nếu không đặt …`) and runs into a command verb.
+ * condition (`flag যদি না`), and vi's and he's `else` follows the branch before
+ * it (`… vào #out nếu không đặt …`) and runs into a command verb.
  */
 import type { LanguageToken, TokenStream } from '../types';
 import { TokenStreamImpl } from './token-utils';

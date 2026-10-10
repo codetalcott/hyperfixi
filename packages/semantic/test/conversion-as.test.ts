@@ -12,7 +12,6 @@ import { localizeValueInterior } from '../src/explicit/value-lexicon';
 import { ofPhrasesAsPossessives } from '../src/explicit/of-phrases';
 import { dictionaries } from '../../i18n/src/dictionaries';
 
-// he has no word yet (sheet B7).
 const NATIVE = getSupportedLanguages().filter(l => CONVERSION_AS[l] !== undefined);
 
 const words = (text: string): string[] => text.split(/\s+/);

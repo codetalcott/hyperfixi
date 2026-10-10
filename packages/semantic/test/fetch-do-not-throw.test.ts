@@ -9,7 +9,7 @@
  * found by position (he `הבא` and id `muat` do not normalize to `fetch`).
  *
  * Each language writes the dictionary's `not` and its `throw` command (M2, sheet
- * A8: es `no lanzar`, ja `投げる ではない`); he has no `not` yet (B7).
+ * A8: es `no lanzar`, ja `投げる ではない`, he `לא זרוק`, B7).
  */
 import { describe, it, expect } from 'vitest';
 import { parse, render, buildAST, tryGetProfile } from '../src/index';
@@ -56,14 +56,13 @@ describe.each(SHAPES)('%s, through every language', (src, english) => {
 });
 
 describe('each language writes its own words', () => {
-  const NATIVE = FOREIGN.filter(l => l !== 'he');
-  it.each(NATIVE)('%s', language => {
+  it.each(FOREIGN)('%s', language => {
     const foreign = render(parse('fetch "/api/users" do not throw', 'en')!, language);
     expect(foreign).toContain(NOT_THROW_BY_LANG[language]!.join(' '));
     expect(foreign.split(/\s+/)).not.toContain('throw');
   });
   // Policy 5: a translation writes only the dictionary's words.
-  it.each(NATIVE)('%s: the dictionary’s `not` and `throw`', language => {
+  it.each(FOREIGN)('%s: the dictionary’s `not` and `throw`', language => {
     const not = getLexicon(language)?.logical?.not?.primary;
     const thrown = tryGetProfile(language)?.keywords.throw?.primary;
     expect([...NOT_THROW_BY_LANG[language]!].sort()).toEqual([not, thrown].sort());

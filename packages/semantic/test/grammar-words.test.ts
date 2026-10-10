@@ -105,8 +105,7 @@ describe('the words are the dictionaries’', () => {
 });
 
 describe('`on first click` writes the language’s `first`', () => {
-  // he has no `first` yet (sheet B7).
-  it.each(FOREIGN.filter(l => l !== 'he'))('%s', language => {
+  it.each(FOREIGN)('%s', language => {
     const first = getLexicon(language)?.expressions?.first?.primary;
     for (const source of ['on first click add .a to me', 'on first click toggle .open on #menu then log 1']) {
       const rendered = translate(source, 'en', language);

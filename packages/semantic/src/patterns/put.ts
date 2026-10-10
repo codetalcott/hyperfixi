@@ -1210,8 +1210,7 @@ const PUT_POSITIONAL: ReadonlyArray<{
  * already aligns with each profile's `references.body` so it resolves to the
  * `body` contextReference). qu is omitted: its dict body word (`kurku`)
  * disagrees with the profile (`ukhu`) and its tokenizer splits `_`-joined
- * keywords — both tracked separately. he leaves `at`/`of` untranslated, so its
- * markers are the English literals.
+ * keywords — both tracked separately.
  *
  * A multi-word marker (vi `kết thúc`) tokenizes as a SINGLE token whose value is
  * the whole phrase, so it is carried verbatim in one literal (not split). SOV
@@ -1274,7 +1273,7 @@ const PUT_AT_END: ReadonlyArray<{
     end: '结束',
     of: '的',
   },
-  { lang: 'he', verb: 'שים', patientPrefix: 'את', at: 'at', end: 'סוף', of: 'of' },
+  { lang: 'he', verb: 'שים', patientPrefix: 'את', at: 'ב', end: 'סוף', of: 'של' },
   // SOV (verb-last, object marker before the verb)
   { lang: 'tr', verb: 'koy', sov: true, objMarker: 'i', at: 'de', end: 'son', of: 'nin' },
   { lang: 'ja', verb: '置く', sov: true, objMarker: 'を', at: 'で', end: '終わり', of: 'の' },
@@ -1353,6 +1352,27 @@ export function isAtEndConnective(language: string, value: string): boolean {
   if (!spec) return false;
   const v = value.toLowerCase();
   return v === spec.at.toLowerCase() || v === spec.of.toLowerCase() || v === spec.end.toLowerCase();
+}
+
+/**
+ * Is `value` the language's `end` noun with its `of` word next: the head of an
+ * `at end of` phrase, which no other put pattern may take for its destination?
+ * A fused handler pattern (`put-event-es-vso-2role`) read es `al clic poner x
+ * en fin de yo` as `put x into fin`, `en` being es's `into` too, and left `de
+ * yo` unread, so a one-line handler's `at end of` was refused in every
+ * language whose `at` word is also a destination marker (es, he, id, it, pt,
+ * tl, uk, vi).
+ */
+export function isAtEndNounBeforeOf(
+  language: string,
+  value: string,
+  next: string | undefined
+): boolean {
+  const spec = PUT_AT_END.find(s => s.lang === language);
+  if (!spec || next === undefined) return false;
+  return (
+    value.toLowerCase() === spec.end.toLowerCase() && next.toLowerCase() === spec.of.toLowerCase()
+  );
 }
 
 function buildAtEndPutPatterns(language: string): LanguagePattern[] {

@@ -10,7 +10,7 @@ import { getSupportedLanguages, parse, render, translate } from '../src/index';
 import { QUERY_IN } from '../src/parser/utils/grammar-words';
 import { dictionaries } from '../../i18n/src/dictionaries';
 
-// de and it spell it `in`; he has no word yet (sheet B7).
+// de and it spell it `in`.
 const NATIVE = getSupportedLanguages().filter(
   l => QUERY_IN[l] !== undefined && QUERY_IN[l] !== 'in'
 );
