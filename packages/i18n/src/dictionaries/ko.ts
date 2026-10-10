@@ -199,6 +199,7 @@ export const ko: Dictionary = {
     start: '시작',
     catch: '잡다',
     finally: '결국',
+    def: '함수',
     characters: '문자',
     inclusive: '포함',
     exclusive: '제외',

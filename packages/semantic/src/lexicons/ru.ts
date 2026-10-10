@@ -155,6 +155,7 @@ export const russianLexicon: LanguageLexicon = {
     start: { primary: 'начать' },
     catch: { primary: 'поймать' },
     finally: { primary: 'наконец' },
+    def: { primary: 'функция' },
     'starts with': { primary: 'начинается_с' },
     within: { primary: 'внутри' },
   },

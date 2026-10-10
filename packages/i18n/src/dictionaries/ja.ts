@@ -203,6 +203,7 @@ export const ja: Dictionary = {
     start: '開始',
     catch: '捕まえる',
     finally: '最終的に',
+    def: '関数',
     characters: '文字',
     inclusive: '含む',
     exclusive: '除く',

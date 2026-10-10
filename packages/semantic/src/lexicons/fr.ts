@@ -135,6 +135,7 @@ export const frenchLexicon: LanguageLexicon = {
     start: { primary: 'démarrer' },
     catch: { primary: 'attraper' },
     finally: { primary: 'finalement' },
+    def: { primary: 'fonction' },
     'starts with': { primary: 'commence par' },
     within: { primary: 'dans' },
   },

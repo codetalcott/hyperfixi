@@ -675,11 +675,12 @@ export class SemanticRendererImpl implements ISemanticRenderer {
 
   /**
    * Render a function definition to target-language source:
-   * `<def> name(params)` + body commands + closing `end`.
+   * `<def> name(params)` + body commands + closing `end`, `def` in the
+   * language's own word (M2 sheet B1: the noun "function", es `función`).
    */
   private renderDef(node: DefSemanticNode, language: string): string {
     const lines = [
-      this.renderBlockHeader(this.keyword(language, 'def'), node.name, node.parameters),
+      this.renderBlockHeader(grammarWord(language, 'def'), node.name, node.parameters),
     ];
     for (const cmd of node.body) lines.push(`  ${this.render(cmd, language)}`);
     if (node.catchBody) {

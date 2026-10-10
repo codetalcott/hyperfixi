@@ -113,6 +113,7 @@ export const he: Dictionary = {
     start: 'יזום',
     catch: 'תפוס',
     finally: 'סופית',
+    def: 'פונקציה',
     random: 'אקראי',
     characters: 'תווים',
     inclusive: 'כולל',

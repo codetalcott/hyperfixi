@@ -115,6 +115,7 @@ export const bengaliLexicon: LanguageLexicon = {
     start: { primary: 'আরম্ভ' },
     catch: { primary: 'ধরুন' },
     finally: { primary: 'অবশেষে' },
+    def: { primary: 'ফাংশন' },
     'starts with': { primary: 'দিয়ে_শুরু' },
   },
 };

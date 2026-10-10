@@ -135,6 +135,7 @@ export const germanLexicon: LanguageLexicon = {
     start: { primary: 'starte' },
     catch: { primary: 'fangen' },
     finally: { primary: 'schließlich' },
+    def: { primary: 'funktion' },
     'starts with': { primary: 'beginnt mit' },
     within: { primary: 'innerhalb' },
   },

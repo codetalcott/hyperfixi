@@ -207,6 +207,7 @@ export const tr: Dictionary = {
     start: 'başla',
     catch: 'yakalarsa',
     finally: 'sonunda',
+    def: 'fonksiyon',
     characters: 'karakterler',
     inclusive: 'dahil',
     exclusive: 'hariç',

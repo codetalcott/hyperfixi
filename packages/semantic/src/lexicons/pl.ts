@@ -135,6 +135,7 @@ export const polishLexicon: LanguageLexicon = {
     start: { primary: 'rozpocznij' },
     catch: { primary: 'złap' },
     finally: { primary: 'ostatecznie' },
+    def: { primary: 'funkcja' },
     'starts with': { primary: 'zaczyna się od' },
     within: { primary: 'wewnątrz' },
   },

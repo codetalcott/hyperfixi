@@ -155,6 +155,7 @@ export const ukrainianLexicon: LanguageLexicon = {
     start: { primary: 'почати' },
     catch: { primary: 'зловити' },
     finally: { primary: 'нарешті' },
+    def: { primary: 'функція' },
     'starts with': { primary: 'починається_з' },
     within: { primary: 'всередині' },
   },

@@ -224,6 +224,7 @@ export const ukrainianDictionary: Dictionary = {
     start: 'почати',
     catch: 'зловити',
     finally: 'нарешті',
+    def: 'функція',
     characters: 'символи',
     inclusive: 'включно',
     exclusive: 'виключно',

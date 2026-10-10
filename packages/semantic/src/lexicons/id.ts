@@ -135,6 +135,7 @@ export const indonesianLexicon: LanguageLexicon = {
     start: { primary: 'memulai' },
     catch: { primary: 'menangkap' },
     finally: { primary: 'akhirnya' },
+    def: { primary: 'fungsi' },
     'starts with': { primary: 'dimulai dengan' },
     within: { primary: 'dalam' },
   },

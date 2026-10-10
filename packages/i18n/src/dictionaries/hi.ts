@@ -225,6 +225,7 @@ export const hindiDictionary: Dictionary = {
     start: 'शुरू',
     catch: 'पकड़ें',
     finally: 'अंततः',
+    def: 'फ़ंक्शन',
     characters: 'अक्षर',
     first: 'पहला',
     last: 'अंतिम',

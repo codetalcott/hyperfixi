@@ -137,6 +137,7 @@ export const turkishLexicon: LanguageLexicon = {
     start: { primary: 'başla' },
     catch: { primary: 'yakalarsa' },
     finally: { primary: 'sonunda' },
+    def: { primary: 'fonksiyon' },
     'starts with': { primary: 'ile başlar' },
     within: { primary: 'içinde' },
   },

@@ -212,6 +212,7 @@ export const de: Dictionary = {
     start: 'starte',
     catch: 'fangen',
     finally: 'schließlich',
+    def: 'funktion',
     characters: 'Zeichen',
     inclusive: 'inklusiv',
     exclusive: 'exklusiv',

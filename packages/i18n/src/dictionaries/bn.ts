@@ -174,6 +174,7 @@ export const bengaliDictionary: Dictionary = {
     start: 'আরম্ভ',
     catch: 'ধরুন',
     finally: 'অবশেষে',
+    def: 'ফাংশন',
     characters: 'অক্ষর',
     inclusive: 'অন্তর্ভুক্ত',
     exclusive: 'বাদ',

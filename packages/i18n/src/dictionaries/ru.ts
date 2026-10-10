@@ -225,6 +225,7 @@ export const russianDictionary: Dictionary = {
     start: 'начать',
     catch: 'поймать',
     finally: 'наконец',
+    def: 'функция',
     characters: 'символы',
     inclusive: 'включительно',
     exclusive: 'исключительно',

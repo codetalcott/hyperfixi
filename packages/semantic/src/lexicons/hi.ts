@@ -153,6 +153,7 @@ export const hindiLexicon: LanguageLexicon = {
     start: { primary: 'शुरू' },
     catch: { primary: 'पकड़ें' },
     finally: { primary: 'अंततः' },
+    def: { primary: 'फ़ंक्शन' },
     'starts with': { primary: 'से_शुरू' },
     within: { primary: 'के_अंदर' },
   },

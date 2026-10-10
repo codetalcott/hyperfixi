@@ -136,6 +136,7 @@ export const japaneseLexicon: LanguageLexicon = {
     start: { primary: '開始' },
     catch: { primary: '捕まえる' },
     finally: { primary: '最終的に' },
+    def: { primary: '関数' },
     'starts with': { primary: 'で始まる' },
     within: { primary: '以内' },
   },

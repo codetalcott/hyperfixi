@@ -172,6 +172,7 @@ export const thaiDictionary: Dictionary = {
     start: 'เริ่ม',
     catch: 'จับ',
     finally: 'ท้ายที่สุด',
+    def: 'ฟังก์ชัน',
     characters: 'อักขระ',
     inclusive: 'รวม',
     exclusive: 'ยกเว้น',

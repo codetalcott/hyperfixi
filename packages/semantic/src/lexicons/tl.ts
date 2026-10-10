@@ -153,6 +153,7 @@ export const tagalogLexicon: LanguageLexicon = {
     start: { primary: 'umpisahan' },
     catch: { primary: 'saluhin' },
     finally: { primary: 'panghuli' },
+    def: { primary: 'punsiyon' },
     'starts with': { primary: 'nagsisimula_sa' },
     within: { primary: 'sa_loob_ng' },
   },

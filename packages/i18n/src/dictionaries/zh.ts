@@ -212,6 +212,7 @@ export const zh: Dictionary = {
     start: '开始',
     catch: '捕获',
     finally: '最终',
+    def: '函数',
     characters: '字符',
     inclusive: '包含',
     exclusive: '排除',
