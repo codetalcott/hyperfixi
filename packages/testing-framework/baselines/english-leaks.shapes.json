@@ -1,8 +1,8 @@
 {
-  "description": "English-leak gate, command-shape half (src/multilingual/english-leaks.ts): per command-shape case, the findings of each language's render (translate(src, 'en', L)): an English grammar word, `event:<name>` or `case:me`. `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts.",
+  "description": "English-leak gate, command-shape half (src/multilingual/english-leaks.ts): per command-shape case, the findings of each language's render (translate(src, 'en', L)): an English grammar word, `event:<name>` or `case:<pronoun>`. `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts.",
   "renders": 23754,
-  "leaky": 5826,
-  "findings": 8645,
+  "leaky": 6388,
+  "findings": 9754,
   "kinds": {
     "word": {
       "renders": 2562,
@@ -13,19 +13,31 @@
       "findings": 0
     },
     "case": {
-      "renders": 3884,
-      "findings": 4181
+      "renders": 4487,
+      "findings": 5290
     }
   },
   "entries": {
+    "3137245779": {
+      "case:it": "hi tr",
+      "case:it-object": "ar es fr it pt"
+    },
+    "3810571169": {
+      "case:it": "hi tr",
+      "case:it-object": "ar es fr it pt"
+    },
     "00d90195c2": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "00ecb58154": {
       "items": "*"
     },
     "014eb9ebf5": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "019d591522": {
       "case:me transition using view": "ar bn de es he hi it pl pt ru tl tr uk",
@@ -33,10 +45,15 @@
       "using view": "fr"
     },
     "03087545d6": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "03a84c939d": {
       "for": "*"
+    },
+    "042ed66aa1": {
+      "case:it": "hi tr",
+      "case:it-object": "ar es fr it pt"
     },
     "04a57faf6e": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -44,15 +61,25 @@
     "052e807746": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
+    "056a1e4975": {
+      "case:it": "ar de fr tl tr"
+    },
     "05f81357fb": {
-      "case:me": "ar de es he it pl pt ru uk",
-      "case:me case:me": "bn hi tr"
+      "case:me": "he",
+      "case:me case:me": "bn hi tr",
+      "case:me case:me-object": "ar de es it pl pt ru uk"
     },
     "060fa72711": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "06921f9cba": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "069dd1170d": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -90,17 +117,26 @@
       "case:me case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "0c745460ab": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "0ce653fc28": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "0cee637bb9": {
       "case:me it matches where": "ar bn de es he hi it pl pt ru tl tr uk",
       "it matches where": "fr id ja ko ms qu sw th vi zh"
     },
     "0eaa74fad5": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "0f2669dcdc": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -136,7 +172,8 @@
       "attributes of": "fr id ja ko ms qu sw vi zh"
     },
     "13ee797690": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "15bef3f796": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -148,28 +185,46 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "1887f98c09": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "18b09f2381": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "190d9ca9e9": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "19a79b3024": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "1a20e5c6d5": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "1a2a9cbb2e": {
-      "case:me in of the": "ar bn es he hi pl pt ru tl uk",
-      "case:me of the": "de it tr",
-      "in of the": "fr id ja ko ms qu sw th zh",
+      "case:it case:me in of the": "hi",
+      "case:it case:me of the": "tr",
+      "case:it-object case:me in of the": "ar es pt",
+      "case:it-object case:me of the": "it",
+      "case:it-object in of the": "fr",
+      "case:me in of the": "bn he pl ru tl uk",
+      "case:me of the": "de",
+      "in of the": "id ja ko ms qu sw th zh",
       "of the": "vi"
     },
     "1aa9c955fa": {
       "trigger trigger": "qu"
+    },
+    "1adc1489c4": {
+      "case:it": "hi pl pt",
+      "case:it case:it": "ar de fr tl tr"
+    },
+    "1ba900c09e": {
+      "case:it": "hi tr",
+      "case:it-object": "ar es fr it pt"
     },
     "1bb73ff359": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -179,6 +234,10 @@
     },
     "1d2b350bfa": {
       "of": "*"
+    },
+    "1d2b7f9432": {
+      "case:it": "hi tr",
+      "case:it-object": "ar fr pt"
     },
     "1d75e16839": {
       "dom": "*"
@@ -190,10 +249,16 @@
       "and between": "bn es hi id it ko ms pl pt qu ru sw th tl uk vi zh"
     },
     "20102b64ce": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "20111d0749": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "20161acab0": {
       "in": "ar bn es fr he hi id ja ko ms pl pt qu ru sw th tl uk zh"
@@ -207,7 +272,8 @@
       "case:me": "ar bn de es hi it pl ru tr"
     },
     "21c66949f1": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "2218bab0ca": {
       "value": "ar bn de es fr hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh"
@@ -219,36 +285,54 @@
       "and between": "bn es hi id it ko ms pl pt qu ru sw th tl uk vi zh"
     },
     "24134ecc72": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "24c32ea0f9": {
       "and between me of": "ar bn de es fr he hi id ja ko ms pl pt qu ru sw th tl tr uk vi zh",
       "and between of": "it"
     },
+    "259c31588b": {
+      "case:it": "hi tr",
+      "case:it-object": "ar es fr it pt"
+    },
     "266de50fcf": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "26a6e1a81f": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:me": "ar bn de es he it pl pt ru tl uk"
     },
     "26e0df8d83": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "26fa66d19d": {
       "case:me dom": "ar bn de es he hi it pl pt ru tl tr uk",
       "dom": "fr id ja ko ms qu sw th vi zh"
     },
     "280d64d892": {
-      "as": "ko"
+      "as": "ko",
+      "case:it": "hi tr",
+      "case:it-object": "ar es fr it pt"
     },
     "2817d62efa": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "28527260ec": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "294059e33b": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "29a686cc3a": {
       "case:me case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -260,7 +344,8 @@
       "case:me case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "2b181df899": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "2bfac832b4": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -272,14 +357,16 @@
       "case:me": "ar bn de es hi it pl pt ru tr uk"
     },
     "2dd827330a": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "2e5e71153b": {
       "giving": "*"
     },
     "2f7af96b02": {
       "case:me my": "bn he hi tr",
-      "my": "ar de es fr it ja ko pl pt qu ru sw th tl uk zh"
+      "case:me-object my": "ar de es it pl pt ru uk",
+      "my": "fr ja ko qu sw th tl zh"
     },
     "2f810152e8": {
       "as": "fr id ja ko ms qu sw th vi zh",
@@ -289,16 +376,27 @@
       "case:me case:me": "ar bn de es he hi it pt ru tl uk"
     },
     "30e41b2965": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "31c9cb395d": {
-      "case:me in of the": "ar bn es he hi pl pt ru tl uk",
-      "case:me of the": "de it tr",
-      "in of the": "fr id ja ko ms qu sw th zh",
+      "case:it case:me in of the": "hi",
+      "case:it case:me of the": "tr",
+      "case:it-object case:me in of the": "ar es pt",
+      "case:it-object case:me of the": "it",
+      "case:it-object in of the": "fr",
+      "case:me in of the": "bn he pl ru tl uk",
+      "case:me of the": "de",
+      "in of the": "id ja ko ms qu sw th zh",
       "of the": "vi"
     },
     "321028e6ee": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "32502101bd": {
       "case:me": "ar bn de es hi it pl pt ru tr uk",
@@ -308,30 +406,42 @@
       "characters from items to": "ar bn de es fr he hi id it ja ko ms pt qu ru sw th tl tr uk vi zh"
     },
     "32f8f63295": {
-      "case:me in of the": "ar bn es he hi pl pt ru tl uk",
-      "case:me of the": "de it tr",
-      "in of the": "fr id ja ko ms qu sw th zh",
+      "case:it case:me in of the": "hi",
+      "case:it case:me of the": "tr",
+      "case:it-object case:me in of the": "ar es pt",
+      "case:it-object case:me of the": "it",
+      "case:it-object in of the": "fr",
+      "case:me in of the": "bn he pl ru tl uk",
+      "case:me of the": "de",
+      "in of the": "id ja ko ms qu sw th zh",
       "of the": "vi"
     },
     "3304ff1362": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "334e47e14e": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "3390d17b97": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "3423ecf5af": {
-      "case:me of": "ar bn de es he hi it pl pt ru tl tr uk",
-      "of": "fr id ja ko ms qu sw th vi zh"
+      "case:it case:me of": "hi tr",
+      "case:it-object case:me of": "ar es it pt",
+      "case:it-object of": "fr",
+      "case:me of": "bn de he pl ru tl uk",
+      "of": "id ja ko ms qu sw th vi zh"
     },
     "352263a923": {
       "case:me case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "3614477c6c": {
       "case:me elsewhere": "he hi tr",
-      "elsewhere": "ar de es fr id ja ko ms pl pt qu ru sw tl uk vi zh"
+      "case:me-object elsewhere": "ar de es pl pt ru uk",
+      "elsewhere": "fr id ja ko ms qu sw tl vi zh"
     },
     "36e2294330": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -353,7 +463,10 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "3b56aa6b90": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "3d08c1eb9c": {
       "case:me transition view": "ar bn de es he hi it pl pt ru tl tr uk",
@@ -364,7 +477,10 @@
       "null": "he"
     },
     "3d414a00d8": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "3d6f0303b4": {
       "trigger": "qu"
@@ -377,13 +493,17 @@
       "case:me": "ar es tl"
     },
     "3f7df590ea": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "3f9872bcd4": {
       "to": "ar de es fr he hi id ja ko ms pt qu ru sw tl tr uk vi zh"
     },
     "400eb0bd39": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "40e898455f": {
       "trigger": "qu"
@@ -400,7 +520,10 @@
       "giving": "*"
     },
     "42e782253d": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "45901524ee": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -412,6 +535,10 @@
     },
     "46862cb328": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+    },
+    "46a7aa63c2": {
+      "case:it": "hi tr",
+      "case:it-object": "ar es fr it pt"
     },
     "471a470db5": {
       "matches": "bn th"
@@ -429,7 +556,10 @@
       "bottom of": "*"
     },
     "49dc8e89a2": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "4a01505336": {
       "transition view": "ar bn de es he hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh",
@@ -445,7 +575,8 @@
       "from with": "*"
     },
     "5022677cf3": {
-      "case:me": "bn hi tr"
+      "case:me": "bn hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "50baa0f426": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -459,7 +590,10 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "50f45f7eb6": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "5166cfc046": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -472,7 +606,8 @@
       "using view": "fr"
     },
     "520002c276": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "53b315fa38": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -485,13 +620,21 @@
       "add": "*"
     },
     "567ce21730": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "56bb56445c": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "5761791c05": {
-      "as": "ko"
+      "as": "ko",
+      "case:it": "hi tr",
+      "case:it-object": "ar es fr it pt"
     },
     "5763f61aac": {
       "case:me": "ar bn de es hi it pl pt ru tr uk"
@@ -506,7 +649,8 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "59e26285f5": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "5a1121fdb6": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -518,10 +662,14 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "5b70a6f411": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "5cc0a436d0": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "5d9dc806eb": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -532,11 +680,18 @@
     "5eb5632e72": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
+    "5ecd22f354": {
+      "case:it": "hi tr",
+      "case:it-object": "ar es fr it pt"
+    },
     "5f9881c2fd": {
       "bubbling": "*"
     },
     "605bdcf98c": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "60770598a3": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -545,11 +700,18 @@
       "case:me childList of": "ar de es he hi pl pt ru tl tr uk",
       "childList of": "fr id ja ko ms qu sw vi zh"
     },
+    "6178899ead": {
+      "case:it": "hi tr",
+      "case:it-object": "ar es fr it pt"
+    },
     "622f30a7a4": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "62b066758c": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "62bab43e17": {
       "case:me of": "ar de es he hi pl pt ru tl tr uk",
@@ -574,17 +736,25 @@
       "case:me element element": "ar bn es he hi pt tl tr",
       "element element": "fr id ja ko ms qu sw th vi zh"
     },
+    "66a3e903a3": {
+      "case:it": "hi tr",
+      "case:it-object": "ar es fr it pt"
+    },
     "66ed3cc3b9": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "6748802c30": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "67a04beae0": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "68a6274f34": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "6916cdcfb9": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -602,15 +772,19 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "6b4e1662ba": {
-      "case:me of the": "ar bn de es he hi it pl pt ru tl tr uk",
-      "of the": "fr id ja ko ms qu sw th vi zh"
+      "case:it case:me of the": "hi tr",
+      "case:it-object case:me of the": "ar es it pt",
+      "case:it-object of the": "fr",
+      "case:me of the": "bn de he pl ru tl uk",
+      "of the": "id ja ko ms qu sw th vi zh"
     },
     "6b508f9f6a": {
       "case:me having margin": "ar de es he hi pl pt ru tl tr uk",
       "having margin": "fr id ja ko ms qu sw vi zh"
     },
     "6b90e41e44": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "6d010b485c": {
       "trigger": "qu"
@@ -619,16 +793,23 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "6d7fec5727": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "6db594c0c9": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "6dd0088239": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "6f26584dc0": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "6f60177037": {
       "matches the": "bn th",
@@ -665,13 +846,18 @@
       "of": "*"
     },
     "73325ff027": {
-      "case:me in in of the": "ar es he hi pl pt ru tl uk",
-      "case:me of the": "de it tr",
-      "in in of the": "fr id ja ko ms qu sw th",
+      "case:it case:me in in of the": "ar tl",
+      "case:it case:me of the": "de tr",
+      "case:it in in of the": "fr",
+      "case:me in in of the": "es he hi pl pt ru uk",
+      "case:me of the": "it",
+      "in in of the": "id ja ko ms qu sw th",
       "of the": "vi"
     },
     "7371a42494": {
-      "as": "ko"
+      "as": "ko",
+      "case:it": "hi tr",
+      "case:it-object": "ar es fr it pt"
     },
     "7377dbd08f": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -680,10 +866,14 @@
       "case:me": "ar bn de es hi it pl pt ru tr uk"
     },
     "74a1efe49e": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "76130fbf7d": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "765fe28046": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -705,16 +895,25 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "779366f4b2": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "77dba71809": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "782e7e32f6": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
+    },
+    "7835c70e58": {
+      "case:it": "tr",
+      "case:it-object": "ar es fr it pt"
     },
     "79674d3450": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "798cb5bb41": {
       "case:me": "ar bn de es hi it pl pt ru tr uk",
@@ -727,7 +926,10 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "7b70b33883": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "7c0b87cf7b": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -736,15 +938,25 @@
       "elsewhere": "ar de es fr he hi id ja ko ms pl pt qu ru sw tl tr uk vi zh"
     },
     "7d534a111c": {
-      "case:me in of the": "ar bn es he hi pl pt ru tl uk",
-      "case:me of the": "de it tr",
-      "in of the": "fr id ja ko ms qu sw th zh",
+      "case:it case:me in of the": "hi",
+      "case:it case:me of the": "tr",
+      "case:it-object case:me in of the": "ar es pt",
+      "case:it-object case:me of the": "it",
+      "case:it-object in of the": "fr",
+      "case:me in of the": "bn he pl ru tl uk",
+      "case:me of the": "de",
+      "in of the": "id ja ko ms qu sw th zh",
       "of the": "vi"
     },
     "7d70d649bb": {
-      "case:me in of the": "ar bn es he hi pl pt ru tl uk",
-      "case:me of the": "de it tr",
-      "in of the": "fr id ja ko ms qu sw th zh",
+      "case:it case:me in of the": "hi",
+      "case:it case:me of the": "tr",
+      "case:it-object case:me in of the": "ar es pt",
+      "case:it-object case:me of the": "it",
+      "case:it-object in of the": "fr",
+      "case:me in of the": "bn he pl ru tl uk",
+      "case:me of the": "de",
+      "in of the": "id ja ko ms qu sw th zh",
       "of the": "vi"
     },
     "7e38e16379": {
@@ -776,10 +988,18 @@
       "here": "*"
     },
     "806f429e17": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
+    },
+    "80f4300e27": {
+      "case:it": "hi tr",
+      "case:it-object": "ar es fr it pt"
     },
     "820f7baba0": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:me": "ar bn de es he it pl pt ru tl uk"
     },
     "821364e1a4": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -794,7 +1014,10 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "83186964ec": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "834d9defce": {
       "for": "*"
@@ -807,9 +1030,14 @@
       "of of": "tr"
     },
     "8485a42376": {
-      "case:me in of the": "ar bn es he hi pl pt ru tl uk",
-      "case:me of the": "de it tr",
-      "in of the": "fr id ja ko ms qu sw th zh",
+      "case:it case:me in of the": "hi",
+      "case:it case:me of the": "tr",
+      "case:it-object case:me in of the": "ar es pt",
+      "case:it-object case:me of the": "it",
+      "case:it-object in of the": "fr",
+      "case:me in of the": "bn he pl ru tl uk",
+      "case:me of the": "de",
+      "in of the": "id ja ko ms qu sw th zh",
       "of the": "vi"
     },
     "84c8655749": {
@@ -837,14 +1065,17 @@
       "case:me": "ar bn de es hi it pl ru tr"
     },
     "87250fbc5e": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it-object case:me": "ar es it",
+      "case:me": "bn de he hi pl pt ru tl tr uk"
     },
     "87a851fb52": {
       "matches": "bn th"
     },
     "87d42db63b": {
       "after case:me": "bn hi",
-      "case:me": "ar es tl"
+      "case:it-object": "fr it pt",
+      "case:it-object case:me": "ar es",
+      "case:me": "tl"
     },
     "880722ad07": {
       "case:me case:me transition view": "ar bn de es he hi it pl pt ru tl tr uk",
@@ -882,9 +1113,14 @@
       "null": "he"
     },
     "8fe4616a43": {
-      "case:me in of the": "ar bn es he hi pl pt ru tl uk",
-      "case:me of the": "de it tr",
-      "in of the": "fr id ja ko ms qu sw th zh",
+      "case:it case:me in of the": "hi",
+      "case:it case:me of the": "tr",
+      "case:it-object case:me in of the": "ar es pt",
+      "case:it-object case:me of the": "it",
+      "case:it-object in of the": "fr",
+      "case:me in of the": "bn he pl ru tl uk",
+      "case:me of the": "de",
+      "in of the": "id ja ko ms qu sw th zh",
       "of the": "vi"
     },
     "90a42e1d9a": {
@@ -894,7 +1130,10 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "9150f6f97b": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "9293cd2fa0": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -902,20 +1141,30 @@
     "92a68c1e3c": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
+    "93ee1ead94": {
+      "case:it case:it": "hi tr",
+      "case:it-object case:it-object": "ar es fr it pt"
+    },
     "942ef9319a": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "958f0101c2": {
-      "case:me in of the": "ar bn es he hi pl pt ru tl uk",
-      "case:me of the": "de it tr",
-      "in of the": "fr id ja ko ms qu sw th zh",
+      "case:it case:me in of the": "hi",
+      "case:it case:me of the": "tr",
+      "case:it-object case:me in of the": "ar es pt",
+      "case:it-object case:me of the": "it",
+      "case:it-object in of the": "fr",
+      "case:me in of the": "bn he pl ru tl uk",
+      "case:me of the": "de",
+      "in of the": "id ja ko ms qu sw th zh",
       "of the": "vi"
     },
     "962e312354": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "97c0779d08": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "987ed0368c": {
       "of": "bn hi ja ko tl vi zh"
@@ -928,18 +1177,27 @@
       "it matches where": "fr id ja ko ms qu sw th vi zh"
     },
     "9a50db7c19": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "9a5c1482e6": {
       "matches": "bn th"
     },
     "9be9d3a6eb": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "9c2d74510e": {
-      "case:me in of the": "ar bn es he hi pl pt ru tl uk",
-      "case:me of the": "de it tr",
-      "in of the": "fr id ja ko ms qu sw th zh",
+      "case:it case:me in of the": "hi",
+      "case:it case:me of the": "tr",
+      "case:it-object case:me in of the": "ar es pt",
+      "case:it-object case:me of the": "it",
+      "case:it-object in of the": "fr",
+      "case:me in of the": "bn he pl ru tl uk",
+      "case:me of the": "de",
+      "in of the": "id ja ko ms qu sw th zh",
       "of the": "vi"
     },
     "9c8733cdd8": {
@@ -950,6 +1208,10 @@
     },
     "9d62c36696": {
       "trigger": "qu"
+    },
+    "9e62601731": {
+      "case:it": "hi tr",
+      "case:it-object": "ar es fr it pt"
     },
     "9edb2416e1": {
       "case:me case:me transition view": "ar bn de es he hi it pl pt ru tl tr uk",
@@ -973,7 +1235,8 @@
       "children": "ar bn de es fr hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh"
     },
     "a232d7d987": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "a279e35963": {
       "from until": "*"
@@ -996,6 +1259,10 @@
     "a68f0afa94": {
       "url": "*"
     },
+    "a6b7b1862e": {
+      "case:it": "hi tr",
+      "case:it-object": "ar es fr it pt"
+    },
     "a6b880e963": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
@@ -1003,7 +1270,12 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "a7287e1332": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
+    },
+    "a95285c5d7": {
+      "case:it": "hi tr",
+      "case:it-object": "ar es fr it pt"
     },
     "a9857390c7": {
       "at case:me debounced": "ar bn de es he hi it pl pt ru tr uk",
@@ -1016,8 +1288,15 @@
     "aaba73db0a": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
+    "ab061cfe15": {
+      "case:it": "hi tr",
+      "case:it-object": "ar es fr it pt"
+    },
     "ab1d7fd38a": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "ab7d8dc462": {
       "from": "*"
@@ -1036,13 +1315,17 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "af32cc56a5": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "af3ea3a24e": {
       "in": "he"
     },
     "af7b70a9e3": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "b0d0618a0f": {
       "case:me case:me transition view": "ar bn de es he hi it pl pt ru tl tr uk",
@@ -1058,10 +1341,13 @@
     "b2bf92e6f0": {
       "case:me case:me": "he hi tr",
       "case:me case:me matches": "bn",
+      "case:me-object case:me-object": "ar de es it pl pt ru uk",
       "matches": "th"
     },
     "b2cf479f04": {
-      "case:me": "ar bn de es he pt tl tr"
+      "case:it": "fr",
+      "case:it case:me": "ar de tl tr",
+      "case:me": "bn es he pt"
     },
     "b365b3c1ad": {
       "at debounced": "ar bn de es fr he hi id it ja ko ms pl pt qu ru sw th tr uk vi zh",
@@ -1073,21 +1359,36 @@
       "case:me throttled": "tl"
     },
     "b7f2f02c7c": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "b839394853": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "b854e91693": {
-      "case:me in of the": "ar bn es he hi pl pt ru tl uk",
-      "case:me of the": "de it tr",
-      "in of the": "fr id ja ko ms qu sw th zh",
+      "case:it case:me in of the": "hi",
+      "case:it case:me of the": "tr",
+      "case:it-object case:me in of the": "ar es pt",
+      "case:it-object case:me of the": "it",
+      "case:it-object in of the": "fr",
+      "case:me in of the": "bn he pl ru tl uk",
+      "case:me of the": "de",
+      "in of the": "id ja ko ms qu sw th zh",
       "of the": "vi"
     },
     "b948ed872b": {
       "in": "qu",
       "matches no": "bn th",
       "no": "he vi"
+    },
+    "b9502de444": {
+      "case:it": "tr",
+      "case:it-object": "ar es fr it pt"
     },
     "baa020171b": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -1112,10 +1413,16 @@
       "in null": "he"
     },
     "bd457f15ab": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
+    },
+    "bd56aad55e": {
+      "case:it": "tr",
+      "case:it-object": "ar es fr it pt"
     },
     "bd75e53d98": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "be1d3cc50d": {
       "in": "he"
@@ -1128,12 +1435,21 @@
       "case:me null null": "bn es he it pt ru tl uk",
       "null null": "fr ko vi zh"
     },
+    "bf94702b15": {
+      "case:it": "hi tr",
+      "case:it-object": "ar es fr it pt"
+    },
+    "bf9d889f42": {
+      "case:it case:it": "hi tr",
+      "case:it-object case:it-object": "ar es fr it pt"
+    },
     "c043e101bf": {
       "I case:me precede": "ar bn de es he hi it pl pt ru tl tr uk",
       "I precede": "fr id ja ko ms qu sw th vi zh"
     },
     "c0ad58570f": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "c0bc2ffa5d": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -1142,7 +1458,10 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "c1f215b555": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "c237d4a678": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -1156,6 +1475,10 @@
     "c5279ca4eb": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
+    "c5f12a5862": {
+      "case:it": "hi tr",
+      "case:it-object": "ar es fr it pt"
+    },
     "c6183ad650": {
       "immediately": "*"
     },
@@ -1163,16 +1486,24 @@
       "and": "*"
     },
     "c7228ea809": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "c763dc2c55": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "c8992c103b": {
       "case:me": "ar bn de es hi it pl pt ru tr uk"
     },
     "c9cd8a23c1": {
-      "with": "*"
+      "case:it with": "hi tr",
+      "case:it-object with": "ar es fr it pt",
+      "with": "bn de he id ja ko ms pl qu ru sw th tl uk vi zh"
     },
     "ca9939a425": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -1182,7 +1513,8 @@
       "new url window": "de it tr vi"
     },
     "cc4909b0a6": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "cce78169bd": {
       "and between me of": "ar bn de es fr he hi id ja ko ms pl pt qu ru sw th tl tr uk vi zh",
@@ -1199,7 +1531,8 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "cf1a449d54": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "cfbc8ed377": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -1231,10 +1564,14 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "d9af1c14cf": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "d9ecdbc854": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "da24c9d768": {
       "to": "ar bn de es fr he hi id it ja ko ms pt qu ru sw th tl tr uk vi zh"
@@ -1259,13 +1596,21 @@
       "the": "ar de es fr he hi id it ja ko ms pl pt ru sw tl tr uk vi zh"
     },
     "dcf31afb1f": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "dd2ca23457": {
-      "in": "ar es fr he hi id ja ko ms pl pt qu ru sw tl uk zh"
+      "case:it in": "hi",
+      "case:it-object in": "ar es fr pt",
+      "in": "he id ja ko ms pl qu ru sw tl uk zh"
     },
     "dd33bcc5dd": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "dd7f5e28a1": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -1278,7 +1623,11 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "deac58c100": {
-      "case:me": "ar bn de es hi it pl pt ru tr uk"
+      "case:it case:it case:me": "hi",
+      "case:it case:me": "tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de pl ru uk"
     },
     "dee03cd129": {
       "case:me": "ar bn de es hi it pl pt ru tr uk"
@@ -1287,19 +1636,28 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "df0bde92da": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "df1d461f99": {
       "case:me of or": "ar de es he hi pl pt ru tl tr uk",
       "of or": "fr id ja ko ms qu sw vi zh"
     },
     "e094621ad0": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "e0fca05a2f": {
-      "case:me in of the": "ar bn es he hi pl pt ru tl uk",
-      "case:me of the": "de it tr",
-      "in of the": "fr id ja ko ms qu sw th zh",
+      "case:it case:me in of the": "hi",
+      "case:it case:me of the": "tr",
+      "case:it-object case:me in of the": "ar es pt",
+      "case:it-object case:me of the": "it",
+      "case:it-object in of the": "fr",
+      "case:me in of the": "bn he pl ru tl uk",
+      "case:me of the": "de",
+      "in of the": "id ja ko ms qu sw th zh",
       "of the": "vi"
     },
     "e13b40b6b2": {
@@ -1315,13 +1673,15 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "e2bc69d64e": {
-      "case:me": "bn hi tr"
+      "case:me": "bn hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "e37390c838": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "e438b17fdb": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "e51cb64feb": {
       "case:me": "ar bn es he hi it pl pt ru tl tr uk"
@@ -1338,16 +1698,26 @@
       "matches": "th"
     },
     "e7687f49e4": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "e7ed10dbe7": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "e8446a57e2": {
-      "case:me": "bn he hi tr"
+      "case:me": "bn he hi tr",
+      "case:me-object": "ar de es it pl pt ru uk"
     },
     "e8a3bc0263": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "e8bc82209b": {
       "url": "*"
@@ -1359,13 +1729,20 @@
       "trigger": "qu"
     },
     "e9f06fbe94": {
-      "case:me": "bn he hi tr"
+      "case:it": "fr tl",
+      "case:it case:me": "tr",
+      "case:it case:me-object": "ar de",
+      "case:me": "bn he hi",
+      "case:me-object": "es it pl pt ru uk"
     },
     "ea053893cb": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "ec97ae1115": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "edd578621b": {
       "from my with": "ar bn de es fr he hi it ja ko ms pl pt qu ru sw th tl tr uk zh"
@@ -1377,7 +1754,10 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "ee4d586d20": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "eeb30e2d38": {
       "in": "he"
@@ -1386,16 +1766,27 @@
       "trigger": "qu"
     },
     "eff1f1e59f": {
-      "as": "ko"
+      "as": "ko",
+      "case:it": "hi tr",
+      "case:it-object": "ar es fr it pt"
     },
     "f147cadda2": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "f18d740a54": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "f24b5ab7b2": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "f460465218": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -1404,7 +1795,10 @@
       "trigger": "qu"
     },
     "f692d12d6d": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "f793d435aa": {
       "into": "*"
@@ -1416,10 +1810,16 @@
       "case:me case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "faf29d32b8": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "fb120db463": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "fbbadf1304": {
       "at case:me throttled": "ar bn de es he hi it pl pt ru tr uk",
@@ -1434,16 +1834,25 @@
       "the": "fr he id ja ko ms pt sw th tl uk vi zh"
     },
     "fc4fc8f3f1": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "fca1795dbc": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "fd5f27f62d": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "fef0cd8bed": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:it case:me": "hi tr",
+      "case:it-object": "fr",
+      "case:it-object case:me": "ar es it pt",
+      "case:me": "bn de he pl ru tl uk"
     },
     "ff30aeb427": {
       "case:me case:me case:me transition view": "ar bn de es he hi it pl pt ru tl tr uk",

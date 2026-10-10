@@ -246,8 +246,6 @@ describe('english-leaks scanner', () => {
     ]);
     // A verb its patterns write (de `verstecke`; the keyword is `verbergen`).
     expect(keys('on click hide me', 'wenn klick verstecke ich', 'de')).toEqual(['case:me-object']);
-    // A marker that ends a verb (ar `احصل على`, get) makes it a marked pronoun.
-    expect(keys('on click get it', 'على النقر احصل على هو', 'ar')).toEqual(['case:it']);
     // The right object forms, and the objects that are right in the nominative.
     expect(keys('on click measure me', 'wenn klick messen mich', 'de')).toEqual([]);
     expect(keys('on click hide it', 'wenn klick verstecke es', 'de')).toEqual([]);

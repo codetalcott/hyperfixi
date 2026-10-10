@@ -650,7 +650,7 @@ export async function initLeakScanner(): Promise<LeakScanner> {
           const wrong = rule[pronoun];
           const wrongBeside =
             marker !== undefined && (wrong === true || (!!wrong && wrong.includes(marker)));
-          const wrongObject = marker === undefined && !!rule[`${pronoun}Object`] && afterVerb(i);
+          const wrongObject = !!rule[`${pronoun}Object`] && afterVerb(i);
           if (wrongBeside || wrongObject)
             findings.push({
               kind: 'case',
