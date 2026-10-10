@@ -868,7 +868,7 @@ const AMBIGUOUS_SENSES: Readonly<Record<string, Readonly<Record<string, Ambiguou
   },
   ja: { 空: { afterCopula: 'empty' }, ある: HAS },
   // he הוא is also the pronoun `it` (the tokenizer's alias), as ar هو is; ריק
-  // was the tokenizer's alias for `null`, which no render wrote (M2 sheet B7).
+  // is `null` elsewhere (the tokenizer's alias), as sw tupu is (M2 sheet B7).
   he: {
     הוא: { beforePredicate: 'is', afterOperand: 'is' },
     ריק: { afterCopula: 'empty' },

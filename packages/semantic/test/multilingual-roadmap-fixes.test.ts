@@ -6119,8 +6119,8 @@ describe('cross-language at-end-of positional put (R2 wave 8 — make-toast-elem
     return (node as { roles: Map<string, { type?: string; value?: unknown }> }).roles;
   }
   // [lang, the corpus-shaped third clause `put 'x' <at> end <of> body`]. SOV
-  // languages (ja/ko/tr) place the verb last after an object marker; he leaves
-  // `at`/`of` untranslated; vi's `kết thúc` is a single multi-word token.
+  // languages (ja/ko/tr) place the verb last after an object marker; vi's
+  // `kết thúc` is a single multi-word token.
   const atEndCases: Array<[string, string]> = [
     ['es', "poner 'x' en fin de cuerpo"],
     ['fr', "mettre 'x' à fin de corps"],
@@ -6135,7 +6135,7 @@ describe('cross-language at-end-of positional put (R2 wave 8 — make-toast-elem
     ['th', "ใส่ 'x' ที่ จบ ของ บอดี้"],
     ['tl', "ilagay 'x' sa wakas ng katawan"],
     ['ar', "ضع 'x' عند النهاية من جسم"],
-    ['he', "שים את 'x' at סוף of גוף"],
+    ['he', "שים את 'x' ב סוף של גוף"],
     ['ja', "'x' で 終わり の ボディ を 置く"],
     ['ko', "'x' 에 끝 의 바디 를 넣다"],
     ['tr', "'x' de son nin gövde i koy"],

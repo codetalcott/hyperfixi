@@ -6,9 +6,9 @@
  *
  * Where the sheet's word was already another of he's words, he takes another
  * (the sheet lists each): `as` is `כ`, the word he's `fetch … as` already
- * wrote (`בתור` reads as ב + תור); `ריק` (empty) was the tokenizer's alias for
- * `null`, which no render wrote. `הוא` (is) is also the pronoun `it`, as ar
- * `هو` is, and reads as `is` only between an operand and its predicate.
+ * wrote (`בתור` reads as ב + תור). `ריק` (empty) is also the reader's `null`,
+ * as sw `tupu` is, and `הוא` (is) the pronoun `it`, as ar `هو` is: each reads
+ * as the copula's word only beside the copula.
  */
 import { describe, it, expect } from 'vitest';
 import { translate } from '../src/index';

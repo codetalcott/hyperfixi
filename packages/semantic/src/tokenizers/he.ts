@@ -66,6 +66,7 @@ const HEBREW_EXTRAS: KeywordEntry[] = [
   { native: 'אמת', normalized: 'true' },
   { native: 'שקר', normalized: 'false' },
   { native: 'null', normalized: 'null' },
+  { native: 'ריק', normalized: 'null' },
   { native: 'לא מוגדר', normalized: 'undefined' },
 
   // Positional
