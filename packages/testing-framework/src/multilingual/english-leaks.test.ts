@@ -102,7 +102,7 @@ describe('english-leaks scanner', () => {
     expect(
       keys(
         'on click js(me) return new Date() end then put it into #a',
-        'al clic js (me) return new Date() fin entonces poner ello en #a',
+        'al clic js (me) return new Date() fin entonces ponerlo en #a',
         'es'
       )
     ).toEqual([]);
@@ -128,7 +128,7 @@ describe('english-leaks scanner', () => {
     expect(
       keys(
         'on click put me into #a then js(me) return 1 end',
-        'al clic poner yo en #a entonces js (me) return 1 fin',
+        'al clic ponerme en #a entonces js (me) return 1 fin',
         'es'
       )
     ).toEqual([]);
@@ -199,6 +199,65 @@ describe('english-leaks scanner', () => {
     // fr writes the stressed form; ja's particle attaches to any noun.
     expect(keys('on click add .b to me', 'sur clic ajouter .b à moi', 'fr')).toEqual([]);
     expect(keys('on click add .b to me', 'クリック で 自分 に .b を 追加', 'ja')).toEqual([]);
+    // The oblique forms are right.
+    expect(keys('on click add .b to me', 'al clic agregar .b a mí', 'es')).toEqual([]);
+    expect(keys('on click add .b to me', 'при клик добавить .b ко мне', 'ru')).toEqual([]);
+  });
+
+  it('counts a nominative `it` beside a marker, where the language has another form', () => {
+    const source = 'on click add .b to it';
+    expect(keys(source, 'при клик добавить .b к это', 'ru')).toEqual(['case:it']);
+    expect(keys(source, 'wenn klick hinzufügen .b zu es', 'de')).toEqual(['case:it']);
+    expect(keys(source, 'tıklama i üzerinde o e .b i ekle', 'tr')).toEqual(['case:it']);
+    expect(keys(source, 'при клик добавить .b к этому', 'ru')).toEqual([]);
+    // es `ello` and it `esso` are right after a marker.
+    expect(keys(source, 'al clic agregar .b a ello', 'es')).toEqual([]);
+    expect(keys(source, 'su clic aggiungere .b a esso', 'it')).toEqual([]);
+    // pt: only `em` and `de` contract with `ele` (nele, dele); `a ele` is right.
+    expect(keys('on click put "x" into it', 'ao clique colocar "x" em ele', 'pt')).toEqual([
+      'case:it',
+    ]);
+    expect(keys(source, 'ao clique adicionar .b a ele', 'pt')).toEqual([]);
+    // The ru/uk/pl demonstrative's accusative is its nominative: right after a
+    // marker that takes the accusative (a direction), wrong after one that never does.
+    const into = 'on click put "x" into it';
+    expect(keys(into, 'при клик положить "x" в это', 'ru')).toEqual([]);
+    expect(keys(into, 'gdy kliknięcie umieść "x" w to', 'pl')).toEqual([]);
+    expect(keys(source, 'gdy kliknięcie dodaj .b do to', 'pl')).toEqual(['case:it']);
+    expect(keys(source, 'при клік додати .b до це', 'uk')).toEqual(['case:it']);
+    // tl `bago ito` (before this) is right; `sa ito` is `dito`.
+    expect(keys(source, 'kapag click idagdag .b sa ito', 'tl')).toEqual(['case:it']);
+    expect(keys('on click wait 1s', 'kapag click maghintay bago ito', 'tl')).toEqual([]);
+  });
+
+  it('does not count a pronoun that opens a parenthesized expression', () => {
+    const source = 'on click set $b to (it * 2)';
+    expect(keys(source, 'wenn klick setze $b auf (es * 2)', 'de')).toEqual([]);
+    expect(keys('on click set $b to it', 'wenn klick setze $b auf es', 'de')).toEqual(['case:it']);
+  });
+
+  it("counts a nominative pronoun as a verb's unmarked object, where that is wrong", () => {
+    expect(keys('on click measure me', 'wenn klick messen ich', 'de')).toEqual(['case:me-object']);
+    expect(keys('on click show me', 'al clic mostrar yo', 'es')).toEqual(['case:me-object']);
+    expect(keys('on click hide it', 'al clic ocultar ello', 'es')).toEqual(['case:it-object']);
+    expect(keys('on click hide it', 'quand clic cacher il', 'fr')).toEqual(['case:it-object']);
+    expect(keys('on click put me into #o', 'при клик положить я в #o', 'ru')).toEqual([
+      'case:me-object',
+    ]);
+    // A verb its patterns write (de `verstecke`; the keyword is `verbergen`).
+    expect(keys('on click hide me', 'wenn klick verstecke ich', 'de')).toEqual(['case:me-object']);
+    // The right object forms, and the objects that are right in the nominative.
+    expect(keys('on click measure me', 'wenn klick messen mich', 'de')).toEqual([]);
+    expect(keys('on click hide it', 'wenn klick verstecke es', 'de')).toEqual([]);
+    expect(keys('on click hide it', 'при клик скрыть это', 'ru')).toEqual([]);
+    // fr `moi` is not counted as an object.
+    expect(keys('on click show me', 'quand clic afficher moi', 'fr')).toEqual([]);
+    // A condition is not an object: `if` is no verb.
+    expect(
+      keys('on click if it is empty hide me end', 'al clic si ello es vacío ocultar yo fin', 'es')
+    ).toEqual(['case:me-object']);
+    // A word before the pronoun that is no verb at all.
+    expect(keys('on click put it into #o', 'al clic ello en #o', 'es')).toEqual([]);
   });
 });
 

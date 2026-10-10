@@ -96,7 +96,7 @@ Plan: `~/.claude/plans/m2-naturalness.md`.
 
 **Step 1 — the gate (2026-10-08).** `english-leaks.ts` counts, per render, English grammar words
 (the tokens the engine's own parser matched as words in the source), English event names the lexicon
-has a word for (N2), and a nominative `me` beside a marker (N3). Two shrink-only halves: the corpus
+has a word for (N2), and a nominative `me` or `it` beside a marker or as an unmarked object (N3). Two shrink-only halves: the corpus
 (`test:canonical`) and the command-shape cases' renders (in their shards). `--report` splits each word
 by context (`clause`, the English M1 keeps as written, N9; `bracket`; `call`; `property`; `plain`) and
 by whether the language has its own word. Measured: words in 18.9% of corpus renders (top: `repeat`,
@@ -106,7 +106,7 @@ never occur in the corpus). **Exit targets (decided 2026-10-08), in every langua
 (an average hid he: words in 35% of its corpus renders, the others near 18%): English words in at most
 5% of corpus renders and 10% of command-shape renders, not counting English a recorded decision keeps
 (policy 6, the sheet's keep rows); no `event:` finding (a denylisted event, each with its reason, is
-none); no `case:me` finding, its forms checked by a native speaker (de, pl, ru and uk pick the case by
+none); no `case:` finding (`me`, `it`, an unmarked object), its forms checked by a native speaker (de, pl, ru and uk pick the case by
 the marker). `--report` prints each language against them (`LEAK_TARGETS`). Words are mostly vocabulary:
 without the sheet the floor is 13.3% / 19.4% (renders with a word the language has none for).
 
