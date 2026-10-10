@@ -108,9 +108,9 @@ describe("fetch's response-type role is not stolen by the fold", () => {
 
 describe('the conversion round-trips in every language', () => {
   // The corpus row this fix exists for. The type name stays English, and the
-  // `as` before it is the language's own (M2 sheet A4; English's in he, which
-  // has none yet), so what has to work is that the foreign surface re-parses
-  // as one value rather than stranding two tokens.
+  // `as` before it is the language's own (M2 sheet A4; he's B7), so what has
+  // to work is that the foreign surface re-parses as one value rather than
+  // stranding two tokens.
   const SOURCE = 'set ^user to attrs.data as JSON';
 
   it.each(LANGUAGES)('%s', language => {

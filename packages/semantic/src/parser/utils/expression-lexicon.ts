@@ -835,11 +835,11 @@ function startsOperand(token: LanguageToken | undefined): boolean {
 /** A class reference (`.x`): what `has` takes, and a comparison does not. */
 const CLASS_REF = /^\.[\p{L}_-][\p{L}\p{N}_-]*$/u;
 
-/** A word-shaped identifier (`p`, `value`, `:count`, `$total`), not an operator
-    symbol that a tokenizer lexed as an identifier. A word may carry combining
-    marks: hi `मान` (value) spells its vowel with one. */
+/** A word-shaped identifier (`p`, `value`, `:count`, `$total`, `^color`), not an
+    operator symbol that a tokenizer lexed as an identifier. A word may carry
+    combining marks: hi `मान` (value) spells its vowel with one. */
 /** A variable's name, or one the reader fused, `(si)` (registry.tokenize). */
-const OPERAND_WORD = /^(?:[:$]?[\p{L}_][\p{L}\p{M}\p{N}_]*|\([\p{L}_$][\p{L}\p{M}\p{N}_$]*\))$/u;
+const OPERAND_WORD = /^(?:[:$^]?[\p{L}_][\p{L}\p{M}\p{N}_]*|\([\p{L}_$][\p{L}\p{M}\p{N}_$]*\))$/u;
 
 /**
  * core's `has` (and the first person's `have`), in the language's own word,
