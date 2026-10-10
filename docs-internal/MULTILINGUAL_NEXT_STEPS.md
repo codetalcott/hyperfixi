@@ -127,7 +127,7 @@ next A6 (`between`).
 **Step 4 — design:**
 
 - N3: an oblique pronoun form after a marker (es `a mí`, de `zu mir`, ru `ко мне`, tr `bana`), with a
-  reader that accepts both forms;
+  reader that accepts both forms (the reader half done 2026-10-10);
 - N5: suffixes attached in the agglutinative languages;
 - N4: the ja/tr handler heads (`クリック を で`, `tıklama i üzerinde`);
 - N6: the article and marker slips.
