@@ -15,8 +15,9 @@
  *   - `event`  an event the source handles or sends, written in English where
  *              the language's lexicon has a word for it and the pair is not on
  *              the renderer's denylist (OPEN_ITEMS N2);
- *   - `case`   the language's nominative `me` next to a role marker, in the
- *              languages where that form is wrong (N3, see CASE_LANGUAGES).
+ *   - `case`   the language's nominative `me` or `it` next to a role marker,
+ *              or as a command's unmarked object, in the languages where that
+ *              form is wrong (N3, see CASE_RULES).
  *
  * ## What counts as English
  * Derived, never a hand list. A source's grammar words are the tokens the
@@ -71,7 +72,10 @@ export type LeakContext = 'plain' | 'clause' | 'bracket' | 'call' | 'property';
 
 export interface LeakFinding {
   kind: LeakKind;
-  /** The English word; for `event` the event name; for `case` the pronoun (`me`). */
+  /**
+   * The English word; for `event` the event name; for `case` the pronoun (`me`,
+   * `it`), with `-object` when it is a verb's unmarked object (`me-object`).
+   */
   word: string;
   context: LeakContext;
   /** Does the language have its own word for it? */
@@ -110,29 +114,93 @@ export const KEPT_ENGLISH: {
 export const findingKey = (f: Pick<LeakFinding, 'kind' | 'word'>): string =>
   f.kind === 'word' ? f.word : `${f.kind}:${f.word}`;
 
+/** Where a language's nominative `me` / `it` is the wrong form ({@link CASE_RULES}). */
+export interface CaseRule {
+  /** `me` beside a role marker. */
+  me?: true;
+  /**
+   * `it` beside a role marker: any marker, or only these (pt contracts only
+   * `em`, `de`; the ru/uk/pl demonstrative's accusative is its nominative, so
+   * it is wrong only after a marker that never takes the accusative).
+   */
+  it?: true | readonly string[];
+  /** `me` / `it` as a command's unmarked object, right after its verb. */
+  meObject?: true;
+  itObject?: true;
+}
+
 /**
- * Languages whose `me` word is nominative while a marker next to it wants
- * another case: es `a yo` (a mí), pt `a eu` (a mim), it `a io` (a me), de
- * `zu ich` (zu mir), pl `do ja` (do mnie), ru `к я` (ко мне), uk `до я`
- * (до мене), tr `ben e` (bana), ar `إلى أنا` (إليّ), he `אל אני` (אליי),
- * tl `sa ako` (sa akin), hi `मैं में` (मुझमें), bn `আমি তে` (আমাতে). The other
- * ten are right as written (fr `à moi`, ja `自分 に`, zh/id/ms/vi/th/ko/sw/qu
- * do not inflect the pronoun for case here). OPEN_ITEMS N3.
+ * The languages whose nominative `me` or `it` is the wrong form where a render
+ * writes it (OPEN_ITEMS N3). A finding is `case:me` / `case:it` beside a role
+ * marker, `case:me-object` / `case:it-object` right after a command's verb with
+ * no marker. Wrong → right:
+ *
+ *   ar  إلى أنا → إليّ; إلى هو → إليه; ضع أنا → ضعني; ضع هو → ضعه
+ *   bn  আমি তে → আমাতে
+ *   de  zu ich → zu mir; zu es → dazu, zu ihm; messen ich → messen mich
+ *   es  a yo → a mí; mostrar yo → mostrarme; poner ello → ponerlo
+ *   fr  dans il → dans lui, y; mettre il → le mettre
+ *   he  אל אני → אליי
+ *   hi  मैं में → मुझमें; यह में → इसमें
+ *   it  a io → a me; mostrare io → mostrarmi; mettere esso → metterlo
+ *   pl  do ja → do mnie; do to → do tego, z to → z tego; pokaż ja → pokaż mnie
+ *   pt  a eu → a mim; em ele → nele, de ele → dele; mostrar eu → mostrar-me;
+ *       colocar ele → colocá-lo
+ *   ru  к я → ко мне; к это → к этому, из это → из этого; показать я → показать меня
+ *   tl  sa ako → sa akin; sa ito → dito, mula sa ito → mula rito
+ *   tr  ben e → bana; o e → ona
+ *   uk  до я → до мене; до це → до цього, з це → з цього; показати я → показати мене
+ *
+ * Right as written: fr `à moi`; es `ello`, it `esso` and pt `ele` after any
+ * other marker (`a ello`, `a esso`, `a ele`); ru `в это`, uk `в це`, pl `w to`
+ * and `на`/`na` with them, the accusative of a direction (a location wants
+ * `в этом`, which the text cannot tell apart: not counted); tl `bago ito`,
+ * `matapos ito`; the objects de `es`, ru `это`, uk `це`, pl `to`. A pronoun
+ * that opens a parenthesized expression (`auf (es * 2)`) is not the marker's.
+ * Not counted here: he `ב זה` and bn `এটি কে`, whose fault is
+ * the spacing (N5); `you`, which waits on an owner decision (de `dir` is a
+ * plausible variable name). ja, zh, id, ms, vi, th, ko, sw and qu do not
+ * inflect these pronouns for case.
  */
-export const CASE_LANGUAGES: ReadonlySet<string> = new Set([
-  'ar',
-  'bn',
-  'de',
-  'es',
-  'he',
-  'hi',
-  'it',
-  'pl',
-  'pt',
-  'ru',
-  'tl',
-  'tr',
-  'uk',
+export const CASE_RULES: Readonly<Record<string, CaseRule>> = {
+  ar: { me: true, it: true, meObject: true, itObject: true },
+  bn: { me: true },
+  de: { me: true, it: true, meObject: true },
+  es: { me: true, meObject: true, itObject: true },
+  fr: { it: true, itObject: true },
+  he: { me: true },
+  hi: { me: true, it: true },
+  it: { me: true, meObject: true, itObject: true },
+  pl: { me: true, it: ['do', 'z', 'ze', 'od'], meObject: true },
+  pt: { me: true, it: ['em', 'de'], meObject: true, itObject: true },
+  ru: { me: true, it: ['к', 'ко', 'из', 'от', 'с', 'со'], meObject: true },
+  tl: { me: true, it: ['sa', 'mula_sa'] },
+  tr: { me: true, it: true },
+  uk: { me: true, it: ['до', 'з', 'із', 'від'], meObject: true },
+};
+
+/**
+ * Commands whose next word is not their object: a handler or block head, or a
+ * condition (`if it is empty`, `while it …`).
+ */
+const NOT_OBJECT_HEADS: ReadonlySet<string> = new Set([
+  'on',
+  'if',
+  'unless',
+  'else',
+  'repeat',
+  'for',
+  'while',
+  'when',
+  'init',
+  'behavior',
+  'install',
+  'live',
+  'js',
+  'compound',
+  'eventsource',
+  'socket',
+  'worker',
 ]);
 
 // ---------------------------------------------------------------------------
@@ -212,6 +280,10 @@ interface ProfileLike {
   eventHandler?: Record<string, unknown>;
 }
 type LexiconLike = Record<string, Record<string, KeywordTranslationLike> | undefined>;
+interface PatternLike {
+  command: string;
+  template?: { tokens?: ReadonlyArray<{ type: string; value?: string; alternatives?: string[] }> };
+}
 
 const LEXICON_CATEGORIES = ['values', 'expressions', 'logical', 'temporal', 'attributes'] as const;
 
@@ -226,16 +298,20 @@ interface LanguageWords {
   translated: Set<string>;
   /** Events its lexicon names, minus the renderer's denylist for it. */
   events: Set<string>;
-  /** Its `me` word, and its role markers by side. */
+  /** Its `me` and `it` words, its role markers by side, and its command verbs (as word lists). */
   me: string | undefined;
+  it: string | undefined;
   markersBefore: Set<string>;
   markersAfter: Set<string>;
+  verbs: string[][];
 }
 
 function languageWords(
   profile: ProfileLike | undefined,
   lexicon: LexiconLike | undefined,
-  denied: ReadonlySet<string> | undefined
+  denied: ReadonlySet<string> | undefined,
+  commands: readonly string[],
+  patterns: readonly PatternLike[]
 ): LanguageWords {
   const native = new Set<string>();
   const translated = new Set<string>();
@@ -285,13 +361,29 @@ function languageWords(
   const markersAfter = new Set<string>();
   for (const t of Object.values(profile?.roleMarkers ?? {}))
     for (const w of spellings(t)) (t.position === 'after' ? markersAfter : markersBefore).add(w);
+  // A command's verb: its keyword, and the word its own patterns open with
+  // (de's `hide` pattern writes `verstecke`, its keyword is `verbergen`).
+  const verbForms: string[] = [];
+  for (const command of commands) {
+    const t = profile?.keywords?.[command];
+    if (t && !NOT_OBJECT_HEADS.has(command))
+      verbForms.push(t.primary ?? '', ...(t.alternatives ?? []));
+  }
+  for (const pattern of patterns) {
+    const first = pattern.template?.tokens?.[0];
+    if (!NOT_OBJECT_HEADS.has(pattern.command) && first?.type === 'literal')
+      verbForms.push(first.value ?? '', ...(first.alternatives ?? []));
+  }
+  const verbs = [...new Set(verbForms.filter(Boolean))].map(wordsOf);
   return {
     native,
     translated,
     events,
     me: profile?.references?.me,
+    it: profile?.references?.it,
     markersBefore,
     markersAfter,
+    verbs,
   };
 }
 
@@ -389,6 +481,8 @@ interface SemanticModule {
   tryGetProfile(language: string): unknown;
   getLexicon(language: string): unknown;
   getEventLocalizationDenylist(): Record<string, ReadonlySet<string>>;
+  commandSchemas: Record<string, unknown>;
+  getPatternsForLanguage(language: string): PatternLike[];
 }
 
 /** Load the engine and semantic (ESM-only, so imported here) and return a scanner. */
@@ -397,6 +491,7 @@ export async function initLeakScanner(): Promise<LeakScanner> {
   engine.register(...engine.everything);
   const semantic = (await import('@lokascript/semantic')) as unknown as SemanticModule;
   const denylist = semantic.getEventLocalizationDenylist();
+  const commands = Object.keys(semantic.commandSchemas);
   const languages = new Map<string, LanguageWords>();
   for (const language of FOREIGN_LANGUAGES) {
     languages.set(
@@ -404,7 +499,9 @@ export async function initLeakScanner(): Promise<LeakScanner> {
       languageWords(
         semantic.tryGetProfile(language) as ProfileLike | undefined,
         semantic.getLexicon(language) as LexiconLike | undefined,
-        denylist[language]
+        denylist[language],
+        commands,
+        semantic.getPatternsForLanguage(language)
       )
     );
   }
@@ -532,14 +629,35 @@ export async function initLeakScanner(): Promise<LeakScanner> {
           ...(isKept(offset, context) ? { kept: true as const } : {}),
         });
       }
-      if (CASE_LANGUAGES.has(language) && lang.me) {
+      const rule = CASE_RULES[language];
+      if (rule) {
         const tokens = words.map(w => w.word);
+        const afterVerb = (i: number): boolean =>
+          lang.verbs.some(
+            verb => i >= verb.length && verb.every((w, k) => tokens[i - verb.length + k] === w)
+          );
         for (let i = 0; i < tokens.length; i++) {
-          if (tokens[i] !== lang.me) continue;
+          const pronoun = tokens[i] === lang.me ? 'me' : tokens[i] === lang.it ? 'it' : undefined;
+          if (!pronoun || /[([]/.test(text[words[i]!.offset - 1] ?? '')) continue;
           const before = tokens[i - 1];
           const after = tokens[i + 1];
-          if ((before && lang.markersBefore.has(before)) || (after && lang.markersAfter.has(after)))
-            findings.push({ kind: 'case', word: 'me', context: 'plain', hasWord: true });
+          const marker =
+            before && lang.markersBefore.has(before)
+              ? before
+              : after && lang.markersAfter.has(after)
+                ? after
+                : undefined;
+          const wrong = rule[pronoun];
+          const wrongBeside =
+            marker !== undefined && (wrong === true || (!!wrong && wrong.includes(marker)));
+          const wrongObject = marker === undefined && !!rule[`${pronoun}Object`] && afterVerb(i);
+          if (wrongBeside || wrongObject)
+            findings.push({
+              kind: 'case',
+              word: wrongObject ? `${pronoun}-object` : pronoun,
+              context: 'plain',
+              hasWord: true,
+            });
         }
       }
       return findings;
