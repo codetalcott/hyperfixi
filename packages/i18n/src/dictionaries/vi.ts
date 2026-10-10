@@ -150,6 +150,8 @@ export const vi: Dictionary = {
   },
 
   values: {
+    document: 'tài liệu',
+    window: 'cửa sổ',
     element: 'phần tử',
     true: 'đúng',
     false: 'sai',

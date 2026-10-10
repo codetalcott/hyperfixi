@@ -30,6 +30,8 @@ export const bengaliProfile: LanguageProfile = {
     event: 'ঘটনা',
     target: 'লক্ষ্য',
     body: 'বডি',
+    document: 'ডকুমেন্ট',
+    window: 'উইন্ডো',
   },
   possessive: {
     marker: 'র',

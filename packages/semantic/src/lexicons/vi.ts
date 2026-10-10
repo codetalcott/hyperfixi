@@ -66,6 +66,8 @@ export const vietnameseLexicon: LanguageLexicon = {
     yesterday: { primary: 'hôm qua' },
   },
   values: {
+    document: { primary: 'tài liệu' },
+    window: { primary: 'cửa sổ' },
     element: { primary: 'phần tử' },
     all: { primary: 'tất cả' },
     any: { primary: 'bất kỳ' },
