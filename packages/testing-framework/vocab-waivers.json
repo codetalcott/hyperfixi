@@ -208,6 +208,10 @@
     "reason": "Batch 3 probe: mula_sa corpus-hot ×24 in remove-from rows, HOT-OK — the underscore form tokenizes whole (sa_loob precedent). Latent."
   },
   {
+    "key": "V1|he|empty",
+    "reason": "M2 sheet B7 (2026-10-10): expressions.empty is the adjective ריק, the predicate of `is empty`, while the profile's `empty` is the command verb רוקן. ריק is also the reader's `null` (HEBREW_EXTRAS), so it cannot be a profile alternative of the command as well; it reads as `empty` beside the copula through AMBIGUOUS_SENSES (afterCopula), as ja 空 and sw tupu do."
+  },
+  {
     "key": "V1|ja|empty",
     "reason": "Batch 3 probe: BLOCKED both ways — dict-fix is unavailable (expressions.empty=空 also feeds the corpus-hot `is empty` renders and commands-category additions shadow it on render), and the profile-alternatives route was probed and REVERTED: registering bare 空 as an empty keyword injects a phantom `empty` action into the hot input-validation/if-empty rows (R0-precision regression). ko/qu took the profile-alt safely (their adjectives don't phantom); ja's empty-COMMAND render slot (corpus-cold) stays a known gap."
   },

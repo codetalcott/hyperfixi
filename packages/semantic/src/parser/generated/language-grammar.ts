@@ -2524,6 +2524,7 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   קבל: ['he'],
   קבע: ['he'],
   קח: ['he'],
+  קיים: ['he'],
   קלט: ['he'],
   קליק: ['he'],
   קרא: ['he'],
@@ -2542,6 +2543,7 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   שליחה: ['he'],
   שנה_כתובת: ['he'],
   שקע: ['he'],
+  תואם: ['he'],
   أخبر: ['ar'],
   أخف: ['ar'],
   أخفِ: ['ar'],
@@ -3535,7 +3537,7 @@ export const SCRIPT_RANGES: readonly {
 ];
 
 /**
- * Total keywords: 3332
+ * Total keywords: 3334
  * Total languages: 24
  * Ambiguous keywords (match 2+ languages): 197
  */
