@@ -236,31 +236,29 @@ export function getPutPatternsEn(): LanguagePattern[] {
     },
     // Upstream also reads `at the start of` / `at the end of`. Below the two
     // above, so English is still written without `the`.
-    ...(['start', 'end'] as const).map(
-      (edge): LanguagePattern => ({
-        id: `put-en-at-the-${edge}`,
-        language: 'en',
-        command: 'put',
-        priority: 94,
-        template: {
-          format: `put {patient} at the ${edge} of {destination}`,
-          tokens: [
-            { type: 'literal', value: 'put' },
-            { type: 'role', role: 'patient' },
-            { type: 'literal', value: 'at' },
-            { type: 'literal', value: 'the' },
-            { type: 'literal', value: edge },
-            { type: 'literal', value: 'of' },
-            { type: 'role', role: 'destination' },
-          ],
-        },
-        extraction: {
-          patient: { position: 1 },
-          destination: { position: 6 },
-          manner: { default: { type: 'literal', value: `at ${edge} of` } },
-        },
-      })
-    ),
+    ...(['start', 'end'] as const).map((edge): LanguagePattern => ({
+      id: `put-en-at-the-${edge}`,
+      language: 'en',
+      command: 'put',
+      priority: 94,
+      template: {
+        format: `put {patient} at the ${edge} of {destination}`,
+        tokens: [
+          { type: 'literal', value: 'put' },
+          { type: 'role', role: 'patient' },
+          { type: 'literal', value: 'at' },
+          { type: 'literal', value: 'the' },
+          { type: 'literal', value: edge },
+          { type: 'literal', value: 'of' },
+          { type: 'role', role: 'destination' },
+        ],
+      },
+      extraction: {
+        patient: { position: 1 },
+        destination: { position: 6 },
+        manner: { default: { type: 'literal', value: `at ${edge} of` } },
+      },
+    })),
   ];
 }
 
@@ -680,13 +678,14 @@ export function getPutPatternsPl(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'umieść', alternatives: ['umiesc', 'wstaw'] },
           { type: 'role', role: 'patient' },
-          { type: 'literal', value: 'przed' },
+          // `przede` before `mną` (M2 N3).
+          { type: 'literal', value: 'przed', alternatives: ['przede'] },
           { type: 'role', role: 'destination' },
         ],
       },
       extraction: {
         patient: { position: 1 },
-        destination: { marker: 'przed' },
+        destination: { marker: 'przed', markerAlternatives: ['przede'] },
         manner: { default: { type: 'literal', value: 'before' } },
       },
     },
@@ -755,13 +754,14 @@ export function getPutPatternsRu(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'положить', alternatives: ['положи', 'поместить', 'помести'] },
           { type: 'role', role: 'patient' },
-          { type: 'literal', value: 'перед', alternatives: ['до'] },
+          // `передо` before `мной` (M2 N3).
+          { type: 'literal', value: 'перед', alternatives: ['до', 'передо'] },
           { type: 'role', role: 'destination' },
         ],
       },
       extraction: {
         patient: { position: 1 },
-        destination: { marker: 'перед', markerAlternatives: ['до'] },
+        destination: { marker: 'перед', markerAlternatives: ['до', 'передо'] },
         manner: { default: { type: 'literal', value: 'before' } },
       },
     },
@@ -904,13 +904,14 @@ export function getPutPatternsUk(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'покласти', alternatives: ['поклади', 'помістити', 'помісти'] },
           { type: 'role', role: 'patient' },
-          { type: 'literal', value: 'перед', alternatives: ['до'] },
+          // `переді` before `мною` (M2 N3).
+          { type: 'literal', value: 'перед', alternatives: ['до', 'переді'] },
           { type: 'role', role: 'destination' },
         ],
       },
       extraction: {
         patient: { position: 1 },
-        destination: { marker: 'перед', markerAlternatives: ['до'] },
+        destination: { marker: 'перед', markerAlternatives: ['до', 'переді'] },
         manner: { default: { type: 'literal', value: 'before' } },
       },
     },
@@ -1227,6 +1228,8 @@ const PUT_AT_END: ReadonlyArray<{
   end: string;
   /** the `of` connective between `end` and the body destination. */
   of: string;
+  /** Other spellings of `of` the reader takes: pl `ze` before `mnie` (M2 N3). */
+  ofAlts?: string[];
   /** verb-final word order: `{patient} at end of {destination} <objMarker> verb`. */
   sov?: boolean;
   /** SOV object marker between the body destination and the trailing verb. */
@@ -1258,7 +1261,7 @@ const PUT_AT_END: ReadonlyArray<{
   },
   { lang: 'ms', verb: 'letak', at: 'di', end: 'tamat', of: 'daripada' },
   { lang: 'vi', verb: 'đặt', at: 'tại', end: 'kết thúc', of: 'của' },
-  { lang: 'pl', verb: 'umieść', at: 'przy', end: 'koniec', of: 'z' },
+  { lang: 'pl', verb: 'umieść', at: 'przy', end: 'koniec', of: 'z', ofAlts: ['ze'] },
   { lang: 'ru', verb: 'положить', at: 'у', end: 'конец', of: 'из' },
   { lang: 'uk', verb: 'покласти', at: 'в', end: 'кінець', of: 'з' },
   { lang: 'th', verb: 'ใส่', at: 'ที่', end: 'จบ', of: 'ของ' },
@@ -1334,7 +1337,13 @@ export function isAtEndPositionNoun(
   if (!spec) return false;
   const eq = (a: string | undefined, b: string): boolean =>
     (a ?? '').toLowerCase() === b.toLowerCase();
-  return eq(endValue, spec.end) && eq(prevValue, spec.at) && eq(nextValue, spec.of);
+  return eq(endValue, spec.end) && eq(prevValue, spec.at) && isOfWord(spec, nextValue);
+}
+
+/** Is `value` the spec's `of` word, or one of its other spellings (pl `ze`)? */
+function isOfWord(spec: (typeof PUT_AT_END)[number], value: string | undefined): boolean {
+  const v = (value ?? '').toLowerCase();
+  return v === spec.of.toLowerCase() || (spec.ofAlts ?? []).some(a => a.toLowerCase() === v);
 }
 
 /**
@@ -1351,7 +1360,7 @@ export function isAtEndConnective(language: string, value: string): boolean {
   const spec = PUT_AT_END.find(s => s.lang === language);
   if (!spec) return false;
   const v = value.toLowerCase();
-  return v === spec.at.toLowerCase() || v === spec.of.toLowerCase() || v === spec.end.toLowerCase();
+  return v === spec.at.toLowerCase() || isOfWord(spec, v) || v === spec.end.toLowerCase();
 }
 
 /**
@@ -1370,9 +1379,7 @@ export function isAtEndNounBeforeOf(
 ): boolean {
   const spec = PUT_AT_END.find(s => s.lang === language);
   if (!spec || next === undefined) return false;
-  return (
-    value.toLowerCase() === spec.end.toLowerCase() && next.toLowerCase() === spec.of.toLowerCase()
-  );
+  return value.toLowerCase() === spec.end.toLowerCase() && isOfWord(spec, next);
 }
 
 function buildAtEndPutPatterns(language: string): LanguagePattern[] {
@@ -1386,8 +1393,12 @@ function buildAtEndPutPatterns(language: string): LanguagePattern[] {
   // the whole phrase, so the literal must carry the phrase verbatim — splitting
   // on whitespace would emit two literals that never align with the single
   // token. Single-word markers are unaffected.
-  const pushWords = (phrase: string) => {
-    tokens.push({ type: 'literal', value: phrase });
+  const pushWords = (phrase: string, alternatives?: string[]) => {
+    tokens.push(
+      alternatives
+        ? { type: 'literal', value: phrase, alternatives }
+        : { type: 'literal', value: phrase }
+    );
   };
   if (!spec.sov) {
     tokens.push(verbToken);
@@ -1395,13 +1406,13 @@ function buildAtEndPutPatterns(language: string): LanguagePattern[] {
     tokens.push({ type: 'role', role: 'patient' });
     pushWords(spec.at);
     pushWords(spec.end);
-    pushWords(spec.of);
+    pushWords(spec.of, spec.ofAlts);
     tokens.push({ type: 'role', role: 'destination' });
   } else {
     tokens.push({ type: 'role', role: 'patient' });
     pushWords(spec.at);
     pushWords(spec.end);
-    pushWords(spec.of);
+    pushWords(spec.of, spec.ofAlts);
     tokens.push({ type: 'role', role: 'destination' });
     if (spec.objMarker) tokens.push({ type: 'literal', value: spec.objMarker });
     tokens.push(verbToken);

@@ -52,6 +52,13 @@ export interface VerbConfig {
  * Configuration for possessive expression construction.
  * Defines how "X's property" is expressed in a language.
  */
+/**
+ * A reference's form next to one marker ({@link LanguageProfile.obliqueReferences}):
+ * one phrase, or one for a direction (put into, append to, send to) and one
+ * for a location (toggle's `on`, trigger's `on`, a query's `in`).
+ */
+export type ObliqueForm = string | { readonly direction: string; readonly location: string };
+
 export interface PossessiveConfig {
   /** Possessive marker (e.g., "'s" in English, "の" in Japanese) */
   readonly marker: string;
@@ -118,6 +125,18 @@ export interface LanguageProfile {
   readonly tokenization?: TokenizationConfig;
   /** Reference translations (me, it, you, etc.) */
   readonly references?: Record<string, string>;
+  /**
+   * A reference next to a role marker, in the case the marker takes (M2 N3):
+   * reference → marker → the phrase a render writes for the marker and the
+   * reference (es `en` + `me` → `en mí`; ru `к` → `ко мне`, the marker
+   * vocalized; hi `में` → `मुझ में`, the marker after). A marker that takes a
+   * direction and a location in different cases has both (de `in mich`, put
+   * into; `in mir`, a query's `in`). A marker with no entry keeps the
+   * nominative. The reader takes every form (tokenizer extras; a vocalized
+   * marker is a role-marker alternative). Each form is listed in
+   * NATIVE_REVIEW_NEEDED.md.
+   */
+  readonly obliqueReferences?: Readonly<Record<string, Readonly<Record<string, ObliqueForm>>>>;
   /** Possessive expression configuration */
   readonly possessive?: PossessiveConfig;
   /** Event handler pattern configuration (for simple SVO languages) */

@@ -32,6 +32,14 @@ export const tagalogProfile: LanguageProfile = {
     window: 'bintana',
     detail: 'detalye',
   },
+  // `me` next to a marker, in the case the marker takes (M2 N3; listed in
+  // NATIVE_REVIEW_NEEDED.md).
+  obliqueReferences: {
+    me: {
+      sa: 'sa akin',
+      mula_sa: 'mula_sa akin', // written as the marker is
+    },
+  },
   possessive: {
     marker: 'ng', // Linker used in possessive constructions
     markerPosition: 'between',

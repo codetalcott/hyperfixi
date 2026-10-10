@@ -16,8 +16,8 @@
  */
 import type { SemanticNode } from '../types';
 import { tryGetProfile } from '../registry';
-import { parenthesizeCollidingNames, readsAs } from '../name-collisions';
-import { semanticRenderer } from './renderer';
+import { parenthesizeCollidingNames, readAlike, readsAs } from '../name-collisions';
+import { semanticRenderer, type NativeWordKind } from './renderer';
 import { toForeignSpelling, toUpstreamSpelling } from './upstream-spelling';
 
 /**
@@ -29,15 +29,32 @@ export function render(written: SemanticNode, language: string): string {
   if (language === 'en') return semanticRenderer.render(toUpstreamSpelling(written), language);
   if (!tryGetProfile(language)) return semanticRenderer.render(written, language);
   const node = toForeignSpelling(written);
-  semanticRenderer.takeNativeValueWords();
-  const text = renderReadable(node, language);
+  semanticRenderer.takeNativeWords();
+  let text = renderReadable(node, language);
+  let wrote = semanticRenderer.takeNativeWords();
+  if (!wrote.size || readsAs(text, language, node)) return text;
+  // A pronoun in the case its marker takes (es `en mí`, N3) must read back as
+  // the nominative does; where it does not, the nominative, as before.
+  let plain: NativeWordKind[] = ['value'];
+  if (wrote.has('case')) {
+    const nominative = semanticRenderer.renderPlainWords(
+      () => renderReadable(node, language),
+      ['case']
+    );
+    const nominativeWrote = semanticRenderer.takeNativeWords();
+    if (!readAlike(text, nominative, language)) {
+      text = nominative;
+      wrote = nominativeWrote;
+      plain = ['value', 'case'];
+    }
+  }
   // A value's grammar word in the language's own can read as something else:
   // a query's `in` as a marker the command wants (es `obtener valor de primero
   // <input/> en yo` read `en yo` as get's `on me`), a conversion's `as` as a
   // marker (ko `로`) or as `is` (th `เป็น` before a type it does not list).
   // There the words are written in English's, which every reader takes.
-  if (!semanticRenderer.takeNativeValueWords() || readsAs(text, language, node)) return text;
-  return semanticRenderer.renderEnglishValueWords(() => renderReadable(node, language));
+  if (!wrote.has('value') || readsAs(text, language, node)) return text;
+  return semanticRenderer.renderPlainWords(() => renderReadable(node, language), plain);
 }
 
 function renderReadable(node: SemanticNode, language: string): string {

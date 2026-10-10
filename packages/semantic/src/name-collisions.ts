@@ -183,6 +183,19 @@ export function readsAs(code: string, language: string, node: SemanticNode): boo
 }
 
 /**
+ * Do two renders of one program read back alike? Two the reader rejects do.
+ * The verified render asks it of a pronoun in the case its marker takes
+ * against the nominative (M2 N3): the case form must change nothing the
+ * reader reads, whatever the rest of the render reads as.
+ */
+export function readAlike(a: string, b: string, language: string): boolean {
+  const first = parseWithConfidence(a, language).node;
+  const second = parseWithConfidence(b, language).node;
+  if (!first || !second) return !first && !second;
+  return sameReading(readingOfNode(first), readingOfNode(second));
+}
+
+/**
  * Two English readings, alike up to a name in parentheses and the spelling
  * of a possessive: a translation reads `valor de #price` back as `value of
  * #price` and ja `#priceの値` as `#price's value`, which both engines read as

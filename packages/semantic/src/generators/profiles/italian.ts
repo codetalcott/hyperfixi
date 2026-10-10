@@ -37,6 +37,16 @@ export const italianProfile: LanguageProfile = {
     window: 'finestra',
     detail: 'dettaglio',
   },
+  // `me` next to a marker, in the case the marker takes (M2 N3; listed in
+  // NATIVE_REVIEW_NEEDED.md).
+  obliqueReferences: {
+    me: {
+      in: 'in me',
+      a: 'a me',
+      da: 'da me',
+      di: 'di me',
+    },
+  },
   possessive: {
     marker: 'di', // Italian uses "di" for general possession
     markerPosition: 'before-property',
