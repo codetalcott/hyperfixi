@@ -120,9 +120,9 @@ and vi where the lexicon's own word reads back; the rest denylisted with reasons
 `start`, he's gaps); C1–C4 keep English (`KEPT_ENGLISH` in `english-leaks.ts`; C4 deferred, still
 counted). Order, by corpus rows each clears in es: A1 (7), A5 (4), A2 (3), B4 (2), A3/A4 (2), then the
 rest; the shapes-heavy rows (`def`, `catch`/`finally`, `element`, `between`) after. Done: A1–A5, A7–A10,
-B1–B7 (B7: bn/th/vi `document`/`window`, and he's words with its `document`, `window` and `is`; the sheet
-lists the PRs and the words that changed). The words target is met in every language (2026-10-10); next
-A6 (`between`).
+B1–B7 (B7: bn/th/vi `document`/`window`; he's words, `document`, `window` and `is`) and V1 `forever`
+(the sheet lists the PRs and the words that changed). The words target is met everywhere (2026-10-10);
+next A6 (`between`).
 
 **Step 4 — design:**
 
