@@ -34,7 +34,7 @@ import {
   collectRoleSignatureStrict,
 } from '../fidelity';
 import { parse } from '../parser';
-import { toUpstreamSpelling, unspelledForms } from './upstream-spelling';
+import { toForeignSpelling, toUpstreamSpelling, unspelledForms } from './upstream-spelling';
 
 export type TranslationLossKind = 'truncation' | 'core-only' | 'read-back' | 'invariant';
 
@@ -321,9 +321,10 @@ export function findTranslationLoss(
   // English is written in upstream's spelling (explicit/upstream-spelling.ts:
   // the owner's 2026-10-01 rule, each rewrite measured on both engines), which
   // can wrap a command (a view-transition tail becomes `start view transition
-  // … end`) or respell one (`prepend` becomes `put … at start of`): compare
-  // with what was rendered.
-  const rendered = to === 'en' ? toUpstreamSpelling(node) : node;
+  // … end`) or respell one (`prepend` becomes `put … at start of`), and the
+  // other languages write `put … at start of` as their `prepend`: compare with
+  // what was rendered.
+  const rendered = to === 'en' ? toUpstreamSpelling(node) : toForeignSpelling(node);
   const commands = actionDifference(rendered, back);
   if (commands.length) return { kind: 'read-back', lost: commands };
   const roles = lostRoles(rendered, back);

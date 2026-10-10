@@ -1,8 +1,8 @@
 {
   "description": "English-leak gate, command-shape half (src/multilingual/english-leaks.ts): per command-shape case, the findings of each language's render (translate(src, 'en', L)): an English grammar word, `event:<name>` or `case:me`. `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts.",
-  "renders": 23685,
-  "leaky": 5800,
-  "findings": 8619,
+  "renders": 23754,
+  "leaky": 5826,
+  "findings": 8645,
   "kinds": {
     "word": {
       "renders": 2562,
@@ -13,8 +13,8 @@
       "findings": 0
     },
     "case": {
-      "renders": 3858,
-      "findings": 4155
+      "renders": 3884,
+      "findings": 4181
     }
   },
   "entries": {
@@ -591,6 +591,9 @@
     },
     "69537d01ae": {
       "case:me case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+    },
+    "6959984db6": {
+      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "6a4c277b9e": {
       "on": "*"
@@ -1394,6 +1397,9 @@
     "f24b5ab7b2": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
+    "f460465218": {
+      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+    },
     "f4c1d568d9": {
       "trigger": "qu"
     },
@@ -1532,7 +1538,6 @@
     "6637424a5a": "*",
     "66878bf2ed": "it pl ru uk",
     "66a3e903a3": "ja",
-    "6959984db6": "*",
     "69b9b4ca2b": "*",
     "6a6afed6dc": "ar de es fr he id it ms pl pt ru sw th tl uk",
     "6b508f9f6a": "bn it th",
@@ -1591,7 +1596,6 @@
     "b0492a08fb": "*",
     "b19c6cad07": "qu tr",
     "b2ec75a2bf": "*",
-    "b2fe1705ef": "*",
     "b5bb616a88": "ko",
     "b6d4332c89": "bn hi ja ko qu tr",
     "b8c084be2a": "*",
@@ -1641,7 +1645,6 @@
     "eff1f1e59f": "qu",
     "f1554089dd": "pt",
     "f1bc20c608": "de es fr id it pl pt qu sw tr vi",
-    "f460465218": "*",
     "f76ff620e1": "*",
     "f886098f71": "ar de fr he ja tr",
     "fc1f6f6ab5": "qu",

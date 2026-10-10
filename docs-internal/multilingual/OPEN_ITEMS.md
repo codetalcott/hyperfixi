@@ -71,7 +71,6 @@ silent; the others marked *refused* are loud.
 32. **P57 · Collection expressions**: upstream 0.9.93's `<q/> in #box where it matches .a`, `… mapped to its textContent`, `repeat for x in :items where …` are refused in all 24 lanes (semantic's reader has no `where` / `mapped to`) · 2026-10-07 (M1 step 3) · yes (LOUD `collection-expressions`) · parser · refused.
 33. **P58 · `at end of` inside a behavior's or a def's body**: `behavior B on click put "x" at end of me end` and the def form are refused; the block parser's `end` tests lack the position check the handler path has (`at end of`, `at the end of`) · 2026-10-07 (M1 step 3) · no · parser · probe confirmed.
 34. **P59 · `wait for reset from #b` loses its source in English**: the English reader takes `reset` (a command too) for the command, so `on click wait for reset from #b then log 1` is refused en → en (invariant: `#b`); the engine reads it. No translation can carry a native `reset` event through `wait for` until this is fixed, so every language's `reset` is denylisted (M2 N2) · 10-08 · command-event-names.test.ts (once `reset` renders) · parser · open.
-35. **P60 · `put X at start of Y` is written as `at end of` in every language**: es `poner x en fin de yo`, ja `x で 終わり の 自分 を 置く`, so `translate()` refuses (the read-back loses `at start of`); English writes core's `prepend` this way (upstream-spelling). Repro: `translate("on click put x at start of me", 'en', 'es')` · 10-08 (M2 B6 probes) · command-shapes (refused) · render · open.
 
 ### 2b. Render / naturalness (6)
 
