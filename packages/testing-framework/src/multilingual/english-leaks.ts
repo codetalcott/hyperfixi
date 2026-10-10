@@ -241,7 +241,16 @@ function languageWords(
   const translated = new Set<string>();
   const add = (english: string, t: KeywordTranslationLike | undefined): void => {
     const forms = spellings(t);
-    for (const w of forms) native.add(w);
+    // An alternative spelled like the English word, beside a primary that is
+    // the language's own, is English the reader still takes (code-switched
+    // input), not a word the language writes: a render that writes it leaks.
+    // Counted as native, it hid every such leak (`forever` in the eight
+    // languages whose primary is their own, V1).
+    const englishWords = new Set(wordsOf(english));
+    const primary = wordsOf(t?.primary);
+    const ownPrimary = primary.some(w => !englishWords.has(w));
+    for (const w of forms)
+      if (!(ownPrimary && englishWords.has(w) && !primary.includes(w))) native.add(w);
     if (forms.length && !forms.includes(english))
       for (const w of wordsOf(english)) translated.add(w);
   };
