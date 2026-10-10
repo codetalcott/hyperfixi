@@ -38,6 +38,11 @@
  *                                       document.startViewTransition; upstream's block
  *                                       runs its body there)
  *
+ * A foreign render keeps its own words, and one form English writes has no
+ * spelling in any other language (toForeignSpelling, below):
+ *
+ *   put X at start of Y               → prepend X to Y  (P60)
+ *
  * Read and written as written, with no upstream spelling: `clone`, `process` (its
  * view-transition tail included: `process partials` is core's in either spelling).
  * Upstream rejects both, so where one runs it fails loudly. A form upstream READS,
@@ -136,6 +141,47 @@ export function toUpstreamSpelling(node: SemanticNode): SemanticNode {
     default:
       return node;
   }
+}
+
+/**
+ * Rewrite a node tree so that a foreign render can write it. Only English reads
+ * `put X at start of Y`: each other language has a pattern for `at end of` alone
+ * (patterns/put.ts PUT_AT_END), and the renderer wrote its `at end of` in its
+ * place (P60), which the read-back caught and `translate` refused. Every
+ * language writes and reads `prepend`, which English writes back as `put … at
+ * start of` (above), so a round trip comes back as written.
+ */
+export function toForeignSpelling(node: SemanticNode): SemanticNode {
+  return mapCommands(node, command => {
+    const manner = command.roles.get('manner' as SemanticRole);
+    if (command.action !== 'put' || manner?.type !== 'literal' || manner.value !== 'at start of') {
+      return command;
+    }
+    const roles = new Map<SemanticRole, SemanticValue>();
+    for (const name of ['patient', 'destination'] as SemanticRole[]) {
+      const value = command.roles.get(name);
+      if (value) roles.set(name, value);
+    }
+    const prepend: CommandSemanticNode = { ...command, action: 'prepend', roles };
+    return prepend;
+  });
+}
+
+/** `node` with each command in it, at any depth, replaced by `rewrite`'s. */
+function mapCommands(
+  node: SemanticNode,
+  rewrite: (command: CommandSemanticNode) => SemanticNode
+): SemanticNode {
+  const rec = node as unknown as Record<string, unknown>;
+  let out: Record<string, unknown> | undefined;
+  for (const field of CHILD_FIELDS) {
+    const children = rec[field];
+    if (!Array.isArray(children)) continue;
+    const mapped = children.map(c => mapCommands(c as SemanticNode, rewrite));
+    if (mapped.some((m, i) => m !== children[i])) (out ??= { ...rec })[field] = mapped;
+  }
+  const next = (out ?? rec) as unknown as SemanticNode;
+  return next.kind === 'command' ? rewrite(next as CommandSemanticNode) : next;
 }
 
 /**

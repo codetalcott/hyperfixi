@@ -18,16 +18,17 @@ import type { SemanticNode } from '../types';
 import { tryGetProfile } from '../registry';
 import { parenthesizeCollidingNames, readsAs } from '../name-collisions';
 import { semanticRenderer } from './renderer';
-import { toUpstreamSpelling } from './upstream-spelling';
+import { toForeignSpelling, toUpstreamSpelling } from './upstream-spelling';
 
 /**
  * Render a semantic node in the specified language: the plain render, unless
  * it would be read back as something else and the render with its colliding
  * variables in parentheses, or with every variable written as spelled, is not.
  */
-export function render(node: SemanticNode, language: string): string {
-  if (language === 'en') return semanticRenderer.render(toUpstreamSpelling(node), language);
-  if (!tryGetProfile(language)) return semanticRenderer.render(node, language);
+export function render(written: SemanticNode, language: string): string {
+  if (language === 'en') return semanticRenderer.render(toUpstreamSpelling(written), language);
+  if (!tryGetProfile(language)) return semanticRenderer.render(written, language);
+  const node = toForeignSpelling(written);
   semanticRenderer.takeNativeValueWords();
   const text = renderReadable(node, language);
   // A value's grammar word in the language's own can read as something else:
