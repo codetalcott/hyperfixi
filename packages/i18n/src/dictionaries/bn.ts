@@ -144,6 +144,8 @@ export const bengaliDictionary: Dictionary = {
   },
 
   values: {
+    document: 'ডকুমেন্ট',
+    window: 'উইন্ডো',
     element: 'উপাদান',
     me: 'আমি',
     my: 'আমার',

@@ -31,6 +31,8 @@ export const vietnameseProfile: LanguageProfile = {
     event: 'sự kiện',
     target: 'mục tiêu',
     body: 'body',
+    document: 'tài liệu',
+    window: 'cửa sổ',
   },
   possessive: {
     marker: 'của', // Vietnamese uses "của" for possession (của tôi = my)

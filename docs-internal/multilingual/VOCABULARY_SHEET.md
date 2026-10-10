@@ -15,11 +15,12 @@ path already used: es `valor de #price`, ja `#priceの値`; only where the prope
 which converts the owner, and for a one-link phrase that is the whole value (`set @role of #x`, which ja
 would read back as a property path); `toggle the *X of Y`, a kept clause, and an owner that is not an
 element, `the length of my value`, stay English), A9 and B2 (#1439; a handler's and a function's `catch
-e` and `finally`), A10 (#1440; `the element's x` is written the same as `element x`, one name on
-both engines, except before an index, where only the possessive spelling reads), B1 (2026-10-09; `def` as
-the noun "function", es `función greet(name)`). Open: A6, B7. The words of B3–B6, A5, A4, A9, B2 and B1
-are in `packages/semantic/src/parser/utils/grammar-words.ts`, and A10's in
-`packages/semantic/src/element-scope.ts`, each held to the dictionaries by a test.
+e` and `finally`), A10 (#1440; `the element's x` is written the same as `element x`, one name on both
+engines, except before an index, where only the possessive spelling reads), B1 (#1441; `def` as the
+noun "function", es `función greet(name)`), and B7's bn/th/vi `document`/`window` (2026-10-09; a dot
+access keeps the English base in every language, `window.scrollY`). Open: A6, and B7's he words. The
+words of B3–B6, A5, A4, A9, B2 and B1 are in `packages/semantic/src/parser/utils/grammar-words.ts`, and
+A10's in `packages/semantic/src/element-scope.ts`, each held to the dictionaries by a test.
 
 **Words changed from the appendix while implementing.** Each proposed word below was already another word
 of its language (a keyword or a role marker), or the tokenizer split it into one; the table has the word

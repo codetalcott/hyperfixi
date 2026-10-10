@@ -1,12 +1,12 @@
 {
   "description": "English-leak gate, command-shape half (src/multilingual/english-leaks.ts): per command-shape case, the findings of each language's render (translate(src, 'en', L)): an English grammar word, `event:<name>` or `case:me`. `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts.",
   "renders": 23673,
-  "leaky": 5859,
-  "findings": 8798,
+  "leaky": 5855,
+  "findings": 8792,
   "kinds": {
     "word": {
-      "renders": 2661,
-      "findings": 4647
+      "renders": 2655,
+      "findings": 4641
     },
     "event": {
       "renders": 0,
@@ -553,9 +553,8 @@
       "case:me": "ar bn de es hi it pl pt ru tr uk"
     },
     "57cc2d6c8c": {
-      "case:me": "ar de es hi it pl pt ru tl tr uk",
-      "case:me window": "bn he",
-      "window": "th vi"
+      "case:me": "ar bn de es hi it pl pt ru tl tr uk",
+      "case:me window": "he"
     },
     "580655e71a": {
       "of": "ar bn de es fr he hi id ja ko ms pt qu sw th tl tr vi zh"
@@ -1048,9 +1047,8 @@
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
     "9c90bddc55": {
-      "case:me": "ar de es hi it pl pt ru tl tr uk",
-      "case:me window": "bn he",
-      "window": "th vi"
+      "case:me": "ar bn de es hi it pl pt ru tl tr uk",
+      "case:me window": "he"
     },
     "9d62c36696": {
       "trigger": "qu"

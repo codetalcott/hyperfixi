@@ -29,6 +29,8 @@ export const thaiProfile: LanguageProfile = {
     event: 'เหตุการณ์',
     target: 'เป้าหมาย',
     body: 'บอดี้',
+    document: 'เอกสาร',
+    window: 'หน้าต่าง',
   },
   possessive: {
     marker: 'ของ',
