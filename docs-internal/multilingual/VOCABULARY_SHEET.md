@@ -15,7 +15,7 @@ path already used: es `valor de #price`, ja `#priceの値`; only where the prope
 which converts the owner, and for a one-link phrase that is the whole value (`set @role of #x`, which ja
 would read back as a property path); `toggle the *X of Y`, a kept clause, and an owner that is not an
 element, `the length of my value`, stay English), A9 and B2 (#1439; a handler's and a function's `catch
-e` and `finally`), A10 (2026-10-09; `the element's x` is written the same as `element x`, one name on
+e` and `finally`), A10 (#1440; `the element's x` is written the same as `element x`, one name on
 both engines, except before an index, where only the possessive spelling reads), B1 (2026-10-09; `def` as
 the noun "function", es `función greet(name)`). Open: A6, B7. The words of B3–B6, A5, A4, A9, B2 and B1
 are in `packages/semantic/src/parser/utils/grammar-words.ts`, and A10's in
