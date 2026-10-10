@@ -66,6 +66,7 @@ export const vietnameseLexicon: LanguageLexicon = {
     yesterday: { primary: 'hôm qua' },
   },
   values: {
+    element: { primary: 'phần tử' },
     all: { primary: 'tất cả' },
     any: { primary: 'bất kỳ' },
     body: { primary: 'body' },

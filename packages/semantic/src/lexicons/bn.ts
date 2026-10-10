@@ -61,6 +61,7 @@ export const bengaliLexicon: LanguageLexicon = {
     times: { primary: 'বার' },
   },
   values: {
+    element: { primary: 'উপাদান' },
     body: { primary: 'বডি' },
     event: { primary: 'ঘটনা' },
     it: { primary: 'এটি' },

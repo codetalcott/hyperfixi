@@ -23,6 +23,7 @@ import type { LanguageTokenizer, LanguagePattern, LanguageToken, TokenStream } f
 import { TokenStreamImpl } from './tokenizers/token-utils';
 import { VALUE_WORDS } from './value-words';
 import { CSS_UNITS } from './css-units';
+import { elementScopeWord } from './element-scope';
 
 // Re-export profile types from generators for convenience
 export type {
@@ -606,10 +607,11 @@ function isPlainName(t: LanguageToken | undefined): t is LanguageToken {
 /**
  * `global x`, `element x`, `the element's x`, `local x`, `dom x`: a variable
  * with its scope, which upstream reads as one name (its `symbol` rule). Fused
- * into one token, every reader takes it as the value it is, as it does `$x`,
- * and every language writes it as written (P45). Before, the scope word stood
- * alone and the command around it was dropped. The scope words are English in
- * every language, as the `$` and `:` sigils are.
+ * into one token, every reader takes it as the value it is, as it does `$x`.
+ * Before, the scope word stood alone and the command around it was dropped.
+ * `element` is also read in the language's own word, which a translation
+ * writes (M2 sheet A10, grammar-words.ts ELEMENT_SCOPE); the other scope words
+ * are English in every language (P45), as the `$` and `:` sigils are.
  */
 function fuseScopedNames(stream: TokenStream, language: string): TokenStream {
   const tokens = stream.tokens;
@@ -617,9 +619,32 @@ function fuseScopedNames(stream: TokenStream, language: string): TokenStream {
   let changed = false;
   const touches = (a: LanguageToken | undefined, b: LanguageToken | undefined): boolean =>
     !!a && !!b && a.position.end === b.position.start;
+  // The language's own `element` (M2 sheet A10), as the words it is written in
+  // (vi `phần tử`): es `elemento x` is `element x`.
+  const native = elementScopeWord(language).toLowerCase().split(/\s+/);
+  const nativeAt = (i: number): number =>
+    native[0] !== 'element' && native.every((w, j) => tokens[i + j]?.value.toLowerCase() === w)
+      ? native.length
+      : 0;
   for (let i = 0; i < tokens.length; i++) {
     const scope = tokens[i]!;
     const word = scope.value.toLowerCase();
+    const nativeLength = nativeAt(i);
+    const nativeName = tokens[i + nativeLength];
+    if (
+      nativeLength > 0 &&
+      isPlainName(nativeName) &&
+      !SCOPE_WORDS.has(nativeName.value.toLowerCase())
+    ) {
+      out.push({
+        value: `element ${nativeName.value}`,
+        kind: 'identifier',
+        position: { ...scope.position, end: nativeName.position.end },
+      } as LanguageToken);
+      i += nativeLength;
+      changed = true;
+      continue;
+    }
     if (!isPlainName(scope) || !SCOPE_WORDS.has(word)) {
       out.push(scope);
       continue;

@@ -119,9 +119,8 @@ and vi where the lexicon's own word reads back; the rest denylisted with reasons
 `element`); B1–B7 add a word per language (`def`, `finally`, `go back`, `elsewhere`, `with index`,
 `start`, he's gaps); C1–C4 keep English (`KEPT_ENGLISH` in `english-leaks.ts`; C4 deferred, still
 counted). Order, by corpus rows each clears in es: A1 (7), A5 (4), A2 (3), B4 (2), A3/A4 (2), then the
-rest; the shapes-heavy rows (`def`, `catch`/`finally`, `element`, `between`) after. Done: A1–A5, A7–A9,
-B2–B6 (the sheet lists the PRs and the words that changed); next the shapes rows (A10, B1, A6), then
-B7.
+rest; the shapes-heavy rows (`def`, `catch`/`finally`, `element`, `between`) after. Done: A1–A5, A7–A10,
+B2–B6 (the sheet lists the PRs and the words that changed); next the shapes rows (B1, A6), then B7.
 
 **Step 4 — design:**
 
@@ -242,8 +241,8 @@ The archived file holds the rationale for each; `OPEN_ITEMS.md` explains how to 
    - brace and bracket interiors (array literals, attribute selectors, indexes), and a call's arguments;
    - a property name its language's reader cannot bring back (`my children`, `my style[…]`);
    - a clause no pattern models, and upstream's `on` head forms, kept as written (M1);
-   - `global x` until it has a word (sheet C4; `catch` and `finally` have theirs, A9 and B2, and `element x`
-     gets one, A10);
+   - `global x` until it has a word (sheet C4; `catch`, `finally` and `element x` have theirs: A9, B2,
+     A10);
    - unsafe event names;
    - `js … end` bodies (never translated).
 

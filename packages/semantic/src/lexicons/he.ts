@@ -32,6 +32,7 @@ export const hebrewLexicon: LanguageLexicon = {
     times: { primary: 'פעמים' },
   },
   values: {
+    element: { primary: 'אלמנט' },
     body: { primary: 'גוף' },
     event: { primary: 'אירוע' },
     // The tokenizer has carried אמת/שקר → true/false for years (HEBREW_EXTRAS);

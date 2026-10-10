@@ -1,12 +1,12 @@
 {
   "description": "English-leak gate, command-shape half (src/multilingual/english-leaks.ts): per command-shape case, the findings of each language's render (translate(src, 'en', L)): an English grammar word, `event:<name>` or `case:me`. `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts.",
-  "renders": 23672,
-  "leaky": 7042,
-  "findings": 10323,
+  "renders": 23673,
+  "leaky": 6978,
+  "findings": 10125,
   "kinds": {
     "word": {
-      "renders": 3865,
-      "findings": 6172
+      "renders": 3801,
+      "findings": 5974
     },
     "event": {
       "renders": 0,
@@ -308,9 +308,6 @@
     "2b181df899": {
       "case:me": "bn he hi tr"
     },
-    "2b95e6630c": {
-      "element": "ar bn es fr he hi id it ja ko ms pt qu ru sw th tl tr uk vi zh"
-    },
     "2bfac832b4": {
       "as at case:me of": "he",
       "case:me": "ar bn de es hi it pl pt ru tl tr uk"
@@ -479,9 +476,6 @@
     "461f84cebf": {
       "empty in is": "he"
     },
-    "465ed43e73": {
-      "element": "ar bn es fr he hi id it ja ko ms pt qu ru sw th tl tr uk vi zh"
-    },
     "46862cb328": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
     },
@@ -561,10 +555,6 @@
     "520002c276": {
       "case:me def": "bn he hi tr",
       "def": "ar de es fr id it ja ko ms pl pt qu ru sw th tl uk vi zh"
-    },
-    "5251dc43ae": {
-      "element element the the": "ar bn es fr he hi id it ja ko ms pt qu ru sw th tl tr vi zh",
-      "the the": "de pl"
     },
     "53b315fa38": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -680,8 +670,8 @@
     },
     "66878bf2ed": {
       "case:me": "de",
-      "case:me element element element element element element": "ar bn es he hi pt tl tr",
-      "element element element element element element": "fr id ja ko ms qu sw th vi zh"
+      "case:me element element": "ar bn es he hi pt tl tr",
+      "element element": "fr id ja ko ms qu sw th vi zh"
     },
     "66ed3cc3b9": {
       "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
@@ -1827,7 +1817,6 @@
     "4d988893a9": "*",
     "4da1d2fe85": "vi",
     "4fa7c5a9f9": "ar de fr he ja tr",
-    "5251dc43ae": "uk",
     "540540cc5a": "bn es it ko pl ru th tl uk",
     "558a1f8b25": "*",
     "55c3d28c9e": "*",

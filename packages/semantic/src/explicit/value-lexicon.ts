@@ -52,6 +52,7 @@
 import type { LanguageLexicon, LanguageProfile } from '../generators/profiles/types';
 import { getLexicon } from '../lexicon-registry';
 import { conversionAsWord, queryInWord } from '../parser/utils/grammar-words';
+import { elementScopeWord } from '../element-scope';
 
 /** Category order matters: first hit wins, mirroring i18n's DICTIONARY_CATEGORIES. */
 const LEXICON_CATEGORIES = ['values', 'expressions', 'logical', 'temporal', 'attributes'] as const;
@@ -277,6 +278,31 @@ function conversionLead(lead: string, words: ValueWords, spans: string[]): strin
 }
 
 /**
+ * An element-scoped name inside a value, in the language's own `element` (M2,
+ * vocabulary sheet A10): `if element x is 1` is es `si elemento x es 1`, and
+ * `the element's x` is written the same, as both engines read it. The word and
+ * the name are masked together, so the name stays as spelled. After `element`,
+ * an operator word is no name: `element is 1` reads a variable named `element`.
+ * Before an index, only the possessive spelling reads (`element's bar["count"]`),
+ * so there the English stays (the index is masked by then: MASK_OPEN).
+ */
+const ELEMENT_SCOPED =
+  /(^|[^\w$.#@*:'-])(?:the\s+)?element(?:'s)?\s+([A-Za-z_]\w*)\b(?!\s*(?:\[|\uE010))/g;
+const NOT_A_SCOPED_NAME: ReadonlySet<string> = new Set([
+  'is', 'am', 'and', 'or', 'not', 'no', 'matches', 'contains', 'includes', 'in', 'as', 'of',
+  'to', 'then', 'else', 'end', 'from', 'into', 'with', 'at', 'by', 'does', 'do', 'exists',
+]);
+function nativeElementScope(text: string, language: string, spans: string[]): string {
+  const word = elementScopeWord(language);
+  if (word === 'element') return text;
+  return text.replace(ELEMENT_SCOPED, (whole, lead: string, name: string) => {
+    if (NOT_A_SCOPED_NAME.has(name.toLowerCase())) return whole;
+    spans.push(`${word} ${name}`);
+    return `${lead}${MASK_OPEN}${spans.length - 1}${MASK_CLOSE}`;
+  });
+}
+
+/**
  * The grammar words a value is written with: the `in` that scopes a query and
  * the `as` of a conversion, each the language's own or English's, and who to
  * tell when one is the language's own.
@@ -328,7 +354,8 @@ export function localizeValueInterior(
     }
   );
 
-  const localized = thirdPerson(nativeQueryIn(masked, valueWords, spans)).replace(WORD, (whole, lead: string, word: string) => {
+  const scoped = nativeElementScope(masked, language, spans);
+  const localized = thirdPerson(nativeQueryIn(scoped, valueWords, spans)).replace(WORD, (whole, lead: string, word: string) => {
     if (keep?.has(word)) return whole;
     const hit = words.get(word.toLowerCase());
     return hit ? `${lead}${hit}` : whole;
