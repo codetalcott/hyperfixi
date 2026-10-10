@@ -143,7 +143,7 @@ export const quechuaProfile: LanguageProfile = {
     while: { primary: 'kaykamaqa', normalized: 'while' },
     // `repeat forever` loop keyword — corpus word recognized so loopType types
     // as `:literal` like EN (the repeat.loopType R1 residue; see spanish.ts).
-    forever: { primary: 'forever', normalized: 'forever' },
+    forever: { primary: 'wiñay', normalized: 'forever', alternatives: ['forever'] },
     continue: { primary: 'qatipay', normalized: 'continue' },
     halt: { primary: 'sayay', alternatives: [], normalized: 'halt' },
     throw: { primary: 'chanqay', normalized: 'throw' },

@@ -60,6 +60,7 @@ export const chineseLexicon: LanguageLexicon = {
     where: { primary: '哪里' },
   },
   temporal: {
+    forever: { primary: '永远' },
     h: { primary: '时' },
     hour: { primary: '小时' },
     hours: { primary: '小时' },

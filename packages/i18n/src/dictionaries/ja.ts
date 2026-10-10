@@ -146,6 +146,7 @@ export const ja: Dictionary = {
   },
 
   temporal: {
+    forever: 'ずっと',
     seconds: '秒',
     second: '秒',
     milliseconds: 'ミリ秒',

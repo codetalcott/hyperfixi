@@ -59,6 +59,7 @@ export const spanishLexicon: LanguageLexicon = {
     where: { primary: 'donde' },
   },
   temporal: {
+    forever: { primary: 'siempre' },
     h: { primary: 'h' },
     hour: { primary: 'hora' },
     hours: { primary: 'horas' },

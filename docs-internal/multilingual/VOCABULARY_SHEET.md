@@ -19,7 +19,8 @@ e` and `finally`), A10 (#1440; `the element's x` is written the same as `element
 engines, except before an index, where only the possessive spelling reads), B1 (#1441; `def` as the
 noun "function", es `función greet(name)`), and B7: bn/th/vi `document`/`window` (#1442; a dot access
 keeps the English base in every language, `window.scrollY`), and he's words with its `document`, `window`
-and `is` (2026-10-10, the owner's call for those three; `between` comes with A6). Open: A6. The
+and `is` (#1443, the owner's call for those three, 2026-10-10; `between` comes with A6), and `repeat
+forever` in the 15 languages that kept English's (V1, below). Open: A6. The
 words of B3–B6, A5, A4, A9, B2 and B1 are in `packages/semantic/src/parser/utils/grammar-words.ts`, and
 A10's in `packages/semantic/src/element-scope.ts`, each held to the dictionaries by a test.
 
@@ -134,6 +135,13 @@ Group A's missing words (A9, A10) and the lexicon gaps (B7):
 | th   | catch จับ · element องค์ประกอบ · document เอกสาร · window หน้าต่าง                                         |
 | vi   | element phần tử · document tài liệu · window cửa sổ                                                       |
 | he   | catch תפוס · element אלמנט · of של · as בתור · in בתוך · between בין · not לא · first ראשון · at אצל ? · matches תואם · closest הקרוב · next הבא · previous הקודם · empty ריק · exists קיים · or או · document מסמך · window חלון · is הוא (the last three: owner, 2026-10-10) |
+
+`repeat forever` (OPEN_ITEMS V1), decided by the owner 2026-10-10, after this sheet: the 15 languages that
+wrote English `forever` (their profiles listed it as their own word, so no check saw it) take ar `دائما`,
+de `endlos`, es `siempre`, fr `toujours`, he `תמיד`, id `selamanya`, it `sempre`, ja `ずっと`, ko `영원히`,
+pl `zawsze`, pt `sempre`, qu `wiñay`, sw `milele`, tr `sürekli`, zh `永远`. Every multi-word choice held a
+marker or keyword (de `für immer` read silently as `repeat for immer`). The other eight already had one
+(ru `всегда`, th `ตลอดไป`, …). The words mix "always" and "endlessly"; the native review checks them.
 
 Not on this sheet: the pronoun case after a marker (N3, es `a mí`, de `zu mir`). Its forms are fixed by
 each language's grammar rather than chosen, so they come with the N3 design (M2 step 4) and the same

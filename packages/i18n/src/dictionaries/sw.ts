@@ -164,6 +164,7 @@ export const sw: Dictionary = {
   },
 
   temporal: {
+    forever: 'milele',
     seconds: 'sekunde',
     second: 'sekunde',
     milliseconds: 'millisekunde',

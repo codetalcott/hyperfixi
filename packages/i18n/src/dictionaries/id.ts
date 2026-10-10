@@ -154,6 +154,7 @@ export const id: Dictionary = {
   },
 
   temporal: {
+    forever: 'selamanya',
     seconds: 'detik',
     second: 'detik',
     milliseconds: 'milidetik',

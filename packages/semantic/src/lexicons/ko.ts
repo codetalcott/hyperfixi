@@ -60,6 +60,7 @@ export const koreanLexicon: LanguageLexicon = {
     where: { primary: '어디' },
   },
   temporal: {
+    forever: { primary: '영원히' },
     h: { primary: '시' },
     hour: { primary: '시간' },
     hours: { primary: '시간' },

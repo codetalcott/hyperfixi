@@ -59,6 +59,7 @@ export const portugueseLexicon: LanguageLexicon = {
     where: { primary: 'onde' },
   },
   temporal: {
+    forever: { primary: 'sempre' },
     h: { primary: 'h' },
     hour: { primary: 'hora' },
     hours: { primary: 'horas' },

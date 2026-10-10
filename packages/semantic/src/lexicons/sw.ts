@@ -59,6 +59,7 @@ export const swahiliLexicon: LanguageLexicon = {
     where: { primary: 'wapi' },
   },
   temporal: {
+    forever: { primary: 'milele' },
     h: { primary: 'sa' },
     hour: { primary: 'saa' },
     hours: { primary: 'masaa' },

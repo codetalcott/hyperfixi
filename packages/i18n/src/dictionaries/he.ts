@@ -96,6 +96,7 @@ export const he: Dictionary = {
   },
 
   temporal: {
+    forever: 'תמיד',
     times: 'פעמים',
   },
 

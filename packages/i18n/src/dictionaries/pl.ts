@@ -148,6 +148,7 @@ export const pl: Dictionary = {
   },
 
   temporal: {
+    forever: 'zawsze',
     seconds: 'sekundy',
     second: 'sekunda',
     milliseconds: 'milisekundy',

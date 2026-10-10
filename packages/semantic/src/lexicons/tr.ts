@@ -61,6 +61,7 @@ export const turkishLexicon: LanguageLexicon = {
     where: { primary: 'nerede' },
   },
   temporal: {
+    forever: { primary: 'sürekli' },
     h: { primary: 'sa' },
     hour: { primary: 'saat' },
     hours: { primary: 'saat' },

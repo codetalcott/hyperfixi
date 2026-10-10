@@ -83,7 +83,6 @@ silent; the others marked *refused* are loud.
 
 ### 2c. Vocabulary / owner decisions / native review (8)
 
-42. **V1 · OWNER: `repeat forever` keeps English `forever` in 15 languages**, and the leak gate cannot see it: those profiles list `forever` as their own word. The other loop heads are done (sheet A1, #1431). `forever` is not on the vocabulary sheet, so a word per language is still an owner call · 7104–7106 (also 5389–5391) · 09-30 (narrowed 10-08) · no · vocab/owner · open, not decided.
 43. **V2 · NATIVE: ru `3 раз` / uk `3 разів`** want `раза`/`рази` after 2–4. The dictionary has a single form · 7106–7108 · 09-30 · no · vocab/native · open.
 44. **V3 · NATIVE: the reactive `when … changes` words in all 24 languages**, plus:
     - the fr `change`, id `berubah`, th `เปลี่ยน` change-event homographs

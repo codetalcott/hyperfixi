@@ -142,6 +142,7 @@ export const ko: Dictionary = {
   },
 
   temporal: {
+    forever: '영원히',
     seconds: '초',
     second: '초',
     milliseconds: '밀리초',

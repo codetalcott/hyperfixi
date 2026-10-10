@@ -155,6 +155,7 @@ export const zh: Dictionary = {
   },
 
   temporal: {
+    forever: '永远',
     seconds: '秒',
     second: '秒',
     milliseconds: '毫秒',

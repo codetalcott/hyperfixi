@@ -60,6 +60,7 @@ export const japaneseLexicon: LanguageLexicon = {
     where: { primary: 'どこ' },
   },
   temporal: {
+    forever: { primary: 'ずっと' },
     h: { primary: '時' },
     hour: { primary: '時間' },
     hours: { primary: '時間' },

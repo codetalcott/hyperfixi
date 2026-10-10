@@ -60,6 +60,7 @@ export const arabicLexicon: LanguageLexicon = {
     where: { primary: 'أين' },
   },
   temporal: {
+    forever: { primary: 'دائما' },
     h: { primary: 'س' },
     hour: { primary: 'ساعة' },
     hours: { primary: 'ساعات' },

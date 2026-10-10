@@ -516,6 +516,7 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   enda: ['sw'],
   ende: ['de'],
   endelea: ['sw'],
+  endlos: ['de'],
   enfocar: ['es'],
   enfoque: ['es'],
   enlazar: ['es'],
@@ -1107,6 +1108,7 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   mfanyakazi: ['sw'],
   mficho: ['sw'],
   mientras: ['es'],
+  milele: ['sw'],
   misurare: ['it'],
   mit: ['de'],
   mở: ['vi'],
@@ -1543,7 +1545,7 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   selagi: ['ms'],
   selainnya: ['id'],
   selama: ['id'],
-  selamanya: ['ms'],
+  selamanya: ['id', 'ms'],
   seleccionar: ['es'],
   selecionar: ['pt'],
   select: ['en'],
@@ -1556,6 +1558,7 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   semasa: ['ms'],
   sembunyi: ['ms'],
   sembunyikan: ['id'],
+  sempre: ['pt', 'it'],
   senão: ['pt'],
   send: ['en'],
   senden: ['de'],
@@ -1577,6 +1580,7 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   si: ['es', 'fr'],
   'siaran-langsung': ['ms'],
   sichus: ['qu'],
+  siempre: ['es'],
   sifirla: ['tr'],
   siguiente: ['es'],
   sil: ['tr'],
@@ -1650,6 +1654,7 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   sumber_peristiwa: ['ms'],
   supprimer: ['fr'],
   sur: ['fr'],
+  sürekli: ['tr'],
   süresince: ['tr'],
   sururichiy: ['qu'],
   survol: ['fr'],
@@ -1759,6 +1764,7 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   toka: ['sw'],
   tolak: ['ms'],
   tomar: ['es'],
+  toujours: ['fr'],
   'trả về': ['vi'],
   trabajador: ['es'],
   trabalhador: ['pt'],
@@ -1949,6 +1955,7 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   wichqay: ['qu'],
   wiederholen: ['de'],
   willakuy: ['qu'],
+  wiñay: ['qu'],
   with: ['en'],
   wo: ['de'],
   worker: [
@@ -2032,6 +2039,7 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   zamień_url: ['pl'],
   zamknij: ['pl'],
   zatrzymaj: ['pl'],
+  zawsze: ['pl'],
   zaznacz: ['pl'],
   zdarzenie: ['pl'],
   ze: ['pl'],
@@ -2544,6 +2552,7 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   שנה_כתובת: ['he'],
   שקע: ['he'],
   תואם: ['he'],
+  תמיד: ['he'],
   أخبر: ['ar'],
   أخف: ['ar'],
   أخفِ: ['ar'],
@@ -2637,6 +2646,7 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   حين: ['ar'],
   خذ: ['ar'],
   'خلاف ذلك': ['ar'],
+  دائما: ['ar'],
   دفع: ['ar'],
   ربط: ['ar'],
   ركز: ['ar'],
@@ -3175,6 +3185,7 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   에서: ['ko'],
   연결: ['ko'],
   열기: ['ko'],
+  영원히: ['ko'],
   워커: ['ko'],
   으로: ['ko'],
   을: ['ko'],
@@ -3232,6 +3243,7 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   コール: ['ja'],
   コピー: ['ja'],
   スクロール: ['ja'],
+  ずっと: ['ja'],
   ストリーム: ['ja'],
   スロー: ['ja'],
   スワップ: ['ja'],
@@ -3418,6 +3430,7 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   末尾追加: ['ja'],
   次に: ['ja'],
   止める: ['ja'],
+  永远: ['zh'],
   流: ['zh'],
   流式传输: ['zh'],
   测量: ['zh'],
@@ -3537,7 +3550,7 @@ export const SCRIPT_RANGES: readonly {
 ];
 
 /**
- * Total keywords: 3334
+ * Total keywords: 3347
  * Total languages: 24
- * Ambiguous keywords (match 2+ languages): 197
+ * Ambiguous keywords (match 2+ languages): 199
  */

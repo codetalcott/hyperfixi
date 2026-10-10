@@ -34,6 +34,7 @@ export const hebrewLexicon: LanguageLexicon = {
     matches: { primary: 'תואם' },
   },
   temporal: {
+    forever: { primary: 'תמיד' },
     times: { primary: 'פעמים' },
   },
   values: {
