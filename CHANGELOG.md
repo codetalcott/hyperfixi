@@ -7,6 +7,67 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.4.0] - 2026-10-10
+
+Translations now read as their language. In 4.3.0, 19% of the corpus's translations and 24% of the
+command-shape scripts' translations kept at least one English word, and a third of the corpus kept an
+English event name. Counting only the English a recorded decision does not keep (type names, `url`,
+`debounced at`, …), every one of the 23 languages is now at or under 5% of corpus renders (0.7–4.6%)
+and 10% of command-shape renders (3.9–6.2%), and no translation writes an English event name its
+language has a word for. The words are the owner's vocabulary sheet
+(`docs-internal/multilingual/VOCABULARY_SHEET.md`), decided 2026-10-08.
+
+### Added
+
+- **`@hyperfixi/testing-framework`: the English left in a translation is gated.** `english-leaks.ts`
+  counts, per render, the English grammar words (the tokens the engine's own parser matched in the
+  source), English event names the language's lexicon has a word for, and a nominative `me` beside a
+  marker in the 13 languages where that case is wrong. Two shrink-only baselines (the corpus, in
+  `test:canonical`, and the command-shape cases, in their shards); `tools/regen-english-leaks-baseline.ts
+  --report` prints each language against M2's targets. An English alternative a profile keeps for
+  code-switched input, beside a primary that is the language's own, counts as English.
+- **`@lokascript/semantic`: `transition … from … to`** reads and writes in every language (a `source`
+  role), and the bare command reads in English. The schema's `destination` role is gone: upstream has
+  none, and SOV destination markers read an owned property's owner as an element (tr and qu swapped
+  `#foo's *width` silently). English writes `using` for an easing.
+- **`@lokascript/semantic`: `add/remove/hide/show … when <condition>`** in every language, through a
+  `condition` role marked with each profile's `when`. It was English in every translation, and refused
+  as a bare command.
+
+### Changed
+
+- **`@lokascript/semantic` writes each language's own words** for: loop heads (`repeat for x in`,
+  `while`, `until`; es `repetir para x en .items`), `I match` / `I am` (written as the third person, and
+  back in English as upstream's first person), `does not match`, `fetch … do not throw`, `on first`,
+  `go back`, `from elsewhere`, a loop's `index`, `start view transition`, a query's `in`, a conversion's
+  `as` (the type name stays English), `the X of Y` inside an expression (es `valor de #price`, ja
+  `#priceの値`), `catch` and `finally`, `element x`, and `def` (as the noun "function", es `función
+  greet(name)`). bn, th and vi have their own `document` and `window`; he has its own words for all of
+  these and for `matches`, `exists`, `or`, `not`, `first`, `next`, `previous`, `closest`, `empty`, `is`,
+  `document` and `window`; and the 15 languages that wrote English `forever` have their own (es
+  `repetir siempre`, de `endlos`, ja `ずっと`). Every reader still takes the English words. Where a word
+  would read back as another (es `en` is also a marker), the translation keeps English's.
+- **`@lokascript/semantic` writes native event names** in he, hi, it, pl, qu, ru, th, uk and vi where
+  the lexicon's word reads back; the rest are denylisted with their reasons.
+- **`@lokascript/semantic`: a foreign `put X at start of Y` is written with the language's `prepend`**,
+  which English writes back as `put … at start of`.
+
+### Fixed
+
+- **`@lokascript/semantic` reads `me` after a marker in the case the marker takes**, as authors write it:
+  de `zu mir`, pt `a mim`, pl `do mnie`, ru `ко мне`, uk `до мене`, hi `मुझ में`. Each was read as a
+  variable (`zu mir` ran as `to mir`) or refused. Translations still write the nominative.
+
+- **`@lokascript/semantic`: `put X at start of Y` translates.** It was refused in all 23 languages: no
+  language but English had a pattern for it, and the render wrote `at end of` in its place.
+- **`@lokascript/semantic`: a one-line handler's `put … at end of`** translates in es, id, it, pt, tl and
+  uk. The fused handler pattern took the end noun for the destination wherever the language's `at` word
+  is also a destination marker.
+- **`@lokascript/semantic`: `^x is …` keeps its copula** in ar, hi and th, which read the `is` word after a
+  `^` variable as the pronoun `it`.
+- **`@lokascript/semantic`: an SOV loop body may open with a variable named `index`** (ja `index を …`),
+  and `repeat` is never read as an event name.
+
 ## [4.3.0] - 2026-10-07
 
 More of what upstream reads now translates, and what does not is refused instead of lost. On the
@@ -1485,7 +1546,9 @@ _Synchronized version release. See git history for details._
 - npm access token stored in GitHub Secrets
 - 2FA recommended for npm organization
 
-[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v4.2.0...HEAD
+[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v4.4.0...HEAD
+[4.4.0]: https://github.com/codetalcott/hyperfixi/compare/v4.3.0...v4.4.0
+[4.3.0]: https://github.com/codetalcott/hyperfixi/compare/v4.2.0...v4.3.0
 [4.2.0]: https://github.com/codetalcott/hyperfixi/compare/v4.1.0...v4.2.0
 [4.1.0]: https://github.com/codetalcott/hyperfixi/compare/v4.0.1...v4.1.0
 [4.0.1]: https://github.com/codetalcott/hyperfixi/compare/v4.0.0...v4.0.1
