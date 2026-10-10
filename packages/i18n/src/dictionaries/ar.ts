@@ -199,6 +199,7 @@ export const ar: Dictionary = {
     start: 'ابدأ',
     catch: 'التقط',
     finally: 'أخيرا',
+    def: 'دالة',
     characters: 'حروف',
     inclusive: 'شامل',
     exclusive: 'حصري',

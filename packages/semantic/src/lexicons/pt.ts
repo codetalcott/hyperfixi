@@ -135,6 +135,7 @@ export const portugueseLexicon: LanguageLexicon = {
     start: { primary: 'começar' },
     catch: { primary: 'capturar' },
     finally: { primary: 'finalmente' },
+    def: { primary: 'função' },
     'starts with': { primary: 'começa com' },
     within: { primary: 'dentro' },
   },

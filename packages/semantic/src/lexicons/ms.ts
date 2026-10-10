@@ -151,6 +151,7 @@ export const malayLexicon: LanguageLexicon = {
     start: { primary: 'memulakan' },
     catch: { primary: 'tangkap' },
     finally: { primary: 'akhirnya' },
+    def: { primary: 'fungsi' },
     'starts with': { primary: 'bermula_dengan' },
     within: { primary: 'dalam' },
   },

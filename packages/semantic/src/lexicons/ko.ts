@@ -136,6 +136,7 @@ export const koreanLexicon: LanguageLexicon = {
     start: { primary: '시작' },
     catch: { primary: '잡다' },
     finally: { primary: '결국' },
+    def: { primary: '함수' },
     'starts with': { primary: '로시작' },
     within: { primary: '이내' },
   },

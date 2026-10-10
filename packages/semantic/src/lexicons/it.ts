@@ -135,6 +135,7 @@ export const italianLexicon: LanguageLexicon = {
     start: { primary: 'avvia' },
     catch: { primary: 'catturare' },
     finally: { primary: 'infine' },
+    def: { primary: 'funzione' },
     'starts with': { primary: 'inizia con' },
     within: { primary: 'dentro' },
   },

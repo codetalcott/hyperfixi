@@ -203,6 +203,7 @@ export const pt: Dictionary = {
     start: 'começar',
     catch: 'capturar',
     finally: 'finalmente',
+    def: 'função',
     characters: 'caracteres',
     inclusive: 'inclusivo',
     exclusive: 'exclusivo',

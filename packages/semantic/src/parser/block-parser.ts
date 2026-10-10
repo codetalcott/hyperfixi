@@ -77,6 +77,9 @@ function keywordForms(language: string, action: string): Set<string> {
     if (entry.primary) set.add(entry.primary.toLowerCase());
     for (const alt of entry.alternatives ?? []) set.add(alt.toLowerCase());
   }
+  // `def` in the language's own word, the noun "function" (M2 sheet B1,
+  // grammar-words.ts): one token in every language.
+  if (action === 'def') set.add(grammarWord(language, 'def').toLowerCase());
   return set;
 }
 

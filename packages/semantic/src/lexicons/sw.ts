@@ -133,6 +133,7 @@ export const swahiliLexicon: LanguageLexicon = {
     start: { primary: 'zindua' },
     catch: { primary: 'shika' },
     finally: { primary: 'mwishowe' },
+    def: { primary: 'kitendakazi' },
     'starts with': { primary: 'huanza na' },
     within: { primary: 'ndani_ya' },
   },

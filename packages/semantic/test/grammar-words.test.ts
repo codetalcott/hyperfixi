@@ -1,7 +1,8 @@
 /**
  * Upstream's fixed words in each language's own (M2, vocabulary sheet B3–B6):
  * `go back`, `from elsewhere`, a loop's `index i`, and the `start` of `start
- * view transition`; and the error clauses' `catch e` and `finally` (A9, B2).
+ * view transition`; the error clauses' `catch e` and `finally` (A9, B2); and
+ * `def`, written as the noun "function" (B1).
  * Each was English in every translation; no profile had a
  * word for it. The words are the dictionaries' (grammar-words.ts), and every
  * reader still takes English's. And `on first click`'s `first` (A7), which every
@@ -32,6 +33,10 @@ const SHAPES: Array<[string, GrammarWordKey]> = [
   ['on click throw "bar" catch e throw e finally put "bar" into me', 'finally'],
   ['def foo() throw "bar" catch e return 42 end', 'catch'],
   ['def foo() set window.bar to 10 finally set window.bar to 20 end', 'finally'],
+  // A function, as the noun "function" (B1).
+  ['def greet(name) log name end', 'def'],
+  ['def foo() throw "bar" catch e return 42 end', 'def'],
+  ['def a() log 1 end def b() log 2 end', 'def'],
 ];
 
 describe.each(SHAPES)('%s', (source, key) => {
@@ -55,6 +60,7 @@ describe('English’s words still read', () => {
     ['es', 'al clic repetir 3 veces index i registrar i fin', 'on click repeat 3 times index i log i end'],
     ['es', 'al clic lanzar "bar" catch e lanzar e finally poner "bar" en yo', 'on click throw "bar" catch e throw e finally put "bar" into me'],
     ['vi', 'khi nhấp ném "bar" catch e ném e finally đặt "bar" vào tôi', 'on click throw "bar" catch e throw e finally put "bar" into me'],
+    ['es', 'def greet(name)\n  registrar name\nfin', 'def greet(name)\n  log name\nend'],
   ])('%s: %s', (language, source, english) => {
     expect(translate(source, language, 'en')).toBe(english);
   });

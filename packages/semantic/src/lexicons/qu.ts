@@ -133,6 +133,7 @@ export const quechuaLexicon: LanguageLexicon = {
     start: { primary: 'qallay' },
     catch: { primary: 'hapsiy' },
     finally: { primary: 'qhipamanqa' },
+    def: { primary: 'rurana' },
     'starts with': { primary: 'qallarisqa wan' },
     within: { primary: 'ukupi' },
   },

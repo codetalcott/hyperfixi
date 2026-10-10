@@ -63,6 +63,7 @@ export const hebrewLexicon: LanguageLexicon = {
     start: { primary: 'יזום' },
     catch: { primary: 'תפוס' },
     finally: { primary: 'סופית' },
+    def: { primary: 'פונקציה' },
   },
 };
 

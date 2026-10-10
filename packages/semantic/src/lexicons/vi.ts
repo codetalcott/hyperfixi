@@ -133,6 +133,7 @@ export const vietnameseLexicon: LanguageLexicon = {
     start: { primary: 'bắt đầu' },
     catch: { primary: 'bắt' },
     finally: { primary: 'rốt cuộc' },
+    def: { primary: 'hàm' },
     'starts with': { primary: 'bắt đầu bằng' },
     target: { primary: 'mục tiêu' },
   },

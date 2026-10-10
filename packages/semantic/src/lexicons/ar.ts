@@ -136,6 +136,7 @@ export const arabicLexicon: LanguageLexicon = {
     start: { primary: 'ابدأ' },
     catch: { primary: 'التقط' },
     finally: { primary: 'أخيرا' },
+    def: { primary: 'دالة' },
     'starts with': { primary: 'يبدأ بـ' },
     within: { primary: 'داخل' },
   },

@@ -108,6 +108,7 @@ export const thaiLexicon: LanguageLexicon = {
     start: { primary: 'เริ่ม' },
     catch: { primary: 'จับ' },
     finally: { primary: 'ท้ายที่สุด' },
+    def: { primary: 'ฟังก์ชัน' },
     'starts with': { primary: 'ขึ้นต้นด้วย' },
   },
 };

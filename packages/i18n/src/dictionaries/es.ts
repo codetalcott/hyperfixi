@@ -194,6 +194,7 @@ export const es: Dictionary = {
     start: 'comenzar',
     catch: 'atrapar',
     finally: 'finalmente',
+    def: 'función',
     characters: 'caracteres',
     inclusive: 'inclusivo',
     exclusive: 'exclusivo',

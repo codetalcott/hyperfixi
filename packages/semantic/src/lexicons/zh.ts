@@ -136,6 +136,7 @@ export const chineseLexicon: LanguageLexicon = {
     start: { primary: '开始' },
     catch: { primary: '捕获' },
     finally: { primary: '最终' },
+    def: { primary: '函数' },
     'starts with': { primary: '以开头' },
     within: { primary: '之内' },
   },

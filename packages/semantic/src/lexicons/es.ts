@@ -135,6 +135,7 @@ export const spanishLexicon: LanguageLexicon = {
     start: { primary: 'comenzar' },
     catch: { primary: 'atrapar' },
     finally: { primary: 'finalmente' },
+    def: { primary: 'función' },
     'starts with': { primary: 'empieza con' },
     within: { primary: 'dentro' },
   },

@@ -205,6 +205,7 @@ export const pl: Dictionary = {
     start: 'rozpocznij',
     catch: 'złap',
     finally: 'ostatecznie',
+    def: 'funkcja',
     characters: 'znaki',
     inclusive: 'włącznie',
     exclusive: 'wyłącznie',

@@ -217,6 +217,7 @@ export const malayDictionary: Dictionary = {
     start: 'memulakan',
     catch: 'tangkap',
     finally: 'akhirnya',
+    def: 'fungsi',
     characters: 'aksara',
     inclusive: 'inklusif',
     exclusive: 'eksklusif',

@@ -202,6 +202,7 @@ export const fr: Dictionary = {
     start: 'démarrer',
     catch: 'attraper',
     finally: 'finalement',
+    def: 'fonction',
     characters: 'caractères',
     inclusive: 'inclusif',
     exclusive: 'exclusif',

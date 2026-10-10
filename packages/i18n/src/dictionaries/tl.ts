@@ -225,6 +225,7 @@ export const tagalogDictionary: Dictionary = {
     start: 'umpisahan',
     catch: 'saluhin',
     finally: 'panghuli',
+    def: 'punsiyon',
     characters: 'karakter',
     inclusive: 'kasama',
     exclusive: 'bukod',
