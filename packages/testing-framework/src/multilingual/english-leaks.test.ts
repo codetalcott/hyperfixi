@@ -60,6 +60,14 @@ describe('english-leaks scanner', () => {
     ).toEqual([]);
   });
 
+  it('counts an English alternative the reader still takes, beside the language’s own word', () => {
+    // ru's `forever` is `всегда`; the profile lists English `forever` too, so the
+    // reader takes code-switched input, but a render that writes it leaks.
+    const source = 'on click repeat forever log 1 end';
+    expect(keys(source, 'при клик повторить всегда записать 1 конец', 'ru')).toEqual([]);
+    expect(keys(source, 'при клик повторить forever записать 1 конец', 'ru')).toEqual(['forever']);
+  });
+
   it('counts a reference the engine reads as a name (`me`)', () => {
     expect(keys('on click log 1, me', 'al clic registrar 1, me', 'es')).toEqual(['me']);
   });
