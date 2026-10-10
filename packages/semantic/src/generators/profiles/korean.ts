@@ -157,7 +157,7 @@ export const koreanProfile: LanguageProfile = {
     while: { primary: '동안', normalized: 'while' },
     // `repeat forever` loop keyword — corpus word recognized so loopType types
     // as `:literal` like EN (the repeat.loopType R1 residue; see spanish.ts).
-    forever: { primary: 'forever', normalized: 'forever' },
+    forever: { primary: '영원히', normalized: 'forever', alternatives: ['forever'] },
     continue: { primary: '계속', normalized: 'continue' },
     halt: { primary: '정지', normalized: 'halt' },
     throw: { primary: '던지다', normalized: 'throw' },

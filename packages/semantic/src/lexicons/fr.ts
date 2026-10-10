@@ -59,6 +59,7 @@ export const frenchLexicon: LanguageLexicon = {
     where: { primary: 'où' },
   },
   temporal: {
+    forever: { primary: 'toujours' },
     h: { primary: 'h' },
     hour: { primary: 'heure' },
     hours: { primary: 'heures' },

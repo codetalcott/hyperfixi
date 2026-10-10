@@ -59,6 +59,7 @@ export const germanLexicon: LanguageLexicon = {
     where: { primary: 'wo' },
   },
   temporal: {
+    forever: { primary: 'endlos' },
     h: { primary: 'std' },
     hour: { primary: 'stunde' },
     hours: { primary: 'stunden' },

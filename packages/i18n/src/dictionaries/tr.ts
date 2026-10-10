@@ -150,6 +150,7 @@ export const tr: Dictionary = {
   },
 
   temporal: {
+    forever: 'sürekli',
     seconds: 'saniye',
     second: 'saniye',
     milliseconds: 'milisaniye',

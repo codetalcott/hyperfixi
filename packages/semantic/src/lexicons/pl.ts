@@ -59,6 +59,7 @@ export const polishLexicon: LanguageLexicon = {
     where: { primary: 'gdzie' },
   },
   temporal: {
+    forever: { primary: 'zawsze' },
     h: { primary: 'godz' },
     hour: { primary: 'godzina' },
     hours: { primary: 'godziny' },

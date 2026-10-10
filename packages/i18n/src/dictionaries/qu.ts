@@ -165,6 +165,7 @@ export const qu: Dictionary = {
   },
 
   temporal: {
+    forever: 'wiñay',
     seconds: 'sikundukuna',
     second: 'sikundu',
     milliseconds: 'iskay_paqta_sikundukuna',

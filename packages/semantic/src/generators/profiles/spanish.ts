@@ -237,14 +237,11 @@ export const spanishProfile: LanguageProfile = {
     repeat: { primary: 'repetir', normalized: 'repeat' },
     for: { primary: 'para', normalized: 'for' },
     while: { primary: 'mientras', normalized: 'while' },
-    // `repeat forever` loop keyword. The i18n dict never translated `forever`, so the
-    // corpus leaves it English (`repetir forever`) — the bare word then typed
-    // `loopType:expression` (SVO) / `loopType:reference` (SOV) instead of EN's
-    // `:literal` (the repeat.loopType R1 residue). Recognizing the English form the
-    // corpus carries lets the generated repeat pattern type it as a literal, matching
-    // EN. (Native translation belongs to a separate i18n-dict pass; until then the
-    // corpus word IS the English one, so that is the primary here.)
-    forever: { primary: 'forever', normalized: 'forever' },
+    // `repeat forever` loop keyword. As a keyword the word types as
+    // `loopType:literal`, matching EN (an unknown word typed `:expression` in SVO,
+    // `:reference` in SOV: the repeat.loopType R1 residue). The language's own word
+    // since M2 (V1, 2026-10-10); the reader still takes English's.
+    forever: { primary: 'siempre', normalized: 'forever', alternatives: ['forever'] },
     continue: { primary: 'continuar', normalized: 'continue' },
     halt: { primary: 'detener', alternatives: ['parar'], normalized: 'halt' },
     throw: { primary: 'lanzar', alternatives: ['arrojar'], normalized: 'throw' },

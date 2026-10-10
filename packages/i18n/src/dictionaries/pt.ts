@@ -146,6 +146,7 @@ export const pt: Dictionary = {
   },
 
   temporal: {
+    forever: 'sempre',
     seconds: 'segundos',
     second: 'segundo',
     milliseconds: 'milissegundos',

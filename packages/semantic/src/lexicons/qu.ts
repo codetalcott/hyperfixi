@@ -59,6 +59,7 @@ export const quechuaLexicon: LanguageLexicon = {
     where: { primary: 'maypi' },
   },
   temporal: {
+    forever: { primary: 'wiñay' },
     h: { primary: 'h' },
     hour: { primary: 'hora' },
     hours: { primary: 'horakuna' },

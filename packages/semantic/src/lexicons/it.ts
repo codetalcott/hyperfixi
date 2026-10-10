@@ -59,6 +59,7 @@ export const italianLexicon: LanguageLexicon = {
     where: { primary: 'dove' },
   },
   temporal: {
+    forever: { primary: 'sempre' },
     h: { primary: 'h' },
     hour: { primary: 'ora' },
     hours: { primary: 'ore' },

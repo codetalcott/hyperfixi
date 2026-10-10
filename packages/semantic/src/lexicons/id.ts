@@ -59,6 +59,7 @@ export const indonesianLexicon: LanguageLexicon = {
     where: { primary: 'di_mana' },
   },
   temporal: {
+    forever: { primary: 'selamanya' },
     h: { primary: 'j' },
     hour: { primary: 'jam' },
     hours: { primary: 'jam' },

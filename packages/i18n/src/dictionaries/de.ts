@@ -155,6 +155,7 @@ export const de: Dictionary = {
   },
 
   temporal: {
+    forever: 'endlos',
     seconds: 'sekunden',
     second: 'sekunde',
     milliseconds: 'millisekunden',
