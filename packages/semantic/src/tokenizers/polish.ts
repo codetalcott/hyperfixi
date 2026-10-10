@@ -78,6 +78,11 @@ const PREPOSITIONS = new Set([
  * - Additional verb forms and synonyms
  */
 const POLISH_EXTRAS: KeywordEntry[] = [
+  // `me` after a marker, in the case the marker takes (pl `do mnie`, `ze mną`): what an
+  // author writes. Read as the nominative is; renders still write the
+  // nominative (M2 N3).
+  { native: 'mnie', normalized: 'me' },
+  { native: 'mną', normalized: 'me' },
   // Values/Literals
   { native: 'prawda', normalized: 'true' },
   { native: 'fałsz', normalized: 'false' },

@@ -37,6 +37,11 @@ import { createGermanExtractors } from './extractors/german-keyword';
  * - Verb conjugation variants (imperatives)
  */
 const GERMAN_EXTRAS: KeywordEntry[] = [
+  // `me` after a marker, in the case the marker takes (de `zu mir`, `in mich`): what an
+  // author writes. Read as the nominative is; renders still write the
+  // nominative (M2 N3).
+  { native: 'mir', normalized: 'me' },
+  { native: 'mich', normalized: 'me' },
   // Values/Literals
   { native: 'wahr', normalized: 'true' },
   { native: 'falsch', normalized: 'false' },
