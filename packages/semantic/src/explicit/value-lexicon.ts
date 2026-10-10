@@ -255,9 +255,22 @@ function thirdPerson(text: string): string {
  */
 const QUERY_IN =
   /(<[^<>]*\/>|(?:^|[^\w$.#@*:-])(?:first|last|next|previous|random|closest)\s+[.#][\w-]+)((?:\.[\w-]+)*\s+)in(?=\s+(?:(?:closest\s+)?[#.<]|(?:me|it|you|body|document|target|result)\b))/g;
+/** A query's `in` before a reference (`first .p1 in me`): the scope in its case. */
+const QUERY_IN_REFERENCE =
+  /(<[^<>]*\/>|(?:^|[^\w$.#@*:-])(?:first|last|next|previous|random|closest)\s+[.#][\w-]+)((?:\.[\w-]+)*\s+)in\s+(me|it|you)\b(?![\w$.'-])/g;
 function nativeQueryIn(text: string, words: ValueWords, spans: string[]): string {
-  if (words.queryIn === 'in') return text;
-  return text.replace(QUERY_IN, (_, query: string, gap: string) => {
+  // `in me` in the case the `in` takes, a location (de `in mir`, M2 N3).
+  const scoped = words.scopeIn
+    ? text.replace(QUERY_IN_REFERENCE, (whole, query: string, gap: string, reference: string) => {
+        const phrase = words.scopeIn!(reference);
+        if (phrase === undefined) return whole;
+        if (words.queryIn !== 'in') words.wrote?.();
+        spans.push(phrase);
+        return `${query}${gap}${MASK_OPEN}${spans.length - 1}${MASK_CLOSE}`;
+      })
+    : text;
+  if (words.queryIn === 'in') return scoped;
+  return scoped.replace(QUERY_IN, (_, query: string, gap: string) => {
     words.wrote?.();
     spans.push(words.queryIn);
     return `${query}${gap}${MASK_OPEN}${spans.length - 1}${MASK_CLOSE}`;
@@ -289,8 +302,30 @@ function conversionLead(lead: string, words: ValueWords, spans: string[]): strin
 const ELEMENT_SCOPED =
   /(^|[^\w$.#@*:'-])(?:the\s+)?element(?:'s)?\s+([A-Za-z_]\w*)\b(?!\s*(?:\[|\uE010))/g;
 const NOT_A_SCOPED_NAME: ReadonlySet<string> = new Set([
-  'is', 'am', 'and', 'or', 'not', 'no', 'matches', 'contains', 'includes', 'in', 'as', 'of',
-  'to', 'then', 'else', 'end', 'from', 'into', 'with', 'at', 'by', 'does', 'do', 'exists',
+  'is',
+  'am',
+  'and',
+  'or',
+  'not',
+  'no',
+  'matches',
+  'contains',
+  'includes',
+  'in',
+  'as',
+  'of',
+  'to',
+  'then',
+  'else',
+  'end',
+  'from',
+  'into',
+  'with',
+  'at',
+  'by',
+  'does',
+  'do',
+  'exists',
 ]);
 function nativeElementScope(text: string, language: string, spans: string[]): string {
   const word = elementScopeWord(language);
@@ -311,6 +346,8 @@ export interface ValueWords {
   readonly queryIn: string;
   readonly conversionAs: string;
   readonly wrote?: () => void;
+  /** `queryIn` and a reference after it, in the case it takes (de `in mir`, M2 N3), if the language has one. */
+  readonly scopeIn?: (reference: string) => string | undefined;
 }
 
 /** The language's own value words. */
@@ -355,11 +392,14 @@ export function localizeValueInterior(
   );
 
   const scoped = nativeElementScope(masked, language, spans);
-  const localized = thirdPerson(nativeQueryIn(scoped, valueWords, spans)).replace(WORD, (whole, lead: string, word: string) => {
-    if (keep?.has(word)) return whole;
-    const hit = words.get(word.toLowerCase());
-    return hit ? `${lead}${hit}` : whole;
-  });
+  const localized = thirdPerson(nativeQueryIn(scoped, valueWords, spans)).replace(
+    WORD,
+    (whole, lead: string, word: string) => {
+      if (keep?.has(word)) return whole;
+      const hit = words.get(word.toLowerCase());
+      return hit ? `${lead}${hit}` : whole;
+    }
+  );
 
   return restoreSpans(localized, spans);
 }

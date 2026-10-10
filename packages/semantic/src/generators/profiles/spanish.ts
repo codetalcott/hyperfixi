@@ -43,8 +43,6 @@ export const spanishProfile: LanguageProfile = {
       en: 'en mí',
       a: 'a mí',
       de: 'de mí',
-      sobre: 'sobre mí',
-      hacia: 'hacia mí',
       desde: 'desde mí',
     },
   },

@@ -41,7 +41,6 @@ export const portugueseProfile: LanguageProfile = {
       a: 'a mim',
       para: 'para mim',
       de: 'de mim',
-      desde: 'desde mim',
     },
   },
   possessive: {

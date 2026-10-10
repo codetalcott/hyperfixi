@@ -44,8 +44,6 @@ export const russianProfile: LanguageProfile = {
       в: { direction: 'в меня', location: 'во мне' },
       на: { direction: 'на меня', location: 'на мне' },
       из: 'из меня',
-      от: 'от меня',
-      с: 'с меня',
       после: 'после меня',
       перед: 'передо мной',
     },

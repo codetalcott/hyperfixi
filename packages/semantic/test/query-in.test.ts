@@ -6,7 +6,7 @@
  * still takes English's.
  */
 import { describe, it, expect } from 'vitest';
-import { getSupportedLanguages, parse, render, translate } from '../src/index';
+import { getSupportedLanguages, parse, render, translate, tryGetProfile } from '../src/index';
 import { QUERY_IN } from '../src/parser/utils/grammar-words';
 import { dictionaries } from '../../i18n/src/dictionaries';
 
@@ -16,6 +16,18 @@ const NATIVE = getSupportedLanguages().filter(
 );
 
 const words = (text: string): string[] => text.split(/\s+/);
+
+/**
+ * Does a render write the language's query `in`? Before a pronoun it can take
+ * a vowel (pl `we mnie`, ru `во мне`; M2 N3).
+ */
+function writesQueryIn(rendered: string, language: string): boolean {
+  const word = QUERY_IN[language]!;
+  const form = tryGetProfile(language)?.obliqueReferences?.me?.[word];
+  const phrases = form === undefined ? [] : typeof form === 'string' ? [form] : [form.location];
+  const spellings = [word, ...phrases.map(p => p.split(' ')[0]!)];
+  return words(rendered).some(w => spellings.includes(w));
+}
 
 describe.each([
   'on click focus first <input/> in closest <form/>',
@@ -30,7 +42,7 @@ describe.each([
 ])('%s', source => {
   it.each(NATIVE)('%s', language => {
     const rendered = translate(source, 'en', language);
-    expect(words(rendered)).toContain(QUERY_IN[language]);
+    expect(writesQueryIn(rendered, language), rendered).toBe(true);
     // vi's `log` is `in ra`.
     if (language !== 'vi') expect(words(rendered)).not.toContain('in');
     expect(translate(rendered, language, 'en')).toBe(translate(source, 'en', 'en'));
@@ -63,7 +75,7 @@ describe('only a query’s `in`', () => {
   it.each(NATIVE)('%s: a comparison keeps English’s', language => {
     const rendered = translate('on click if x is in <li/> in me then log 1 end', 'en', language);
     expect(rendered).toContain(' in <li/>');
-    expect(words(rendered)).toContain(QUERY_IN[language]);
+    expect(writesQueryIn(rendered, language), rendered).toBe(true);
   });
 });
 

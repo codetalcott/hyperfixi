@@ -202,6 +202,9 @@ describe('english-leaks scanner', () => {
     // The oblique forms are right.
     expect(keys('on click add .b to me', 'al clic agregar .b a mí', 'es')).toEqual([]);
     expect(keys('on click add .b to me', 'при клик добавить .b ко мне', 'ru')).toEqual([]);
+    // it writes `me` after a marker: Italian's word, not English's.
+    expect(keys('on click put "x" into me', 'su clic mettere "x" in me', 'it')).toEqual([]);
+    expect(keys('on click put "x" into me', 'su clic mettere "x" in io', 'it')).toEqual(['case:me']);
   });
 
   it('counts a nominative `it` beside a marker, where the language has another form', () => {

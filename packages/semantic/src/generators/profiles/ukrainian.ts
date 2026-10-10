@@ -44,8 +44,6 @@ export const ukrainianProfile: LanguageProfile = {
       у: { direction: 'у мене', location: 'у мені' },
       на: { direction: 'на мене', location: 'на мені' },
       з: 'з мене',
-      із: 'із мене',
-      від: 'від мене',
       після: 'після мене',
       перед: 'переді мною',
     },
