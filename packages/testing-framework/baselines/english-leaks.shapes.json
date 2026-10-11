@@ -1,12 +1,12 @@
 {
   "description": "English-leak gate, command-shape half (src/multilingual/english-leaks.ts): per command-shape case, the findings of each language's render (translate(src, 'en', L)): an English grammar word, `event:<name>`, `case:<pronoun>` or `spacing:<marker>`. `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts.",
-  "renders": 23801,
-  "leaky": 4453,
-  "findings": 9001,
+  "renders": 23810,
+  "leaky": 3966,
+  "findings": 7710,
   "kinds": {
     "word": {
-      "renders": 2399,
-      "findings": 4058
+      "renders": 2400,
+      "findings": 4059
     },
     "event": {
       "renders": 0,
@@ -17,39 +17,35 @@
       "findings": 32
     },
     "spacing": {
-      "renders": 2305,
-      "findings": 4911
+      "renders": 1740,
+      "findings": 3619
     }
   },
   "entries": {
     "3137245779": {
       "spacing:e spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "3480154525": {
       "spacing:e spacing:i": "tr"
     },
     "3810571169": {
       "spacing:e spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "4166920578": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "00d90195c2": {
       "spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "00ec8e6170": {
       "spacing:den spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:에서": "ko",
-      "spacing:から spacing:で spacing:を": "ja"
+      "spacing:から": "ja"
     },
     "00ecb58154": {
       "items": "ar bn de es fr he hi id it ms pl pt qu ru sw th tl uk vi zh",
@@ -62,68 +58,57 @@
     },
     "01556efe52": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "019d591522": {
       "spacing:i spacing:i transition using view": "tr",
       "spacing:তে transition using view": "bn",
-      "spacing:で spacing:を transition using view": "ja",
-      "transition using view": "ar de es he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
+      "transition using view": "ar de es he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
       "using view": "fr"
     },
     "0221e693a9": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "02479c80b2": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "03087545d6": {
       "spacing:i spacing:le": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "03a84c939d": {
-      "for": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
+      "for": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
       "for spacing:den spacing:i spacing:i": "tr",
-      "for spacing:তে": "bn",
-      "for spacing:で spacing:を": "ja"
+      "for spacing:তে": "bn"
     },
     "042ed66aa1": {
       "spacing:e spacing:i spacing:le": "tr"
     },
     "044528a979": {
-      "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:e spacing:i spacing:i": "tr"
     },
     "04a57faf6e": {
       "spacing:i": "tr"
     },
     "051e376226": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "052e807746": {
       "spacing:den spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:로": "ko",
-      "spacing:で spacing:として spacing:を": "ja"
+      "spacing:として": "ja"
     },
     "054e5c2260": {
       "spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "056a1e4975": {
       "spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "059d24d9e9": {
       "spacing:i": "tr"
@@ -132,7 +117,7 @@
       "spacing:de spacing:i spacing:nin": "tr",
       "spacing:এ spacing:এ spacing:তে": "bn",
       "spacing:를 spacing:에 spacing:의": "ko",
-      "spacing:で spacing:で spacing:の spacing:を spacing:を": "ja"
+      "spacing:で spacing:の spacing:を": "ja"
     },
     "0660772f01": {
       "spacing:e spacing:i": "tr",
@@ -147,37 +132,33 @@
       "spacing:de spacing:i spacing:i spacing:nin": "tr",
       "spacing:এ spacing:কে spacing:তে": "bn",
       "spacing:를 spacing:에 spacing:의": "ko",
-      "spacing:で spacing:で spacing:の spacing:を spacing:を": "ja"
+      "spacing:で spacing:の spacing:を": "ja"
     },
     "0770e53381": {
       "spacing:i": "tr"
     },
     "079be44753": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "083aedbcb6": {
       "from spacing:i spacing:i with": "tr",
       "from spacing:তে with": "bn",
-      "from spacing:で spacing:を with": "ja",
-      "from with": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh"
+      "from with": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh"
     },
     "0852594083": {
       "spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "085e2e13dc": {
       "spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "0886e961b7": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:로": "ko",
-      "spacing:で spacing:として spacing:を": "ja"
+      "spacing:として": "ja"
     },
     "08a363052d": {
       "spacing:e spacing:i": "tr"
@@ -193,20 +174,18 @@
     },
     "094982a419": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "09f435f419": {
       "in": "he",
       "spacing:de spacing:de spacing:de spacing:i spacing:i spacing:nin spacing:nin spacing:nin": "tr",
       "spacing:এ spacing:এ spacing:এ spacing:এ spacing:কে spacing:তে": "bn",
       "spacing:를 spacing:를 spacing:를 spacing:를 spacing:에 spacing:에 spacing:에 spacing:의 spacing:의 spacing:의": "ko",
-      "spacing:で spacing:で spacing:で spacing:で spacing:の spacing:の spacing:の spacing:を spacing:を spacing:を spacing:を spacing:を": "ja"
+      "spacing:で spacing:で spacing:で spacing:の spacing:の spacing:の spacing:を spacing:を spacing:を spacing:を": "ja"
     },
     "0a1d98c47c": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "0b202a7fa5": {
       "spacing:e transition view": "tr",
@@ -216,42 +195,34 @@
     },
     "0b25d72177": {
       "spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "0b43fd8a66": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "0b774b88e3": {
       "spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "0b7951a6db": {
       "spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "0bc2fc8b64": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:কে spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:কে": "bn"
     },
     "0bd96b548f": {
-      "of": "hi ko qu tl vi zh",
+      "of": "hi ja ko qu tl vi zh",
       "of spacing:e spacing:i spacing:i": "tr",
-      "of spacing:তে": "bn",
-      "of spacing:で spacing:を": "ja"
+      "of spacing:তে": "bn"
     },
     "0c35ff5203": {
       "spacing:i": "tr"
     },
     "0c70d623f4": {
-      "spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:i spacing:i spacing:i": "tr"
     },
     "0c784075be": {
       "spacing:e spacing:i": "tr"
@@ -259,34 +230,28 @@
     "0cee637bb9": {
       "it matches spacing:e spacing:i spacing:i where": "tr",
       "it matches spacing:এ spacing:কে spacing:তে where": "bn",
-      "it matches spacing:で spacing:を where": "ja",
-      "it matches where": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh"
+      "it matches where": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh"
     },
     "0d545bc615": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "0df05da43f": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:কে spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:কে spacing:তে": "bn"
     },
     "0eaa74fad5": {
       "spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "0f2669dcdc": {
       "spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "0ff2f70080": {
       "in": "ar es pl ru th",
       "spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:কে spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:কে spacing:তে": "bn"
     },
     "103adfe987": {
       "spacing:e spacing:i": "tr",
@@ -294,37 +259,32 @@
       "trigger": "qu"
     },
     "10d4b4a593": {
-      "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:e spacing:i spacing:i": "tr"
     },
     "112d7d4685": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "11324f6854": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:로": "ko",
-      "spacing:で spacing:として spacing:を": "ja"
+      "spacing:として": "ja"
     },
     "1137122b56": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "116a91c7f8": {
       "spacing:den spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:에서": "ko",
-      "spacing:から spacing:で spacing:を": "ja"
+      "spacing:から": "ja"
     },
     "11dc9b2c51": {
       "spacing:i spacing:i transition transition view view": "tr",
       "spacing:তে transition transition view view": "bn",
-      "spacing:で spacing:を transition transition view view": "ja",
-      "transition transition view view": "ar de es he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
+      "transition transition view view": "ar de es he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
       "view view": "fr"
     },
     "11e96eeab6": {
@@ -335,71 +295,60 @@
     },
     "12a3bee9fd": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "12a586d477": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "12b7e85d51": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "12ddca7aa8": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "12ff2cf365": {
       "in": "he",
       "spacing:de spacing:i spacing:nin": "tr",
       "spacing:এ spacing:এ spacing:তে": "bn",
       "spacing:를 spacing:에 spacing:의": "ko",
-      "spacing:で spacing:で spacing:の spacing:を spacing:を": "ja"
+      "spacing:で spacing:の spacing:を": "ja"
     },
     "132b5fb425": {
       "spacing:i": "tr"
     },
     "134d2ca857": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:কে spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:কে": "bn"
     },
     "13cff46824": {
-      "attributes of": "ar de es fr he hi id ko ms pl pt qu ru sw tl uk vi zh",
-      "attributes of spacing:i spacing:i": "tr",
-      "attributes of spacing:で spacing:を": "ja"
+      "attributes of": "ar de es fr he hi id ja ko ms pl pt qu ru sw tl uk vi zh",
+      "attributes of spacing:i spacing:i": "tr"
     },
     "13eda1e752": {
       "spacing:e spacing:i spacing:i": "tr"
     },
     "13ee797690": {
       "spacing:i spacing:le": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "1485ba2e54": {
       "spacing:den spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "1489b2b9fb": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:কে spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:কে spacing:তে": "bn"
     },
     "148a5a7532": {
       "spacing:e spacing:i spacing:i spacing:nin": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "148af3b352": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:কে spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:কে": "bn"
     },
     "14ad24cc1a": {
       "spacing:i": "tr"
@@ -411,13 +360,13 @@
       "spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:로": "ko",
-      "spacing:で spacing:として spacing:を": "ja"
+      "spacing:として": "ja"
     },
     "16cf73552a": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:로": "ko",
-      "spacing:で spacing:として spacing:を": "ja"
+      "spacing:として": "ja"
     },
     "16d56382d7": {
       "spacing:e spacing:i spacing:nin": "tr",
@@ -426,13 +375,13 @@
       "spacing:を": "ja"
     },
     "16fb80c097": {
-      "or": "ar de es fr he hi id ms pl pt qu ru sw tl uk vi"
+      "or": "ar de es fr he hi id ja ms pl pt qu ru sw tl uk vi"
     },
     "17039d15e3": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:로": "ko",
-      "spacing:で spacing:として spacing:を": "ja"
+      "spacing:として": "ja"
     },
     "17798898ae": {
       "spacing:i": "tr"
@@ -442,27 +391,24 @@
     },
     "1887f98c09": {
       "spacing:i spacing:le": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "18b09f2381": {
       "spacing:den spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:로": "ko",
-      "spacing:で spacing:として spacing:を": "ja"
+      "spacing:として": "ja"
     },
     "18ccf896af": {
       "spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "18e46b723e": {
       "spacing:i": "tr"
     },
     "190d9ca9e9": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "19a79b3024": {
       "spacing:i": "tr"
@@ -488,8 +434,7 @@
     },
     "1adc1489c4": {
       "spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "1ba900c09e": {
       "spacing:e spacing:i": "tr",
@@ -497,28 +442,23 @@
     },
     "1bb73ff359": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "1c0539c39f": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "1d261d5658": {
       "spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "1d2b350bfa": {
-      "of": "hi ko qu tl vi zh",
+      "of": "hi ja ko qu tl vi zh",
       "of spacing:i spacing:i": "tr",
-      "of spacing:তে": "bn",
-      "of spacing:で spacing:を": "ja"
+      "of spacing:তে": "bn"
     },
     "1d2b7f9432": {
-      "spacing:a spacing:e spacing:e spacing:i spacing:i": "tr",
-      "spacing:で spacing:を": "ja"
+      "spacing:a spacing:e spacing:e spacing:i spacing:i": "tr"
     },
     "1d75e16839": {
       "dom": "ar bn de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
@@ -526,23 +466,19 @@
     },
     "1d8b113cd9": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "1dc00d5d74": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "1ef62c4db8": {
       "spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "1f173a2d64": {
       "spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "1f2b723207": {
       "spacing:i": "tr"
@@ -550,120 +486,97 @@
     "1f8cfc2474": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:로": "ko",
-      "spacing:で spacing:を": "ja"
+      "spacing:로": "ko"
     },
     "1fb4a5cc28": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "1fd5e18c79": {
       "spacing:e spacing:i": "tr"
     },
     "20102b64ce": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "20161acab0": {
-      "in": "ar es fr he hi id ko ms pl pt qu ru sw th tl uk zh",
-      "in spacing:তে": "bn",
-      "in spacing:で spacing:を": "ja"
+      "in": "ar es fr he hi id ja ko ms pl pt qu ru sw th tl uk zh",
+      "in spacing:তে": "bn"
     },
     "20efa33ba5": {
       "spacing:i spacing:i": "tr"
     },
     "20faa29e81": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "210c0c7788": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "2159462e64": {
       "in": "ar es pl ru th",
       "spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:কে spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:কে spacing:তে": "bn"
     },
     "216845203a": {
       "spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "21c66949f1": {
       "spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "2204b224b3": {
       "spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "2218bab0ca": {
       "spacing:i spacing:i spacing:i spacing:i value": "tr",
       "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja",
       "value": "ar de es fr hi id it ms pl pt qu ru sw th tl uk vi zh"
     },
     "2226faa570": {
       "spacing:i spacing:i": "tr"
     },
     "22cd219964": {
-      "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:i spacing:i": "tr"
     },
     "237fd5ee40": {
       "spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "239cba8b61": {
-      "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে spacing:তে": "bn",
-      "spacing:で spacing:で spacing:を spacing:を": "ja"
+      "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr"
     },
     "23a801be10": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "23f2b7dd1b": {
-      "spacing:e spacing:e spacing:e spacing:i spacing:i": "tr",
-      "spacing:で spacing:を": "ja"
+      "spacing:e spacing:e spacing:e spacing:i spacing:i": "tr"
     },
     "24725909ec": {
       "spacing:e spacing:i spacing:i spacing:nin": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "24c32ea0f9": {
       "case:me of": "hi",
       "case:me of spacing:i spacing:i": "tr",
       "case:me of spacing:কে spacing:তে": "bn",
-      "of": "ar de es fr he id it ko ms pl pt qu ru sw th tl uk vi zh",
-      "of spacing:で spacing:を": "ja"
+      "of": "ar de es fr he id it ja ko ms pl pt qu ru sw th tl uk vi zh"
     },
     "259c31588b": {
       "spacing:e spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "266de50fcf": {
       "spacing:i spacing:le": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "2697268fcb": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "269d3a7044": {
       "spacing:e spacing:i": "tr"
@@ -673,21 +586,19 @@
       "case:it spacing:i": "tr"
     },
     "26fa66d19d": {
-      "dom": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
+      "dom": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
       "dom spacing:i spacing:i": "tr",
-      "dom spacing:তে": "bn",
-      "dom spacing:で spacing:を": "ja"
+      "dom spacing:তে": "bn"
     },
     "280d64d892": {
       "as spacing:로": "ko",
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で spacing:として spacing:を": "ja"
+      "spacing:として": "ja"
     },
     "2817d62efa": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "283e759e4b": {
       "spacing:e spacing:i spacing:nin": "tr",
@@ -699,17 +610,15 @@
     },
     "294aed5746": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "29a686cc3a": {
       "spacing:i spacing:i": "tr"
     },
     "29d848f705": {
-      "for": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
+      "for": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
       "for spacing:den spacing:i spacing:i": "tr",
-      "for spacing:তে": "bn",
-      "for spacing:で spacing:を": "ja"
+      "for spacing:তে": "bn"
     },
     "29dd3464a4": {
       "spacing:i spacing:i": "tr"
@@ -722,37 +631,31 @@
     },
     "2a1e61aac1": {
       "spacing:e spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে spacing:তে": "bn"
     },
     "2a2eba93fc": {
       "spacing:i spacing:i": "tr"
     },
     "2a85f5edfd": {
-      "spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:i": "tr"
     },
     "2b181df899": {
       "spacing:i spacing:le": "tr",
       "spacing:তে": "bn",
       "spacing:로 spacing:을": "ko",
-      "spacing:で spacing:で spacing:を spacing:を": "ja"
+      "spacing:で spacing:で spacing:を": "ja"
     },
     "2b2c56ca06": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "2b6119889c": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "2b95e6630c": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "2bb670017e": {
       "spacing:e spacing:i": "tr"
@@ -767,34 +670,30 @@
       "spacing:de spacing:e spacing:i spacing:i spacing:i spacing:i spacing:nin": "tr",
       "spacing:এ spacing:কে spacing:তে": "bn",
       "spacing:로 spacing:를 spacing:에 spacing:의": "ko",
-      "spacing:で spacing:で spacing:として spacing:の spacing:を spacing:を": "ja"
+      "spacing:で spacing:として spacing:の spacing:を": "ja"
     },
     "2c9a180e87": {
       "spacing:e spacing:i": "tr"
     },
     "2ca21dd51b": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "2d00200e49": {
       "spacing:e spacing:i": "tr"
     },
     "2d2d3e341b": {
-      "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:i spacing:i": "tr"
     },
     "2d6fa6cf27": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "2d9422b3af": {
       "spacing:de spacing:i spacing:nin": "tr",
       "spacing:এ spacing:তে": "bn",
       "spacing:를 spacing:에 spacing:의": "ko",
-      "spacing:で spacing:で spacing:の spacing:を spacing:を": "ja"
+      "spacing:で spacing:の spacing:を": "ja"
     },
     "2dd827330a": {
       "case:me-object": "ar"
@@ -803,61 +702,52 @@
       "spacing:i": "tr"
     },
     "2e5e71153b": {
-      "giving": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
+      "giving": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
       "giving spacing:den spacing:i spacing:i": "tr",
-      "giving spacing:তে": "bn",
-      "giving spacing:で spacing:を": "ja"
+      "giving spacing:তে": "bn"
     },
     "2eb6399ee6": {
       "spacing:e spacing:i": "tr"
     },
     "2f39f19583": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "2f7af96b02": {
-      "my": "ar de es fr he hi it ko pl pt qu ru sw th tl uk zh",
+      "my": "ar de es fr he hi it ja ko pl pt qu ru sw th tl uk zh",
       "my spacing:i": "tr",
-      "my spacing:তে": "bn",
-      "my spacing:で spacing:を": "ja"
+      "my spacing:তে": "bn"
     },
     "2f810152e8": {
-      "as": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
+      "as": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
       "as spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "as spacing:তে": "bn",
-      "as spacing:で spacing:を": "ja"
+      "as spacing:তে": "bn"
     },
     "2f892debd3": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "2fa2696d3f": {
       "spacing:e spacing:i": "tr"
     },
     "3030e3cc43": {
-      "spacing:তে spacing:তে": "bn"
+      "spacing:তে": "bn"
     },
     "30a55ccaf6": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "30b1299663": {
       "spacing:den spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "314a8e8e46": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "314f61b0ae": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "31c9cb395d": {
       "in of the": "ar bn es fr he hi id ja ko ms pl pt qu ru sw th tl uk zh",
@@ -869,7 +759,7 @@
       "spacing:de spacing:i spacing:nin": "tr",
       "spacing:এ spacing:এ spacing:তে": "bn",
       "spacing:를 spacing:에 spacing:의": "ko",
-      "spacing:で spacing:で spacing:の spacing:を spacing:を": "ja"
+      "spacing:で spacing:の spacing:を": "ja"
     },
     "32bbb02918": {
       "characters from items spacing:i spacing:nin to": "tr",
@@ -885,47 +775,40 @@
     },
     "3304ff1362": {
       "spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "335ef48f4a": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "3390d17b97": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "33fea20b5d": {
       "spacing:e spacing:i spacing:i spacing:nin": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "3423ecf5af": {
       "of": "*"
     },
     "352263a923": {
       "spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "35eacfc01d": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "3608d60b77": {
       "spacing:den spacing:e spacing:i spacing:i spacing:nin": "tr",
       "spacing:তে": "bn",
       "spacing:의": "ko",
-      "spacing:で spacing:の spacing:を": "ja"
+      "spacing:の": "ja"
     },
     "3614477c6c": {
-      "elsewhere": "ar de es fr he hi id ko ms pl pt qu ru sw tl uk vi zh",
-      "elsewhere spacing:i": "tr",
-      "elsewhere spacing:で spacing:を": "ja"
+      "elsewhere": "ar de es fr he hi id ja ko ms pl pt qu ru sw tl uk vi zh",
+      "elsewhere spacing:i": "tr"
     },
     "3653262b4c": {
       "spacing:e spacing:e spacing:i spacing:i": "tr"
@@ -935,16 +818,14 @@
     },
     "370e90a549": {
       "spacing:e spacing:i spacing:i spacing:i spacing:nin": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "37e942764f": {
       "spacing:i": "tr"
     },
     "3850418a7f": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "38731274f8": {
       "spacing:i": "tr"
@@ -954,21 +835,19 @@
       "spacing:de spacing:i spacing:nin": "tr",
       "spacing:এ spacing:এ spacing:তে": "bn",
       "spacing:를 spacing:에 spacing:의": "ko",
-      "spacing:で spacing:で spacing:の spacing:を spacing:を": "ja"
+      "spacing:で spacing:の spacing:を": "ja"
     },
     "390543ee1c": {
-      "global": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
+      "global": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
       "global spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "global spacing:তে": "bn",
-      "global spacing:で spacing:を": "ja"
+      "global spacing:তে": "bn"
     },
     "391f640b6b": {
       "spacing:কে": "bn"
     },
     "3943c95dd5": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "39744dbe88": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr"
@@ -980,25 +859,22 @@
       "spacing:den spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:에서": "ko",
-      "spacing:から spacing:で spacing:を": "ja"
+      "spacing:から": "ja"
     },
     "39fcc6226b": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "3a23dbafcd": {
       "spacing:i": "tr"
     },
     "3a592b6997": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:কে spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:কে spacing:তে": "bn"
     },
     "3ac5aec65a": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "3ad3f4bd6c": {
       "spacing:i": "tr"
@@ -1008,63 +884,52 @@
     },
     "3b67c3d1a7": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "3c320d76e8": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "3c836f19b5": {
       "spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "3ca1a7a07f": {
       "spacing:i": "tr",
-      "spacing:কে spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:কে spacing:তে": "bn"
     },
     "3d08c1eb9c": {
       "spacing:i spacing:i transition view": "tr",
       "spacing:তে transition view": "bn",
-      "spacing:で spacing:を transition view": "ja",
-      "transition view": "ar de es he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
+      "transition view": "ar de es he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
       "view": "fr"
     },
     "3d10ae6c9b": {
       "null": "he",
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:কে spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:কে spacing:তে": "bn"
     },
     "3d5f26b854": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "3d6f0303b4": {
       "spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে spacing:তে": "bn",
-      "spacing:で spacing:で spacing:を spacing:を": "ja",
+      "spacing:তে": "bn",
       "trigger": "qu"
     },
     "3dfa6c3d53": {
       "spacing:e spacing:i spacing:le": "tr",
-      "spacing:কে spacing:কে spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:কে spacing:কে spacing:তে": "bn"
     },
     "3e46a26788": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "3f12e47ce2": {
       "I": "ar de es fr he hi id it ms pl pt qu ru sw th tl uk vi zh",
       "I spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "3f2b78988b": {
       "after": "hi",
@@ -1072,25 +937,22 @@
       "case:me": "tl",
       "spacing:i": "tr",
       "spacing:를": "ko",
-      "spacing:で spacing:を spacing:を": "ja"
+      "spacing:を": "ja"
     },
     "3f40310d9a": {
       "spacing:e spacing:i": "tr"
     },
     "3f668e4075": {
-      "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:e spacing:i spacing:i": "tr"
     },
     "3f7df590ea": {
       "spacing:i spacing:le": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "3f9872bcd4": {
       "spacing:e spacing:i spacing:i to": "tr",
       "spacing:로 to": "ko",
-      "spacing:で spacing:として spacing:を to": "ja",
+      "spacing:として to": "ja",
       "to": "ar de es fr he hi id ms pt qu ru sw tl uk vi zh"
     },
     "3ff1c7e952": {
@@ -1114,8 +976,7 @@
     },
     "41f7730864": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "42370bb64d": {
       "smoothly": "*"
@@ -1127,26 +988,23 @@
       "spacing:de spacing:i spacing:i spacing:nin": "tr",
       "spacing:এ spacing:এ spacing:তে": "bn",
       "spacing:를 spacing:에 spacing:의": "ko",
-      "spacing:で spacing:で spacing:の spacing:を spacing:を": "ja"
+      "spacing:で spacing:の spacing:を": "ja"
     },
     "42ab540e4f": {
-      "giving": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
+      "giving": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
       "giving spacing:den spacing:i spacing:i": "tr",
-      "giving spacing:তে": "bn",
-      "giving spacing:で spacing:を": "ja"
+      "giving spacing:তে": "bn"
     },
     "433228d9f9": {
       "spacing:i": "tr"
     },
     "43d3d294ed": {
       "spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "44d0de7b8e": {
       "spacing:den spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "452278f4ef": {
       "spacing:i": "tr"
@@ -1158,32 +1016,27 @@
     },
     "45901524ee": {
       "spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "45c450cd16": {
       "null": "es fr he it pt ru tl uk vi zh",
       "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "4624a9f39a": {
       "spacing:e spacing:i": "tr"
     },
     "465ed43e73": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "46862cb328": {
       "spacing:e spacing:i spacing:i spacing:i spacing:nin spacing:nin": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "46a7aa63c2": {
       "spacing:e spacing:i spacing:le": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "46fae912c4": {
       "spacing:i": "tr"
@@ -1193,31 +1046,26 @@
     },
     "47864f514a": {
       "spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "47902e382e": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "4790691b18": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr"
     },
     "47a37edc5b": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "47b04cd69b": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "48041c1699": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "482bcde10d": {
       "spacing:কে": "bn"
@@ -1251,13 +1099,11 @@
     },
     "4a093ff930": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "4a318e304f": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "4aa203e138": {
       "spacing:i": "tr"
@@ -1270,8 +1116,7 @@
     },
     "4afb8bc59d": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "4b841b38b6": {
       "spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i": "tr"
@@ -1283,42 +1128,37 @@
       "spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:로": "ko",
-      "spacing:で spacing:として spacing:を": "ja"
+      "spacing:として": "ja"
     },
     "4da1d2fe85": {
       "spacing:de spacing:i spacing:i spacing:nin": "tr",
       "spacing:এ spacing:কে spacing:তে": "bn",
       "spacing:를 spacing:를 spacing:에 spacing:의": "ko",
-      "spacing:で spacing:で spacing:の spacing:を spacing:を spacing:を": "ja"
+      "spacing:で spacing:の spacing:を spacing:を": "ja"
     },
     "4da5bc5657": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "4decb0f469": {
       "spacing:e spacing:i": "tr"
     },
     "4eee0ddc5e": {
       "spacing:e spacing:i spacing:i spacing:nin spacing:nin": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "4f0ccd3191": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "4f2c353324": {
       "from spacing:i spacing:i with": "tr",
       "from spacing:তে with": "bn",
-      "from spacing:で spacing:を with": "ja",
-      "from with": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh"
+      "from with": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh"
     },
     "4f4e17d09d": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "4fa7c5a9f9": {
       "spacing:তে": "bn"
@@ -1337,29 +1177,24 @@
     },
     "50baa0f426": {
       "spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "50e7da7fd1": {
-      "a": "ar de he hi id ko ms pl qu ru sw th tl uk vi zh",
+      "a": "ar de he hi id ja ko ms pl qu ru sw th tl uk vi zh",
       "a spacing:তে": "bn",
-      "a spacing:で spacing:を": "ja",
       "spacing:a spacing:i spacing:i": "tr"
     },
     "50e8f568f6": {
       "spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "50f53e2178": {
       "spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "5166cfc046": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "51bb7a875d": {
       "spacing:i": "tr"
@@ -1371,8 +1206,7 @@
     },
     "52176aeb50": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "52429e2b56": {
       "spacing:e spacing:i spacing:nin": "tr",
@@ -1381,13 +1215,11 @@
     },
     "5251dc43ae": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "527fa42258": {
       "spacing:e spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "533247c884": {
       "spacing:e spacing:i": "tr"
@@ -1399,98 +1231,83 @@
       "spacing:i spacing:nin": "tr"
     },
     "540540cc5a": {
-      "spacing:e spacing:i spacing:i": "tr",
-      "spacing:で spacing:を": "ja"
+      "spacing:e spacing:i spacing:i": "tr"
     },
     "54a65f4602": {
-      "of": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
+      "of": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
       "of spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "of spacing:তে": "bn",
-      "of spacing:で spacing:を": "ja"
+      "of spacing:তে": "bn"
     },
     "54e82be07b": {
       "spacing:den spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "556f94f59c": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "557f87a625": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:কে spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:কে spacing:তে": "bn"
     },
     "558ab062bd": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "55c848a15e": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "55d89a9495": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "561fca9c2c": {
       "spacing:de spacing:e spacing:i spacing:i spacing:i spacing:i spacing:nin": "tr",
       "spacing:এ spacing:কে spacing:তে": "bn",
       "spacing:를 spacing:에 spacing:의": "ko",
-      "spacing:で spacing:で spacing:の spacing:を spacing:を": "ja"
+      "spacing:で spacing:の spacing:を": "ja"
     },
     "563fb2db1f": {
       "add": "ar de es fr he hi id it ms pl pt qu ru sw th tl uk vi zh",
       "add spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "567ce21730": {
-      "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:i spacing:i": "tr"
     },
     "57470de5ba": {
       "spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "5761791c05": {
       "as spacing:로": "ko",
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で spacing:として spacing:を": "ja"
+      "spacing:として": "ja"
     },
     "5763f61aac": {
       "spacing:de spacing:i spacing:i spacing:i spacing:nin": "tr",
       "spacing:এ spacing:এ spacing:তে": "bn",
       "spacing:를 spacing:에 spacing:의": "ko",
-      "spacing:で spacing:で spacing:の spacing:を spacing:を": "ja"
+      "spacing:で spacing:の spacing:を": "ja"
     },
     "57c481271a": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "57cc2d6c8c": {
       "spacing:den spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
       "spacing:에서": "ko",
-      "spacing:から spacing:で spacing:を": "ja"
+      "spacing:から": "ja"
     },
     "57cff16446": {
       "spacing:i": "tr"
     },
     "580655e71a": {
-      "of": "ar de es fr he hi id ko ms pt qu sw th tl vi zh",
+      "of": "ar de es fr he hi id ja ko ms pt qu sw th tl vi zh",
       "of spacing:e spacing:i spacing:i": "tr",
-      "of spacing:তে": "bn",
-      "of spacing:で spacing:を": "ja"
+      "of spacing:তে": "bn"
     },
     "585ccc624e": {
       "spacing:i": "tr"
@@ -1502,12 +1319,11 @@
       "spacing:i spacing:le": "tr",
       "spacing:তে": "bn",
       "spacing:로 spacing:을": "ko",
-      "spacing:で spacing:で spacing:を spacing:を": "ja"
+      "spacing:で spacing:で spacing:を": "ja"
     },
     "5a1121fdb6": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "5a8fe9b03e": {
       "spacing:e spacing:i": "tr"
@@ -1518,8 +1334,7 @@
     },
     "5ad8d62d99": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "5b3fabb9d0": {
       "spacing:i": "tr"
@@ -1529,18 +1344,15 @@
     },
     "5b97d98650": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "5bc47fcae3": {
       "spacing:e spacing:i spacing:i spacing:nin": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "5c032bc4cf": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "5c42316d50": {
       "spacing:e": "tr"
@@ -1550,45 +1362,38 @@
     },
     "5cc0a436d0": {
       "spacing:i spacing:le": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "5d9dc806eb": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "5da322d79d": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "5dc6439afe": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "5ded6059c0": {
       "spacing:den spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "5df4aec673": {
       "spacing:i spacing:i spacing:nin": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "5e05720cf8": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "5e34b9c563": {
       "before": "hi",
       "before spacing:কে spacing:তে": "bn",
       "spacing:i": "tr",
       "spacing:를": "ko",
-      "spacing:で spacing:を spacing:を": "ja"
+      "spacing:を": "ja"
     },
     "5e693c38f0": {
       "spacing:i spacing:i": "tr"
@@ -1597,7 +1402,7 @@
       "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
       "spacing:কে spacing:তে": "bn",
       "spacing:를": "ko",
-      "spacing:で spacing:を spacing:を": "ja"
+      "spacing:を": "ja"
     },
     "5ecd22f354": {
       "spacing:e": "tr",
@@ -1605,8 +1410,7 @@
     },
     "5eebb2cee1": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "5f9723511f": {
       "spacing:e spacing:i": "tr"
@@ -1614,16 +1418,14 @@
     "5f9881c2fd": {
       "bubbling": "ar de es fr he hi id it ms pl pt qu ru sw th tl uk vi zh",
       "bubbling spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "5ff6a6eb86": {
       "spacing:e spacing:i": "tr"
     },
     "60770598a3": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "60a296a24c": {
       "spacing:i": "tr"
@@ -1632,9 +1434,8 @@
       "spacing:i": "tr"
     },
     "611ee442a1": {
-      "childList of": "ar de es fr he hi id ko ms pl pt qu ru sw tl uk vi zh",
-      "childList of spacing:i spacing:i": "tr",
-      "childList of spacing:で spacing:を": "ja"
+      "childList of": "ar de es fr he hi id ja ko ms pl pt qu ru sw tl uk vi zh",
+      "childList of spacing:i spacing:i": "tr"
     },
     "6158d2b4f1": {
       "spacing:e spacing:i": "tr"
@@ -1644,45 +1445,38 @@
     },
     "6178899ead": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "622f30a7a4": {
       "spacing:i": "tr"
     },
     "6238ec66e3": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "62b066758c": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "62bab43e17": {
-      "of": "ar de es fr he hi id ko ms pl pt qu ru sw tl uk vi zh",
-      "of spacing:i spacing:i": "tr",
-      "of spacing:で spacing:を": "ja"
+      "of": "ar de es fr he hi id ja ko ms pl pt qu ru sw tl uk vi zh",
+      "of spacing:i spacing:i": "tr"
     },
     "62cfecb936": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "63b15e5c8c": {
       "spacing:den spacing:i": "tr"
     },
     "63e8a84d3d": {
       "spacing:den spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "6428d2ac2e": {
       "in": "he",
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:এ spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:এ spacing:তে": "bn"
     },
     "64332ce12f": {
       "spacing:e spacing:i": "tr"
@@ -1693,15 +1487,13 @@
     "64962d021c": {
       "of spacing:e spacing:i the top": "tr",
       "of spacing:তে the top": "bn",
-      "of spacing:で spacing:を the top": "ja",
-      "of the top": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh"
+      "of the top": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh"
     },
     "654badc7d8": {
       "case:me of": "hi",
       "case:me of spacing:e spacing:i spacing:i spacing:i": "tr",
       "case:me of spacing:কে spacing:তে": "bn",
-      "of": "ar de es fr he id it ko ms pl pt qu ru sw th tl uk vi zh",
-      "of spacing:で spacing:を": "ja"
+      "of": "ar de es fr he id it ja ko ms pl pt qu ru sw th tl uk vi zh"
     },
     "65c957df4c": {
       "spacing:i spacing:i spacing:nin": "tr",
@@ -1713,19 +1505,16 @@
     },
     "667ef374a3": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "66878bf2ed": {
-      "element element": "ar es fr he hi id ko ms pt qu sw th tl vi zh",
+      "element element": "ar es fr he hi id ja ko ms pt qu sw th tl vi zh",
       "element element spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
-      "element element spacing:তে": "bn",
-      "element element spacing:で spacing:を": "ja"
+      "element element spacing:তে": "bn"
     },
     "66938890d8": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "66a3e903a3": {
       "spacing:e spacing:i": "tr",
@@ -1748,13 +1537,11 @@
     },
     "67bc68093b": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "6807291736": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "6811807eb6": {
       "spacing:i spacing:i": "tr"
@@ -1764,8 +1551,7 @@
     },
     "68757eaaed": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "68eeb5b1b8": {
       "spacing:i spacing:i": "tr",
@@ -1775,78 +1561,65 @@
     },
     "6916cdcfb9": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "69428a76bc": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "69537d01ae": {
       "spacing:i spacing:i": "tr"
     },
     "6959984db6": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "6a4c277b9e": {
-      "on": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
+      "on": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
       "on spacing:e spacing:i spacing:i": "tr",
-      "on spacing:তে": "bn",
-      "on spacing:で spacing:を": "ja"
+      "on spacing:তে": "bn"
     },
     "6a6afed6dc": {
       "spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "6a898f0e9d": {
       "spacing:e spacing:e spacing:i spacing:i": "tr"
     },
     "6aa4945f87": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "6b4e1662ba": {
       "of the": "*"
     },
     "6b508f9f6a": {
-      "having margin": "ar de es fr he hi id ko ms pl pt qu ru sw tl uk vi zh",
-      "having margin spacing:i spacing:i": "tr",
-      "having margin spacing:で spacing:を": "ja"
+      "having margin": "ar de es fr he hi id ja ko ms pl pt qu ru sw tl uk vi zh",
+      "having margin spacing:i spacing:i": "tr"
     },
     "6b86c1be20": {
       "spacing:e spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "6b90e41e44": {
       "spacing:i spacing:le": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "6bd43c0600": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "6c502db00d": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "6c6c1f6354": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "6c899a4847": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "6ca5c3aad9": {
       "spacing:i spacing:i spacing:i": "tr"
@@ -1858,57 +1631,49 @@
     },
     "6d2f8a0f51": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "6d4c264063": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "6d51cb6e38": {
       "spacing:i spacing:i": "tr"
     },
     "6db594c0c9": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "6dd0088239": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "6e3bd8d366": {
       "spacing:den spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:에서": "ko",
-      "spacing:から spacing:で spacing:を": "ja"
+      "spacing:から": "ja"
     },
     "6e8c76f073": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "6f158287fe": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "6f16034320": {
       "spacing:e spacing:i": "tr"
     },
     "6f26584dc0": {
       "spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "6f60177037": {
       "matches spacing:তে the": "bn",
       "matches the": "th",
       "spacing:e spacing:i spacing:i spacing:i spacing:i the": "tr",
-      "spacing:で spacing:を the": "ja",
-      "the": "ar de es fr he hi id it ko ms pl pt ru sw tl uk vi zh"
+      "the": "ar de es fr he hi id it ja ko ms pl pt ru sw tl uk vi zh"
     },
     "6f6d57c10a": {
       "spacing:i spacing:i spacing:i": "tr",
@@ -1925,34 +1690,30 @@
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:로": "ko",
-      "spacing:で spacing:として spacing:を": "ja"
+      "spacing:として": "ja"
     },
     "700521d74b": {
       "of spacing:e spacing:i the top": "tr",
       "of spacing:তে the top": "bn",
-      "of spacing:で spacing:を the top": "ja",
-      "of the top": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh"
+      "of the top": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh"
     },
     "702a77d3e4": {
       "spacing:i": "tr"
     },
     "708a1525c6": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "70b5679b95": {
       "spacing:i spacing:i": "tr"
     },
     "711c7947e3": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "7140cf9f73": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "714647b5db": {
       "spacing:i": "tr"
@@ -1963,25 +1724,21 @@
       "spacing:を": "ja"
     },
     "7190d033fa": {
-      "for": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
+      "for": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
       "for spacing:den spacing:i spacing:i": "tr",
-      "for spacing:তে": "bn",
-      "for spacing:で spacing:を": "ja"
+      "for spacing:তে": "bn"
     },
     "71b580c75e": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "71da97898c": {
       "spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "71fa65fffe": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "7236bd917b": {
       "spacing:le": "tr"
@@ -1989,25 +1746,22 @@
     "725196f20e": {
       "matches": "th",
       "matches spacing:তে": "bn",
-      "spacing:e spacing:i spacing:i": "tr",
-      "spacing:で spacing:を": "ja"
+      "spacing:e spacing:i spacing:i": "tr"
     },
     "725210f295": {
       "spacing:e spacing:i": "tr"
     },
     "729177d584": {
       "spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "72d6ccf6ff": {
       "spacing:i": "tr"
     },
     "72fd7ecd0f": {
-      "of": "hi ko qu tl vi zh",
+      "of": "hi ja ko qu tl vi zh",
       "of spacing:i spacing:i": "tr",
-      "of spacing:তে": "bn",
-      "of spacing:で spacing:を": "ja"
+      "of spacing:তে": "bn"
     },
     "73325ff027": {
       "in in of spacing:의 the": "ko",
@@ -2023,7 +1777,7 @@
       "as spacing:로": "ko",
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で spacing:として spacing:を": "ja"
+      "spacing:として": "ja"
     },
     "7376bdb9d2": {
       "spacing:e spacing:i": "tr"
@@ -2035,73 +1789,61 @@
       "spacing:de spacing:i spacing:i spacing:i spacing:nin": "tr",
       "spacing:এ spacing:এ spacing:তে": "bn",
       "spacing:를 spacing:에 spacing:의": "ko",
-      "spacing:で spacing:で spacing:の spacing:を spacing:を": "ja"
+      "spacing:で spacing:の spacing:を": "ja"
     },
     "744ae1df0e": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "74ea5f1e38": {
-      "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:i spacing:i": "tr"
     },
     "75c59205a6": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "765b8ac520": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "765fe28046": {
       "spacing:i spacing:i": "tr"
     },
     "766096d1a6": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "766267788d": {
       "spacing:i": "tr"
     },
     "766ded0ebf": {
-      "a": "ar de he hi id ko ms pl qu ru sw th tl uk vi zh",
+      "a": "ar de he hi id ja ko ms pl qu ru sw th tl uk vi zh",
       "a spacing:তে": "bn",
-      "a spacing:で spacing:を": "ja",
       "spacing:a spacing:i spacing:i": "tr"
     },
     "76829fafba": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "769eede266": {
       "spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "76bf595d21": {
-      "a": "ar de he hi id ko ms pl qu ru sw th tl uk vi zh",
+      "a": "ar de he hi id ja ko ms pl qu ru sw th tl uk vi zh",
       "a spacing:তে": "bn",
-      "a spacing:で spacing:を": "ja",
       "spacing:a spacing:i spacing:i": "tr"
     },
     "7740b3f40e": {
       "spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "779366f4b2": {
       "case:me-object": "ar"
     },
     "77b3a829d6": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "77dba71809": {
       "spacing:i": "tr"
@@ -2113,16 +1855,14 @@
     },
     "7835c70e58": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:で spacing:として spacing:を": "ja"
+      "spacing:として": "ja"
     },
     "7856a2a86c": {
       "spacing:e spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "7896ec4b23": {
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "789c484ccf": {
       "spacing:e spacing:i": "tr",
@@ -2131,8 +1871,7 @@
     },
     "794323a650": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "79674d3450": {
       "case:me-object": "ar"
@@ -2142,12 +1881,11 @@
       "spacing:de spacing:e spacing:i spacing:i spacing:nin": "tr",
       "spacing:এ spacing:এ spacing:তে": "bn",
       "spacing:를 spacing:에 spacing:의": "ko",
-      "spacing:で spacing:で spacing:の spacing:を spacing:を": "ja"
+      "spacing:で spacing:の spacing:を": "ja"
     },
     "79e8bdd382": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "7a09f40bfc": {
       "spacing:e spacing:i": "tr"
@@ -2157,26 +1895,22 @@
     },
     "7a76e66c64": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "7a95666bea": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "7ab4a541ee": {
-      "in me": "hi ko qu",
-      "in me spacing:কে spacing:তে": "bn",
-      "in me spacing:で spacing:を": "ja"
+      "in me": "hi ja ko qu",
+      "in me spacing:কে spacing:তে": "bn"
     },
     "7add8d99d2": {
       "spacing:e spacing:i spacing:i": "tr"
     },
     "7b278b329a": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "7b70b33883": {
       "spacing:e spacing:i": "tr"
@@ -2186,24 +1920,21 @@
     },
     "7beb55b4c4": {
       "spacing:e spacing:i": "tr",
-      "spacing:কে spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:কে spacing:তে": "bn"
     },
     "7c0b87cf7b": {
       "spacing:i spacing:i": "tr"
     },
     "7c78ba4c61": {
       "spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "7cd5bcc5eb": {
       "spacing:i": "tr"
     },
     "7cf4fa3af7": {
-      "elsewhere": "ar de es fr he hi id ko ms pl pt qu ru sw tl uk vi zh",
-      "elsewhere spacing:i spacing:i": "tr",
-      "elsewhere spacing:で spacing:を": "ja"
+      "elsewhere": "ar de es fr he hi id ja ko ms pl pt qu ru sw tl uk vi zh",
+      "elsewhere spacing:i spacing:i": "tr"
     },
     "7d06494c1c": {
       "spacing:e spacing:i": "tr"
@@ -2223,105 +1954,87 @@
     },
     "7d7f400a2f": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "7e38e16379": {
       "spacing:den spacing:i spacing:i spacing:i spacing:i": "tr",
       "spacing:তে spacing:তে": "bn",
       "spacing:에서": "ko",
-      "spacing:から spacing:で spacing:で spacing:を spacing:を": "ja"
+      "spacing:から": "ja"
     },
     "7e5fef0f64": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "7e7ed46a0f": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "7e80abc1a6": {
       "spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "7e86c4a503": {
       "in": "he",
       "spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:এ spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:এ spacing:তে": "bn"
     },
     "7eeb961752": {
       "spacing:i": "tr"
     },
     "7ef504c57f": {
-      "me": "ar de es he hi id ko ms pl pt qu ru sw th tl uk vi zh",
-      "me spacing:e spacing:i spacing:i spacing:i": "tr",
-      "me spacing:তে": "bn",
-      "me spacing:で spacing:を": "ja"
+      "me": "ar bn de es he hi id ja ko ms pl pt qu ru sw th tl uk vi zh",
+      "me spacing:e spacing:i spacing:i spacing:i": "tr"
     },
     "7f12115c90": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "7f147b2903": {
       "spacing:i": "tr"
     },
     "7f192fcdec": {
       "having spacing:i spacing:i threshold": "tr",
-      "having spacing:で spacing:を threshold": "ja",
-      "having threshold": "ar de es fr he hi id ko ms pl pt qu ru sw tl uk vi zh"
+      "having threshold": "ar de es fr he hi id ja ko ms pl pt qu ru sw tl uk vi zh"
     },
     "7f9dd756b8": {
       "spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:কে spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:কে spacing:তে": "bn"
     },
     "7f9de8b3e2": {
-      "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:i spacing:i": "tr"
     },
     "7fe8bdc214": {
       "spacing:den spacing:e spacing:i spacing:i spacing:nin": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "7ff84f9087": {
       "spacing:e spacing:i": "tr"
     },
     "801604b875": {
-      "here": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
+      "here": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
       "here spacing:i spacing:i spacing:le": "tr",
-      "here spacing:তে": "bn",
-      "here spacing:で spacing:を": "ja"
+      "here spacing:তে": "bn"
     },
     "801e211f5c": {
       "spacing:i": "tr"
     },
     "8085b8ef86": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "80f4300e27": {
       "spacing:e spacing:i spacing:le": "tr",
       "spacing:তে": "bn",
-      "spacing:로": "ko",
-      "spacing:で spacing:を": "ja"
+      "spacing:로": "ko"
     },
     "8165cc6f36": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "817dc01fa4": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "81d9b407c3": {
       "spacing:e spacing:i": "tr"
@@ -2338,16 +2051,14 @@
     },
     "825dfb0d8a": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "829d5911e4": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "829e32df04": {
-      "spacing:তে spacing:তে": "bn"
+      "spacing:তে": "bn"
     },
     "82a219d345": {
       "spacing:i spacing:i": "tr"
@@ -2357,33 +2068,28 @@
     },
     "82d551ac58": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "83186964ec": {
       "spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "834d9defce": {
-      "for": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
+      "for": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
       "for spacing:den spacing:i spacing:i": "tr",
-      "for spacing:তে": "bn",
-      "for spacing:で spacing:を": "ja"
+      "for spacing:তে": "bn"
     },
     "8353b546d7": {
-      "spacing:তে spacing:তে": "bn"
+      "spacing:তে": "bn"
     },
     "83eaad1bf1": {
-      "on": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
+      "on": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
       "on spacing:i spacing:i": "tr",
-      "on spacing:তে": "bn",
-      "on spacing:で spacing:を": "ja"
+      "on spacing:তে": "bn"
     },
     "845761d98f": {
       "of of spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "847f3a46e3": {
       "spacing:i": "tr"
@@ -2395,19 +2101,16 @@
     },
     "84b0b7a214": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "84c8655749": {
       "contains": "he th",
       "contains spacing:তে": "bn",
-      "spacing:i spacing:i": "tr",
-      "spacing:で spacing:を": "ja"
+      "spacing:i spacing:i": "tr"
     },
     "85061852ee": {
       "spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "8546811a92": {
       "spacing:i": "tr"
@@ -2423,36 +2126,30 @@
     },
     "85d983006c": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "85f412f92a": {
-      "of": "ar de es fr he hi id ko ms pl pt qu ru sw tl uk vi zh",
-      "of spacing:i spacing:i": "tr",
-      "of spacing:で spacing:を": "ja"
+      "of": "ar de es fr he hi id ja ko ms pl pt qu ru sw tl uk vi zh",
+      "of spacing:i spacing:i": "tr"
     },
     "860fe6613f": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "862ede02e6": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "8656f0257d": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "868f70fa6f": {
       "spacing:e spacing:i": "tr"
     },
     "86bfd24dc8": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "8712ddea5b": {
       "spacing:를 spacing:에 spacing:의": "ko"
@@ -2462,13 +2159,12 @@
       "spacing:e spacing:i spacing:i spacing:i": "tr",
       "spacing:কে spacing:তে": "bn",
       "spacing:로": "ko",
-      "spacing:で spacing:として spacing:を": "ja"
+      "spacing:として": "ja"
     },
     "87a851fb52": {
       "matches": "th",
       "matches spacing:তে": "bn",
-      "spacing:e spacing:i spacing:i": "tr",
-      "spacing:で spacing:を": "ja"
+      "spacing:e spacing:i spacing:i": "tr"
     },
     "87d42db63b": {
       "after": "bn hi",
@@ -2482,42 +2178,36 @@
     },
     "880115352a": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "880722ad07": {
       "spacing:i spacing:i spacing:i transition view": "tr",
       "spacing:তে transition view": "bn",
-      "spacing:で spacing:を transition view": "ja",
-      "transition view": "ar de es he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
+      "transition view": "ar de es he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
       "view": "fr"
     },
     "884cd9cfaa": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "88e85f0a8c": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "894814af9a": {
       "spacing:e spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:로": "ko",
-      "spacing:で spacing:として spacing:を": "ja"
+      "spacing:として": "ja"
     },
     "897b7048f1": {
       "spacing:de spacing:i spacing:i spacing:nin": "tr",
       "spacing:এ spacing:কে spacing:তে": "bn",
       "spacing:를 spacing:를 spacing:에 spacing:의": "ko",
-      "spacing:で spacing:で spacing:の spacing:を spacing:を spacing:を": "ja"
+      "spacing:で spacing:の spacing:を spacing:を": "ja"
     },
     "89b4950c2c": {
-      "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:e spacing:i spacing:i": "tr"
     },
     "8a0905548a": {
       "spacing:e spacing:i": "tr",
@@ -2529,8 +2219,7 @@
     },
     "8b7ea8a21f": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "8b8f506130": {
       "spacing:e spacing:e spacing:i spacing:i": "tr"
@@ -2540,26 +2229,22 @@
     },
     "8c714e3b3d": {
       "spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "8cd34498a6": {
       "spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "8cfc36e158": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে spacing:তে spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে spacing:তে spacing:তে": "bn"
     },
     "8d10ac2d94": {
       "spacing:i": "tr"
     },
     "8d3f2c38c0": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "8d4184a372": {
       "spacing:i": "tr"
@@ -2568,59 +2253,49 @@
       "spacing:e spacing:i": "tr"
     },
     "8da39cdc9a": {
-      "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:e spacing:i spacing:i": "tr"
     },
     "8e36a39de9": {
       "spacing:e spacing:i": "tr"
     },
     "8e5fb7d3a8": {
       "spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "8e7118ac3b": {
-      "spacing:তে spacing:তে": "bn"
+      "spacing:তে": "bn"
     },
     "8e718ade5d": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:কে spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:কে spacing:তে": "bn"
     },
     "8e7b19e6bf": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "8e9c8553f1": {
       "spacing:i": "tr"
     },
     "8ecf869842": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "8eeb80b899": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "8f00ea8d8e": {
       "null": "he",
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "8f02a24c06": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "8f0d0f2a7d": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "8f4df5f328": {
       "spacing:로": "ko"
@@ -2628,13 +2303,11 @@
     "8f9dd840b1": {
       "null": "he",
       "spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে spacing:তে": "bn"
     },
     "8fc37b9df2": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "8fc755e865": {
       "spacing:i": "tr"
@@ -2646,13 +2319,11 @@
     },
     "9092777eb6": {
       "spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "90a42e1d9a": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "90b8b33b82": {
       "spacing:e spacing:i": "tr"
@@ -2664,23 +2335,19 @@
     },
     "90f85df7f5": {
       "spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "914b546f34": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "91b558959a": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "92525f135d": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "92546b4cad": {
       "spacing:i spacing:i": "tr"
@@ -2693,25 +2360,22 @@
     },
     "93ce107f93": {
       "spacing:den spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "93ee1ead94": {
       "spacing:e spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:로": "ko",
-      "spacing:で spacing:を": "ja"
+      "spacing:로": "ko"
     },
     "942ef9319a": {
       "spacing:den spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:에서": "ko",
-      "spacing:から spacing:で spacing:を": "ja"
+      "spacing:から": "ja"
     },
     "943ae3577e": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "945a7f7444": {
       "spacing:e spacing:i": "tr"
@@ -2721,8 +2385,7 @@
     },
     "9509c2886f": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "95533f2ee6": {
       "spacing:i spacing:i": "tr"
@@ -2739,37 +2402,31 @@
     },
     "962e312354": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "9661715748": {
       "spacing:e spacing:i spacing:i spacing:nin": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "96f7b0ed5d": {
       "spacing:i": "tr"
     },
     "972c3d6f19": {
       "spacing:e spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "97c0779d08": {
       "spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "987ed0368c": {
-      "of": "hi ko tl vi zh",
+      "of": "hi ja ko tl vi zh",
       "of spacing:তে": "bn",
-      "of spacing:で spacing:を": "ja",
       "spacing:e spacing:i spacing:i spacing:nin": "tr"
     },
     "991b086b82": {
       "spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "999742bbf7": {
       "spacing:e spacing:i": "tr"
@@ -2780,29 +2437,24 @@
     "9a110b248d": {
       "it matches spacing:e spacing:i spacing:i where": "tr",
       "it matches spacing:এ spacing:কে spacing:তে where": "bn",
-      "it matches spacing:で spacing:を where": "ja",
-      "it matches where": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh"
+      "it matches where": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh"
     },
     "9a50db7c19": {
       "spacing:i spacing:i spacing:le": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "9a5c1482e6": {
       "matches": "th",
       "matches spacing:তে": "bn",
-      "spacing:den spacing:i spacing:i": "tr",
-      "spacing:で spacing:を": "ja"
+      "spacing:den spacing:i spacing:i": "tr"
     },
     "9b26201426": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:কে spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:কে spacing:তে": "bn"
     },
     "9be849de9c": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "9c2d74510e": {
       "in of the": "ar bn es fr he hi id ja ko ms pl pt qu ru sw th tl uk zh",
@@ -2814,19 +2466,16 @@
     },
     "9c90bddc55": {
       "spacing:den spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
       "spacing:에서": "ko",
-      "spacing:から spacing:で spacing:を": "ja"
+      "spacing:から": "ja"
     },
     "9d0f0c062c": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "9d62c36696": {
       "spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে spacing:তে": "bn",
-      "spacing:で spacing:で spacing:を spacing:を": "ja",
+      "spacing:তে": "bn",
       "trigger": "qu"
     },
     "9dc8b1b423": {
@@ -2838,8 +2487,7 @@
     "9edb2416e1": {
       "spacing:i spacing:i spacing:i transition view": "tr",
       "spacing:তে transition view": "bn",
-      "spacing:で spacing:を transition view": "ja",
-      "transition view": "ar de es he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
+      "transition view": "ar de es he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
       "view": "fr"
     },
     "9f4cde0fe5": {
@@ -2847,35 +2495,30 @@
     },
     "a0136ee729": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "a01461ca3f": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "a055291c73": {
       "spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "a082a01a52": {
       "spacing:i": "tr"
     },
     "a085623f02": {
       "spacing:i spacing:i spacing:nin": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "a0b190eb38": {
       "spacing:e spacing:i": "tr"
     },
     "a0c1f32954": {
-      "here": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
+      "here": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
       "here spacing:i spacing:i": "tr",
-      "here spacing:তে": "bn",
-      "here spacing:で spacing:を": "ja"
+      "here spacing:তে": "bn"
     },
     "a0f6dab868": {
       "spacing:i": "tr"
@@ -2884,7 +2527,7 @@
       "spacing:den spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:에서": "ko",
-      "spacing:から spacing:で spacing:を": "ja"
+      "spacing:から": "ja"
     },
     "a151a7cf7f": {
       "before": "hi",
@@ -2892,7 +2535,7 @@
       "case:me": "tl",
       "spacing:i": "tr",
       "spacing:를": "ko",
-      "spacing:で spacing:を spacing:を": "ja"
+      "spacing:を": "ja"
     },
     "a1a501759f": {
       "spacing:로": "ko"
@@ -2900,8 +2543,7 @@
     "a1ca7a74a0": {
       "children": "ar de es fr hi id it ms pl pt qu ru sw th tl uk vi zh",
       "children spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "a2276c4e42": {
       "spacing:e spacing:i": "tr"
@@ -2912,8 +2554,7 @@
     "a279e35963": {
       "from spacing:i spacing:i until": "tr",
       "from spacing:তে until": "bn",
-      "from spacing:で spacing:を until": "ja",
-      "from until": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh"
+      "from until": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh"
     },
     "a30e7d6174": {
       "spacing:i spacing:i": "tr"
@@ -2924,23 +2565,18 @@
     },
     "a3810d939d": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "a45d8e4da7": {
       "spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "a4c56acf1e": {
       "spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "a4d32b322b": {
-      "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:i spacing:i": "tr"
     },
     "a513d21e2b": {
       "spacing:i": "tr"
@@ -2950,21 +2586,18 @@
     },
     "a5867275db": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "a5c88b667f": {
       "spacing:e spacing:i": "tr"
     },
     "a5ee689a0d": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "a668c70f10": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "a68f0afa94": {
       "spacing:e spacing:e url": "tr",
@@ -2976,96 +2609,79 @@
     },
     "a6b880e963": {
       "spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "a7073f5941": {
       "spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "a71a0260b6": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "a7287e1332": {
       "spacing:i spacing:le": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "a757f9aec5": {
       "spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "a808d48445": {
       "spacing:e spacing:i": "tr"
     },
     "a873ef0532": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "a8b3e61b81": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "a930a68c92": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "a95285c5d7": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "a9857390c7": {
-      "at debounced": "ar de es fr he hi id it ko ms pl pt qu ru sw th uk vi zh",
+      "at debounced": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th uk vi zh",
       "at debounced spacing:i spacing:i spacing:i": "tr",
       "at debounced spacing:তে": "bn",
-      "at debounced spacing:で spacing:を": "ja",
       "debounced": "tl"
     },
     "a9c2c0024a": {
-      "into": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
+      "into": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
       "into spacing:i spacing:i": "tr",
-      "into spacing:তে": "bn",
-      "into spacing:で spacing:を": "ja"
+      "into spacing:তে": "bn"
     },
     "aa5dcaba5f": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:কে spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:কে spacing:তে": "bn"
     },
     "aaba73db0a": {
       "spacing:i": "tr"
     },
     "aae16fda89": {
-      "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:i spacing:i": "tr"
     },
     "ab061cfe15": {
       "spacing:e spacing:i spacing:le": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "ab10f94541": {
       "spacing:i": "tr"
     },
     "ab5abf9b63": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "ab7d8dc462": {
-      "from": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
+      "from": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
       "from spacing:i spacing:i": "tr",
-      "from spacing:তে": "bn",
-      "from spacing:で spacing:を": "ja"
+      "from spacing:তে": "bn"
     },
     "abe943ade0": {
       "spacing:e spacing:e spacing:i spacing:i": "tr"
@@ -3075,21 +2691,18 @@
     },
     "ac5ff9a5b5": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "ac635c73cd": {
       "spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "ac66e32148": {
       "spacing:i": "tr"
     },
     "acaac0e049": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "acc29ee739": {
       "spacing:i": "tr"
@@ -3098,41 +2711,35 @@
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:로": "ko",
-      "spacing:で spacing:として spacing:を": "ja"
+      "spacing:として": "ja"
     },
     "ad7a09e79d": {
       "spacing:i": "tr"
     },
     "ad85a3c7d8": {
       "spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "addaace6d5": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "ae7e10324c": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr"
     },
     "ae9fb9c316": {
-      "attributes from of": "ar de es fr he hi id ko ms pl pt qu ru sw tl uk vi zh",
-      "attributes from of spacing:i spacing:i": "tr",
-      "attributes from of spacing:で spacing:を": "ja"
+      "attributes from of": "ar de es fr he hi id ja ko ms pl pt qu ru sw tl uk vi zh",
+      "attributes from of spacing:i spacing:i": "tr"
     },
     "aec5da0bfd": {
       "spacing:i": "tr"
     },
     "aede3b026d": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "af0fc325e3": {
-      "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:e spacing:i spacing:i": "tr"
     },
     "af32cc56a5": {
       "spacing:i": "tr"
@@ -3140,65 +2747,56 @@
     "af3ea3a24e": {
       "in": "he",
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:এ spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:এ spacing:তে": "bn"
     },
     "af7b70a9e3": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "afac41b3de": {
       "spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "afef121c93": {
       "spacing:e spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "b0537d7735": {
       "spacing:i": "tr"
     },
     "b06caeffb6": {
       "spacing:e spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "b07af68a20": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "b0c2b16cd5": {
       "spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "b0d0618a0f": {
       "spacing:i spacing:i spacing:i spacing:i transition view": "tr",
       "spacing:কে spacing:তে transition view": "bn",
       "spacing:를 transition view": "ko",
-      "spacing:で spacing:を spacing:を transition view": "ja",
+      "spacing:を transition view": "ja",
       "transition view": "ar de es he hi id it ms pl pt qu ru sw th tl uk vi zh",
       "view": "fr"
     },
     "b19c6cad07": {
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "b1ced64392": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "b2a8e6ca6c": {
       "after": "hi",
       "after spacing:কে spacing:তে": "bn",
       "spacing:i": "tr",
       "spacing:를": "ko",
-      "spacing:で spacing:を spacing:を": "ja"
+      "spacing:を": "ja"
     },
     "b2bf92e6f0": {
       "matches": "bn th"
@@ -3207,19 +2805,17 @@
       "spacing:den spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:에서": "ko",
-      "spacing:から spacing:で spacing:を": "ja"
+      "spacing:から": "ja"
     },
     "b2fe1705ef": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "b365b3c1ad": {
-      "at debounced": "ar de es fr he hi id it ms pl pt qu ru sw th uk vi zh",
+      "at debounced": "ar de es fr he hi id it ja ms pl pt qu ru sw th uk vi zh",
       "at debounced spacing:e spacing:i": "tr",
       "at debounced spacing:কে spacing:তে": "bn",
       "at debounced spacing:로": "ko",
-      "at debounced spacing:で spacing:を": "ja",
       "debounced": "tl"
     },
     "b3c284aec4": {
@@ -3227,8 +2823,7 @@
     },
     "b3ebecebe8": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "b42f44a025": {
       "spacing:i": "tr"
@@ -3237,23 +2832,20 @@
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:로": "ko",
-      "spacing:で spacing:として spacing:を": "ja"
+      "spacing:として": "ja"
     },
     "b4ff59c66c": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "b544ca989b": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "b5b16e17a6": {
       "at spacing:i spacing:i spacing:i throttled": "tr",
       "at spacing:তে throttled": "bn",
-      "at spacing:で spacing:を throttled": "ja",
-      "at throttled": "ar de es fr he hi id it ko ms pl pt qu ru sw th uk vi zh",
+      "at throttled": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th uk vi zh",
       "throttled": "tl"
     },
     "b5bb616a88": {
@@ -3264,19 +2856,17 @@
     },
     "b67908651e": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "b80e4f0edf": {
       "spacing:i spacing:i spacing:le": "tr",
       "spacing:তে": "bn",
       "spacing:로 spacing:을": "ko",
-      "spacing:で spacing:で spacing:を spacing:を": "ja"
+      "spacing:で spacing:で spacing:を": "ja"
     },
     "b81ed8569d": {
       "spacing:den spacing:e spacing:i spacing:i spacing:nin": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "b854e91693": {
       "in of the": "ar bn es fr he hi id ja ko ms pl pt qu ru sw th tl uk zh",
@@ -3285,14 +2875,13 @@
     },
     "b8863db6fb": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:এ spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:এ spacing:তে": "bn"
     },
     "b8b0aeac2f": {
       "spacing:den spacing:i spacing:i spacing:i spacing:i": "tr",
       "spacing:তে spacing:তে": "bn",
       "spacing:에서": "ko",
-      "spacing:から spacing:で spacing:で spacing:を spacing:を": "ja"
+      "spacing:から": "ja"
     },
     "b93c6c2cfd": {
       "spacing:e spacing:i": "tr"
@@ -3302,17 +2891,15 @@
       "matches no": "th",
       "matches no spacing:এ spacing:তে": "bn",
       "no": "he vi",
-      "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:で spacing:を": "ja"
+      "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr"
     },
     "b9502de444": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:で spacing:として spacing:を": "ja"
+      "spacing:として": "ja"
     },
     "b995b77512": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "b9d8995c07": {
       "spacing:e spacing:i": "tr"
@@ -3325,34 +2912,30 @@
     },
     "baa020171b": {
       "spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "bab6996783": {
       "spacing:e spacing:e spacing:e spacing:i spacing:i": "tr"
     },
     "baf8dabbcb": {
       "spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:কে spacing:কে spacing:তে spacing:তে": "bn",
-      "spacing:で spacing:で spacing:を spacing:を spacing:を": "ja",
+      "spacing:কে spacing:কে": "bn",
+      "spacing:を": "ja",
       "trigger": "qu"
     },
     "bb2c2ab053": {
-      "characterData of": "ar de es fr he hi id ko ms pl pt ru sw tl uk vi zh",
-      "characterData of spacing:i spacing:i": "tr",
-      "characterData of spacing:で spacing:を": "ja"
+      "characterData of": "ar de es fr he hi id ja ko ms pl pt ru sw tl uk vi zh",
+      "characterData of spacing:i spacing:i": "tr"
     },
     "bb60537d26": {
       "spacing:i spacing:i spacing:i transition view": "tr",
       "spacing:তে transition view": "bn",
-      "spacing:で spacing:を transition view": "ja",
-      "transition view": "ar de es he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
+      "transition view": "ar de es he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
       "view": "fr"
     },
     "bbd6c5d7fb": {
       "spacing:den spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "bbf040ee1a": {
       "spacing:de spacing:nin": "tr",
@@ -3362,27 +2945,24 @@
     },
     "bc2e321c80": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "bcf30473e0": {
       "in null": "he",
       "spacing:de spacing:i spacing:nin": "tr",
       "spacing:এ spacing:এ spacing:তে": "bn",
       "spacing:를 spacing:에 spacing:의": "ko",
-      "spacing:で spacing:で spacing:の spacing:を spacing:を": "ja"
+      "spacing:で spacing:の spacing:を": "ja"
     },
     "bd457f15ab": {
       "spacing:i spacing:le": "tr"
     },
     "bd56aad55e": {
-      "spacing:e spacing:i": "tr",
-      "spacing:で spacing:を": "ja"
+      "spacing:e spacing:i": "tr"
     },
     "bd75e53d98": {
       "spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "be1d3cc50d": {
       "in": "he",
@@ -3398,26 +2978,22 @@
       "null": "ko",
       "null null": "es fr he it pt ru tl uk vi zh",
       "null spacing:তে": "bn",
-      "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:で spacing:を": "ja"
+      "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr"
     },
     "bf398cb006": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "bf3ceac332": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "bf50ddcd10": {
       "spacing:i": "tr"
     },
     "bf94702b15": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "bf9d889f42": {
       "spacing:e spacing:e": "tr"
@@ -3426,48 +3002,42 @@
       "spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:로": "ko",
-      "spacing:で spacing:として spacing:を": "ja"
+      "spacing:として": "ja"
     },
     "c01496df40": {
       "spacing:e spacing:i spacing:i": "tr"
     },
     "c043e101bf": {
-      "I precede": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
+      "I precede": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
       "I precede spacing:i spacing:i": "tr",
-      "I precede spacing:তে": "bn",
-      "I precede spacing:で spacing:を": "ja"
+      "I precede spacing:তে": "bn"
     },
     "c0ad58570f": {
       "case:me-object": "ar",
       "spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "c0bc2ffa5d": {
       "spacing:i spacing:i": "tr"
     },
     "c1676aa0f9": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "c182ea389a": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "c1d1b5cdc8": {
       "spacing:로": "ko"
     },
     "c20d43a6aa": {
       "spacing:den spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "c237d4a678": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "c2694dd656": {
       "spacing:i": "tr"
@@ -3479,12 +3049,11 @@
       "spacing:den spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:에서": "ko",
-      "spacing:から spacing:で spacing:を": "ja"
+      "spacing:から": "ja"
     },
     "c3d63e2c32": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "c48b233ac7": {
       "in in": "he",
@@ -3504,24 +3073,19 @@
       "spacing:i": "tr"
     },
     "c5c59f2ee4": {
-      "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:e spacing:i spacing:i": "tr"
     },
     "c5ca44049d": {
       "spacing:e spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "c5eb3461d5": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "c5f12a5862": {
       "spacing:e spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "c5fcb81749": {
       "spacing:i": "tr",
@@ -3533,53 +3097,46 @@
     },
     "c6bb505006": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:এ spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:এ spacing:তে": "bn"
     },
     "c6f31063f2": {
       "spacing:e spacing:i": "tr"
     },
     "c71951381c": {
-      "and": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
+      "and": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
       "and spacing:e spacing:i spacing:i": "tr",
-      "and spacing:কে spacing:তে": "bn",
-      "and spacing:で spacing:を": "ja"
+      "and spacing:কে": "bn"
     },
     "c7245165f5": {
       "spacing:e spacing:e spacing:i spacing:i": "tr"
     },
     "c7f012aba7": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "c8992c103b": {
       "spacing:de spacing:i spacing:nin": "tr",
       "spacing:এ spacing:এ spacing:তে": "bn",
       "spacing:를 spacing:에 spacing:의": "ko",
-      "spacing:で spacing:で spacing:の spacing:を spacing:を": "ja"
+      "spacing:で spacing:の spacing:を": "ja"
     },
     "c934b95f51": {
       "spacing:den spacing:e spacing:i spacing:i spacing:nin": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "c9be1bb541": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "c9cd8a23c1": {
       "spacing:e spacing:i with": "tr",
       "spacing:তে with": "bn",
       "spacing:로 with": "ko",
-      "spacing:で spacing:を with": "ja",
-      "with": "ar de es fr he hi id it ms pl pt qu ru sw th tl uk vi zh"
+      "with": "ar de es fr he hi id it ja ms pl pt qu ru sw th tl uk vi zh"
     },
     "c9d4a80d65": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে spacing:তে": "bn",
-      "spacing:で spacing:で spacing:を spacing:を": "ja"
+      "spacing:তে spacing:তে": "bn"
     },
     "ca9939a425": {
       "spacing:i spacing:i": "tr"
@@ -3589,8 +3146,7 @@
     },
     "cb7572a38c": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "cbd4fd5651": {
       "spacing:i": "tr"
@@ -3605,51 +3161,43 @@
     },
     "cc1ea47fb2": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "cc2534b7bc": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "cc4909b0a6": {
       "spacing:i spacing:i spacing:le": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "cce78169bd": {
       "case:me of": "hi",
       "case:me of spacing:i spacing:i": "tr",
       "case:me of spacing:কে spacing:তে": "bn",
-      "of": "ar de es fr he id it ko ms pl pt qu ru sw th tl uk vi zh",
-      "of spacing:で spacing:を": "ja"
+      "of": "ar de es fr he id it ja ko ms pl pt qu ru sw th tl uk vi zh"
     },
     "cd426e8dd9": {
       "spacing:e spacing:i spacing:i spacing:nin": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "cd44d3aa23": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "cd8e67be34": {
       "spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:로": "ko",
-      "spacing:で spacing:として spacing:を": "ja"
+      "spacing:として": "ja"
     },
     "cd8f52b108": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "cda77ba4b6": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "ce1aadee11": {
       "spacing:i": "tr"
@@ -3658,57 +3206,50 @@
       "as spacing:로": "ko",
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で spacing:として spacing:を": "ja"
+      "spacing:として": "ja"
     },
     "ce71a3f0af": {
       "spacing:e spacing:i": "tr"
     },
     "cefbdaeb64": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "cf1a449d54": {
       "spacing:i spacing:le": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "cfbc8ed377": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:로": "ko",
-      "spacing:で spacing:として spacing:を": "ja"
+      "spacing:として": "ja"
     },
     "d015995ae1": {
       "spacing:i": "tr"
     },
     "d09430fb78": {
       "spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "d098868fa8": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "d1f91ab5ac": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "d27a26f74a": {
       "spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "d2affba4d3": {
       "spacing:e spacing:i": "tr"
     },
     "d39b280138": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "d3de3db341": {
       "spacing:로": "ko"
@@ -3718,14 +3259,12 @@
     },
     "d4559bb0fb": {
       "spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "d54bf42f20": {
       "spacing:den spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
       "spacing:에서": "ko",
-      "spacing:から spacing:で spacing:を": "ja"
+      "spacing:から": "ja"
     },
     "d568dbd737": {
       "spacing:i spacing:i": "tr"
@@ -3735,60 +3274,50 @@
     },
     "d623870b1a": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "d66d670d34": {
-      "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:i spacing:i": "tr"
     },
     "d6dcac54c6": {
       "spacing:e spacing:i spacing:i": "tr"
     },
     "d6f236bcfd": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "d6f9065949": {
       "spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "d70995cbf8": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "d71970442a": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "d74a86f3a0": {
       "spacing:e spacing:i spacing:i to": "tr",
       "spacing:তে to": "bn",
-      "spacing:で spacing:を to": "ja",
-      "to": "ar de es fr he hi id it ko ms pt qu ru sw th tl uk vi zh"
+      "to": "ar de es fr he hi id it ja ko ms pt qu ru sw th tl uk vi zh"
     },
     "d7608763c7": {
       "spacing:e spacing:i spacing:i spacing:nin": "tr",
       "spacing:কে spacing:তে": "bn",
       "spacing:를 spacing:에": "ko",
-      "spacing:で spacing:を spacing:を": "ja"
+      "spacing:を": "ja"
     },
     "d779d2d4ee": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "d7b35fefe6": {
       "case:me": "it",
       "case:me in": "hi",
       "case:me in spacing:কে spacing:তে": "bn",
-      "in": "ar es fr he id ko ms pl pt qu ru sw th tl uk zh",
-      "in spacing:で spacing:を": "ja"
+      "in": "ar es fr he id ja ko ms pl pt qu ru sw th tl uk zh"
     },
     "d7b40fb144": {
       "spacing:i": "tr"
@@ -3798,13 +3327,11 @@
     },
     "d8072b1b08": {
       "spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "d807756d44": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "d94fe8f146": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr"
@@ -3812,37 +3339,31 @@
     "d97222601b": {
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:로": "ko",
-      "spacing:で spacing:を": "ja"
+      "spacing:로": "ko"
     },
     "d996916cf7": {
       "spacing:e spacing:i": "tr"
     },
     "d9ec1b5498": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "d9ecdbc854": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "da24c9d768": {
       "spacing:e spacing:i spacing:i to": "tr",
       "spacing:তে to": "bn",
-      "spacing:で spacing:を to": "ja",
-      "to": "ar de es fr he hi id it ko ms pt qu ru sw th tl uk vi zh"
+      "to": "ar de es fr he hi id it ja ko ms pt qu ru sw th tl uk vi zh"
     },
     "da773b09b4": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "da777e2957": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "daa84963de": {
       "spacing:i": "tr"
@@ -3855,11 +3376,10 @@
     },
     "db306c8d93": {
       "spacing:i spacing:i": "tr",
-      "spacing:কে spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:কে spacing:তে": "bn"
     },
     "db3346f209": {
-      "spacing:তে spacing:তে": "bn"
+      "spacing:তে": "bn"
     },
     "db537e799b": {
       "event repeat until": "qu",
@@ -3871,46 +3391,39 @@
       "spacing:de spacing:i spacing:nin": "tr",
       "spacing:এ spacing:এ spacing:তে": "bn",
       "spacing:를 spacing:에 spacing:의": "ko",
-      "spacing:で spacing:で spacing:の spacing:を spacing:を": "ja"
+      "spacing:で spacing:の spacing:を": "ja"
     },
     "db83784f60": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "db954b49b5": {
       "spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "dc092ffd38": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "dc8881fc7d": {
       "matches spacing:তে the": "bn",
       "matches the": "th",
       "spacing:den spacing:e spacing:i spacing:i spacing:i the": "tr",
-      "spacing:で spacing:を the": "ja",
-      "the": "ar de es fr he hi id it ko ms pl pt ru sw tl uk vi zh"
+      "the": "ar de es fr he hi id it ja ko ms pl pt ru sw tl uk vi zh"
     },
     "dc9ce23e31": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "dcb5976167": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে spacing:তে": "bn"
     },
     "dd1f412689": {
       "spacing:e": "tr"
     },
     "dd2ca23457": {
-      "in": "ar es fr he hi id ko ms pl pt qu ru sw tl uk zh",
-      "in spacing:で spacing:を": "ja"
+      "in": "ar es fr he hi id ja ko ms pl pt qu ru sw tl uk zh"
     },
     "dd7f5e28a1": {
       "spacing:i": "tr"
@@ -3920,23 +3433,21 @@
       "spacing:de spacing:i spacing:i spacing:nin": "tr",
       "spacing:এ spacing:এ spacing:কে spacing:তে": "bn",
       "spacing:를 spacing:를 spacing:에 spacing:의": "ko",
-      "spacing:で spacing:で spacing:の spacing:を spacing:を spacing:を": "ja"
+      "spacing:で spacing:の spacing:を spacing:を": "ja"
     },
     "dda4b15ec3": {
       "spacing:i": "tr"
     },
     "ddb498424a": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "ddd1db551f": {
       "spacing:i": "tr"
     },
     "de4311b9f1": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "dea854873f": {
       "spacing:i": "tr"
@@ -3945,36 +3456,32 @@
       "case:it spacing:de spacing:i spacing:nin": "tr",
       "spacing:তে": "bn",
       "spacing:를 spacing:에 spacing:의": "ko",
-      "spacing:で spacing:で spacing:の spacing:を spacing:を": "ja"
+      "spacing:で spacing:の spacing:を": "ja"
     },
     "dee03cd129": {
       "spacing:de spacing:i spacing:nin": "tr",
       "spacing:এ spacing:এ spacing:তে": "bn",
       "spacing:를 spacing:에 spacing:의": "ko",
-      "spacing:で spacing:で spacing:の spacing:を spacing:を": "ja"
+      "spacing:で spacing:の spacing:を": "ja"
     },
     "def617e777": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "df0aa16dbb": {
       "spacing:e spacing:i": "tr"
     },
     "df0bde92da": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "df1d461f99": {
-      "of or": "ar de es fr he hi id ko ms pl pt qu ru sw tl uk vi zh",
-      "of or spacing:i spacing:i": "tr",
-      "of or spacing:で spacing:を": "ja"
+      "of or": "ar de es fr he hi id ja ko ms pl pt qu ru sw tl uk vi zh",
+      "of or spacing:i spacing:i": "tr"
     },
     "df2ee54ee8": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "df922f3370": {
       "spacing:তে": "bn"
@@ -3989,14 +3496,11 @@
       "spacing:i spacing:i spacing:i": "tr"
     },
     "e02d7c4c94": {
-      "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:e spacing:i spacing:i": "tr"
     },
     "e09708409c": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "e0fca05a2f": {
       "in of the": "ar bn es fr he hi id ja ko ms pl pt qu ru sw th tl uk zh",
@@ -4009,18 +3513,15 @@
     "e172bd73af": {
       "of spacing:e spacing:i spacing:i the": "tr",
       "of spacing:তে the": "bn",
-      "of spacing:で spacing:を the": "ja",
-      "of the": "hi ko qu tl vi zh"
+      "of the": "hi ja ko qu tl vi zh"
     },
     "e1bdb23401": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "e1fb5ac921": {
       "spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "e21c81bfc3": {
       "spacing:e spacing:i": "tr"
@@ -4033,89 +3534,73 @@
     },
     "e33bcefc87": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "e37390c838": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "e3f48bb1d5": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "e401ccae54": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "e438b17fdb": {
       "spacing:i spacing:le": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "e4a02b8344": {
       "spacing:i spacing:i": "tr"
     },
     "e51cb64feb": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "e5a600a136": {
-      "of": "hi ko qu tl vi zh",
+      "of": "hi ja ko qu tl vi zh",
       "of spacing:i spacing:i": "tr",
-      "of spacing:তে": "bn",
-      "of spacing:で spacing:を": "ja"
+      "of spacing:তে": "bn"
     },
     "e60afa928a": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "e65eca90f3": {
       "spacing:i": "tr"
     },
     "e6f00e5b1e": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "e71193eed8": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "e7122e0faf": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "e71ea44d67": {
       "matches": "th",
       "matches spacing:তে": "bn",
-      "spacing:i spacing:i": "tr",
-      "spacing:で spacing:を": "ja"
+      "spacing:i spacing:i": "tr"
     },
     "e775a2bad3": {
-      "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:i spacing:i": "tr"
     },
     "e7bfc6833b": {
       "spacing:i": "tr"
     },
     "e82246290a": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "e827566ebf": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "e8446a57e2": {
       "case:me-object": "ar",
@@ -4126,32 +3611,27 @@
     },
     "e866c8e9be": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "e8a10dc843": {
       "spacing:i": "tr"
     },
     "e8a298b630": {
       "spacing:den spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "e8afa42b5a": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "e8bc82209b": {
       "spacing:e spacing:i url": "tr",
       "spacing:তে url": "bn",
-      "spacing:で spacing:を url": "ja",
-      "url": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh"
+      "url": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh"
     },
     "e8ec0ca401": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "e932a68aee": {
       "spacing:i": "tr"
@@ -4160,28 +3640,26 @@
       "spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:로": "ko",
-      "spacing:で spacing:として spacing:を": "ja"
+      "spacing:として": "ja"
     },
     "e9c2de0bf8": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "e9e92774e7": {
-      "spacing:তে spacing:তে": "bn",
+      "spacing:তে": "bn",
       "trigger": "qu"
     },
     "e9f06fbe94": {
       "case:me-object": "ar",
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "ea053893cb": {
       "spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:로": "ko",
-      "spacing:で spacing:として spacing:を": "ja"
+      "spacing:として": "ja"
     },
     "eaa5a2fba1": {
       "spacing:e spacing:i": "tr"
@@ -4193,13 +3671,11 @@
     },
     "ec97ae1115": {
       "spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "eccffc1d1a": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "ed54c8da0b": {
       "spacing:i": "tr"
@@ -4207,36 +3683,30 @@
     "edd578621b": {
       "from my spacing:i spacing:i with": "tr",
       "from my spacing:তে with": "bn",
-      "from my spacing:で spacing:を with": "ja",
-      "from my with": "ar de es fr he hi it ko ms pl pt qu ru sw th tl uk zh"
+      "from my with": "ar de es fr he hi it ja ko ms pl pt qu ru sw th tl uk zh"
     },
     "edd957b754": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "eddfd31cd7": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "ee008e0a98": {
-      "spacing:তে spacing:তে": "bn"
+      "spacing:তে": "bn"
     },
     "ee115df734": {
       "spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে spacing:তে": "bn",
-      "spacing:で spacing:で spacing:を spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "ee27038f99": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "ee4d586d20": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "ee910bdffb": {
       "spacing:i spacing:i": "tr"
@@ -4249,36 +3719,31 @@
       "spacing:i": "tr"
     },
     "ef499d89c4": {
-      "spacing:তে spacing:তে": "bn",
+      "spacing:তে": "bn",
       "trigger": "qu"
     },
     "eff1f1e59f": {
       "as spacing:로": "ko",
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で spacing:として spacing:を": "ja"
+      "spacing:として": "ja"
     },
     "f1554089dd": {
-      "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে spacing:তে": "bn",
-      "spacing:で spacing:で spacing:を spacing:を": "ja"
+      "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr"
     },
     "f18d740a54": {
       "spacing:e spacing:i": "tr"
     },
     "f195fb7855": {
       "spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "f1b1f36cd3": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "f1bc20c608": {
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "f22d539d09": {
       "spacing:i": "tr"
@@ -4291,13 +3756,10 @@
     },
     "f2d336e5a1": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "f3209b3448": {
-      "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:i spacing:i": "tr"
     },
     "f3431f99fc": {
       "spacing:e spacing:i": "tr"
@@ -4307,141 +3769,117 @@
     },
     "f44452a575": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "f460465218": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:로": "ko",
-      "spacing:で spacing:として spacing:を": "ja"
+      "spacing:として": "ja"
     },
     "f46f631254": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr"
     },
     "f4c1d568d9": {
       "spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে spacing:তে": "bn",
-      "spacing:で spacing:で spacing:を spacing:を": "ja",
+      "spacing:তে": "bn",
       "trigger": "qu"
     },
     "f4de24af39": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "f4ef673f0a": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "f533340726": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "f5687d27bd": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:로": "ko",
-      "spacing:で spacing:として spacing:を": "ja"
+      "spacing:として": "ja"
     },
     "f6a0197bd9": {
       "spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "f6a83b738c": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "f6dd2fc33a": {
       "spacing:e spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "f709adde2c": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "f714c87ed5": {
       "spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "f74ce980ff": {
       "spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "f793d435aa": {
-      "into": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
+      "into": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
       "into spacing:i spacing:i spacing:le": "tr",
-      "into spacing:তে": "bn",
-      "into spacing:で spacing:を": "ja"
+      "into spacing:তে": "bn"
     },
     "f7d4d5f9f0": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "f80f138a60": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "f85bfab72d": {
-      "spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:i": "tr"
     },
     "f886098f71": {
       "spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "f8db6d2073": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "f9d6cb3b20": {
       "spacing:den spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "fb29eb9039": {
       "spacing:e spacing:i": "tr"
     },
     "fb6e2d70ec": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "fbbadf1304": {
       "at spacing:i spacing:i spacing:i throttled": "tr",
       "at spacing:তে throttled": "bn",
-      "at spacing:で spacing:を throttled": "ja",
-      "at throttled": "ar de es fr he hi id it ko ms pl pt qu ru sw th uk vi zh",
+      "at throttled": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th uk vi zh",
       "throttled": "tl"
     },
     "fbee4bc3d3": {
       "spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "fc1f6f6ab5": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i the": "tr",
       "spacing:তে the": "bn",
-      "spacing:で spacing:を the": "ja",
-      "the": "ar de es fr he hi id it ko ms pl pt ru sw th tl uk vi zh"
+      "the": "ar de es fr he hi id it ja ko ms pl pt ru sw th tl uk vi zh"
     },
     "fc2dcef0f5": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "fc731ea661": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr"
@@ -4454,22 +3892,20 @@
     },
     "fcebf7d82b": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "fd5f27f62d": {
       "spacing:e spacing:i": "tr"
     },
     "fda9236be6": {
       "spacing:e spacing:i spacing:i": "tr",
-      "spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:তে": "bn"
     },
     "fe4deb7de0": {
       "spacing:den spacing:den spacing:i spacing:i spacing:i spacing:i": "tr",
       "spacing:তে spacing:তে": "bn",
       "spacing:에서 spacing:에서": "ko",
-      "spacing:から spacing:から spacing:で spacing:で spacing:を spacing:を": "ja"
+      "spacing:から spacing:から": "ja"
     },
     "fef0cd8bed": {
       "spacing:e spacing:i": "tr"
@@ -4477,8 +3913,7 @@
     "ff30aeb427": {
       "spacing:i spacing:i spacing:i spacing:i transition view": "tr",
       "spacing:তে transition view": "bn",
-      "spacing:で spacing:を transition view": "ja",
-      "transition view": "ar de es he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
+      "transition view": "ar de es he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
       "view": "fr"
     },
     "ffae900b4c": {
@@ -4498,7 +3933,7 @@
     "15c22f6ecd": "*",
     "15f8c54697": "*",
     "162e3e0582": "*",
-    "16fb80c097": "bn it ja ko th tr zh",
+    "16fb80c097": "bn it ko th tr zh",
     "1aa9c955fa": "ko",
     "1ba900c09e": "ja",
     "1c37112e5a": "*",
@@ -4517,7 +3952,7 @@
     "2d9422b3af": "vi",
     "2f027486b4": "*",
     "2f7af96b02": "id ms vi",
-    "3030e3cc43": "ja ko pl tr",
+    "3030e3cc43": "ko pl tr",
     "32502101bd": "vi",
     "32bbb02918": "pl",
     "32ce88b2e0": "*",
@@ -4589,16 +4024,16 @@
     "7dee91f428": "*",
     "7e4f56fe1b": "*",
     "7f192fcdec": "bn it th",
-    "829e32df04": "ja ko pl tr",
+    "829e32df04": "ko pl tr",
     "82b8bc8836": "*",
-    "8353b546d7": "ja ko tr",
+    "8353b546d7": "ko tr",
     "85d0684e94": "*",
     "85f412f92a": "bn it th",
     "8712ddea5b": "bn hi ja qu tr",
     "897b7048f1": "vi",
     "8a13ec8232": "*",
     "8c8e27625d": "*",
-    "8e7118ac3b": "ja ko tr",
+    "8e7118ac3b": "ko tr",
     "91ef0c1608": "hi",
     "92546b4cad": "ko",
     "93c8c96b46": "hi",
@@ -4650,7 +4085,7 @@
     "d7b35fefe6": "de tr",
     "d9c92a211d": "*",
     "da38860cb8": "hi",
-    "db3346f209": "ja ko tr",
+    "db3346f209": "ko tr",
     "db7fef03e9": "vi",
     "dc8881fc7d": "qu",
     "dd2ca23457": "bn de it th tr",
@@ -4665,12 +4100,12 @@
     "e51cb64feb": "de fr ko",
     "e8446a57e2": "ko",
     "e856eb7927": "*",
-    "e9e92774e7": "ja ko tr",
+    "e9e92774e7": "ko tr",
     "eaa5a2fba1": "it pl ru uk",
     "edd578621b": "id vi",
-    "ee008e0a98": "ja ko pl tr",
+    "ee008e0a98": "ko pl tr",
     "eeb30e2d38": "bn hi sw",
-    "ef499d89c4": "ja ko tr",
+    "ef499d89c4": "ko tr",
     "eff1f1e59f": "qu",
     "f1554089dd": "pt",
     "f1bc20c608": "de es fr id it pl pt qu sw tr vi",
