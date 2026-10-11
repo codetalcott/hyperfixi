@@ -90,7 +90,7 @@ describe('a hand-crafted pattern materializes the implicit role', () => {
     // Suppression is what keeps this a fixed point: materializing the default
     // must not make `toggle .active` render as `toggle .active on me`.
     for (const [language, surface] of [
-      ['bn', '.active কে টগল করুন'],
+      ['bn', '.activeকে টগল করুন'],
       ['qu', ".active ta t'ikray"],
     ] as const) {
       const node = parseSemantic(surface, language)?.node;

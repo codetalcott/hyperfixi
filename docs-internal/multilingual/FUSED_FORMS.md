@@ -117,7 +117,8 @@ as a profile alternative.
 3. bn (`আমাকে`, `আমাতে`), hi `को` (`मुझे`, `इसे`), tl `dito`/`rito`, pt `nele`/`dele`.
 4. de da-compounds (if the owner prefers them to `zu ihm`, §6 Q4).
 5. Object clitics: es, it, pt, ar (`objectClitics`).
-6. N5 render: ko, bn, ja attach (with the spacing gate if wanted).
+6. N5 render: ko, bn, ja attach (with the spacing gate if wanted). **Done 2026-10-11** (the gate, #1461;
+   the render, `explicit/attached-markers.ts`).
 7. N5 tr apostrophe suffixes (reader first).
 8. fr clitic order: only with the owner's yes (§6 Q1).
 

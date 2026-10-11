@@ -485,6 +485,25 @@ verb natural for the command, given that `desenfocar`/`desfocar` also name the v
 blur (as English `blur` does)? fr is not here: its object pronoun moves before
 the verb (`le mettre`), a word-order change waiting on the owner (FUSED_FORMS.md Q1).
 
+### A marker written onto its word: ko, ja, bn (M2 N5) ⚠️
+
+Renders wrote every case particle as a word of its own (`#out 에`, `"x" を`, `.active কে`).
+They now write it onto the word it marks, where the reader splits the word back:
+
+| Lang | written                                                | rule                                                                                                                                   |
+| ---- | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| ko   | `"x"을 #out에 넣다`, `나를 숨기다`, `결과를`, `그것을` | every particle; after a Hangul syllable the form its final consonant takes (`를` after a vowel, `을` after a consonant; `로` after ㄹ) |
+| ja   | `"x"を #outに 置く`, `自分から .aを 削除`              | every particle                                                                                                                         |
+| bn   | `"x"কে #outএ রাখুন`, `.xকে যোগ`                        | after code, every case ending; after a Bengali word only `কে`                                                                          |
+
+Notes for the reviewer: after code (a selector, a variable, a string) ko keeps the
+particle the render chose (`.active을`, `$x를`): which form a code word takes depends on
+how it is read aloud (`.active` is 액티브, so `를`). Is the render's choice acceptable, or
+should a code word take one form always? bn's locative after a Bengali word is `তে` after a
+vowel and the vowel sign `ে` after a consonant (`ক্লিকে`), which the reader does not split
+yet: renders keep `ক্লিক তে` there. Code with a bn ending: `#outএ` (attached) or `#out-এ`
+(hyphenated)? A handler's own event keeps its marker apart (`クリック を で`: N4, its head).
+
 ## `toggle … between` (M2, vocabulary sheet A6) ⚠️ (October 2026)
 
 `toggle between .a and .b`, `toggle $x between 'a', 'b' and 'c'`. The `between` word is each dictionary's

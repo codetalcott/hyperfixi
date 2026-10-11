@@ -91,7 +91,7 @@ describe('every language writes its own word, and reads it back', () => {
 
   it('a verb-final language writes the pair before the verb (ja)', () => {
     expect(translate('on click toggle between .foo and .bar', 'en', 'ja')).toMatch(
-      /\.foo そして \.bar の間で 切り替え$/
+      /\.foo そして \.barの間で 切り替え$/
     );
   });
 

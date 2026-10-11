@@ -160,6 +160,20 @@ export interface LanguageProfile {
     /** Verbs the renderer writes in a form that takes no clitic (ar `قياس`, a verbal noun). */
     readonly notVerbs?: readonly string[];
   };
+  /**
+   * Role markers written onto the word before them, as the language writes its
+   * case particles (M2 N5): ko `#out에`, ja `#outに`, bn `#outকে`. `markers`
+   * attach after code (a selector, a variable, a string); `afterWords` also
+   * after a word of the language, where its spelling does not change the
+   * marker (`'all'`; bn `কে` only: its locative is `তে` after a vowel and a
+   * vowel sign after a consonant). ko picks each particle's form by the word's
+   * final consonant (`나를`). The verified render keeps an attached marker only
+   * where the reader reads it as the spaced one (explicit/attached-markers.ts).
+   */
+  readonly attachedMarkers?: {
+    readonly markers: readonly string[];
+    readonly afterWords?: 'all' | readonly string[];
+  };
   /** Possessive expression configuration */
   readonly possessive?: PossessiveConfig;
   /** Event handler pattern configuration (for simple SVO languages) */
