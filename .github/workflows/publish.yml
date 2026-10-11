@@ -316,6 +316,13 @@ jobs:
                 --tag "${{ github.event.inputs.npm-tag }}" 2>&1 | tee /tmp/pub-$pkg.log) || {
                 if grep -q "previously published\|already exists\|cannot publish over" /tmp/pub-$pkg.log 2>/dev/null; then
                   echo "  ⏭ already published, skipping"
+                elif grep -q "previously staged" /tmp/pub-$pkg.log 2>/dev/null; then
+                  # E409 `Cannot publish over previously staged version` (capital C:
+                  # the grep above misses it): npm accepted this version earlier and is
+                  # still processing it (4.4.0's @hyperfixi/core sat there for hours, 404
+                  # on the registry, nothing in `npm stage list` to approve). A repair
+                  # run cannot republish it, so it is not this run's failure.
+                  echo "::warning::$PKG_NAME@$PKG_VER: npm already holds this version and is still processing it (E409 previously staged). Skipping; if it never appears on the registry, ask npm support."
                 elif grep -q "Scope not found" /tmp/pub-$pkg.log 2>/dev/null; then
                   echo "  ⚠ scope not found on npm — create @${PKG_NAME%%/*} scope first"
                 else
