@@ -1,8 +1,8 @@
 {
   "description": "English-leak gate, corpus half (src/multilingual/english-leaks.ts): per corpus row, the findings of each language's render (render(parse(en), L)): an English grammar word, `event:<name>` (an English event the lexicon has a word for) or `case:me` / `case:it` (a nominative pronoun beside a marker; `-object`: as an unmarked object). `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts after a fresh populate.",
   "renders": 3519,
-  "leaky": 325,
-  "findings": 464,
+  "leaky": 278,
+  "findings": 401,
   "kinds": {
     "word": {
       "renders": 191,
@@ -13,14 +13,11 @@
       "findings": 0
     },
     "case": {
-      "renders": 151,
-      "findings": 162
+      "renders": 96,
+      "findings": 99
     }
   },
   "entries": {
-    "add-class-basic": {
-      "case:me": "bn"
-    },
     "announce-screen-reader": {
       "of": "bn hi ja ko tl vi zh"
     },
@@ -29,8 +26,7 @@
       "event repeat trigger trigger trigger until": "qu"
     },
     "behavior-removable": {
-      "case:me": "tr",
-      "case:me case:me": "bn hi",
+      "case:me": "bn hi tr",
       "case:me-object": "ar es it pt",
       "trigger trigger": "qu"
     },
@@ -38,58 +34,38 @@
       "event repeat trigger trigger trigger until": "qu"
     },
     "behavior-sortable": {
-      "case:me case:me case:me": "bn",
       "event repeat trigger trigger trigger until": "qu",
       "null": "he"
     },
     "blur-element": {
-      "case:me": "bn hi",
       "case:me-object": "ar es it pt"
     },
     "caret-var-on-target": {
-      "case:me on": "bn",
-      "on": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh"
+      "on": "*"
     },
     "computed-value": {
       "of the": "bn hi ja ko tl vi zh"
     },
-    "copy-to-clipboard": {
-      "case:me case:me": "bn"
-    },
     "event-debounce": {
-      "at case:it debounced": "hi",
       "at case:it-object debounced": "ar es fr it pt",
-      "at debounced": "bn de he id ja ko ms pl qu ru sw th tr uk vi zh",
+      "at debounced": "bn de he hi id ja ko ms pl qu ru sw th tr uk vi zh",
       "debounced": "tl"
-    },
-    "event-from-elsewhere": {
-      "case:me": "bn"
-    },
-    "event-once": {
-      "case:me": "bn"
     },
     "event-throttle": {
       "at throttled": "ar bn de es fr he hi id it ja ko ms pl pt qu ru sw th tr uk vi zh",
       "throttled": "tl"
     },
     "fade-out-remove": {
-      "case:me": "bn hi",
       "case:me-object": "ar es it pt"
     },
     "fetch-basic": {
-      "case:it": "hi",
       "case:it-object": "ar es fr it pt"
     },
     "fetch-do-not-throw": {
-      "case:it": "de tl"
+      "case:it": "de"
     },
     "fetch-loading-state": {
-      "case:it": "hi",
-      "case:it-object": "ar es fr it pt",
-      "case:me case:me": "bn"
-    },
-    "fetch-with-headers": {
-      "case:me": "bn"
+      "case:it-object": "ar es fr it pt"
     },
     "focus-trap": {
       "matches": "bn th"
@@ -98,123 +74,81 @@
       "case:me case:me": "bn hi tr"
     },
     "get-value": {
-      "case:it": "hi",
       "case:it-object": "ar es fr it pt"
     },
     "go-url": {
       "url": "*"
     },
     "hide-with-transition": {
-      "case:me": "bn hi",
       "case:me-object": "ar es it pt"
     },
-    "if-empty": {
-      "case:me": "bn"
-    },
     "if-exists": {
-      "case:it": "hi",
       "case:it-object": "ar es fr it pt"
     },
-    "input-validation": {
-      "case:me case:me": "bn"
-    },
     "keydown-key-is-syntax": {
-      "case:me is": "bn hi",
       "case:me-object is": "ar es it pt",
-      "is": "de fr he id ja ko ms pl qu ru sw th tl tr uk vi zh"
-    },
-    "live-derived-value": {
-      "case:me": "bn"
+      "is": "bn de fr he hi id ja ko ms pl qu ru sw th tl tr uk vi zh"
     },
     "log-element": {
-      "case:me": "bn hi",
       "case:me-object": "ar es it pt"
     },
     "make-element": {
-      "case:it": "hi",
       "case:it-object": "ar es fr it pt"
     },
     "make-toast-element": {
-      "case:it": "de tl tr",
-      "case:it case:it-object": "pt",
-      "case:it-object": "ar es fr it"
+      "case:it": "de tr",
+      "case:it-object": "ar es fr it pt"
     },
     "modal-close-backdrop": {
       "matches": "bn th"
     },
     "morph-fetch-result": {
-      "case:it": "de pt tl"
+      "case:it": "de"
     },
     "morph-form-update": {
-      "case:it": "de pt tl"
+      "case:it": "de"
     },
     "morph-with-template": {
-      "case:it": "de pt tl"
-    },
-    "on-custom-event-receive": {
-      "case:me": "bn"
+      "case:it": "de"
     },
     "pick-text-range": {
       "of": "he"
     },
     "put-after": {
-      "after case:me": "bn hi",
+      "after": "bn hi",
       "case:me": "tl"
     },
     "put-before": {
-      "before case:me": "bn hi",
+      "before": "bn hi",
       "case:me": "tl"
     },
-    "put-content-basic": {
-      "case:me": "bn"
-    },
-    "remove-class-basic": {
-      "case:me": "bn"
-    },
     "remove-element": {
-      "case:me": "bn hi",
       "case:me-object": "ar es it pt"
     },
     "render-template-with-data": {
-      "case:it": "hi",
       "case:it-object": "ar es fr it pt"
-    },
-    "repeat-times": {
-      "case:me": "bn"
     },
     "swap-view-transition": {
       "transition view": "ar bn de es he hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh",
       "view": "fr"
     },
-    "tabs-aria": {
-      "case:me": "bn"
-    },
-    "tabs-basic": {
-      "case:me": "bn"
-    },
-    "tabs-content": {
-      "case:me": "bn"
-    },
     "template-literal-list-build": {
       "in": "he"
     },
     "toggle-aria-expanded": {
-      "case:me": "bn it"
+      "case:me": "it"
     },
     "transition-opacity": {
-      "case:me": "bn hi",
       "case:me-object": "ar es it pt"
     },
     "trigger-event": {
       "trigger": "qu"
     },
     "wait-then": {
-      "case:me": "bn hi",
       "case:me-object": "ar es it pt"
     },
     "when-value-changes": {
-      "case:it": "hi tr",
-      "case:me": "bn"
+      "case:it": "hi tr"
     },
     "window-resize": {
       "at debounced": "ar bn de es fr he hi id it ja ko ms pl pt qu ru sw th tr uk vi zh",
