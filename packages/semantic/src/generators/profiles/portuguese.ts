@@ -108,19 +108,22 @@ export const portugueseProfile: LanguageProfile = {
     on: { primary: 'em', alternatives: ['ao'], normalized: 'on' },
     trigger: { primary: 'disparar', alternatives: ['ativar'], normalized: 'trigger' },
     send: { primary: 'enviar', normalized: 'send' },
-    // Nominalized 2026-07-28: an event names an occurrence, so it takes a noun;
-    // the bare infinitive reads as a command ('focus this!'). Portuguese prose
-    // says an element 'recebe o foco' / 'perde foco'.
-    focus: { primary: 'foco', alternatives: ['focar'], normalized: 'focus' },
-    // 'desfoque' was the obvious nominalization and is deliberately NOT used:
-    // in front-end Portuguese it is the CSS visual blur (filter: blur(),
-    // backdrop-filter), the same false-friend trap that put ぼかし in Japanese
-    // and 블러 in Korean. 'perda de foco' is what MDN pt-BR and Alura use for
-    // the event, and the multi-word form is fine — lookup collapses separators,
-    // so `on-perda-de-foco` resolves too.
+    // These entries are the COMMANDS, so they write the verb, as the i18n
+    // dictionary does (`focar-me`, the object pronoun attached: M2 N3); the event
+    // names render from eventNameTranslations (`ao foco`). The nouns were made
+    // primary on 2026-07-28 for the event ("an event names an occurrence":
+    // Portuguese prose says an element 'recebe o foco' / 'perde foco'), which this
+    // table never rendered, and the command then wrote `foco eu`. They stay
+    // alternatives, so code written with them reads.
+    // 'perda de foco' is what MDN pt-BR and Alura use for the EVENT ('desfoque'
+    // is the CSS visual blur, the false friend of ja ぼかし and ko 블러); a noun
+    // phrase takes no object, so the command writes the verb, which has English
+    // `blur`'s own ambiguity. Lookup collapses separators, so
+    // `on-perda-de-foco` resolves too.
+    focus: { primary: 'focar', alternatives: ['foco'], normalized: 'focus' },
     blur: {
-      primary: 'perda de foco',
-      alternatives: ['desfocar'],
+      primary: 'desfocar',
+      alternatives: ['perda de foco'],
       normalized: 'blur',
     },
     // Phase 1 (v0.9.90): DOM / form state / debug

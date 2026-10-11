@@ -280,6 +280,31 @@ describe('es, it, pt and ar attach the object pronoun to the verb', () => {
   });
 });
 
+// es and pt's focus and blur commands write the verb, which takes the pronoun;
+// the events keep their nouns, and code written with the nouns still reads.
+describe('es and pt write focus and blur as verbs', () => {
+  it.each([
+    ['es', 'on click focus me', 'al clic enfocarme'],
+    ['es', 'on click blur #name', 'al clic desenfocar #name'],
+    ['es', 'on focus add .x', 'al enfoque agregar .x'],
+    ['pt', 'on click focus me', 'ao clique focar-me'],
+    ['pt', 'on click blur me', 'ao clique desfocar-me'],
+    ['pt', 'on blur remove .x', 'ao desfoque remover .x'],
+  ])('%s: %s', (language, source, expected) => {
+    expect(translate(source, 'en', language)).toBe(expected);
+    expect(translate(expected, language, 'en')).toBe(source);
+  });
+
+  it.each([
+    ['es', 'al clic enfoque yo', 'on click focus me'],
+    ['es', 'al clic pérdida de foco #name', 'on click blur #name'],
+    ['pt', 'ao clique foco eu', 'on click focus me'],
+    ['pt', 'ao clique perda de foco #name', 'on click blur #name'],
+  ])('%s reads the noun: %s', (language, source, expected) => {
+    expect(translate(source, language, 'en')).toBe(expected);
+  });
+});
+
 // The plain render, before the verified render's fallback: a scroll position's
 // phrase is never replaced by a case form (the fallback would hide it).
 it('a scroll position keeps its phrase in the plain render', () => {
