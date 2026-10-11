@@ -39,6 +39,8 @@ export const tagalogProfile: LanguageProfile = {
       sa: 'sa akin',
       mula_sa: 'mula_sa akin', // written as the marker is
     },
+    // `sa ito` fuses to `dito` (M2 N3, wave 3).
+    it: { sa: 'dito' },
   },
   possessive: {
     marker: 'ng', // Linker used in possessive constructions

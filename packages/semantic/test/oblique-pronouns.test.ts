@@ -19,7 +19,8 @@ const FORMS: Record<string, string[]> = {
   pl: ['mnie', 'mną'],
   ru: ['меня', 'мне', 'мной'],
   uk: ['мене', 'мені', 'мною'],
-  hi: ['मुझ', 'मुझे'],
+  // `मुझे` is `मुझ` + `को` (fused, read apart): it stands where `को` does, below.
+  hi: ['मुझ'],
 };
 
 const SHAPES = [
@@ -31,12 +32,19 @@ const SHAPES = [
   'on click put me into #out',
 ];
 
+/** A `me` fused with its marker, which the substitution leaves alone. */
+const FUSED_ME: Record<string, string[]> = { hi: ['मुझे'] };
+
 describe.each(Object.entries(FORMS))('%s reads', (language, forms) => {
   const me = tryGetProfile(language)!.references.me!;
   const isMe = (w: string): boolean => w === me || forms.includes(w);
+  const fused = FUSED_ME[language] ?? [];
   it.each(SHAPES)('%s', source => {
     const rendered = translate(source, 'en', language);
-    expect(rendered.split(/\s+/).some(isMe), rendered).toBe(true);
+    expect(
+      rendered.split(/\s+/).some(w => isMe(w) || fused.includes(w)),
+      rendered
+    ).toBe(true);
     for (const form of [me, ...forms]) {
       const written = rendered
         .split(/\s+/)
@@ -139,16 +147,22 @@ describe('renders write it in the case its marker takes, and me as an object', (
     ['pl', 'on click hide <p/> in it', 'gdy kliknięcie ukryj <p/> w tym'],
     ['pl', 'on click put 1 before it', 'gdy kliknięcie umieść 1 przed tym'],
     ['uk', 'on click remove .x from it', 'при клік видалити .x з цього'],
-    ['de', 'on click add .x to it', 'wenn klick hinzufügen .x zu ihm'],
-    ['de', 'on click toggle .x on it', 'wenn klick umschalten .x auf ihm'],
+    // de writes a da-compound (FUSED_FORMS.md Q4), split back by its reader.
+    ['de', 'on click add .x to it', 'wenn klick hinzufügen .x dazu'],
+    ['de', 'on click toggle .x on it', 'wenn klick umschalten .x darauf'],
+    ['de', 'on click take .x from it', 'wenn klick nehmen .x davon'],
+    ['de', 'on click put 1 into it', 'wenn klick setzen 1 darein'],
+    ['de', 'on click hide <p/> in it', 'wenn klick verstecke <p/> darin'],
+    ['de', 'on click put 1 before it', 'wenn klick setzen 1 davor'],
+    // `danach` is de's `then`: `nach` keeps the dative.
+    ['de', 'on click put 1 after it', 'wenn klick setzen 1 nach ihm'],
     ['fr', 'on click add .x to it', 'quand clic ajouter .x à lui'],
     ['fr', 'on click put 1 into it', 'quand clic mettre 1 dans lui'],
     ['fr', 'on click put 1 before it', 'quand clic mettre 1 avant lui'],
     ['fr', 'on click hide <p/> in it', 'quand clic cacher <p/> en lui'],
     ['hi', 'on click put 1 into it', 'क्लिक पर 1 को रखें इस में'],
-    // A direction's accusative is the nominative (ru `это`, de `es`): unchanged.
+    // A direction's accusative is the nominative (ru `это`): unchanged.
     ['ru', 'on click put 1 into it', 'при клик положить 1 в это'],
-    ['de', 'on click put 1 into it', 'wenn klick setzen 1 in es'],
     // `me` as a verb's object: a patient, or a destination right after the verb.
     ['de', 'on click show me', 'wenn klick zeige mich'],
     ['ru', 'on click show me', 'при клик показать меня'],
@@ -192,6 +206,26 @@ describe('ar and he write a pronoun fused with its marker', () => {
     ['he', 'on click remove .x from me', 'ב לחיצה הסר את .x ממני'],
     ['he', 'on click show me', 'ב לחיצה הראה אותי'],
     ['he', 'on click put 1 before me', 'ב לחיצה שים את 1 לפניי'],
+  ];
+  it.each(RENDERS)('%s: %s', (language, source, expected) => {
+    expect(translate(source, 'en', language)).toBe(expected);
+    expect(translate(expected, language, 'en')).toBe(source);
+  });
+});
+
+describe('bn, hi, tl and pt write a pronoun fused with its marker', () => {
+  const RENDERS: Array<[string, string, string]> = [
+    ['bn', 'on click show me', 'ক্লিক তে আমাকে দেখান'],
+    ['bn', 'on click add .x to me', 'ক্লিক তে আমাতে .x কে যোগ'],
+    ['bn', 'on click remove .x from me', 'ক্লিক তে আমার থেকে .x কে সরান'],
+    ['bn', 'on click put it into #out', 'ক্লিক তে এটিকে #out এ রাখুন'],
+    ['hi', 'on click show me', 'क्लिक पर मुझे दिखाएं'],
+    ['hi', 'on click put it into #out', 'क्लिक पर इसे रखें #out में'],
+    ['tl', 'on click add .x to it', 'kapag click idagdag .x dito'],
+    ['pt', 'on click put 1 into it', 'ao clique colocar 1 nele'],
+    ['pt', 'on click take .x from it', 'ao clique pegar .x dele'],
+    // `a ele` stays: only `em` and `de` contract.
+    ['pt', 'on click add .x to it', 'ao clique adicionar .x a ele'],
   ];
   it.each(RENDERS)('%s: %s', (language, source, expected) => {
     expect(translate(source, 'en', language)).toBe(expected);

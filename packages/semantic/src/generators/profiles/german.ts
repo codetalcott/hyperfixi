@@ -51,16 +51,18 @@ export const germanProfile: LanguageProfile = {
       an: { direction: 'an mich', location: 'an mir' },
       vor: { direction: 'vor mich', location: 'vor mir' },
     },
-    // Dative after zu/von/nach, and for a location; a direction keeps `es`
-    // (the accusative; natively a da-compound, `hinein`, `darauf`: N5).
+    // A da-compound, as German writes `it` after a preposition (owner, 2026-10-10:
+    // FUSED_FORMS.md Q4): `dazu`, `darin`. The reader splits each back. `nach`
+    // keeps `nach ihm` (`danach` is de's `then`); a direction into it is `darein`
+    // (`hinein` is de's `into`). `ihm` stays a reader form.
     it: {
-      zu: 'zu ihm',
-      von: 'von ihm',
+      zu: 'dazu',
+      von: 'davon',
       nach: 'nach ihm',
-      in: { location: 'in ihm' },
-      auf: { location: 'auf ihm' },
-      an: { location: 'an ihm' },
-      vor: { location: 'vor ihm' },
+      in: { direction: 'darein', location: 'darin' },
+      auf: 'darauf',
+      an: 'daran',
+      vor: 'davor',
     },
   },
   possessive: {

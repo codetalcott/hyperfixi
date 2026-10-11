@@ -405,18 +405,18 @@ prepend, add to. **Location:** toggle … on, trigger … on, and a query's `in`
 
 ### `it` after a marker, and `me` as a verb's object (M2 N3, wave 2) ⚠️
 
-**`it` after a marker.** The ru, uk and pl demonstrative and de `es` are already
-accusative for a direction (ru `в это`, de `in es`), so those stay. A location and
+**`it` after a marker.** The ru, uk and pl demonstrative is already accusative for a
+direction (ru `в это`), so those stay; de writes a da-compound throughout. A location and
 the other markers take another case:
 
-| Lang | Marker → form                                                                                                                                              | Notes for the reviewer                                                                                                                                               |
-| ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ru   | `к` → `к этому`, `в` → `в этом` (location), `на` → `на этом` (location), `из` → `из этого`, `после` → `после этого`, `перед` → `перед этим`                |                                                                                                                                                                      |
-| uk   | `до` → `до цього`, `в`/`у` → `в цьому`/`у цьому` (location), `на` → `на цьому` (location), `з` → `з цього`, `після` → `після цього`, `перед` → `перед цим` |                                                                                                                                                                      |
-| pl   | `do` → `do tego`, `w` → `w tym` (location), `na` → `na tym` (location), `z` → `z tego`, `po` → `po tym`, `przed` → `przed tym`                             |                                                                                                                                                                      |
-| de   | `zu` → `zu ihm`, `von` → `von ihm`, `nach` → `nach ihm`; for a location `in ihm`, `auf ihm`, `an ihm`, `vor ihm`                                           | natively a da-compound (`dazu`, `davon`, `darin`, `darauf`): would it read better? A direction keeps `in es`, `auf es` (`hinein`, `darauf` are fused forms, with N5) |
-| fr   | `à` → `à lui`, `dans` → `dans lui`, `sur` → `sur lui`, `de` → `de lui`, `avant` → `avant lui`, `après` → `après lui`, `en` → `en lui`                      | `lui` for an element (masculine `il`). Natively `y` / `dedans` / `dessus`, which move before the verb (`y mettre`): a word-order change the owner has to approve     |
-| hi   | `में` → `इस में`, `पर` → `इस पर`, `से` → `इस से`                                                                                                           | oblique `इस`, spaced like `मुझ में`; `यह को` → `इसे` is fused (N5)                                                                                                   |
+| Lang | Marker → form                                                                                                                                                                              | Notes for the reviewer                                                                                                                                           |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ru   | `к` → `к этому`, `в` → `в этом` (location), `на` → `на этом` (location), `из` → `из этого`, `после` → `после этого`, `перед` → `перед этим`                                                |                                                                                                                                                                  |
+| uk   | `до` → `до цього`, `в`/`у` → `в цьому`/`у цьому` (location), `на` → `на цьому` (location), `з` → `з цього`, `після` → `після цього`, `перед` → `перед цим`                                 |                                                                                                                                                                  |
+| pl   | `do` → `do tego`, `w` → `w tym` (location), `na` → `na tym` (location), `z` → `z tego`, `po` → `po tym`, `przed` → `przed tym`                                                             |                                                                                                                                                                  |
+| de   | da-compounds (owner, 2026-10-10): `zu` → `dazu`, `von` → `davon`, `in` → `darein` (direction) / `darin` (location), `auf` → `darauf`, `an` → `daran`, `vor` → `davor`; `nach` → `nach ihm` | `danach` is de's `then` and `hinein` its `into`, so neither is written. Is `darein` natural for "put x into it"? `ihm` stays a reader form                       |
+| fr   | `à` → `à lui`, `dans` → `dans lui`, `sur` → `sur lui`, `de` → `de lui`, `avant` → `avant lui`, `après` → `après lui`, `en` → `en lui`                                                      | `lui` for an element (masculine `il`). Natively `y` / `dedans` / `dessus`, which move before the verb (`y mettre`): a word-order change the owner has to approve |
+| hi   | `में` → `इस में`, `पर` → `इस पर`, `से` → `इस से`                                                                                                                                           | oblique `इस`, spaced like `मुझ में`; `यह को` → `इसे` is fused (N5)                                                                                               |
 
 **`me` as a verb's object** (no marker): de `mich` (`zeige mich`, `binden mich zu $x`),
 ru `меня` (`показать меня`), uk `мене`, pl `mnie`. It counts as an object when it is
@@ -452,6 +452,15 @@ Notes for the reviewer: ar is written with the shadda (`إليّ`, `عليّ`, `
 write? The reader takes each fused word whole, before the proclitic extractor could take
 `ب`/`ف`/`מ` off it (`tokenizers/fused-forms-split.ts`). ar's verb + object (`أظهرني`,
 `ضعه`) waits on the object clitics.
+
+### A pronoun fused with its marker: bn, hi, tl, pt (M2 N3, wave 3) ⚠️
+
+| Lang | Forms                                                                                                            | Notes for the reviewer                                                                      |
+| ---- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| bn   | `আমি কে` → `আমাকে`, `আমি তে`/`এ` → `আমাতে`, `আমি থেকে` → `আমার থেকে`; `এটি কে` → `এটিকে`, `এটি তে`/`এ` → `এটিতে` | the reader reads `আমাতে` back with `এ` (`তে` is also the event marker)                      |
+| hi   | `मैं को` → `मुझे`, `यह को` → `इसे`                                                                               | the other postpositions stay spaced (`मुझ में`, `इस में`; N5 joins them)                    |
+| tl   | `sa ito` → `dito`                                                                                                | `dito` also means "here": does `ilagay 1 dito` read as "put 1 into it"? `mula_sa ito` stays |
+| pt   | `em ele` → `nele`, `de ele` → `dele`                                                                             | `a ele`, `para ele` are right as written                                                    |
 
 ## August 2026 research pass — summary
 
