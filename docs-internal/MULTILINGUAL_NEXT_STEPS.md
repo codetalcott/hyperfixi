@@ -130,7 +130,8 @@ next A6 (`between`).
   reader that accepts both forms (the reader half done 2026-10-10; renders write `me` in the oblique
   in the free-word languages es, pt, it, tl, pl, ru, uk, de and hi, then `it` after a marker and `me` as
   a verb's object, 2026-10-10; next the fused forms with N5);
-- N5: suffixes attached in the agglutinative languages;
+- N5: suffixes attached in the agglutinative languages, with N3's fused forms (design:
+  `multilingual/FUSED_FORMS.md`, 2026-10-10);
 - N4: the ja/tr handler heads (`クリック を で`, `tıklama i üzerinde`);
 - N6: the article and marker slips.
 
