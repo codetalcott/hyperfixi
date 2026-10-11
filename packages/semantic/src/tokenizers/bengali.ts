@@ -128,10 +128,11 @@ export class BengaliTokenizer extends BaseTokenizer {
 
   /**
    * The locative written onto a Bengali word (M2 N4): the vowel sign `ে` after
-   * a consonant (`ক্লিকে`, read as `ক্লিক` + `এ`), `তে` after a vowel (`জমাতে`).
+   * a consonant (`ক্লিকে`), `তে` after a vowel (`জমাতে`). Both read as `তে`,
+   * the form every pattern's marker lists (`এ` only some: default's `to`).
    */
   private readonly attached: readonly AttachedSuffix[] = [
-    { written: 'ে', marker: 'এ' },
+    { written: 'ে', marker: 'তে' },
     { written: 'তে', marker: 'তে' },
   ];
 

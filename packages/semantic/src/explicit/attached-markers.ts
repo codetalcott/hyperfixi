@@ -22,10 +22,10 @@ const BN_LOCATIVE: ReadonlySet<string> = new Set(['তে', 'এ']);
 
 /**
  * The marker the reader gives back for a suffix written onto a word: bn's
- * vowel sign `ে` reads as `এ`; every other suffix reads as itself.
+ * vowel sign `ে` reads as `তে` (bengali.ts); every other suffix reads as itself.
  */
 export function attachedSuffixReads(profile: LanguageProfile | undefined, suffix: string): string {
-  return profile?.code === 'bn' && suffix === '\u09c7' ? 'এ' : suffix;
+  return profile?.code === 'bn' && suffix === '\u09c7' ? 'তে' : suffix;
 }
 
 /**

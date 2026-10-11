@@ -148,8 +148,8 @@ describe("ja's handler head: the on word written onto the event", () => {
 
 /**
  * bn's handler head is the event with its locative written on (M2 N4):
- * `ক্লিকে` (`ক্লিক` + `এ`, the vowel sign after a consonant), `জমাতে` (after a
- * vowel), where the render wrote `ক্লিক তে`. The reader splits the word back
+ * `ক্লিকে` (the vowel sign after a consonant), `জমাতে` (after a vowel), where
+ * the render wrote `ক্লিক তে`. The reader splits the word back (both read as `তে`)
  * (tokenizers/attached-suffix-split.ts) and keeps taking `ক্লিক তে` and
  * `ক্লিক এ`; after code the locative is `তে`, as bn's N5 rule writes it.
  */
@@ -159,6 +159,8 @@ describe("bn's handler head: the locative written onto the event", () => {
     ['on load toggle .a', 'লোডে .aকে টগল করুন'],
     ['on submit toggle .a', 'জমাতে .aকে টগল করুন'],
     ['on change put "x" into #out', 'পরিবর্তনে "x"কে #outএ রাখুন'],
+    // A Bengali value takes it too, in its form; every pattern reads it back.
+    ['on click set x to false then default x to true', 'ক্লিকে xকে মিথ্যাতে সেট তারপর xকে সত্যে ডিফল্ট'],
     ['on click from #b toggle .a', '#b থেকে ক্লিকে .aকে টগল করুন'],
     ['on keyup toggle .a', 'keyupতে .aকে টগল করুন'],
     ['on click or keyup toggle .a', 'ক্লিক অথবা keyupতে .aকে টগল করুন'],
@@ -184,7 +186,7 @@ describe("bn's handler head: the locative written onto the event", () => {
 
   it('splits only a known word: a name that ends like the locative stays a name', () => {
     const values = (text: string) => tokenize(text, 'bn').tokens.map(t => `${t.value}:${t.kind}`);
-    expect(values('ক্লিকে')).toEqual(['ক্লিক:keyword', 'এ:particle']);
+    expect(values('ক্লিকে')).toEqual(['ক্লিক:keyword', 'তে:particle']);
     expect(values('জমাতে')).toEqual(['জমা:keyword', 'তে:particle']);
     expect(values('থেকে')).toEqual(['থেকে:particle']);
     expect(values('xyzে')).toEqual(values('xyzে')); // whatever it is, one way

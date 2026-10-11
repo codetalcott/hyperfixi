@@ -12,7 +12,7 @@ const BN_VOWEL = /[া-ৌঅ-ঔ]$/u;
 
 /**
  * The locative written onto a Bengali word: the vowel sign `ে` after a
- * consonant (`ক্লিকে`, which reads as `ক্লিক` + `এ`), `তে` after a vowel
+ * consonant (`ক্লিকে`, which the reader takes as `ক্লিক` + `তে`), `তে` after a vowel
  * (`জমাতে`); undefined after anything else (a hasant, an anusvara).
  */
 export function bengaliLocative(word: string): string | undefined {

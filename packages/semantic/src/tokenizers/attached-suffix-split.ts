@@ -1,6 +1,6 @@
 /**
  * A role marker read off the word it is written onto (M2 N4, N5): bn `ক্লিকে`
- * (`ক্লিক` + the locative `এ`, written as the vowel sign after a consonant),
+ * (`ক্লিক` + the locative, written as the vowel sign after a consonant),
  * `জমাতে` (`জমা` + `তে`); tr `tıklamada` (`tıklama` + `da`). ko's and ja's
  * extractors split a particle off any word; bn's and tr's read a word of their
  * script whole, so this pass splits one that is not a keyword itself but a
@@ -13,7 +13,7 @@ import { TokenStreamImpl } from './token-utils';
 export interface AttachedSuffix {
   /** The suffix as written on the word. */
   readonly written: string;
-  /** The marker the reader gives back for it (bn `ে` reads as `এ`). */
+  /** The marker the reader gives back for it (bn `ে` reads as `তে`). */
   readonly marker: string;
 }
 
