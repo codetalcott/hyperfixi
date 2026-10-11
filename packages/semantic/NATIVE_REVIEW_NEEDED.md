@@ -379,17 +379,17 @@ a render picks by command. **Direction:** put into, append to, send to, set … 
 prepend, add to. **Location:** toggle … on, trigger … on, and a query's `in`
 (`<p/> in me`). Please check this split per command too.
 
-| Lang | Marker → form                                                                                                                                                                                        | Notes for the reviewer                                                                                                       |
-| ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| es   | `en` → `en mí`, `a` → `a mí`, `de` → `de mí`, `desde` → `desde mí`                                                                                                                                   | `antes de mí`, `después de mí`, `en fin de mí` follow from `de`                                                              |
-| pt   | `em` → `em mim`, `a` → `a mim`, `para` → `para mim`, `de` → `de mim`                                                                                                                                 | `em fim de mim` follows from `de`                                                                                            |
-| it   | `in` → `in me`, `a` → `a me`, `da` → `da me`, `di` → `di me`                                                                                                                                         | `a fine di me` follows from `di`                                                                                             |
-| tl   | `sa` → `sa akin`, `mula_sa` → `mula_sa akin`                                                                                                                                                         | `mula_sa` is written as the profile's marker is (`mula sa` does not read back)                                               |
-| pl   | `do` → `do mnie`, `w` → `we mnie`, `na` → `na mnie`, `z` → `ze mnie`, `po` → `po mnie`, `przed` → `przede mną`                                                                                       | vocalized `we`, `ze`, `przede`; `mnie` is the same form for a direction and a location; `przy koniec ze mnie` (at end of me) |
-| ru   | `к` → `ко мне`, `в` → `в меня` (direction) / `во мне` (location), `на` → `на меня` / `на мне`, `из` → `из меня`, `после` → `после меня`, `перед` → `передо мной`                                     | vocalized `ко`, `во`, `передо`; `у конец из меня` (at end of me)                                                             |
-| uk   | `до` → `до мене`, `в` → `в мене` / `в мені`, `у` → `у мене` / `у мені`, `на` → `на мене` / `на мені`, `з` → `з мене`, `після` → `після мене`, `перед` → `переді мною`                                | `в мене` also reads as "I have"; is it natural for "into me"?                                                                |
+| Lang | Marker → form                                                                                                                                                                     | Notes for the reviewer                                                                                                       |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| es   | `en` → `en mí`, `a` → `a mí`, `de` → `de mí`, `desde` → `desde mí`                                                                                                                | `antes de mí`, `después de mí`, `en fin de mí` follow from `de`                                                              |
+| pt   | `em` → `em mim`, `a` → `a mim`, `para` → `para mim`, `de` → `de mim`                                                                                                              | `em fim de mim` follows from `de`                                                                                            |
+| it   | `in` → `in me`, `a` → `a me`, `da` → `da me`, `di` → `di me`                                                                                                                      | `a fine di me` follows from `di`                                                                                             |
+| tl   | `sa` → `sa akin`, `mula_sa` → `mula_sa akin`                                                                                                                                      | `mula_sa` is written as the profile's marker is (`mula sa` does not read back)                                               |
+| pl   | `do` → `do mnie`, `w` → `we mnie`, `na` → `na mnie`, `z` → `ze mnie`, `po` → `po mnie`, `przed` → `przede mną`                                                                    | vocalized `we`, `ze`, `przede`; `mnie` is the same form for a direction and a location; `przy koniec ze mnie` (at end of me) |
+| ru   | `к` → `ко мне`, `в` → `в меня` (direction) / `во мне` (location), `на` → `на меня` / `на мне`, `из` → `из меня`, `после` → `после меня`, `перед` → `передо мной`                  | vocalized `ко`, `во`, `передо`; `у конец из меня` (at end of me)                                                             |
+| uk   | `до` → `до мене`, `в` → `в мене` / `в мені`, `у` → `у мене` / `у мені`, `на` → `на мене` / `на мені`, `з` → `з мене`, `після` → `після мене`, `перед` → `переді мною`             | `в мене` also reads as "I have"; is it natural for "into me"?                                                                |
 | de   | `zu` → `zu mir`, `von` → `von mir`, `nach` → `nach mir`, `in` → `in mich` / `in mir`, `auf` → `auf mich` / `auf mir`, `an` → `an mich` / `an mir`, `vor` → `vor mich` / `vor mir` | accusative for a direction, dative for a location; `bei ende von mir` (at end of me)                                         |
-| hi   | `में` → `मुझ में`, `पर` → `मुझ पर`, `से` → `मुझ से`                                                                                                                                                  | oblique `मुझ`, spaced as the renderer spaces every marker (N5 would join them: `मुझमें`)                                     |
+| hi   | `में` → `मुझ में`, `पर` → `मुझ पर`, `से` → `मुझ से`                                                                                                                               | oblique `मुझ`, spaced as the renderer spaces every marker (N5 would join them: `मुझमें`)                                     |
 
 **Still the nominative (open).** These need a reader change or a decision:
 
@@ -402,8 +402,27 @@ prepend, add to. **Location:** toggle … on, trigger … on, and a query's `in`
   the render keeps `ako` there.
 - hi `मैं को` (`को` fuses: `मुझे`) and every fused form (tr `bana`, ar `إليّ`, he `אליי`, bn
   `আমাকে`): they wait on N5's attached suffixes.
-- `it` after a marker, and `me` as an unmarked object (de `messen ich` → `messen mich`):
-  the next step.
+
+### `it` after a marker, and `me` as a verb's object (M2 N3, wave 2) ⚠️
+
+**`it` after a marker.** The ru, uk and pl demonstrative and de `es` are already
+accusative for a direction (ru `в это`, de `in es`), so those stay. A location and
+the other markers take another case:
+
+| Lang | Marker → form                                                                                                                                                  | Notes for the reviewer                                                                                                                                               |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ru   | `к` → `к этому`, `в` → `в этом` (location), `на` → `на этом` (location), `из` → `из этого`, `после` → `после этого`, `перед` → `перед этим`                    |                                                                                                                                                                      |
+| uk   | `до` → `до цього`, `в`/`у` → `в цьому`/`у цьому` (location), `на` → `на цьому` (location), `з` → `з цього`, `після` → `після цього`, `перед` → `перед цим`     |                                                                                                                                                                      |
+| pl   | `do` → `do tego`, `w` → `w tym` (location), `na` → `na tym` (location), `z` → `z tego`, `po` → `po tym`, `przed` → `przed tym`                                 |                                                                                                                                                                      |
+| de   | `zu` → `zu ihm`, `von` → `von ihm`, `nach` → `nach ihm`; for a location `in ihm`, `auf ihm`, `an ihm`, `vor ihm`                                               | natively a da-compound (`dazu`, `davon`, `darin`, `darauf`): would it read better? A direction keeps `in es`, `auf es` (`hinein`, `darauf` are fused forms, with N5) |
+| fr   | `à` → `à lui`, `dans` → `dans lui`, `sur` → `sur lui`, `de` → `de lui`, `avant` → `avant lui`, `après` → `après lui`, `en` → `en lui` | `lui` for an element (masculine `il`). Natively `y` / `dedans` / `dessus`, which move before the verb (`y mettre`): a word-order change the owner has to approve     |
+| hi   | `में` → `इस में`, `पर` → `इस पर`, `से` → `इस से`                                                                                                               | oblique `इस`, spaced like `मुझ में`; `यह को` → `इसे` is fused (N5)                                                                                                   |
+
+**`me` as a verb's object** (no marker): de `mich` (`zeige mich`, `binden mich zu $x`),
+ru `меня` (`показать меня`), uk `мене`, pl `mnie`. It counts as an object when it is
+the command's patient, or its destination written right after the verb (`bind me to $x`).
+es, pt, it and ar attach the object pronoun to the verb (`mostrarme`, `mostrar-me`,
+`mostrarmi`, `أظهرني`), so they wait on N5.
 
 ## August 2026 research pass — summary
 

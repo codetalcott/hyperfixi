@@ -43,7 +43,6 @@ export const frenchProfile: LanguageProfile = {
       dans: 'dans lui',
       sur: 'sur lui',
       de: 'de lui',
-      depuis: 'depuis lui',
       avant: 'avant lui',
       après: 'après lui',
       en: 'en lui',

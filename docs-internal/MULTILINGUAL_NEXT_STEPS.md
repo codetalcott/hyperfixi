@@ -128,8 +128,8 @@ next A6 (`between`).
 
 - N3: an oblique pronoun form after a marker (es `a mí`, de `zu mir`, ru `ко мне`, tr `bana`), with a
   reader that accepts both forms (the reader half done 2026-10-10; renders write `me` in the oblique
-  in the free-word languages es, pt, it, tl, pl, ru, uk, de and hi, 2026-10-10; next `it` and the
-  unmarked object, then the fused forms with N5);
+  in the free-word languages es, pt, it, tl, pl, ru, uk, de and hi, then `it` after a marker and `me` as
+  a verb's object, 2026-10-10; next the fused forms with N5);
 - N5: suffixes attached in the agglutinative languages;
 - N4: the ja/tr handler heads (`クリック を で`, `tıklama i üzerinde`);
 - N6: the article and marker slips.
