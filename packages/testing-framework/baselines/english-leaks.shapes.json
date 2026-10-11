@@ -1,8 +1,8 @@
 {
   "description": "English-leak gate, command-shape half (src/multilingual/english-leaks.ts): per command-shape case, the findings of each language's render (translate(src, 'en', L)): an English grammar word, `event:<name>` or `case:<pronoun>`. `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts.",
   "renders": 23801,
-  "leaky": 2583,
-  "findings": 4282,
+  "leaky": 2554,
+  "findings": 4253,
   "kinds": {
     "word": {
       "renders": 2419,
@@ -13,8 +13,8 @@
       "findings": 0
     },
     "case": {
-      "renders": 197,
-      "findings": 199
+      "renders": 168,
+      "findings": 170
     }
   },
   "entries": {
@@ -40,17 +40,11 @@
     "042ed66aa1": {
       "case:it-object": "fr"
     },
-    "04a57faf6e": {
-      "case:me": "bn"
-    },
     "060fa72711": {
       "case:it-object": "fr"
     },
     "06921f9cba": {
       "case:it-object": "fr"
-    },
-    "069dd1170d": {
-      "case:me": "bn"
     },
     "083aedbcb6": {
       "from with": "*"
@@ -100,9 +94,6 @@
     },
     "190d9ca9e9": {
       "case:it-object": "fr"
-    },
-    "19a79b3024": {
-      "case:me": "bn"
     },
     "1a2a9cbb2e": {
       "case:it-object in of the": "fr",
@@ -336,9 +327,6 @@
     "6178899ead": {
       "case:it-object": "fr"
     },
-    "622f30a7a4": {
-      "case:me": "bn"
-    },
     "62b066758c": {
       "case:it-object": "fr"
     },
@@ -355,17 +343,11 @@
       "case:me of": "bn hi tr",
       "of": "ar de es fr he id it ja ko ms pl pt qu ru sw th tl uk vi zh"
     },
-    "663204001d": {
-      "case:me": "bn"
-    },
     "66878bf2ed": {
       "element element": "ar bn es fr he hi id ja ko ms pt qu sw th tl tr vi zh"
     },
     "66a3e903a3": {
       "case:it-object": "fr"
-    },
-    "67a04beae0": {
-      "case:me": "bn"
     },
     "68a6274f34": {
       "case:it-object": "fr"
@@ -416,9 +398,6 @@
     "76130fbf7d": {
       "case:it-object": "fr"
     },
-    "766267788d": {
-      "case:me": "bn"
-    },
     "766ded0ebf": {
       "a": "ar bn de he hi id ja ko ms pl qu ru sw th tl uk vi zh"
     },
@@ -427,9 +406,6 @@
     },
     "779366f4b2": {
       "case:me-object": "ar"
-    },
-    "77dba71809": {
-      "case:me": "bn"
     },
     "782e7e32f6": {
       "case:it-object": "fr"
@@ -468,9 +444,6 @@
     "7ef504c57f": {
       "me": "ar bn de es fr he hi id ja ko ms pl pt qu ru sw th tl tr uk vi zh"
     },
-    "7f147b2903": {
-      "case:me": "bn"
-    },
     "7f192fcdec": {
       "having threshold": "ar de es fr he hi id ja ko ms pl pt qu ru sw tl tr uk vi zh"
     },
@@ -508,9 +481,6 @@
       "case:me contains": "bn",
       "contains": "he th"
     },
-    "8546811a92": {
-      "case:me": "bn"
-    },
     "85f412f92a": {
       "of": "ar de es fr he hi id ja ko ms pl pt qu ru sw tl tr uk vi zh"
     },
@@ -532,9 +502,6 @@
       "transition view": "ar bn de es he hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh",
       "view": "fr"
     },
-    "8e9c8553f1": {
-      "case:me": "bn"
-    },
     "8f00ea8d8e": {
       "null": "he"
     },
@@ -549,9 +516,6 @@
     "9150f6f97b": {
       "case:it-object": "fr"
     },
-    "92a68c1e3c": {
-      "case:me": "bn"
-    },
     "93ee1ead94": {
       "case:it-object case:it-object": "fr"
     },
@@ -565,9 +529,6 @@
     },
     "9a110b248d": {
       "it matches where": "*"
-    },
-    "9a50db7c19": {
-      "case:me-object": "ar es it pt"
     },
     "9a5c1482e6": {
       "matches": "bn th"
@@ -592,9 +553,6 @@
     },
     "a0c1f32954": {
       "here": "*"
-    },
-    "a0f6dab868": {
-      "case:me": "bn"
     },
     "a151a7cf7f": {
       "before": "bn hi",
@@ -625,9 +583,6 @@
     "a9c2c0024a": {
       "into": "*"
     },
-    "aaba73db0a": {
-      "case:me": "bn"
-    },
     "ab061cfe15": {
       "case:it-object": "fr"
     },
@@ -639,9 +594,6 @@
     },
     "ae9fb9c316": {
       "attributes from of": "ar de es fr he hi id ja ko ms pl pt qu ru sw tl tr uk vi zh"
-    },
-    "aec5da0bfd": {
-      "case:me": "bn"
     },
     "af3ea3a24e": {
       "in": "he"
@@ -755,9 +707,6 @@
       "in new url window": "ar bn es fr he hi id ja ko ms pl pt qu ru sw th tl uk zh",
       "new url window": "de it tr vi"
     },
-    "cc4909b0a6": {
-      "case:me-object": "ar es it pt"
-    },
     "cce78169bd": {
       "case:me of": "bn hi tr",
       "of": "ar de es fr he id it ja ko ms pl pt qu ru sw th tl uk vi zh"
@@ -778,9 +727,6 @@
     },
     "d9af1c14cf": {
       "case:it-object": "fr"
-    },
-    "d9ecdbc854": {
-      "case:me-object": "ar es it pt"
     },
     "da24c9d768": {
       "to": "ar bn de es fr he hi id it ja ko ms pt qu ru sw th tl tr uk vi zh"
@@ -819,9 +765,6 @@
       "case:it-object in of the": "fr",
       "in of the": "ar bn es he hi id ja ko ms pl pt qu ru sw th tl uk zh",
       "of the": "de it tr vi"
-    },
-    "e13b40b6b2": {
-      "case:me": "bn"
     },
     "e172bd73af": {
       "of the": "bn hi ja ko qu tl tr vi zh"
@@ -878,8 +821,7 @@
       "case:it-object": "fr"
     },
     "f18d740a54": {
-      "case:it-object": "fr",
-      "case:me": "bn"
+      "case:it-object": "fr"
     },
     "f24b5ab7b2": {
       "case:it-object": "fr"
