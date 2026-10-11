@@ -1,8 +1,8 @@
 {
   "description": "English-leak gate, corpus half (src/multilingual/english-leaks.ts): per corpus row, the findings of each language's render (render(parse(en), L)): an English grammar word, `event:<name>` (an English event the lexicon has a word for) or `case:me` / `case:it` (a nominative pronoun beside a marker; `-object`: as an unmarked object) or `spacing:<marker>` (a marker the language attaches, written apart). `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts after a fresh populate.",
   "renders": 3519,
-  "leaky": 637,
-  "findings": 1332,
+  "leaky": 636,
+  "findings": 1322,
   "kinds": {
     "word": {
       "renders": 191,
@@ -13,12 +13,12 @@
       "findings": 0
     },
     "case": {
-      "renders": 16,
-      "findings": 19
+      "renders": 13,
+      "findings": 13
     },
     "spacing": {
       "renders": 470,
-      "findings": 1011
+      "findings": 1007
     }
   },
   "entries": {
@@ -297,9 +297,8 @@
       "spacing:から spacing:で spacing:を": "ja"
     },
     "form-disable-on-submit": {
-      "case:me case:me": "hi",
-      "case:me case:me spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
-      "case:me case:me spacing:এ spacing:এ spacing:এ spacing:তে spacing:তে": "bn",
+      "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
+      "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
     "form-submit-prevent": {

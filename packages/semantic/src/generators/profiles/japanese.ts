@@ -37,6 +37,8 @@ export const japaneseProfile: LanguageProfile = {
     window: 'ウィンドウ',
     detail: '詳細',
   },
+  // A query's scope before it (`#list の中の <li/>`; M2 N3).
+  queryScopeFirst: { marker: 'の中の', queryIn: 'の中' },
   possessive: {
     marker: 'の',
     markerPosition: 'between',

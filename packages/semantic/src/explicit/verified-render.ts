@@ -33,33 +33,29 @@ export function render(written: SemanticNode, language: string): string {
   let text = renderReadable(node, language);
   let wrote = semanticRenderer.takeNativeWords();
   if (!wrote.size || readsAs(text, language, node)) return text;
-  // A pronoun in the case its marker takes (es `en mí`, N3) must read back as
-  // the nominative does; where it does not, the nominative, as before.
-  let plain: NativeWordKind[] = ['value'];
-  if (wrote.has('case')) {
-    const nominative = semanticRenderer.renderPlainWords(
+  // Each kind of native word must read as the render without it does; where
+  // it does not, the render goes without it, as before. In turn, each compared
+  // with the render that keeps what the earlier ones dropped:
+  //   - `scope`, a query's scope before it (tr `bendeki <p/>`, N3), against
+  //     English's order (`<p/> içinde ben`);
+  //   - `case`, a pronoun in the case its marker takes (es `en mí`, N3),
+  //     against the nominative;
+  //   - `attach`, a marker written onto the word before it (ko `#out에`, N5),
+  //     against the spaced one.
+  // The scope goes first: in English's order a case form can need the
+  // nominative that the scope-first form did not (bn `<button/> এ আমি`).
+  const dropped: NativeWordKind[] = [];
+  for (const kind of ['scope', 'case', 'attach'] as const) {
+    if (!wrote.has(kind)) continue;
+    const without = semanticRenderer.renderPlainWords(
       () => renderReadable(node, language),
-      ['case']
+      [...dropped, kind]
     );
-    const nominativeWrote = semanticRenderer.takeNativeWords();
-    if (!readAlike(text, nominative, language)) {
-      text = nominative;
-      wrote = nominativeWrote;
-      plain = ['value', 'case'];
-    }
-  }
-  // A marker written onto the word before it (ko `#out에`, N5) must read as
-  // the spaced one does; where it does not, spaced, as before.
-  if (wrote.has('attach')) {
-    const spaced = semanticRenderer.renderPlainWords(
-      () => renderReadable(node, language),
-      [...plain.filter(k => k !== 'value'), 'attach']
-    );
-    const spacedWrote = semanticRenderer.takeNativeWords();
-    if (!readAlike(text, spaced, language)) {
-      text = spaced;
-      wrote = spacedWrote;
-      plain = [...plain, 'attach'];
+    const withoutWrote = semanticRenderer.takeNativeWords();
+    if (!readAlike(text, without, language)) {
+      text = without;
+      wrote = withoutWrote;
+      dropped.push(kind);
     }
   }
   // A value's grammar word in the language's own can read as something else:
@@ -68,7 +64,10 @@ export function render(written: SemanticNode, language: string): string {
   // marker (ko `로`) or as `is` (th `เป็น` before a type it does not list).
   // There the words are written in English's, which every reader takes.
   if (!wrote.has('value') || readsAs(text, language, node)) return text;
-  return semanticRenderer.renderPlainWords(() => renderReadable(node, language), plain);
+  return semanticRenderer.renderPlainWords(
+    () => renderReadable(node, language),
+    ['value', ...dropped]
+  );
 }
 
 function renderReadable(node: SemanticNode, language: string): string {

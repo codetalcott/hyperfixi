@@ -176,6 +176,21 @@ export interface LanguageProfile {
     readonly markers: readonly string[];
     readonly afterWords?: 'all' | readonly string[];
   };
+  /**
+   * A query's scope written before the query, as a verb-final language writes
+   * a modifier (M2 N3): tr `bendeki <p/>` (the `<p/>` in me), hi `मुझ में
+   * स्थित <p/>`, ja `自分 の中の <p/>`, where English's order wrote `<p/>
+   * içinde ben`. `marker` follows the scope, in the case it takes there
+   * (`obliqueReferences`: tr `içindeki` → `bendeki`); `participle`, a word
+   * after it (hi `स्थित`, located); `queryIn`, the `in` the reader takes after
+   * a query (the reader takes the scope-first query at a role:
+   * `matchScopeFirstQuery`).
+   */
+  readonly queryScopeFirst?: {
+    readonly marker: string;
+    readonly participle?: string;
+    readonly queryIn: string;
+  };
   /** Possessive expression configuration */
   readonly possessive?: PossessiveConfig;
   /** Event handler pattern configuration (for simple SVO languages) */

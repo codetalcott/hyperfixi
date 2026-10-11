@@ -24,9 +24,12 @@ export function fusedForms(profile: LanguageProfile): ReadonlyMap<string, readon
       if (!marker) continue;
       for (const phrase of typeof form === 'string' ? [form] : [form.direction, form.location]) {
         if (!phrase || /\s/.test(phrase)) continue;
-        const after = Object.values(profile.roleMarkers).some(
-          m => m?.position === 'after' && (m.primary === marker || m.alternatives?.includes(marker))
+        // A marker no role has (tr's scope-first `içindeki`) follows its noun
+        // where the language's markers do.
+        const role = Object.values(profile.roleMarkers).find(
+          m => m?.primary === marker || m?.alternatives?.includes(marker)
         );
+        const after = (role ?? profile.roleMarkers.destination)?.position === 'after';
         out.set(phrase, after ? [pronoun, marker] : [marker, pronoun]);
       }
     }

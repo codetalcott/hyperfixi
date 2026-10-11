@@ -34,6 +34,7 @@ import {
   joinExpressionTokens,
   matchPositionalRun,
   matchQueryScope,
+  matchScopeFirstQuery,
   translatePropertyName,
   translateConnective,
   expressionWordOf,
@@ -1153,6 +1154,46 @@ export class PatternMatcher {
    * - '#dialog.showModal()' (method call)
    * - "#element's *opacity" (possessive selector + property)
    */
+  /**
+   * A query with its scope written before it, at the role (tr `bendeki <p/>`,
+   * hi `मुझ में स्थित <p/>`; `profile.queryScopeFirst`): the query with its
+   * scope, as English's `<p/> in me` reads, and the tokens it spans consumed.
+   */
+  private matchScopeFirst(
+    tokens: TokenStream,
+    patternToken: PatternToken & { type: 'role' }
+  ): SemanticValue | null {
+    const entry = this.currentProfile?.queryScopeFirst;
+    if (!entry || patternToken.role === 'event') return null;
+    const found = matchScopeFirstQuery(
+      tokens.tokens,
+      tokens.position(),
+      `${entry.marker}${entry.participle ?? ''}`
+    );
+    if (!found) return null;
+    const [first, second] = found.scope.parts;
+    const scopeText = found.scope.parts.map(p => p.text).join(' ');
+    let value: SemanticValue | null;
+    if (found.positional) {
+      value = {
+        type: 'expression',
+        raw: `${found.positional} ${found.query.value} in ${scopeText}`,
+      } as SemanticValue;
+    } else {
+      const query = this.tokenToSemanticValue(found.query);
+      const scope: SemanticValue =
+        found.scope.kind === 'reference'
+          ? createReference(first!.text as ReferenceValue['value'])
+          : found.scope.kind === 'closest'
+            ? ({ type: 'expression', raw: `closest ${second!.text}` } as SemanticValue)
+            : (this.tokenToSemanticValue(first!.token) as SemanticValue);
+      value = query ? ({ ...query, scope } as SemanticValue) : null;
+    }
+    if (!value) return null;
+    for (let n = 0; n < found.consumed; n++) tokens.advance();
+    return value;
+  }
+
   private matchRoleTokenCore(
     tokens: TokenStream,
     patternToken: PatternToken & { type: 'role' },
@@ -1174,6 +1215,12 @@ export class PatternMatcher {
       this.commandMarkers().has(token.value.toLowerCase())
     ) {
       return patternToken.optional || false;
+    }
+    // A query with its scope written first (tr `bendeki <p/>`, the `<p/>` in me).
+    const scopeFirst = this.matchScopeFirst(tokens, patternToken);
+    if (scopeFirst) {
+      captured.set(patternToken.role, scopeFirst);
+      return true;
     }
     const slot = this.slotAt(tokens, patternToken, nextPatternToken);
 

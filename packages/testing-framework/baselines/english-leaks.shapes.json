@@ -1,24 +1,24 @@
 {
   "description": "English-leak gate, command-shape half (src/multilingual/english-leaks.ts): per command-shape case, the findings of each language's render (translate(src, 'en', L)): an English grammar word, `event:<name>`, `case:<pronoun>` or `spacing:<marker>`. `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts.",
   "renders": 23801,
-  "leaky": 4460,
-  "findings": 9041,
+  "leaky": 4453,
+  "findings": 9001,
   "kinds": {
     "word": {
-      "renders": 2401,
-      "findings": 4060
+      "renders": 2399,
+      "findings": 4058
     },
     "event": {
       "renders": 0,
       "findings": 0
     },
     "case": {
-      "renders": 56,
-      "findings": 56
+      "renders": 32,
+      "findings": 32
     },
     "spacing": {
       "renders": 2305,
-      "findings": 4925
+      "findings": 4911
     }
   },
   "entries": {
@@ -283,10 +283,9 @@
       "spacing:で spacing:を": "ja"
     },
     "0ff2f70080": {
-      "case:me in": "hi",
-      "case:me spacing:e spacing:i spacing:i spacing:i": "tr",
-      "case:me spacing:এ spacing:কে spacing:তে": "bn",
       "in": "ar es pl ru th",
+      "spacing:e spacing:i spacing:i spacing:i": "tr",
+      "spacing:কে spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
     "103adfe987": {
@@ -586,16 +585,14 @@
       "spacing:で spacing:を": "ja"
     },
     "2159462e64": {
-      "case:me in": "hi",
-      "case:me spacing:e spacing:i spacing:i spacing:i": "tr",
-      "case:me spacing:এ spacing:কে spacing:তে": "bn",
       "in": "ar es pl ru th",
+      "spacing:e spacing:i spacing:i spacing:i": "tr",
+      "spacing:কে spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
     "216845203a": {
-      "case:me": "hi",
-      "case:me spacing:i spacing:i spacing:i": "tr",
-      "case:me spacing:এ spacing:কে spacing:তে": "bn",
+      "spacing:i spacing:i spacing:i": "tr",
+      "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
     "21c66949f1": {
@@ -2402,10 +2399,9 @@
       "spacing:で spacing:を": "ja"
     },
     "84c8655749": {
-      "case:me": "hi",
-      "case:me contains spacing:এ spacing:কে spacing:তে": "bn",
-      "case:me spacing:i spacing:i": "tr",
       "contains": "he th",
+      "contains spacing:তে": "bn",
+      "spacing:i spacing:i": "tr",
       "spacing:で spacing:を": "ja"
     },
     "85061852ee": {
@@ -2454,9 +2450,8 @@
       "spacing:e spacing:i": "tr"
     },
     "86bfd24dc8": {
-      "case:me": "hi",
-      "case:me spacing:e spacing:i spacing:i": "tr",
-      "case:me spacing:এ spacing:তে spacing:তে": "bn",
+      "spacing:e spacing:i spacing:i": "tr",
+      "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
     "8712ddea5b": {
@@ -3722,9 +3717,8 @@
       "spacing:e spacing:i spacing:nin": "tr"
     },
     "d4559bb0fb": {
-      "case:me": "hi",
-      "case:me spacing:e spacing:i spacing:i spacing:i": "tr",
-      "case:me spacing:এ spacing:তে spacing:তে": "bn",
+      "spacing:e spacing:i spacing:i spacing:i": "tr",
+      "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
     "d54bf42f20": {
@@ -4100,10 +4094,9 @@
       "spacing:で spacing:を": "ja"
     },
     "e71ea44d67": {
-      "case:me": "hi",
-      "case:me matches spacing:এ spacing:কে spacing:তে": "bn",
-      "case:me spacing:i spacing:i": "tr",
       "matches": "th",
+      "matches spacing:তে": "bn",
+      "spacing:i spacing:i": "tr",
       "spacing:で spacing:を": "ja"
     },
     "e775a2bad3": {
@@ -4440,11 +4433,10 @@
       "spacing:で spacing:を": "ja"
     },
     "fc1f6f6ab5": {
-      "case:me spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i the": "tr",
-      "case:me spacing:এ spacing:কে spacing:তে the": "bn",
-      "case:me the": "hi",
+      "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i the": "tr",
+      "spacing:তে the": "bn",
       "spacing:で spacing:を the": "ja",
-      "the": "ar de es fr he id it ko ms pl pt ru sw th tl uk vi zh"
+      "the": "ar de es fr he hi id it ko ms pl pt ru sw th tl uk vi zh"
     },
     "fc2dcef0f5": {
       "spacing:e spacing:i spacing:i": "tr",
