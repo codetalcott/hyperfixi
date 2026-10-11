@@ -868,7 +868,7 @@ export function buildRoleToken(roleSpec: RoleSpec, profile: LanguageProfile): Pa
     const isPassthroughOverride =
       overrideMarker !== undefined && overrideMarker === roleSpec.markerOverride?.en;
     const position =
-      roleSpec.markerPosition?.[profile.code] ??
+      roleSpec.markerPositionOverride?.[profile.code] ??
       defaultMarker?.position ??
       (profile.wordOrder === 'SOV' && !isPassthroughOverride ? 'after' : 'before');
     const optionalMarker = roleSpec.markerOptional?.[profile.code] === true;

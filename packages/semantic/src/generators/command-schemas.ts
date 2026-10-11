@@ -109,10 +109,11 @@ export interface RoleSpec {
   readonly markerOptional?: Record<string, boolean>;
   /**
    * Which side of its value this role's marker goes on, per language, where it
-   * is not the side the profile's markers take: zh's `之间` follows the pair it
-   * names (`切换 .a 和 .b 之间`), as no zh preposition does.
+   * is not the side the profile's markers take (intent's field of the same
+   * name): zh's `之间` follows the pair it names (`切换 .a 和 .b 之间`), as no zh
+   * preposition does.
    */
-  readonly markerPosition?: Record<string, 'before' | 'after'>;
+  readonly markerPositionOverride?: Record<string, 'before' | 'after'>;
   /**
    * Additional alternate marker keywords for this role, beyond {@link markerOverride}.
    * Used by schema-driven role inference (e.g., from `@lokascript/intent`) to
@@ -603,7 +604,7 @@ export const toggleSchema: CommandSchema = {
         vi: 'giữa',
         zh: '之间',
       },
-      markerPosition: { zh: 'after' },
+      markerPositionOverride: { zh: 'after' },
     },
     {
       role: 'duration',
