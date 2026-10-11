@@ -9,6 +9,7 @@
 import type { LanguageProfile } from '../generators/profiles/types';
 import { getSchema } from '../generators/command-schemas';
 import type { ActionType } from '../types';
+import { bengaliLocative } from '../tokenizers/bengali-script';
 
 /**
  * Does `word` end in a letter of a script other than Latin, with any marks on
@@ -16,26 +17,8 @@ import type { ActionType } from '../types';
  */
 const endsInWord = (word: string): boolean => /[^\p{Script=Latin}\P{L}]\p{M}*$/u.test(word);
 
-/** A Bengali consonant letter (U+0995–U+09B9, the nukta letters, khanda ta). */
-const BN_CONSONANT = /[\u0995-\u09b9\u09dc-\u09df\u09ce]$/u;
-/** A Bengali vowel: a vowel sign or an independent vowel. */
-const BN_VOWEL = /[\u09be-\u09cc\u0985-\u0994]$/u;
 /** bn's locative, as a role marker and as the `on` word. */
 const BN_LOCATIVE: ReadonlySet<string> = new Set(['তে', 'এ']);
-
-/** Does a Bengali word end in a consonant letter (so a vowel sign may follow it)? */
-export const endsInBengaliConsonant = (word: string): boolean => BN_CONSONANT.test(word);
-
-/**
- * The locative written onto a Bengali word: the vowel sign `ে` after a
- * consonant (`ক্লিকে`, which reads as `ক্লিক` + `এ`), `তে` after a vowel
- * (`জমাতে`); undefined after anything else (a hasant, an anusvara).
- */
-function bengaliLocative(word: string): string | undefined {
-  if (BN_CONSONANT.test(word)) return `${word}\u09c7`;
-  if (BN_VOWEL.test(word)) return `${word}তে`;
-  return undefined;
-}
 
 /**
  * The marker the reader gives back for a suffix written onto a word: bn's

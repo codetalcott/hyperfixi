@@ -16,7 +16,7 @@ import { bengaliMorphologicalNormalizer } from './morphology/bengali-normalizer'
 import { bengaliProfile } from '../generators/profiles/bengali';
 import { fusedForms, splitFusedForms } from './fused-forms-split';
 import { splitAttachedSuffixes, type AttachedSuffix } from './attached-suffix-split';
-import { endsInBengaliConsonant } from '../explicit/attached-markers';
+import { endsInBengaliConsonant } from './bengali-script';
 import {
   StringLiteralExtractor,
   NumberExtractor,
