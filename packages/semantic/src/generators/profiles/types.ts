@@ -294,6 +294,15 @@ export interface EventHandlerConfig {
   /** Temporal/conditional markers that can optionally appear with events */
   readonly temporalMarkers?: string[];
   /**
+   * The pure head pattern (`[{source} から] {event} [を] で`) outranks the
+   * fused `<command>-event-*` patterns, so a handler's body always takes the
+   * clause walk (`then` chains, js blocks, fetch's response type), as it does
+   * in English. Set where the fused patterns' head is the pure head's own
+   * words (ja since N4, M2): the fused patterns stay for the forms only they
+   * read (the patient-first `.a を クリック で 追加`).
+   */
+  readonly headOutranksFused?: boolean;
+  /**
    * Negation marker for expressing negated events (e.g., Arabic عدم = "not/lack of").
    * Used in patterns like: عند عدم التركيز = "when not focusing" = "on blur"
    */

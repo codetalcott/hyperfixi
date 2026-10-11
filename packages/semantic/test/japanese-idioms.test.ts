@@ -159,14 +159,17 @@ describe('Japanese Event Handler Patterns', () => {
    * These tests verify the event handler structure is correct.
    */
   describe('standard patterns (baseline)', () => {
-    // Now supported via generateSOVSimpleEventHandlerPattern
-    it('should parse "クリック で 増加" as event handler', () => {
-      const node = parse('クリック で 増加', 'ja');
-      // Event handlers have action='on' - the wrapped command is in metadata
+    // The head pattern reads the handler (N4: `headOutranksFused`), and the
+    // body's bare verb is the command; the fused `{event} で <verb>` patterns
+    // stay for the forms only they read (patient-first).
+    it('should parse "クリック で 隠す" as event handler', () => {
+      const node = parse('クリック で 隠す', 'ja') as ReturnType<typeof parse> & {
+        body?: Array<{ action?: string }>;
+      };
       expect(node.action).toBe('on');
-      // Check event role is present
       expect(node.roles.has('event')).toBe(true);
-      expect(node.metadata?.patternId).toContain('increment');
+      expect(node.metadata?.patternId).toBe('on-ja-generated');
+      expect(node.body?.[0]?.action).toBe('hide');
     });
 
     // Now supported via generateSOVTemporalEventHandlerPattern

@@ -73,19 +73,10 @@ refusals left are LOUD, each family with its reason: `scroll … by` and `beep!`
 M2 sheet), halt's `default` modes and collection expressions are filed (P56, P57), the rest are shapes
 rare in pages.
 
-| Run                    | pass   | refused | silent | en lane (pass / refused / silent) |
-| ---------------------- | ------ | ------- | ------ | --------------------------------- |
-| first run (2026-10-06) | 18,171 | 1,479   | 7,614  | 793 / 60 / 283                    |
-| 4.2.0 (2026-10-07)     | 23,763 | 3,303   | 174    | 1,053 / 82 / 0                    |
-| main (2026-10-07)      | 23,954 | 3,242   | 44     | 1,053 / 82 / 0                    |
-| step 3, values         | 24,139 | 3,057   | 44     | 1,062 / 73 / 0                    |
-| step 3, commands       | 24,386 | 2,823   | 31     | 1,074 / 61 (all LOUD) / 0         |
-
-**Left.** The English lane has no refusal outside a LOUD family (step 3's exit). Group 6, foreign
-lanes: P9, P15, P18, P21, P52, foreign bare counts and `queue` forms, ko verbs that are also events,
-and the `branch` refusals (an SOV condition ending in an owner takes the branch's `.y`); 31 silent
-pairs, each in a named family. The gate's `--report` lists them. **Exit:** every IN family passes
-or has a reason; stop widening when a widening finds nothing a user would write (rule 4).
+**Left.** The English lane has no refusal outside a LOUD family (step 3's exit; silent pairs 7,614 at
+the first run → 19 on 2026-10-11, each in a named family). The foreign lanes' refusals and the 19 are
+the reliability rows after M2 (below). **Exit:** every IN family passes or has a reason; stop
+widening when a widening finds nothing a user would write (rule 4).
 
 ### M2: translations that read as the language
 
@@ -114,16 +105,10 @@ without the sheet the floor is 13.3% / 19.4% (renders with a word the language h
 **Step 2 — no decision needed (N2): done 2026-10-08.** Native event names in he, hi, it, pl, qu, ru, th, uk
 and vi where the lexicon's own word reads back; the rest denylisted with reasons. Events now 0 in both halves.
 
-**Step 3 — owner vocabulary decisions (V1, N1): decided 2026-10-08, all as recommended.** The sheet,
-`multilingual/VOCABULARY_SHEET.md`: A1–A10 render words the dictionaries already have (loop heads,
-`I match`, `the X of Y`, `as T`, positional `in`, `between`, `first`, `do not throw`, `catch`,
-`element`); B1–B7 add a word per language (`def`, `finally`, `go back`, `elsewhere`, `with index`,
-`start`, he's gaps); C1–C4 keep English (`KEPT_ENGLISH` in `english-leaks.ts`; C4 deferred, still
-counted). Order, by corpus rows each clears in es: A1 (7), A5 (4), A2 (3), B4 (2), A3/A4 (2), then the
-rest; the shapes-heavy rows (`def`, `catch`/`finally`, `element`, `between`) after. Done, all of it:
-A1–A10, B1–B7 (B7: bn/th/vi `document`/`window`; he's words, `document`, `window` and `is`) and V1
-`forever` (the sheet lists the PRs and the words that changed). The words target is met everywhere
-(2026-10-10); A6 (`between`) was the last row (2026-10-11).
+**Step 3 — owner vocabulary decisions (V1, N1): decided 2026-10-08, all as recommended; done 2026-10-11.**
+The sheet, `multilingual/VOCABULARY_SHEET.md`: A1–A10 render words the dictionaries already have, B1–B7
+add a word per language, C1–C4 keep English (`KEPT_ENGLISH` in `english-leaks.ts`; C4 deferred, still
+counted). The sheet lists the PRs and the words that changed; the words target is met everywhere.
 
 **Step 4 — design:**
 
@@ -133,7 +118,8 @@ A1–A10, B1–B7 (B7: bn/th/vi `document`/`window`; he's words, `document`, `wi
   a verb's object, 2026-10-10; next the fused forms with N5);
 - N5: suffixes attached in the agglutinative languages, with N3's fused forms (design:
   `multilingual/FUSED_FORMS.md`, 2026-10-10);
-- N4: the ja/tr handler heads (`クリック を で`, `tıklama i üzerinde`);
+- N4: the ja/tr/bn handler heads (`クリック を で`, `tıklama i üzerinde`, `ক্লিক তে`): one marker, written
+  onto the event (ja `クリックで` since 2026-10-11; the reader keeps taking the two-marker head);
 - N6: the article and marker slips.
 
 **Step 5 — native review of what changed** (N8, V2, V3, `packages/semantic/NATIVE_REVIEW_NEEDED.md`).
@@ -146,6 +132,30 @@ exists (policy 13).
 - event names are native wherever a round-tripping word exists;
 - pronoun case is right in the 13 languages;
 - the leak rate target (set at Step 1) is met.
+
+**Owner decision 2026-10-11 (the order in force).** Correctness is measured and strong (command
+shapes: silent pairs 7,614 → 19 since M1's first run); naturalness moved on a proxy no native speaker
+has checked (`NATIVE_REVIEW_NEEDED.md`: 226 items, none reviewed); 9.3% of authors' script lanes are
+refused; no gate reads code a native speaker writes; `semantic-parser.ts` grew 8,871 → 9,494 lines in
+five days. So: finish N4 (ja, bn, tr) → release 4.5.0 → **no new naturalness form until native review
+returns** (the case residue, N6 and every other form wait) → the review packet (ja, es, de, ru; answers
+come back without hand copying) and the hand-written-input gate (the harness now, inputs from native
+writers later, never seeded with our renders; recruiting is the owner's job) → the reliability rows
+below → M3. Every PR records `semantic-parser.ts`'s line count.
+
+### Reliability (after M2, before M3): the silent pairs, then the common refusals
+
+**Why.** In the command-shape gate 2,537 of 27,240 lanes are refused: safe, but to a user it does not
+work. 1,626 are LOUD families (shapes semantic does not model), 911 are shapes it models.
+
+**Work, in order.** (1) The 19 silent pairs: ms/pl `… is undefined` (8), pl/sw `closest … to …` (3),
+it `get … in me` (3), qu/vi `if no <span/> in #box where …` (2), qu possessive chains (2), id `when my
+@data-x changes` (1); each fixed, or its reason written in `SILENT_FAMILIES`. (2) Refusals by reach:
+handler-head counts (`on click 1`, ~300 lanes, refused in all 23 languages, English passes), `wait for
+<custom event>` (P52, 115 lanes), pseudo-class queries (`<:checked/>`, LOUD, 209 lanes), then `on click
+elsewhere` (bn/it/th), `fetch … as JSON` in qu, `transition` with two properties in SOV, and the rest
+by the regen tool's family table. A refused pair that starts to render can come out silent: the
+command-shape dry run shows each move.
 
 ### M3: complexity down
 

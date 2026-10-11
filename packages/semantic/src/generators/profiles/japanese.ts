@@ -274,5 +274,8 @@ export const japaneseProfile: LanguageProfile = {
     // で specifically marks the means/method of action (by/via)
     eventMarker: { primary: 'で', position: 'after' },
     temporalMarkers: ['時', 'とき'], // temporal markers that can optionally appear
+    // The head is `クリックで` (N4): the fused `{event} で …` patterns would
+    // otherwise read every handler, with their hand-built body.
+    headOutranksFused: true,
   },
 };

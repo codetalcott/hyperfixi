@@ -8,12 +8,12 @@ import { translate, tryGetProfile } from '../src/index';
 import { attachMarker } from '../src/explicit/attached-markers';
 
 describe('a marker written onto its word', () => {
-  // A handler's own event keeps its marker apart: or-legs and parameters
-  // splice onto the event word, and the head itself is N4's (`クリック を で`).
+  // The handler's own head is written last, once the or-legs and parameters
+  // have joined the event (N4, below); bn's and tr's heads keep their marker apart.
   it.each([
-    ['ja', 'on click put "x" into #out', 'クリック を で "x"を #outに 置く'],
-    ['ja', 'on click take .a from #b', 'クリック を で #bから .aを 取る'],
-    ['ja', 'on click hide #m with *opacity', 'クリック を で #mを *opacityで 隠す'],
+    ['ja', 'on click put "x" into #out', 'クリックで "x"を #outに 置く'],
+    ['ja', 'on click take .a from #b', 'クリックで #bから .aを 取る'],
+    ['ja', 'on click hide #m with *opacity', 'クリックで #mを *opacityで 隠す'],
     ['ko', 'on click put "x" into #out', '클릭 할 때 "x"을 #out에 넣다'],
     ['ko', 'on click send foo to #b', '클릭 할 때 #b에게 foo을 보내다'],
     ['ko', 'on click take .a from #b', '클릭 할 때 #b에서 .a을 가져오다'],
@@ -57,7 +57,7 @@ describe('a marker written onto its word', () => {
   it('leaves a marker apart where the reader would not split the word back', () => {
     // A property after a possessive is one word to ja's reader (`値を`).
     expect(translate('on click put my value into #out', 'en', 'ja')).toBe(
-      'クリック を で 私の 値 を #outに 置く'
+      'クリックで 私の 値 を #outに 置く'
     );
     expect(translate('on click put my value into #out', 'en', 'bn')).toBe(
       'ক্লিক তে আমার মান কে #outএ রাখুন'
@@ -79,5 +79,64 @@ describe('a marker written onto its word', () => {
   it('attaches nothing in a language that writes its markers apart', () => {
     expect(attachMarker(tryGetProfile('tr'), '#out', 'e')).toBeUndefined();
     expect(attachMarker(tryGetProfile('es'), '#out', 'en')).toBeUndefined();
+  });
+});
+
+/**
+ * ja's handler head is the event and the `on` word, written as one (M2 N4):
+ * `クリックで`, where the render wrote the event's own marker too (`クリック を
+ * で`). The reader takes both: code written before 4.5.0 has the two markers.
+ */
+describe("ja's handler head: the on word written onto the event", () => {
+  it.each([
+    ['on click toggle .a', 'クリックで .aを 切り替え'],
+    ['on load toggle .a', 'ロードで .aを 切り替え'],
+    // A fronted source, parameters, or-legs and modifiers all keep the word
+    // after the whole event phrase, where the reader looks for it.
+    ['on click from #b toggle .a', '#b から クリックで .aを 切り替え'],
+    ['on myEvent(detail) toggle .a', 'myEvent(detail)で .aを 切り替え'],
+    ['on click or keyup toggle .a', 'クリック または キーアップで .aを 切り替え'],
+    ['on click debounced at 200ms toggle .a', 'クリックで debounced at 200ms .aを 切り替え'],
+    ['on click js console.log(1) end', 'クリックで JS実行 console.log(1) 終わり'],
+    // The body takes the clause walk, as with the two-marker head: the fused
+    // `{event} で …` patterns (headOutranksFused) left a js block after `then`
+    // unread and dropped fetch's response type.
+    [
+      'on click set t to true then js(t) window.testSuccess = t end',
+      'クリックで tを 真に 設定 それから JS実行 (t) window.testSuccess = t 終わり',
+    ],
+    [
+      'on click fetch /test as Number then put it into my.innerHTML',
+      'クリックで "/test" フェッチ Number それから それを 私の innerHTMLに 置く',
+    ],
+    ['on click toggle .a end on keyup toggle .b end', 'クリックで .aを 切り替え\n終わり\nキーアップで .bを 切り替え\n終わり'],
+  ])('%s', (source, expected) => {
+    expect(translate(source, 'en', 'ja')).toBe(expected);
+    expect(translate(expected, 'ja', 'en')).toBe(translate(source, 'en', 'en'));
+  });
+
+  it('still reads the two-marker head, with a fronted source and in a chain', () => {
+    expect(translate('クリック を で .aを 切り替え', 'ja', 'en')).toBe('on click toggle .a');
+    expect(translate('#b から クリック を で .aを 切り替え', 'ja', 'en')).toBe(
+      'on click from #b toggle .a'
+    );
+    expect(translate('クリック を で .aを 切り替え キーアップ を で .bを 切り替え', 'ja', 'en')).toBe(
+      'on click toggle .a\nend\non keyup toggle .b\nend'
+    );
+    expect(translate('クリックで .aを 切り替え キーアップで .bを 切り替え', 'ja', 'en')).toBe(
+      'on click toggle .a\nend\non keyup toggle .b\nend'
+    );
+  });
+
+  it('keeps the word apart where the reader would not split it off the event', () => {
+    // `キープレスで` and `サイズ変更で` are one word to the tokenizer.
+    for (const [source, head] of [
+      ['on keypress toggle .a', 'キープレス で'],
+      ['on resize toggle .a', 'サイズ変更 で'],
+    ]) {
+      const rendered = translate(source, 'en', 'ja');
+      if (rendered.startsWith(head.split(' ')[0]!)) expect(rendered.startsWith(head)).toBe(true);
+      expect(translate(rendered, 'ja', 'en')).toBe(source);
+    }
   });
 });

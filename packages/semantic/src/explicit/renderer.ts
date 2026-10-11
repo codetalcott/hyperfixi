@@ -1249,6 +1249,7 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       // alternatives, which is how the parser reads a source (the first leg's).
       this.spliceOrEvents(node as EventHandlerSemanticNode, parts, eventPart, language);
       this.spliceEventModifiers(node as EventHandlerSemanticNode, parts, eventPart, language);
+      this.attachHeadMarker(parts, eventPart, tokens, language);
     }
 
     // Handle event handler body (render separately after pattern).
@@ -1311,16 +1312,49 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       marksRole(profile, node.action, previous.role, text)
         ? attachMarker(profile, last, text)
         : undefined;
-    // Only where the reader splits it back: the word's own tokens, then the
-    // marker (ja `値を` after a possessive is one word to it).
-    const words = (text: string): string[] => tokenize(text, language).tokens.map(t => t.value);
-    const splits = (joined: string, word: string, marker: string): boolean =>
-      words(joined).join('\u0000') === [...words(word), ...words(marker)].join('\u0000');
-    if (attached === undefined || !splits(attached, last!, attached.slice(last!.length))) {
+    if (attached === undefined || !this.splitsBack(attached, last!, language)) {
       parts.push(text);
       return;
     }
     parts[parts.length - 1] = attached;
+    this.nativeWritten.add('attach');
+  }
+
+  /**
+   * Does the reader split `joined` back into `word` and the marker written
+   * onto it? Only then is the attached form written (ja `値を` after a
+   * possessive is one word to it).
+   */
+  private splitsBack(joined: string, word: string, language: string): boolean {
+    const words = (text: string): string[] => tokenize(text, language).tokens.map(t => t.value);
+    const marker = joined.slice(word.length);
+    return words(joined).join('\u0000') === [...words(word), ...words(marker)].join('\u0000');
+  }
+
+  /**
+   * A handler head's `on` word written onto its event (ja `クリックで`, M2
+   * N4), once the or-legs and the parameters have joined the event: the word
+   * follows the last leg (`クリック または キーアップで`). Only in a language
+   * that attaches the word, and only where the reader splits it back; the
+   * verified render's `attach` fallback keeps the spaced head otherwise.
+   */
+  private attachHeadMarker(
+    parts: string[],
+    eventPart: number,
+    tokens: readonly PatternToken[],
+    language: string
+  ): void {
+    const profile = tryGetProfile(language);
+    if (eventPart < 0 || !profile?.attachedMarkers || this.plainWords.has('attach')) return;
+    const eventAt = tokens.findIndex(t => t.type === 'role' && t.role === 'event');
+    const onWord = tokens.slice(eventAt + 1).find(t => t.type === 'literal');
+    if (eventAt < 0 || onWord?.type !== 'literal') return;
+    const at = parts.indexOf(onWord.value, eventPart + 1);
+    if (at <= eventPart) return;
+    const word = parts[at - 1]!;
+    const attached = attachMarker(profile, word, onWord.value);
+    if (attached === undefined || !this.splitsBack(attached, word, language)) return;
+    parts.splice(at - 1, 2, attached);
     this.nativeWritten.add('attach');
   }
 

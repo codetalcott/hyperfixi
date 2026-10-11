@@ -9580,11 +9580,11 @@ describe('repeat-until-event recovery (event:literal + loopType:literal="until-e
     });
   }
   // Real corpus repeat-until-event texts (head: `on <ev> repeat until event <ev2> increment #counter wait 100ms end`).
+  // ja's row (`マウス押下 で 繰り返し イベント マウス解放 を まで …`, the 2026-08
+  // transformer's verb-first order) left with N4: ja's head pattern outranks
+  // the fused patterns, whose path alone carried this recovery, and the render
+  // since 2026-08-28 is `まで イベント mouseupを 繰り返し …`, which reads.
   for (const [lang, src] of [
-    [
-      'ja',
-      'マウス押下 で 繰り返し イベント マウス解放 を まで それから #counter を 増加 それから 待つ 100ms 終わり',
-    ],
     [
       'ko',
       '마우스다운 할 때 반복 이벤트 마우스업 를 까지 그러면 #counter 를 증가 그러면 대기 100ms 끝',

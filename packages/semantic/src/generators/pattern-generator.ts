@@ -696,6 +696,12 @@ export function generateEventHandlerPatterns(
     }
   }
 
+  // Below every pure head pattern (80–100 in a language's `on` set), their
+  // relative order kept: the head wins wherever it matches, the fused forms
+  // read what only they can (see EventHandlerConfig.headOutranksFused).
+  if (profile.eventHandler.headOutranksFused) {
+    return patterns.map(p => ({ ...p, priority: p.priority - 75 }));
+  }
   return patterns;
 }
 
