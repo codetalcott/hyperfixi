@@ -98,6 +98,17 @@ describe("ja's handler head: the on word written onto the event", () => {
     ['on click or keyup toggle .a', 'クリック または キーアップで .aを 切り替え'],
     ['on click debounced at 200ms toggle .a', 'クリックで debounced at 200ms .aを 切り替え'],
     ['on click js console.log(1) end', 'クリックで JS実行 console.log(1) 終わり'],
+    // The body takes the clause walk, as with the two-marker head: the fused
+    // `{event} で …` patterns (headOutranksFused) left a js block after `then`
+    // unread and dropped fetch's response type.
+    [
+      'on click set t to true then js(t) window.testSuccess = t end',
+      'クリックで tを 真に 設定 それから JS実行 (t) window.testSuccess = t 終わり',
+    ],
+    [
+      'on click fetch /test as Number then put it into my.innerHTML',
+      'クリックで "/test" フェッチ Number それから それを 私の innerHTMLに 置く',
+    ],
     ['on click toggle .a end on keyup toggle .b end', 'クリックで .aを 切り替え\n終わり\nキーアップで .bを 切り替え\n終わり'],
   ])('%s', (source, expected) => {
     expect(translate(source, 'en', 'ja')).toBe(expected);
