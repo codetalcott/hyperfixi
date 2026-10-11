@@ -119,7 +119,7 @@ as a profile alternative.
 5. Object clitics: es, it, pt, ar (`objectClitics`).
 6. N5 render: ko, bn, ja attach (with the spacing gate if wanted). **Done 2026-10-11** (the gate, #1461;
    the render, `explicit/attached-markers.ts`).
-7. N5 tr apostrophe suffixes (reader first).
+7. N5 tr apostrophe suffixes (reader first). **Done 2026-10-11** (the reader; code stays spaced, Q2).
 8. fr clitic order: only with the owner's yes (§6 Q1).
 
 ## 6. Questions for the owner
@@ -133,7 +133,10 @@ as a profile alternative.
 - **Q2 (tr suffixes on code words).** Write `#out'a`, `.active'i` (apostrophe + suffix,
   harmony by how the selector is read), or keep the spaced `#out e` until a native
   reviewer picks? Recommended: build the reader for both, render the apostrophe form only
-  for pronouns and words, keep selectors spaced until review.
+  for pronouns and words, keep selectors spaced until review. **Built 2026-10-11, as
+  recommended:** the reader takes `#out'a` in any harmony form
+  (`tokenizers/apostrophe-suffixes.ts`); renders fuse the suffix with tr's own reference
+  words (`sonucu`, `hedefe`, as the pronouns' `bana`), and keep code spaced.
 - **Q3 (N5 gate).** Add a `spacing:` finding to the leak gate for ko, bn, ja, tr (qu?)
   before the render work, as `case` was? Recommended: yes, ko/bn/ja/tr; qu after a
   check. **Built 2026-10-11, as recommended** (`ATTACHED_MARKERS` in `english-leaks.ts`):

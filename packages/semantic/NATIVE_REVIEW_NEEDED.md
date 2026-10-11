@@ -440,6 +440,25 @@ The reader splits each back into the pronoun and the marker
 (`<p/> içinde ben i`, where `i` marks the phrase), and put's position words (`"x" önce
 beni koy`; Turkish says `benden önce`).
 
+Since 2026-10-11 (N5, FUSED_FORMS.md Q2) tr's other references, which are Turkish
+words, are fused the same way, in the harmony their spelling gives:
+
+| Word               | `i`         | `e`         | `den`        |
+| ------------------ | ----------- | ----------- | ------------ |
+| `sonuç` (result)   | `sonucu`    | `sonuca`    | `sonuçtan`   |
+| `olay` (event)     | `olayı`     | `olaya`     | `olaydan`    |
+| `hedef` (target)   | `hedefi`    | `hedefe`    | `hedeften`   |
+| `gövde` (body)     | `gövdeyi`   | `gövdeye`   | `gövdeden`   |
+| `belge` (document) | `belgeyi`   | `belgeye`   | `belgeden`   |
+| `pencere` (window) | `pencereyi` | `pencereye` | `pencereden` |
+| `detay` (detail)   | `detayı`    | `detaya`    | `detaydan`   |
+
+The reader also takes a suffix written onto code after an apostrophe, in any harmony
+form (`#out'a`, `.active'i`, `"x"'i`, `5'e`, `#out’tan`). Renders still write code's
+suffix apart (`#out e`): its harmony follows how the code word is read aloud (`#out'a`;
+`.hidden'a` or `.hidden'e`?). A question for the reviewer: should renders write the
+apostrophe form, and with which harmony rule (the last vowel as spelled, or as read)?
+
 ### A pronoun fused with its marker: ar and he (M2 N3, wave 3) ⚠️
 
 | Lang | Marker → `me`                                                                                                         | Marker → `it`                                             |
