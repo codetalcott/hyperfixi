@@ -2,7 +2,7 @@
   "description": "English-leak gate, corpus half (src/multilingual/english-leaks.ts): per corpus row, the findings of each language's render (render(parse(en), L)): an English grammar word, `event:<name>` (an English event the lexicon has a word for) or `case:me` / `case:it` (a nominative pronoun beside a marker; `-object`: as an unmarked object) or `spacing:<marker>` (a marker the language attaches, written apart). `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts after a fresh populate.",
   "renders": 3519,
   "leaky": 644,
-  "findings": 1353,
+  "findings": 1340,
   "kinds": {
     "word": {
       "renders": 191,
@@ -18,7 +18,7 @@
     },
     "spacing": {
       "renders": 470,
-      "findings": 1024
+      "findings": 1011
     }
   },
   "entries": {
@@ -60,7 +60,7 @@
     },
     "behavior-draggable": {
       "case:me": "hi",
-      "case:me spacing:den spacing:den spacing:den spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
+      "case:me spacing:den spacing:den spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
       "case:me spacing:কে spacing:কে spacing:তে": "bn",
       "event repeat trigger trigger trigger until": "qu",
       "spacing:에서 spacing:에서": "ko",
@@ -76,7 +76,7 @@
     },
     "behavior-resizable": {
       "event repeat trigger trigger trigger until": "qu",
-      "spacing:den spacing:den spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
+      "spacing:den spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
       "spacing:কে spacing:কে spacing:তে": "bn",
       "spacing:에서": "ko",
       "spacing:から spacing:で spacing:を": "ja"
@@ -84,7 +84,7 @@
     "behavior-sortable": {
       "event repeat trigger trigger trigger until": "qu",
       "null": "he",
-      "spacing:den spacing:den spacing:den spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
+      "spacing:den spacing:den spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
       "spacing:কে spacing:কে spacing:তে": "bn",
       "spacing:에서": "ko",
       "spacing:から spacing:で spacing:を": "ja"
@@ -306,7 +306,7 @@
       "spacing:で spacing:を": "ja"
     },
     "form-submit-prevent": {
-      "spacing:i spacing:i spacing:i spacing:i": "tr",
+      "spacing:i spacing:i spacing:i": "tr",
       "spacing:কে spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
@@ -339,7 +339,7 @@
       "url": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh"
     },
     "halt-propagation": {
-      "spacing:i spacing:i spacing:i": "tr",
+      "spacing:i spacing:i": "tr",
       "spacing:কে spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
@@ -365,7 +365,7 @@
     },
     "if-exists": {
       "case:it-object": "fr",
-      "spacing:e spacing:i spacing:i spacing:i": "tr",
+      "spacing:i spacing:i spacing:i": "tr",
       "spacing:এ spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
@@ -452,7 +452,7 @@
       "spacing:で spacing:を": "ja"
     },
     "make-toast-element": {
-      "case:it spacing:de spacing:i spacing:i spacing:i spacing:i spacing:nin": "tr",
+      "case:it spacing:de spacing:i spacing:i spacing:i spacing:nin": "tr",
       "case:it-object": "fr",
       "spacing:কে spacing:তে": "bn",
       "spacing:를 spacing:에 spacing:의": "ko",
@@ -470,18 +470,18 @@
       "spacing:で spacing:を": "ja"
     },
     "modal-close-button": {
-      "spacing:den spacing:i spacing:i spacing:i": "tr",
+      "spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
     "modal-close-escape": {
-      "spacing:den spacing:den spacing:i spacing:i spacing:i": "tr",
+      "spacing:den spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:에서": "ko",
       "spacing:から spacing:で spacing:を": "ja"
     },
     "modal-open": {
-      "spacing:e spacing:i spacing:i spacing:i": "tr",
+      "spacing:i spacing:i spacing:i": "tr",
       "spacing:তে spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
