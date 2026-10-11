@@ -1280,9 +1280,9 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    * it where they are a marker and the role it marks (a destination, a source,
    * or a patient that has one: `set $x to me`, es `a mí`): one oblique phrase
    * (obliquePhrase), the marker the literal's last word (`antes de`), or its
-   * first where markers follow their noun (hi). A patient with no marker before
-   * it, or a destination right after the verb, is a verb's object (de `zeige
-   * mich`, `binden mich zu $x`). undefined where it is neither.
+   * first where markers follow their noun (hi). A patient or destination no
+   * marker took is a verb's object (de `zeige mich`, `binden mich zu $x`).
+   * undefined where it is neither.
    */
   private obliqueAt(
     tokens: readonly PatternToken[],
@@ -1293,17 +1293,16 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     const first = tokens[i];
     const second = tokens[i + 1];
     const profile = tryGetProfile(language);
-    // A verb's object: a patient with no marker before it, or a destination
-    // right after the verb (`bind me to $x`, de `binden mich zu $x`).
-    const before = tokens[i - 1];
-    const object =
+    // A go/scroll position renders its own way (`top of me`).
+    const positioned = (role: SemanticRole): boolean =>
+      role === 'destination' && !!(node as CommandSemanticNode).scrollPosition;
+    // A verb's object: a patient or destination no marker took (the pair
+    // below reads the marker first), de `zeige mich`, `binden mich zu $x`.
+    if (
       first?.type === 'role' &&
-      (first.role === 'patient'
-        ? !this.isMarker(before, language)
-        : first.role === 'destination' &&
-          before?.type === 'literal' &&
-          !this.isMarker(before, language));
-    if (object) {
+      (first.role === 'patient' || first.role === 'destination') &&
+      !positioned(first.role)
+    ) {
       const form = this.obliquePhrase(
         language,
         '',
@@ -1319,8 +1318,7 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     const after = profile?.roleMarkers[role]?.position === 'after';
     const [literal, roleAt] = after ? [second, first] : [first, second];
     if (roleAt !== roleToken || literal?.type !== 'literal') return undefined;
-    // A go/scroll position renders its own way (`top of me`).
-    if (role === 'destination' && (node as CommandSemanticNode).scrollPosition) return undefined;
+    if (positioned(role)) return undefined;
     const words = literal.value.split(' ');
     const marker = after ? words[0]! : words[words.length - 1]!;
     const sense =
@@ -1329,16 +1327,6 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     if (phrase === undefined) return undefined;
     const text = (after ? [phrase, ...words.slice(1)] : [...words.slice(0, -1), phrase]).join(' ');
     return { text, tokens: 2 };
-  }
-
-  /** Is `token` a marker literal: a role marker, or a marker the oblique forms name? */
-  private isMarker(token: PatternToken | undefined, language: string): boolean {
-    if (token?.type !== 'literal') return false;
-    const word = token.value.split(' ').pop()!;
-    const profile = tryGetProfile(language);
-    for (const marker of Object.values(profile?.roleMarkers ?? {}))
-      if (marker && (marker.primary === word || marker.alternatives?.includes(word))) return true;
-    return Object.values(profile?.obliqueReferences ?? {}).some(forms => word in forms);
   }
 
   /**

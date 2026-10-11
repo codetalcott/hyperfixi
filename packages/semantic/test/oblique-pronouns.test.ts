@@ -169,4 +169,6 @@ describe('renders write it in the case its marker takes, and me as an object', (
 it('a scroll position keeps its phrase in the plain render', () => {
   const node = parse('on click scroll to the top of me', 'en')!;
   expect(semanticRenderer.render(node, 'es')).toBe('al clic desplazamiento en the top of yo');
+  // de has an object form too: the position is no object either.
+  expect(semanticRenderer.render(node, 'de')).toBe('wenn klick scrollen auf the top of ich');
 });
