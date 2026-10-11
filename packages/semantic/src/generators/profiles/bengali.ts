@@ -41,6 +41,8 @@ export const bengaliProfile: LanguageProfile = {
     me: { কে: 'আমাকে', তে: 'আমাতে', থেকে: 'আমার থেকে', এ: 'আমাতে' },
     it: { কে: 'এটিকে', তে: 'এটিতে', এ: 'এটিতে' },
   },
+  // A query's scope before it (`#list এ থাকা <li/>`, `আমাতে থাকা <p/>`; M2 N3).
+  queryScopeFirst: { marker: 'এ', participle: 'থাকা', queryIn: 'এ' },
   possessive: {
     marker: 'র',
     markerPosition: 'between',

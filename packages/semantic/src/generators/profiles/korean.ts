@@ -34,6 +34,8 @@ export const koreanProfile: LanguageProfile = {
     window: '창',
     detail: '세부',
   },
+  // A query's scope before it (`#list 안의 <li/>`; M2 N3).
+  queryScopeFirst: { marker: '안의', queryIn: '안에' },
   possessive: {
     marker: '의', // Possessive particle
     markerPosition: 'between',

@@ -391,6 +391,61 @@ function matchScopeAt(tokens: readonly LanguageToken[], i: number): LocativeScop
   return null;
 }
 
+const POSITIONAL_HEADS: ReadonlySet<string> = new Set([
+  'first',
+  'last',
+  'next',
+  'previous',
+  'random',
+]);
+
+/**
+ * A query with its scope written before it, at `tokens[at]`, as a verb-final
+ * language writes a modifier (`profile.queryScopeFirst`): tr `bendeki <p/>`
+ * (`ben` `içindeki` `<p/>`), hi `मुझ में स्थित <p/>`, `#list の中の <li/>`, also
+ * after a positional word (`bendeki ilk <p/>`). `phrase` is the marker and
+ * participle (`में स्थित`), matched by the tokens' text however the tokenizer
+ * cut it (ja `の中` `の`); `classOk`, whether a class query (`.item`) stands
+ * for a query in this slot.
+ */
+export function matchScopeFirstQuery(
+  tokens: readonly LanguageToken[],
+  at: number,
+  phrase: string,
+  classOk: boolean
+): {
+  readonly scope: LocativeScope;
+  readonly positional?: string | undefined;
+  readonly query: LanguageToken;
+  readonly consumed: number;
+} | null {
+  const scope = matchScopeAt(tokens, at);
+  const target = phrase.replace(/\s+/g, '');
+  if (!scope || !target) return null;
+  let q = at + scope.consumed;
+  let joined = '';
+  while (
+    joined.length < target.length &&
+    tokens[q] &&
+    target.startsWith(joined + tokens[q]!.value)
+  ) {
+    joined += tokens[q]!.value;
+    q++;
+  }
+  if (joined !== target) return null;
+  const head = (tokens[q]?.normalized ?? tokens[q]?.value ?? '').toLowerCase();
+  const positional = POSITIONAL_HEADS.has(head) ? head : undefined;
+  if (positional) q++;
+  const query = tokens[q];
+  if (query?.kind !== 'selector') return null;
+  const isQuery =
+    query.value.startsWith('<') ||
+    (query.value.startsWith('.') && (classOk || positional !== undefined)) ||
+    (query.value.startsWith('#') && positional !== undefined);
+  if (!isQuery) return null;
+  return { scope, positional, query, consumed: q + 1 - at };
+}
+
 /**
  * A query's locative scope, at `tokens[at]`: `<locative> <scope>`, as in
  * `add @disabled to <button/> in me`. Read only right after a `<…/>` query,

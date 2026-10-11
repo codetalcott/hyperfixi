@@ -62,6 +62,20 @@ export function render(written: SemanticNode, language: string): string {
       plain = [...plain, 'attach'];
     }
   }
+  // A query's scope before it (tr `bendeki <p/>`, N3) must read as English's
+  // order does; where it does not, English's order, as before.
+  if (wrote.has('scope')) {
+    const after = semanticRenderer.renderPlainWords(
+      () => renderReadable(node, language),
+      [...plain.filter(k => k !== 'value'), 'scope']
+    );
+    const afterWrote = semanticRenderer.takeNativeWords();
+    if (!readAlike(text, after, language)) {
+      text = after;
+      wrote = afterWrote;
+      plain = [...plain, 'scope'];
+    }
+  }
   // A value's grammar word in the language's own can read as something else:
   // a query's `in` as a marker the command wants (es `obtener valor de primero
   // <input/> en yo` read `en yo` as get's `on me`), a conversion's `as` as a

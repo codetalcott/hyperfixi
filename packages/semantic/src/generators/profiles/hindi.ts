@@ -53,6 +53,8 @@ export const hindiProfile: LanguageProfile = {
       से: 'इस से',
     },
   },
+  // A query's scope before it (`#list में स्थित <li/>`, `मुझ में स्थित <p/>`; M2 N3).
+  queryScopeFirst: { marker: 'में', participle: 'स्थित', queryIn: 'में' },
   possessive: {
     marker: 'का',
     markerPosition: 'between',

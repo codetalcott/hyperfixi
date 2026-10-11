@@ -49,9 +49,11 @@ const BLOCK_HEADER_ACTIONS = new Set<ActionType>([
  * misread, so the verified render re-reads it ({@link SemanticRendererImpl.takeNativeWords}):
  * `value`, a value's grammar word (a query's `in`, a conversion's `as`, `the X
  * of Y`; M2 sheet A3–A5); `case`, a pronoun in the case its marker takes (N3);
- * `attach`, a marker written onto the word before it (N5: ko `#out에`).
+ * `attach`, a marker written onto the word before it (N5: ko `#out에`);
+ * `scope`, a query's scope before it, as a verb-final language writes it (tr
+ * `bendeki <p/>`, N3).
  */
-export type NativeWordKind = 'value' | 'case' | 'attach';
+export type NativeWordKind = 'value' | 'case' | 'attach' | 'scope';
 
 /**
  * Commands whose destination is where something is, not where it goes: their
@@ -234,7 +236,18 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       : nativeValueWords(language);
     const scopeIn = (reference: string): string | undefined =>
       this.obliquePhrase(language, words.queryIn, reference, 'location');
-    return { ...words, wrote: () => this.nativeWritten.add('value'), scopeIn };
+    const first = this.plainWords.has('value') ? undefined : this.scopeFirst(language);
+    const scopeFirst = first
+      ? (scope: string, reference: string | undefined): string => {
+          this.nativeWritten.add('scope');
+          const phrase =
+            (reference !== undefined &&
+              this.obliquePhrase(language, first.marker, reference, 'location')) ||
+            `${scope} ${first.marker}`;
+          return first.participle ? `${phrase} ${first.participle}` : phrase;
+        }
+      : undefined;
+    return { ...words, wrote: () => this.nativeWritten.add('value'), scopeIn, scopeFirst };
   }
 
   /**
@@ -1261,6 +1274,11 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     return parts.join(' ');
   }
 
+  /** The language's query scope written before the query (tr `bendeki <p/>`), unless written plain. */
+  private scopeFirst(language: string) {
+    return this.plainWords.has('scope') ? undefined : tryGetProfile(language)?.queryScopeFirst;
+  }
+
   /**
    * A pattern token's text after `parts`: the marker of the role before it
    * (`previous`), where the language writes it onto its word (ko `#out에`, M2
@@ -1704,6 +1722,11 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         if (!value.scope) return value.value;
         {
           const words = this.valueWords(language);
+          // A verb-final language writes the scope first (tr `bendeki <p/>`).
+          if (words.scopeFirst) {
+            const scope = this.valueToNaturalString(value.scope, language);
+            return `${words.scopeFirst(scope, referenceOf(value.scope))} ${value.value}`;
+          }
           if (words.queryIn !== 'in') words.wrote?.();
           // `in me` in the case the `in` takes, a location (de `in mir`, N3).
           const scope =

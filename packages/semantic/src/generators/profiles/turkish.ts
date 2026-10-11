@@ -46,8 +46,8 @@ export const turkishProfile: LanguageProfile = {
   // its suffix after an apostrophe (`#out'a`), which the reader takes; renders
   // keep it apart until a reviewer picks a code word's harmony.
   obliqueReferences: {
-    me: { i: 'beni', e: 'bana', den: 'benden' },
-    it: { i: 'onu', e: 'ona', den: 'ondan' },
+    me: { i: 'beni', e: 'bana', den: 'benden', içindeki: 'bendeki' },
+    it: { i: 'onu', e: 'ona', den: 'ondan', içindeki: 'ondaki' },
     result: { i: 'sonucu', e: 'sonuca', den: 'sonuçtan' },
     event: { i: 'olayı', e: 'olaya', den: 'olaydan' },
     target: { i: 'hedefi', e: 'hedefe', den: 'hedeften' },
@@ -56,6 +56,8 @@ export const turkishProfile: LanguageProfile = {
     window: { i: 'pencereyi', e: 'pencereye', den: 'pencereden' },
     detail: { i: 'detayı', e: 'detaya', den: 'detaydan' },
   },
+  // A query's scope before it (`#list içindeki <li/>`, `bendeki <p/>`; M2 N3).
+  queryScopeFirst: { marker: 'içindeki', queryIn: 'içinde' },
   possessive: {
     // Genitive suffix, spaced for tokenization like Turkish's other case
     // markers (i/e/de). i18n renders `#picker ın değer`; the parser matches

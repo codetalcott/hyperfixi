@@ -258,10 +258,27 @@ const QUERY_IN =
 /** A query's `in` before a reference (`first .p1 in me`): the scope in its case. */
 const QUERY_IN_REFERENCE =
   /(<[^<>]*\/>|(?:^|[^\w$.#@*:-])(?:first|last|next|previous|random|closest)\s+[.#][\w-]+)((?:\.[\w-]+)*\s+)in\s+(me|it|you)\b(?![\w$.'-])/g;
+/** A query and its scope, for a language that writes the scope first: `[positional ]query in scope`. */
+const QUERY_SCOPE =
+  /(^|[^\w$.#@*:-])((?:(?:first|last|next|previous|random)\s+)?(?:<[^<>]*\/>|(?<=(?:first|last|next|previous|random)\s+)[.#][\w-]+)(?:\.[\w-]+)*)\s+in\s+((?:closest\s+)?(?:<[^<>]*\/>|[#.][\w-]+)|me|it|you|body|document|target|result)(?![\w$.'-])/g;
 function nativeQueryIn(text: string, words: ValueWords, spans: string[]): string {
+  // The scope first, where the language writes it so (tr `bendeki ilk <p/>`):
+  // its marker masked, or a reference's case form whole.
+  const first = words.scopeFirst
+    ? text.replace(QUERY_SCOPE, (_, lead: string, query: string, scope: string) => {
+        const reference = /^(?:me|it|you)$/.test(scope) ? scope : undefined;
+        const phrase = words.scopeFirst!('\u0000', reference);
+        const at = phrase.indexOf('\u0000');
+        spans.push(at < 0 ? phrase : phrase.slice(at + 1).trim());
+        const masked = `${MASK_OPEN}${spans.length - 1}${MASK_CLOSE}`;
+        return at < 0
+          ? `${lead}${masked} ${query}`
+          : `${lead}${phrase.slice(0, at)}${scope} ${masked} ${query}`;
+      })
+    : text;
   // `in me` in the case the `in` takes, a location (de `in mir`, M2 N3).
   const scoped = words.scopeIn
-    ? text.replace(QUERY_IN_REFERENCE, (whole, query: string, gap: string, reference: string) => {
+    ? first.replace(QUERY_IN_REFERENCE, (whole, query: string, gap: string, reference: string) => {
         const phrase = words.scopeIn!(reference);
         if (phrase === undefined) return whole;
         if (words.queryIn !== 'in') words.wrote?.();
@@ -348,6 +365,12 @@ export interface ValueWords {
   readonly wrote?: () => void;
   /** `queryIn` and a reference after it, in the case it takes (de `in mir`, M2 N3), if the language has one. */
   readonly scopeIn?: (reference: string) => string | undefined;
+  /**
+   * A query's scope written before the query, where the language writes it so
+   * (tr `bendeki <p/>`, M2 N3): the phrase for `scope` (written, or the
+   * reference it is), which the query follows.
+   */
+  readonly scopeFirst?: ((scope: string, reference: string | undefined) => string) | undefined;
 }
 
 /** The language's own value words. */
