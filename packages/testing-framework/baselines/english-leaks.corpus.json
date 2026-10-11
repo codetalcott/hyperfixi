@@ -1,8 +1,8 @@
 {
   "description": "English-leak gate, corpus half (src/multilingual/english-leaks.ts): per corpus row, the findings of each language's render (render(parse(en), L)): an English grammar word, `event:<name>` (an English event the lexicon has a word for) or `case:me` / `case:it` (a nominative pronoun beside a marker; `-object`: as an unmarked object). `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts after a fresh populate.",
   "renders": 3519,
-  "leaky": 273,
-  "findings": 396,
+  "leaky": 216,
+  "findings": 331,
   "kinds": {
     "word": {
       "renders": 191,
@@ -13,8 +13,8 @@
       "findings": 0
     },
     "case": {
-      "renders": 91,
-      "findings": 94
+      "renders": 26,
+      "findings": 29
     }
   },
   "entries": {
@@ -27,7 +27,6 @@
     },
     "behavior-removable": {
       "case:me": "bn hi tr",
-      "case:me-object": "ar es it pt",
       "trigger trigger": "qu"
     },
     "behavior-resizable": {
@@ -38,7 +37,7 @@
       "null": "he"
     },
     "blur-element": {
-      "case:me-object": "ar es it pt"
+      "case:me-object": "ar es pt"
     },
     "caret-var-on-target": {
       "on": "*"
@@ -47,22 +46,19 @@
       "of the": "bn hi ja ko tl vi zh"
     },
     "event-debounce": {
-      "at case:it-object debounced": "ar es fr it pt",
-      "at debounced": "bn de he hi id ja ko ms pl qu ru sw th tr uk vi zh",
+      "at case:it-object debounced": "fr",
+      "at debounced": "ar bn de es he hi id it ja ko ms pl pt qu ru sw th tr uk vi zh",
       "debounced": "tl"
     },
     "event-throttle": {
       "at throttled": "ar bn de es fr he hi id it ja ko ms pl pt qu ru sw th tr uk vi zh",
       "throttled": "tl"
     },
-    "fade-out-remove": {
-      "case:me-object": "ar es it pt"
-    },
     "fetch-basic": {
-      "case:it-object": "ar es fr it pt"
+      "case:it-object": "fr"
     },
     "fetch-loading-state": {
-      "case:it-object": "ar es fr it pt"
+      "case:it-object": "fr"
     },
     "focus-trap": {
       "matches": "bn th"
@@ -71,30 +67,23 @@
       "case:me case:me": "bn hi tr"
     },
     "get-value": {
-      "case:it-object": "ar es fr it pt"
+      "case:it-object": "fr"
     },
     "go-url": {
       "url": "*"
     },
-    "hide-with-transition": {
-      "case:me-object": "ar es it pt"
-    },
     "if-exists": {
-      "case:it-object": "ar es fr it pt"
+      "case:it-object": "fr"
     },
     "keydown-key-is-syntax": {
-      "case:me-object is": "ar es it pt",
-      "is": "bn de fr he hi id ja ko ms pl qu ru sw th tl tr uk vi zh"
-    },
-    "log-element": {
-      "case:me-object": "ar es it pt"
+      "is": "*"
     },
     "make-element": {
-      "case:it-object": "ar es fr it pt"
+      "case:it-object": "fr"
     },
     "make-toast-element": {
       "case:it": "tr",
-      "case:it-object": "ar es fr it pt"
+      "case:it-object": "fr"
     },
     "modal-close-backdrop": {
       "matches": "bn th"
@@ -110,11 +99,8 @@
       "before": "bn hi",
       "case:me": "tl"
     },
-    "remove-element": {
-      "case:me-object": "ar es it pt"
-    },
     "render-template-with-data": {
-      "case:it-object": "ar es fr it pt"
+      "case:it-object": "fr"
     },
     "swap-view-transition": {
       "transition view": "ar bn de es he hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh",
@@ -126,14 +112,8 @@
     "toggle-aria-expanded": {
       "case:me": "it"
     },
-    "transition-opacity": {
-      "case:me-object": "ar es it pt"
-    },
     "trigger-event": {
       "trigger": "qu"
-    },
-    "wait-then": {
-      "case:me-object": "ar es it pt"
     },
     "when-value-changes": {
       "case:it": "hi tr"

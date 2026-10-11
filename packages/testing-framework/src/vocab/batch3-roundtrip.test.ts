@@ -127,7 +127,8 @@ describe('Batch 3 — wrong-verb class (dict word was another command)', () => {
 describe('Batch 3 — it blur (noun form dropped the command patient)', () => {
   it('it: blur command render captures blur.patient', () => {
     const { render, triples: t } = renderAndParse('on keydown[key=="Escape"] blur me', 'it');
-    expect(render).toContain('sfuocare');
+    // The verb, not the noun; with its object attached since M2 N3 (`sfuocarmi`).
+    expect(render).toMatch(/sfuocar(?:e|mi)\b/);
     expect(t).toContain('blur.patient=me');
   });
 

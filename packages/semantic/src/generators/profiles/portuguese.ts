@@ -33,6 +33,9 @@ export const portugueseProfile: LanguageProfile = {
     window: 'janela',
     detail: 'detalhe',
   },
+  // The object pronoun after the infinitive, hyphenated (M2 N3, wave 3):
+  // `mostrar-me`, `colocá-lo`. Listed in NATIVE_REVIEW_NEEDED.md.
+  objectClitics: { forms: { me: 'me', it: 'lo' }, attach: 'hyphen' },
   // `me` next to a marker, in the case the marker takes (M2 N3; listed in
   // NATIVE_REVIEW_NEEDED.md).
   obliqueReferences: {

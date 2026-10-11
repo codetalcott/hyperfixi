@@ -462,6 +462,25 @@ write? The reader takes each fused word whole, before the proclitic extractor co
 | tl   | `sa ito` → `dito`                                                                                                | `dito` also means "here": does `ilagay 1 dito` read as "put 1 into it"? `mula_sa ito` stays |
 | pt   | `em ele` → `nele`, `de ele` → `dele`                                                                             | `a ele`, `para ele` are right as written                                                    |
 
+### The object pronoun attached to the verb: es, it, pt, ar (M2 N3, wave 3) ⚠️
+
+Where a command's object is `me` or `it` and the render writes the verb first, the
+pronoun attaches to the verb:
+
+| Lang | `me`                                       | `it`                                  | Rule                                                             |
+| ---- | ------------------------------------------ | ------------------------------------- | ---------------------------------------------------------------- |
+| es   | `mostrarme`, `quitarme`, `vincularme a $x` | `ocultarlo`, `ponerlo en #out`        | infinitive + clitic                                              |
+| it   | `mostrarmi`, `mettermi`                    | `nasconderlo`, `metterlo in #out`     | infinitive less its `-e` + clitic                                |
+| pt   | `mostrar-me`, `remover-me`                 | `ocultá-lo`, `colocá-lo`, `removê-lo` | hyphen; before `lo` the `-r` drops and the vowel takes an accent |
+| ar   | `اظهرني`, `احذفني`                         | `اخفه`, `ضعه في #out`                 | imperative + suffix                                              |
+
+Notes for the reviewer: `it` is written masculine (`lo`, `ه`), as `ello`/`esso`/`ele`/`هو`
+were; is that natural for an element? ar keeps the separate pronoun after a verb the
+renderer writes as a verbal noun (`قياس أنا`, `تشغيل`, `تركيز`): the imperative (`قِس`)
+would take the suffix. A verb the renderer does not write as an infinitive (es
+`enfoque`) keeps the separate pronoun. fr is not here: its object pronoun moves before
+the verb (`le mettre`), a word-order change waiting on the owner (FUSED_FORMS.md Q1).
+
 ## August 2026 research pass — summary
 
 A follow-up research pass (web sources as a native-speaker proxy; items still

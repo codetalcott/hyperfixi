@@ -37,6 +37,9 @@ export const italianProfile: LanguageProfile = {
     window: 'finestra',
     detail: 'dettaglio',
   },
+  // The object pronoun attached to the infinitive (M2 N3, wave 3): `mostrarmi`,
+  // `metterlo`. Listed in NATIVE_REVIEW_NEEDED.md.
+  objectClitics: { forms: { me: 'mi', it: 'lo' }, attach: 'infinitive-drop-e' },
   // `me` next to a marker, in the case the marker takes (M2 N3; listed in
   // NATIVE_REVIEW_NEEDED.md).
   obliqueReferences: {

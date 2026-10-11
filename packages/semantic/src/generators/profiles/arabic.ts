@@ -33,6 +33,25 @@ export const arabicProfile: LanguageProfile = {
     window: 'نافذة',
     detail: 'تفاصيل',
   },
+  // The object pronoun suffixed to the imperative (M2 N3, wave 3): `اظهرني`,
+  // `ضعه`. Listed in NATIVE_REVIEW_NEEDED.md.
+  // A verbal noun, adjective or past tense the renderer writes takes no suffix
+  // (`قياس` + `ني` would be "my measurement").
+  objectClitics: {
+    forms: { me: 'ني', it: 'ه' },
+    attach: 'suffix',
+    notVerbs: [
+      'قياس',
+      'تشغيل',
+      'تركيز',
+      'إفراغ',
+      'انتقال',
+      'إعادة-ضبط',
+      'ضبابية',
+      'افتراضي',
+      'سبق',
+    ],
+  },
   // A pronoun and its marker, fused into one word as Arabic writes them (M2 N3;
   // listed in NATIVE_REVIEW_NEEDED.md). The reader splits each back
   // (tokenizers/fused-forms-split.ts).

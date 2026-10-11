@@ -12,7 +12,7 @@
 import type { TokenKind, TokenStream } from '../types';
 import { BaseTokenizer, type KeywordEntry } from './base';
 import { portugueseProfile } from '../generators/profiles/portuguese';
-import { fusedForms, splitFusedForms } from './fused-forms-split';
+import { fusedForms, splitFusedForms, splitObjectClitics } from './fused-forms-split';
 import { PortugueseMorphologicalNormalizer } from './morphology/portuguese-normalizer';
 import {
   StringLiteralExtractor,
@@ -169,7 +169,12 @@ export class PortugueseTokenizer extends BaseTokenizer {
 
   /** A pronoun fused with its marker (`nele`, `em` + `ele`) reads as the two: see splitFusedForms. */
   override tokenize(input: string): TokenStream {
-    return splitFusedForms(super.tokenize(input), this.fused, word => super.tokenize(word).tokens);
+    const word = (w: string) => super.tokenize(w).tokens;
+    return splitObjectClitics(
+      splitFusedForms(super.tokenize(input), this.fused, word),
+      portugueseProfile,
+      word
+    );
   }
 
   classifyToken(token: string): TokenKind {

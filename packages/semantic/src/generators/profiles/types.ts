@@ -60,6 +60,14 @@ export interface VerbConfig {
  */
 export type ObliqueForm = string | { readonly direction?: string; readonly location?: string };
 
+/**
+ * How a clitic attaches to the verb a render writes: `infinitive` (es: the
+ * infinitive + clitic), `infinitive-drop-e` (it: `mettere` → `metterlo`),
+ * `hyphen` (pt: `mostrar-me`; before `lo` the `-r` drops and the vowel takes
+ * an accent, `colocá-lo`), `suffix` (ar: the imperative + suffix).
+ */
+export type CliticAttach = 'infinitive' | 'infinitive-drop-e' | 'hyphen' | 'suffix';
+
 export interface PossessiveConfig {
   /** Possessive marker (e.g., "'s" in English, "の" in Japanese) */
   readonly marker: string;
@@ -139,6 +147,19 @@ export interface LanguageProfile {
    * NATIVE_REVIEW_NEEDED.md.
    */
   readonly obliqueReferences?: Readonly<Record<string, Readonly<Record<string, ObliqueForm>>>>;
+  /**
+   * A reference as a verb's object, attached to the verb as the language
+   * writes it (M2 N3, wave 3): es `mostrarme`, `ponerlo`; it `metterlo`; pt
+   * `mostrar-me`, `colocá-lo`; ar `أظهرني`, `ضعه`. `forms`: reference → clitic.
+   * The reader splits the verb and the reference back
+   * (tokenizers/fused-forms-split.ts). Listed in NATIVE_REVIEW_NEEDED.md.
+   */
+  readonly objectClitics?: {
+    readonly forms: Readonly<Record<string, string>>;
+    readonly attach: CliticAttach;
+    /** Verbs the renderer writes in a form that takes no clitic (ar `قياس`, a verbal noun). */
+    readonly notVerbs?: readonly string[];
+  };
   /** Possessive expression configuration */
   readonly possessive?: PossessiveConfig;
   /** Event handler pattern configuration (for simple SVO languages) */
