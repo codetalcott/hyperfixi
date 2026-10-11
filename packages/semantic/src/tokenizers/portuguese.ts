@@ -63,8 +63,8 @@ const PREPOSITIONS = new Set([
  */
 const PORTUGUESE_EXTRAS: KeywordEntry[] = [
   // `me` after a marker, in the case the marker takes (pt `a mim`, `em mim`): what an
-  // author writes. Read as the nominative is; renders still write the
-  // nominative (M2 N3).
+  // author writes, and what a render writes where the reader brings it back
+  // (profile `obliqueReferences`). Read as the nominative is (M2 N3).
   { native: 'mim', normalized: 'me' },
   // Values/Literals
   { native: 'verdadeiro', normalized: 'true' },

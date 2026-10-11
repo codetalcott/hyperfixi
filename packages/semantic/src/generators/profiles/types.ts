@@ -55,9 +55,10 @@ export interface VerbConfig {
 /**
  * A reference's form next to one marker ({@link LanguageProfile.obliqueReferences}):
  * one phrase, or one for a direction (put into, append to, send to) and one
- * for a location (toggle's `on`, trigger's `on`, a query's `in`).
+ * for a location (toggle's `on`, trigger's `on`, a query's `in`). A sense with
+ * no form keeps the nominative (ru `в это` is already the accusative).
  */
-export type ObliqueForm = string | { readonly direction: string; readonly location: string };
+export type ObliqueForm = string | { readonly direction?: string; readonly location?: string };
 
 export interface PossessiveConfig {
   /** Possessive marker (e.g., "'s" in English, "の" in Japanese) */
@@ -133,7 +134,8 @@ export interface LanguageProfile {
    * direction and a location in different cases has both (de `in mich`, put
    * into; `in mir`, a query's `in`). A marker with no entry keeps the
    * nominative. The reader takes every form (tokenizer extras; a vocalized
-   * marker is a role-marker alternative). Each form is listed in
+   * marker is a role-marker alternative). The marker `''` is none: the
+   * reference as a verb's object (de `zeige mich`). Each form is listed in
    * NATIVE_REVIEW_NEEDED.md.
    */
   readonly obliqueReferences?: Readonly<Record<string, Readonly<Record<string, ObliqueForm>>>>;

@@ -47,10 +47,12 @@ const SINGLE_POSTPOSITIONS = new Set(['को', 'में', 'पर', 'से',
  */
 const HINDI_EXTRAS: KeywordEntry[] = [
   // `me` after a marker, in the case the marker takes (hi `मुझ में`, `मुझे`): what an
-  // author writes. Read as the nominative is; renders still write the
-  // nominative (M2 N3).
+  // author writes, and what a render writes where the reader brings it back
+  // (profile `obliqueReferences`). Read as the nominative is (M2 N3).
   { native: 'मुझ', normalized: 'me' },
   { native: 'मुझे', normalized: 'me' },
+  // `it` after a marker, in the case the marker takes (hi `इस में`).
+  { native: 'इस', normalized: 'it' },
   // Fused mousedown/mouseup (dict emits these WITHOUT `_` since the tokenizer
   // splits on it — see hi.ts events note). repeat-until-event / handler events.
   { native: 'माउसनीचे', normalized: 'mousedown' },

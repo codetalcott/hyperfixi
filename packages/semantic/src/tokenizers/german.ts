@@ -38,10 +38,12 @@ import { createGermanExtractors } from './extractors/german-keyword';
  */
 const GERMAN_EXTRAS: KeywordEntry[] = [
   // `me` after a marker, in the case the marker takes (de `zu mir`, `in mich`): what an
-  // author writes. Read as the nominative is; renders still write the
-  // nominative (M2 N3).
+  // author writes, and what a render writes where the reader brings it back
+  // (profile `obliqueReferences`). Read as the nominative is (M2 N3).
   { native: 'mir', normalized: 'me' },
   { native: 'mich', normalized: 'me' },
+  // `it` after a marker, in the case the marker takes (de `zu ihm`, `in ihm`).
+  { native: 'ihm', normalized: 'it' },
   // Values/Literals
   { native: 'wahr', normalized: 'true' },
   { native: 'falsch', normalized: 'false' },

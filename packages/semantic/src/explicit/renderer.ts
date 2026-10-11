@@ -136,6 +136,11 @@ import { renderExplicit as renderExplicitBase } from '@lokascript/framework';
  */
 const NESTED_ROLE_BONUS = 5;
 
+/** A reference value's name (`me`), or undefined for any other value. */
+function referenceOf(value: SemanticValue | undefined): string | undefined {
+  return value?.type === 'reference' ? value.value : undefined;
+}
+
 /** Whether the node carries a real (authored, not defaulted) role besides `role`. */
 function hasOtherRealRole(node: SemanticNode, role: SemanticRole): boolean {
   for (const [name, value] of node.roles) {
@@ -1176,8 +1181,8 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     for (let i = 0; i < tokens.length; i++) {
       const oblique = this.obliqueAt(tokens, i, node, language);
       if (oblique !== undefined) {
-        parts.push(oblique);
-        i++;
+        parts.push(oblique.text);
+        i += oblique.tokens - 1;
         continue;
       }
       const token = tokens[i]!;
@@ -1264,31 +1269,47 @@ export class SemanticRendererImpl implements ISemanticRenderer {
   ): string | undefined {
     if (this.plainWords.has('case') || reference === undefined) return undefined;
     const form = tryGetProfile(language)?.obliqueReferences?.[reference]?.[marker];
-    if (!form) return undefined;
+    const phrase = typeof form === 'string' ? form : form?.[sense];
+    if (phrase === undefined) return undefined;
     this.nativeWritten.add('case');
-    return typeof form === 'string' ? form : form[sense];
+    return phrase;
   }
 
   /**
-   * Tokens `i` and `i + 1`, a marker and the role it marks (a destination, a
-   * source, or a patient that has one: `set $x to me`, es `a mí`),
-   * written as one oblique phrase (obliquePhrase): the marker is the literal's
-   * last word (`antes de`), or its first where markers follow their noun (hi).
-   * undefined where they are not such a pair.
+   * Token `i` written as a reference in its case (M2 N3), with the token after
+   * it where they are a marker and the role it marks (a destination, a source,
+   * or a patient that has one: `set $x to me`, es `a mí`): one oblique phrase
+   * (obliquePhrase), the marker the literal's last word (`antes de`), or its
+   * first where markers follow their noun (hi). A patient with no marker before
+   * it is a verb's object (de `zeige mich`). undefined where it is neither.
    */
   private obliqueAt(
     tokens: readonly PatternToken[],
     i: number,
     node: SemanticNode,
     language: string
-  ): string | undefined {
+  ): { text: string; tokens: number } | undefined {
     const first = tokens[i];
     const second = tokens[i + 1];
+    const profile = tryGetProfile(language);
+    if (
+      first?.type === 'role' &&
+      first.role === 'patient' &&
+      !this.isMarker(tokens[i - 1], language)
+    ) {
+      const object = this.obliquePhrase(
+        language,
+        '',
+        referenceOf(node.roles.get('patient')),
+        'direction'
+      );
+      if (object !== undefined) return { text: object, tokens: 1 };
+    }
     const roleToken = first?.type === 'role' ? first : second;
     if (roleToken?.type !== 'role') return undefined;
     const role = roleToken.role;
     if (role !== 'destination' && role !== 'source' && role !== 'patient') return undefined;
-    const after = tryGetProfile(language)?.roleMarkers[role]?.position === 'after';
+    const after = profile?.roleMarkers[role]?.position === 'after';
     const [literal, roleAt] = after ? [second, first] : [first, second];
     if (roleAt !== roleToken || literal?.type !== 'literal') return undefined;
     // A go/scroll position renders its own way (`top of me`).
@@ -1297,11 +1318,20 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     const marker = after ? words[0]! : words[words.length - 1]!;
     const sense =
       role === 'destination' && LOCATION_DESTINATIONS.has(node.action) ? 'location' : 'direction';
-    const value = node.roles.get(role);
-    const reference = value?.type === 'reference' ? value.value : undefined;
-    const phrase = this.obliquePhrase(language, marker, reference, sense);
+    const phrase = this.obliquePhrase(language, marker, referenceOf(node.roles.get(role)), sense);
     if (phrase === undefined) return undefined;
-    return (after ? [phrase, ...words.slice(1)] : [...words.slice(0, -1), phrase]).join(' ');
+    const text = (after ? [phrase, ...words.slice(1)] : [...words.slice(0, -1), phrase]).join(' ');
+    return { text, tokens: 2 };
+  }
+
+  /** Is `token` a marker literal: a role marker, or a marker the oblique forms name? */
+  private isMarker(token: PatternToken | undefined, language: string): boolean {
+    if (token?.type !== 'literal') return false;
+    const word = token.value.split(' ').pop()!;
+    const profile = tryGetProfile(language);
+    for (const marker of Object.values(profile?.roleMarkers ?? {}))
+      if (marker && (marker.primary === word || marker.alternatives?.includes(word))) return true;
+    return Object.values(profile?.obliqueReferences ?? {}).some(forms => word in forms);
   }
 
   /**
@@ -1510,9 +1540,9 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         for (let i = 0; i < token.tokens.length; i++) {
           const oblique = this.obliqueAt(token.tokens, i, node, language);
           if (oblique !== undefined) {
-            groupParts.push(oblique);
+            groupParts.push(oblique.text);
             hasRoleValue = true;
-            i++;
+            i += oblique.tokens - 1;
             continue;
           }
           const subToken = token.tokens[i];
@@ -1599,8 +1629,7 @@ export class SemanticRendererImpl implements ISemanticRenderer {
           // `in me` in the case the `in` takes, a location (de `in mir`, N3).
           const scope =
             (tryGetProfile(language)?.roleMarkers.destination?.position !== 'after' &&
-              value.scope.type === 'reference' &&
-              this.obliquePhrase(language, words.queryIn, value.scope.value, 'location')) ||
+              this.obliquePhrase(language, words.queryIn, referenceOf(value.scope), 'location')) ||
             `${words.queryIn} ${this.valueToNaturalString(value.scope, language)}`;
           return `${value.value} ${scope}`;
         }

@@ -83,11 +83,16 @@ const PREPOSITIONS = new Set([
  */
 const RUSSIAN_EXTRAS: KeywordEntry[] = [
   // `me` after a marker, in the case the marker takes (ru `ко мне`, `из меня`): what an
-  // author writes. Read as the nominative is; renders still write the
-  // nominative (M2 N3).
+  // author writes, and what a render writes where the reader brings it back
+  // (profile `obliqueReferences`). Read as the nominative is (M2 N3).
   { native: 'меня', normalized: 'me' },
   { native: 'мне', normalized: 'me' },
   { native: 'мной', normalized: 'me' },
+  // `it` after a marker, in the case the marker takes (ru `к этому`, `в этом`).
+  { native: 'этому', normalized: 'it' },
+  { native: 'этого', normalized: 'it' },
+  { native: 'этом', normalized: 'it' },
+  { native: 'этим', normalized: 'it' },
   // Fused event names (the i18n dict emits these WITHOUT `_`, since the tokenizer
   // splits on `_` — see ru.ts events note). Recognize them so the event types as
   // a literal, not a bare expression (window-resize, repeat-until-event).

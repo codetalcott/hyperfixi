@@ -45,6 +45,11 @@ export const hindiProfile: LanguageProfile = {
       पर: 'मुझ पर',
       से: 'मुझ से',
     },
+    it: {
+      में: 'इस में',
+      पर: 'इस पर',
+      से: 'इस से',
+    },
   },
   possessive: {
     marker: 'का',

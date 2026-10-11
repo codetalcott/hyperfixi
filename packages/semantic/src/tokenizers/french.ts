@@ -35,6 +35,9 @@ import { createFrenchExtractors } from './extractors/french-keyword';
  * - Accent-free variants for accessibility
  */
 const FRENCH_EXTRAS: KeywordEntry[] = [
+  // `it` after a marker, in the stressed form a preposition takes (fr `dans lui`,
+  // `à lui`). Read as the nominative is (M2 N3).
+  { native: 'lui', normalized: 'it' },
   // Values/Literals
   { native: 'vrai', normalized: 'true' },
   { native: 'faux', normalized: 'false' },

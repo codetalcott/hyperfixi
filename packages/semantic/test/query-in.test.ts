@@ -24,7 +24,9 @@ const words = (text: string): string[] => text.split(/\s+/);
 function writesQueryIn(rendered: string, language: string): boolean {
   const word = QUERY_IN[language]!;
   const form = tryGetProfile(language)?.obliqueReferences?.me?.[word];
-  const phrases = form === undefined ? [] : typeof form === 'string' ? [form] : [form.location];
+  const phrases = (typeof form === 'string' ? [form] : [form?.location]).filter(
+    (p): p is string => p !== undefined
+  );
   const spellings = [word, ...phrases.map(p => p.split(' ')[0]!)];
   return words(rendered).some(w => spellings.includes(w));
 }

@@ -35,6 +35,20 @@ export const frenchProfile: LanguageProfile = {
     window: 'fenêtre',
     detail: 'détail',
   },
+  // `it` next to a marker, in the stressed form a preposition takes (M2 N3;
+  // listed in NATIVE_REVIEW_NEEDED.md). `moi` already is one.
+  obliqueReferences: {
+    it: {
+      à: 'à lui',
+      dans: 'dans lui',
+      sur: 'sur lui',
+      de: 'de lui',
+      depuis: 'depuis lui',
+      avant: 'avant lui',
+      après: 'après lui',
+      en: 'en lui',
+    },
+  },
   possessive: {
     marker: 'de', // Uses "de" for general possession
     markerPosition: 'before-property',
