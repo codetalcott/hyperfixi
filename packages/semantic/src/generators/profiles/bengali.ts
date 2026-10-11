@@ -33,6 +33,14 @@ export const bengaliProfile: LanguageProfile = {
     document: 'ডকুমেন্ট',
     window: 'উইন্ডো',
   },
+  // A pronoun and its marker as Bengali writes them (M2 N3; listed in
+  // NATIVE_REVIEW_NEEDED.md): fused (`আমাকে`), or the genitive before `থেকে`.
+  // The reader splits a fused word back (tokenizers/fused-forms-split.ts), to
+  // `এ` where `তে` also writes it (`তে` is also the event marker).
+  obliqueReferences: {
+    me: { কে: 'আমাকে', তে: 'আমাতে', থেকে: 'আমার থেকে', এ: 'আমাতে' },
+    it: { কে: 'এটিকে', তে: 'এটিতে', এ: 'এটিতে' },
+  },
   possessive: {
     marker: 'র',
     markerPosition: 'between',

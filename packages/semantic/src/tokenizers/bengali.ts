@@ -14,6 +14,7 @@ import { splitIfNot } from './if-not-split';
 import { BaseTokenizer, type KeywordEntry } from './base';
 import { bengaliMorphologicalNormalizer } from './morphology/bengali-normalizer';
 import { bengaliProfile } from '../generators/profiles/bengali';
+import { fusedForms, splitFusedForms } from './fused-forms-split';
 import {
   StringLiteralExtractor,
   NumberExtractor,
@@ -122,9 +123,15 @@ export class BengaliTokenizer extends BaseTokenizer {
     this.registerExtractor(new PunctuationExtractor()); // Punctuation
   }
 
-  /** `if not` is written `যদি না`, which is also its `unless`: see splitIfNot. */
+  private readonly fused = fusedForms(bengaliProfile);
+
+  /**
+   * `if not` is written `যদি না`, which is also its `unless`: see splitIfNot. A
+   * pronoun fused with its marker (`আমাকে`, `আমি` + `কে`): see splitFusedForms.
+   */
   override tokenize(input: string): TokenStream {
-    return splitIfNot(super.tokenize(input), 'যদি না', word => super.tokenize(word).tokens);
+    const word = (w: string) => super.tokenize(w).tokens;
+    return splitFusedForms(splitIfNot(super.tokenize(input), 'যদি না', word), this.fused, word);
   }
 
   // tokenize() method removed - now uses extractor-based tokenization from BaseTokenizer

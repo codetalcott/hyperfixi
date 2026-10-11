@@ -9,10 +9,11 @@
  * - CSS selectors are embedded ASCII
  */
 
-import type { TokenKind } from '../types';
+import type { TokenKind, TokenStream } from '../types';
 import { BaseTokenizer, type KeywordEntry } from './base';
 import { HindiMorphologicalNormalizer } from './morphology/hindi-normalizer';
 import { hindiProfile } from '../generators/profiles/hindi';
+import { fusedForms, splitFusedForms } from './fused-forms-split';
 import {
   StringLiteralExtractor,
   NumberExtractor,
@@ -139,6 +140,13 @@ export class HindiTokenizer extends BaseTokenizer {
     this.registerExtractor(new AsciiIdentifierExtractor()); // ASCII identifiers (for mixed content)
     this.registerExtractor(new OperatorExtractor()); // Operators
     this.registerExtractor(new PunctuationExtractor()); // Punctuation
+  }
+
+  private readonly fused = fusedForms(hindiProfile);
+
+  /** A pronoun fused with its marker (`मुझे`, `मैं` + `को`) reads as the two: see splitFusedForms. */
+  override tokenize(input: string): TokenStream {
+    return splitFusedForms(super.tokenize(input), this.fused, word => super.tokenize(word).tokens);
   }
 
   // tokenize() method removed - now uses extractor-based tokenization from BaseTokenizer

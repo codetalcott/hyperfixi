@@ -42,6 +42,8 @@ export const portugueseProfile: LanguageProfile = {
       para: 'para mim',
       de: 'de mim',
     },
+    // `em`, `de` contract with `ele` (M2 N3, wave 3); `a ele`, `para ele` stay.
+    it: { em: 'nele', de: 'dele' },
   },
   possessive: {
     marker: 'de', // Uses "de" for general possession

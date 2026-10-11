@@ -41,11 +41,13 @@ export const hindiProfile: LanguageProfile = {
     // The oblique `मुझ` before a postposition, spaced as the renderer spaces
     // markers (N5 joins them: मुझमें). `को` fuses to `मुझे` (later, with N5).
     me: {
+      को: 'मुझे', // fused (M2 N3, wave 3)
       में: 'मुझ में',
       पर: 'मुझ पर',
       से: 'मुझ से',
     },
     it: {
+      को: 'इसे', // fused
       में: 'इस में',
       पर: 'इस पर',
       से: 'इस से',

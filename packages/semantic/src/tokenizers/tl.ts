@@ -10,10 +10,11 @@
  * with extras for literals, positional words, and event names.
  */
 
-import type { TokenKind } from '../types';
+import type { TokenKind, TokenStream } from '../types';
 import type { KeywordEntry } from './base';
 import { BaseTokenizer } from './base';
 import { tagalogProfile } from '../generators/profiles/tl';
+import { fusedForms, splitFusedForms } from './fused-forms-split';
 import { tagalogMorphologicalNormalizer } from './morphology/tagalog-normalizer';
 import {
   StringLiteralExtractor,
@@ -85,6 +86,13 @@ export class TagalogTokenizer extends BaseTokenizer {
     this.registerExtractors(createTagalogExtractors()); // Tagalog keywords (context-aware)
     this.registerExtractor(new OperatorExtractor()); // Operators
     this.registerExtractor(new PunctuationExtractor()); // Punctuation
+  }
+
+  private readonly fused = fusedForms(tagalogProfile);
+
+  /** A pronoun fused with its marker (`dito`, `sa` + `ito`) reads as the two: see splitFusedForms. */
+  override tokenize(input: string): TokenStream {
+    return splitFusedForms(super.tokenize(input), this.fused, word => super.tokenize(word).tokens);
   }
 
   // tokenize() method removed - now uses extractor-based tokenization from BaseTokenizer

@@ -9,9 +9,10 @@
  * - Accent marks
  */
 
-import type { TokenKind } from '../types';
+import type { TokenKind, TokenStream } from '../types';
 import { BaseTokenizer, type KeywordEntry } from './base';
 import { portugueseProfile } from '../generators/profiles/portuguese';
+import { fusedForms, splitFusedForms } from './fused-forms-split';
 import { PortugueseMorphologicalNormalizer } from './morphology/portuguese-normalizer';
 import {
   StringLiteralExtractor,
@@ -162,6 +163,13 @@ export class PortugueseTokenizer extends BaseTokenizer {
     this.registerExtractors(createPortugueseExtractors()); // Portuguese keywords (context-aware)
     this.registerExtractor(new OperatorExtractor()); // Operators
     this.registerExtractor(new PunctuationExtractor()); // Punctuation
+  }
+
+  private readonly fused = fusedForms(portugueseProfile);
+
+  /** A pronoun fused with its marker (`nele`, `em` + `ele`) reads as the two: see splitFusedForms. */
+  override tokenize(input: string): TokenStream {
+    return splitFusedForms(super.tokenize(input), this.fused, word => super.tokenize(word).tokens);
   }
 
   classifyToken(token: string): TokenKind {
