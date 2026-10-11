@@ -33,6 +33,29 @@ export const arabicProfile: LanguageProfile = {
     window: 'نافذة',
     detail: 'تفاصيل',
   },
+  // A pronoun and its marker, fused into one word as Arabic writes them (M2 N3;
+  // listed in NATIVE_REVIEW_NEEDED.md). The reader splits each back
+  // (tokenizers/fused-forms-split.ts).
+  obliqueReferences: {
+    me: {
+      في: 'فيّ',
+      إلى: 'إليّ',
+      من: 'منّي',
+      على: 'عليّ',
+      ب: 'بي',
+      قبل: 'قبلي',
+      بعد: 'بعدي',
+    },
+    it: {
+      في: 'فيه',
+      إلى: 'إليه',
+      من: 'منه',
+      على: 'عليه',
+      ب: 'به',
+      قبل: 'قبله',
+      بعد: 'بعده',
+    },
+  },
   possessive: {
     marker: '', // No explicit marker - uses possessive pronouns
     markerPosition: 'after-object',

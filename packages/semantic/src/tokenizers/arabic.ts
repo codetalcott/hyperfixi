@@ -20,6 +20,7 @@ import {
 } from './base';
 import { ArabicMorphologicalNormalizer } from './morphology/arabic-normalizer';
 import { arabicProfile } from '../generators/profiles/arabic';
+import { fusedForms, fusedKeywords, splitFusedForms } from './fused-forms-split';
 import {
   StringLiteralExtractor,
   NumberExtractor,
@@ -218,7 +219,12 @@ export class ArabicTokenizer extends BaseTokenizer {
   constructor() {
     super();
     // Initialize keywords from profile + extras (single source of truth)
-    this.initializeKeywordsFromProfile(arabicProfile, ARABIC_EXTRAS);
+    // A pronoun fused with its marker is one keyword, which the proclitic
+    // extractor leaves whole (`فيه`, not `ف` + `يه`), and the split reads apart.
+    this.initializeKeywordsFromProfile(arabicProfile, [
+      ...ARABIC_EXTRAS,
+      ...fusedKeywords(arabicProfile),
+    ]);
     // Set morphological normalizer for prefix/suffix stripping
     this.normalizer = new ArabicMorphologicalNormalizer();
 
@@ -234,6 +240,13 @@ export class ArabicTokenizer extends BaseTokenizer {
     this.registerExtractor(new ArabicKeywordExtractor()); // Arabic keywords (context-aware)
     this.registerExtractor(new OperatorExtractor()); // Operators
     this.registerExtractor(new PunctuationExtractor()); // Punctuation
+  }
+
+  private readonly fused = fusedForms(arabicProfile);
+
+  /** A pronoun fused with its marker (`إليّ`, `إلى` + `أنا`) reads as the two: see splitFusedForms. */
+  override tokenize(input: string): TokenStream {
+    return splitFusedForms(super.tokenize(input), this.fused, word => super.tokenize(word).tokens);
   }
 
   // Override tokenizeWithExtractors to handle proclitic metadata

@@ -12,6 +12,7 @@
 import type { TokenKind, TokenStream } from '../types';
 import { BaseTokenizer, type KeywordEntry } from './base';
 import { hebrewProfile } from '../generators/profiles/he';
+import { fusedForms, fusedKeywords, splitFusedForms } from './fused-forms-split';
 import {
   StringLiteralExtractor,
   NumberExtractor,
@@ -140,7 +141,12 @@ export class HebrewTokenizer extends BaseTokenizer {
   constructor() {
     super();
     // Initialize keywords from profile + extras (single source of truth)
-    this.initializeKeywordsFromProfile(hebrewProfile, HEBREW_EXTRAS);
+    // A pronoun fused with its marker is one keyword, which the proclitic
+    // extractor leaves whole (`ממני`, not `מ` + `מ` + `ני`), and the split reads apart.
+    this.initializeKeywordsFromProfile(hebrewProfile, [
+      ...HEBREW_EXTRAS,
+      ...fusedKeywords(hebrewProfile),
+    ]);
     // Note: Hebrew doesn't have a morphological normalizer yet
 
     // Register extractors for extractor-based tokenization
@@ -155,9 +161,15 @@ export class HebrewTokenizer extends BaseTokenizer {
     this.registerExtractor(new PunctuationExtractor()); // Punctuation
   }
 
-  /** `if not` is written `אם לא`, which is also an `else`: see splitIfNot. */
+  private readonly fused = fusedForms(hebrewProfile);
+
+  /**
+   * `if not` is written `אם לא`, which is also an `else`: see splitIfNot. A
+   * pronoun fused with its marker (`אליי`, `אל` + `אני`): see splitFusedForms.
+   */
   override tokenize(input: string): TokenStream {
-    return splitIfNot(super.tokenize(input), 'אם לא', word => super.tokenize(word).tokens);
+    const word = (w: string) => super.tokenize(w).tokens;
+    return splitFusedForms(splitIfNot(super.tokenize(input), 'אם לא', word), this.fused, word);
   }
 
   // Tokenization is otherwise BaseTokenizer's extractor-based one.
