@@ -297,6 +297,7 @@ function locativeSurfaces(profile: LanguageProfile | undefined): ReadonlySet<str
       for (const [marker, form] of Object.entries(forms)) {
         if (!base.has(marker)) continue;
         for (const phrase of typeof form === 'string' ? [form] : [form.direction, form.location]) {
+          if (!phrase) continue;
           const words = phrase.split(' ');
           if (words.length > 1) all.add(words[0]!.toLowerCase());
         }

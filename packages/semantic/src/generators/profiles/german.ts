@@ -42,6 +42,7 @@ export const germanProfile: LanguageProfile = {
     // Dative after zu/von/nach; in/auf/an/vor take the accusative for
     // a direction (put into), the dative for a location (toggle on).
     me: {
+      '': 'mich', // a verb's object
       zu: 'zu mir',
       von: 'von mir',
       nach: 'nach mir',
@@ -49,6 +50,17 @@ export const germanProfile: LanguageProfile = {
       auf: { direction: 'auf mich', location: 'auf mir' },
       an: { direction: 'an mich', location: 'an mir' },
       vor: { direction: 'vor mich', location: 'vor mir' },
+    },
+    // Dative after zu/von/nach, and for a location; a direction keeps `es`
+    // (the accusative; natively a da-compound, `hinein`, `darauf`: N5).
+    it: {
+      zu: 'zu ihm',
+      von: 'von ihm',
+      nach: 'nach ihm',
+      in: { location: 'in ihm' },
+      auf: { location: 'auf ihm' },
+      an: { location: 'an ihm' },
+      vor: { location: 'vor ihm' },
     },
   },
   possessive: {

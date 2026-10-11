@@ -39,6 +39,7 @@ export const ukrainianProfile: LanguageProfile = {
   // NATIVE_REVIEW_NEEDED.md).
   obliqueReferences: {
     me: {
+      '': 'мене', // a verb's object
       до: 'до мене',
       в: { direction: 'в мене', location: 'в мені' },
       у: { direction: 'у мене', location: 'у мені' },
@@ -46,6 +47,16 @@ export const ukrainianProfile: LanguageProfile = {
       з: 'з мене',
       після: 'після мене',
       перед: 'переді мною',
+    },
+    // `це` is already the accusative (a direction, `в це`).
+    it: {
+      до: 'до цього',
+      в: { location: 'в цьому' },
+      у: { location: 'у цьому' },
+      на: { location: 'на цьому' },
+      з: 'з цього',
+      після: 'після цього',
+      перед: 'перед цим',
     },
   },
   possessive: {

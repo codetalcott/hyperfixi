@@ -40,12 +40,22 @@ export const russianProfile: LanguageProfile = {
   obliqueReferences: {
     // `к`, `в` and `перед` take a vowel before `мне`/`мной` (`ко`, `во`, `передо`).
     me: {
+      '': 'меня', // a verb's object
       к: 'ко мне',
       в: { direction: 'в меня', location: 'во мне' },
       на: { direction: 'на меня', location: 'на мне' },
       из: 'из меня',
       после: 'после меня',
       перед: 'передо мной',
+    },
+    // `это` is already the accusative (a direction, `в это`).
+    it: {
+      к: 'к этому',
+      в: { location: 'в этом' },
+      на: { location: 'на этом' },
+      из: 'из этого',
+      после: 'после этого',
+      перед: 'перед этим',
     },
   },
   possessive: {

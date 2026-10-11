@@ -79,10 +79,13 @@ const PREPOSITIONS = new Set([
  */
 const POLISH_EXTRAS: KeywordEntry[] = [
   // `me` after a marker, in the case the marker takes (pl `do mnie`, `ze mną`): what an
-  // author writes. Read as the nominative is; renders still write the
-  // nominative (M2 N3).
+  // author writes, and what a render writes where the reader brings it back
+  // (profile `obliqueReferences`). Read as the nominative is (M2 N3).
   { native: 'mnie', normalized: 'me' },
   { native: 'mną', normalized: 'me' },
+  // `it` after a marker, in the case the marker takes (pl `do tego`, `w tym`).
+  { native: 'tego', normalized: 'it' },
+  { native: 'tym', normalized: 'it' },
   // Values/Literals
   { native: 'prawda', normalized: 'true' },
   { native: 'fałsz', normalized: 'false' },

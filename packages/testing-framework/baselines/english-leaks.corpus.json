@@ -1,8 +1,8 @@
 {
   "description": "English-leak gate, corpus half (src/multilingual/english-leaks.ts): per corpus row, the findings of each language's render (render(parse(en), L)): an English grammar word, `event:<name>` (an English event the lexicon has a word for) or `case:me` / `case:it` (a nominative pronoun beside a marker; `-object`: as an unmarked object). `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts after a fresh populate.",
   "renders": 3519,
-  "leaky": 454,
-  "findings": 628,
+  "leaky": 410,
+  "findings": 578,
   "kinds": {
     "word": {
       "renders": 191,
@@ -13,8 +13,8 @@
       "findings": 0
     },
     "case": {
-      "renders": 291,
-      "findings": 326
+      "renders": 243,
+      "findings": 276
     }
   },
   "entries": {
@@ -31,7 +31,7 @@
     "behavior-removable": {
       "case:me": "he",
       "case:me case:me": "bn hi tr",
-      "case:me-object": "ar de es it pl pt ru uk",
+      "case:me-object": "ar es it pt",
       "trigger trigger": "qu"
     },
     "behavior-resizable": {
@@ -44,7 +44,7 @@
     },
     "blur-element": {
       "case:me": "bn he hi tr",
-      "case:me-object": "ar de es it pl pt ru uk"
+      "case:me-object": "ar es it pt"
     },
     "caret-var-on-target": {
       "case:me on": "ar bn he tr",
@@ -74,14 +74,14 @@
     },
     "fade-out-remove": {
       "case:me": "bn he hi tr",
-      "case:me-object": "ar de es it pl pt ru uk"
+      "case:me-object": "ar es it pt"
     },
     "fetch-basic": {
       "case:it": "hi tr",
       "case:it-object": "ar es fr it pt"
     },
     "fetch-do-not-throw": {
-      "case:it": "ar de fr tl tr"
+      "case:it": "ar de tl tr"
     },
     "fetch-loading-state": {
       "case:it": "hi",
@@ -108,7 +108,7 @@
     },
     "hide-with-transition": {
       "case:me": "bn he hi tr",
-      "case:me-object": "ar de es it pl pt ru uk"
+      "case:me-object": "ar es it pt"
     },
     "if-empty": {
       "case:me": "ar bn he tr"
@@ -122,37 +122,37 @@
     },
     "keydown-key-is-syntax": {
       "case:me is": "bn he hi tr",
-      "case:me-object is": "ar de es it pl pt ru uk",
-      "is": "fr id ja ko ms qu sw th tl vi zh"
+      "case:me-object is": "ar es it pt",
+      "is": "de fr id ja ko ms pl qu ru sw th tl uk vi zh"
     },
     "live-derived-value": {
       "case:me": "ar bn he tr"
     },
     "log-element": {
       "case:me": "bn he hi tr",
-      "case:me-object": "ar de es it pl pt ru uk"
+      "case:me-object": "ar es it pt"
     },
     "make-element": {
       "case:it": "hi tr",
       "case:it-object": "ar es fr it pt"
     },
     "make-toast-element": {
-      "case:it": "de pl tl",
-      "case:it case:it": "hi tr",
-      "case:it case:it-object": "ar fr pt",
-      "case:it-object": "es it"
+      "case:it": "de tl",
+      "case:it case:it": "tr",
+      "case:it case:it-object": "ar pt",
+      "case:it-object": "es fr it"
     },
     "modal-close-backdrop": {
       "matches": "bn th"
     },
     "morph-fetch-result": {
-      "case:it": "ar de fr hi pl pt tl tr"
+      "case:it": "ar de pt tl tr"
     },
     "morph-form-update": {
-      "case:it": "ar de fr hi pl pt tl tr"
+      "case:it": "ar de pt tl tr"
     },
     "morph-with-template": {
-      "case:it": "ar de fr hi pl pt tl tr"
+      "case:it": "ar de pt tl tr"
     },
     "on-custom-event-receive": {
       "case:me": "ar bn he tr"
@@ -176,7 +176,7 @@
     },
     "remove-element": {
       "case:me": "bn he hi tr",
-      "case:me-object": "ar de es it pl pt ru uk"
+      "case:me-object": "ar es it pt"
     },
     "render-template-with-data": {
       "case:it": "hi tr",
@@ -206,14 +206,14 @@
     },
     "transition-opacity": {
       "case:me": "bn he hi tr",
-      "case:me-object": "ar de es it pl pt ru uk"
+      "case:me-object": "ar es it pt"
     },
     "trigger-event": {
       "trigger": "qu"
     },
     "wait-then": {
       "case:me": "bn he hi tr",
-      "case:me-object": "ar de es it pl pt ru uk"
+      "case:me-object": "ar es it pt"
     },
     "when-value-changes": {
       "case:it": "hi",

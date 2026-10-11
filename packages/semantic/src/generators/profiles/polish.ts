@@ -42,12 +42,22 @@ export const polishProfile: LanguageProfile = {
   obliqueReferences: {
     // `w`, `z` and `przed` take a vowel before `mnie`/`mną` (`we`, `ze`, `przede`).
     me: {
+      '': 'mnie', // a verb's object
       do: 'do mnie',
       w: 'we mnie',
       na: 'na mnie',
       z: 'ze mnie',
       po: 'po mnie',
       przed: 'przede mną',
+    },
+    // `to` is already the accusative (a direction, `w to`).
+    it: {
+      do: 'do tego',
+      z: 'z tego',
+      w: { location: 'w tym' },
+      na: { location: 'na tym' },
+      po: 'po tym',
+      przed: 'przed tym',
     },
   },
   possessive: {
