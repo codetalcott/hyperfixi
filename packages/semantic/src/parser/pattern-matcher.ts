@@ -767,9 +767,11 @@ export class PatternMatcher {
       PatternMatcher.boundedByMarker(nextPatternToken) || patternToken.valueShape === 'list'
         ? valueTailEnds(tokens.tokens, tokens.position(), this.extentContext())
         : possessiveLinkEnds(tokens.tokens, tokens.position(), this.currentProfile);
+    // A style is one token, read from itself: the `the` before it (`toggle the
+    // *display of #d2`) is noise, as it is before a bare style.
     const run = longestWholeRun(
       tokens.tokens,
-      startIdx,
+      style ? tokens.position() - 1 : startIdx,
       ends,
       this.currentProfile,
       patternToken.valueShape === 'list' ? readsAsValueList : undefined

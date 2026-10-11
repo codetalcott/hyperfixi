@@ -137,6 +137,14 @@ describe('the readers', () => {
     }
   });
 
+  it('a style is read from itself, not from a `the` before it', () => {
+    const code = 'on click toggle the *display of #d2';
+    expect(translate(code, 'en', 'en')).toBe('on click toggle *display of #d2');
+    for (const language of ['bn', 'ja', 'zh']) {
+      expect(translate(code, 'en', language), language).not.toMatch(/\bthe\b/);
+    }
+  });
+
   it('a list is items separated by commas, each one value', () => {
     expect(readsAsValueList("'a', 'b' and 'c'")).toBe(true);
     expect(readsAsValueList('f(1, 2) and [3, 4]')).toBe(true);
