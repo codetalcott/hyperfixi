@@ -64,6 +64,18 @@ describe('a marker written onto its word', () => {
     );
   });
 
+  it('keeps the whole render spaced where the attached one reads otherwise', () => {
+    // Each marker splits back alone, but ko reads `나을 display:flex로` as
+    // something else: the verified render writes it spaced, and it reads back.
+    for (const source of [
+      'on click show me with display: flex',
+      "on click set #t1's value to 'x'",
+    ]) {
+      const rendered = translate(source, 'en', 'ko');
+      expect(translate(rendered, 'ko', 'en'), rendered).toBe(translate(source, 'en', 'en'));
+    }
+  });
+
   it('attaches nothing in a language that writes its markers apart', () => {
     expect(attachMarker(tryGetProfile('tr'), '#out', 'e')).toBeUndefined();
     expect(attachMarker(tryGetProfile('es'), '#out', 'en')).toBeUndefined();
