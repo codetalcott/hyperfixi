@@ -8,10 +8,11 @@
  * - Uses accent marks that need proper handling
  */
 
-import type { TokenKind } from '../types';
+import type { TokenKind, TokenStream } from '../types';
 import { BaseTokenizer, type KeywordEntry } from './base';
 import { SpanishMorphologicalNormalizer } from './morphology/spanish-normalizer';
 import { spanishProfile } from '../generators/profiles/spanish';
+import { splitObjectClitics } from './fused-forms-split';
 import {
   StringLiteralExtractor,
   NumberExtractor,
@@ -111,6 +112,15 @@ export class SpanishTokenizer extends BaseTokenizer {
     this.registerExtractors(createSpanishExtractors()); // Spanish keywords (context-aware)
     this.registerExtractor(new OperatorExtractor()); // Operators
     this.registerExtractor(new PunctuationExtractor()); // Punctuation
+  }
+
+  /** A verb with its object attached (`ponerlo`, `poner` + `ello`): see splitObjectClitics. */
+  override tokenize(input: string): TokenStream {
+    return splitObjectClitics(
+      super.tokenize(input),
+      spanishProfile,
+      word => super.tokenize(word).tokens
+    );
   }
 
   // tokenize() method removed - now uses extractor-based tokenization from BaseTokenizer

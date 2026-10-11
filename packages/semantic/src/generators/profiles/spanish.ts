@@ -36,6 +36,9 @@ export const spanishProfile: LanguageProfile = {
     window: 'ventana',
     detail: 'detalle',
   },
+  // The object pronoun attached to the infinitive (M2 N3, wave 3): `mostrarme`,
+  // `ponerlo`. Listed in NATIVE_REVIEW_NEEDED.md.
+  objectClitics: { forms: { me: 'me', it: 'lo' }, attach: 'infinitive' },
   // `me` next to a marker, in the case the marker takes (M2 N3; listed in
   // NATIVE_REVIEW_NEEDED.md).
   obliqueReferences: {

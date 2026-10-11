@@ -32,17 +32,20 @@ const SHAPES = [
   'on click put me into #out',
 ];
 
-/** A `me` fused with its marker, which the substitution leaves alone. */
-const FUSED_ME: Record<string, string[]> = { hi: ['मुझे'] };
+/** A `me` fused with its marker or its verb, which the substitution leaves alone. */
+const FUSED_ME: Record<string, (w: string) => boolean> = {
+  hi: w => w === 'मुझे',
+  pt: w => w.endsWith('-me'),
+};
 
 describe.each(Object.entries(FORMS))('%s reads', (language, forms) => {
   const me = tryGetProfile(language)!.references.me!;
   const isMe = (w: string): boolean => w === me || forms.includes(w);
-  const fused = FUSED_ME[language] ?? [];
+  const fused = FUSED_ME[language] ?? (() => false);
   it.each(SHAPES)('%s', source => {
     const rendered = translate(source, 'en', language);
     expect(
-      rendered.split(/\s+/).some(w => isMe(w) || fused.includes(w)),
+      rendered.split(/\s+/).some(w => isMe(w) || fused(w)),
       rendered
     ).toBe(true);
     for (const form of [me, ...forms]) {
@@ -169,8 +172,8 @@ describe('renders write it in the case its marker takes, and me as an object', (
     ['pl', 'on click put me into #out', 'gdy kliknięcie umieść mnie do #out'],
     ['uk', 'on click hide me with *opacity', 'при клік сховати мене з *opacity'],
     ['de', 'bind me to $name', 'binden mich zu $name'],
-    // es fuses its object pronoun into the verb (`mostrarme`): not yet (N5).
-    ['es', 'on click show me', 'al clic mostrar yo'],
+    // es attaches its object pronoun to the verb (`mostrarme`).
+    ['es', 'on click show me', 'al clic mostrarme'],
   ];
   it.each(RENDERS)('%s: %s', (language, source, expected) => {
     expect(translate(source, 'en', language)).toBe(expected);
@@ -226,6 +229,29 @@ describe('bn, hi, tl and pt write a pronoun fused with its marker', () => {
     ['pt', 'on click take .x from it', 'ao clique pegar .x dele'],
     // `a ele` stays: only `em` and `de` contract.
     ['pt', 'on click add .x to it', 'ao clique adicionar .x a ele'],
+  ];
+  it.each(RENDERS)('%s: %s', (language, source, expected) => {
+    expect(translate(source, 'en', language)).toBe(expected);
+    expect(translate(expected, language, 'en')).toBe(source);
+  });
+});
+
+describe('es, it, pt and ar attach the object pronoun to the verb', () => {
+  const RENDERS: Array<[string, string, string]> = [
+    ['es', 'on click show me', 'al clic mostrarme'],
+    ['es', 'on click hide it', 'al clic ocultarlo'],
+    ['es', 'on click put it into #out', 'al clic ponerlo en #out'],
+    ['es', 'bind me to $x', 'vincularme a $x'],
+    ['it', 'on click show me', 'su clic mostrarmi'],
+    ['it', 'on click put it into #out', 'su clic metterlo in #out'],
+    ['pt', 'on click show me', 'ao clique mostrar-me'],
+    ['pt', 'on click put it into #out', 'ao clique colocá-lo em #out'],
+    ['pt', 'on click remove me', 'ao clique remover-me'],
+    ['ar', 'on click show me', 'على النقر اظهرني'],
+    ['ar', 'on click put it into #out', 'على النقر ضعه في #out'],
+    // A bare command keeps its bare verb; a verbal noun takes no suffix (ar `قياس`).
+    ['es', 'on click show', 'al clic mostrar'],
+    ['ar', 'on click measure me', 'على النقر قياس أنا'],
   ];
   it.each(RENDERS)('%s: %s', (language, source, expected) => {
     expect(translate(source, 'en', language)).toBe(expected);

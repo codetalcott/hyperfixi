@@ -5,7 +5,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { tokenize, tryGetProfile } from '../src/index';
-import { fusedForms, splitFusedForms } from '../src/tokenizers/fused-forms-split';
+import { attachClitic, fusedForms, splitFusedForms } from '../src/tokenizers/fused-forms-split';
 
 const read = (text: string, language: string): string[] =>
   tokenize(text, language).tokens.map(t => `${t.value}:${t.normalized ?? t.kind}`);
@@ -53,5 +53,30 @@ describe('fused forms', () => {
   it('leaves every other word alone', () => {
     expect(read('banal', 'tr')).toEqual(['banal:identifier']);
     expect(read('bana', 'es')).toEqual(['bana:identifier']);
+  });
+});
+
+describe('object clitics', () => {
+  it('attach to the verb form each language writes', () => {
+    expect(attachClitic('infinitive', 'poner', 'lo')).toBe('ponerlo');
+    expect(attachClitic('infinitive', 'enfoque', 'me')).toBeUndefined();
+    expect(attachClitic('infinitive-drop-e', 'mettere', 'lo')).toBe('metterlo');
+    expect(attachClitic('hyphen', 'mostrar', 'me')).toBe('mostrar-me');
+    expect(attachClitic('hyphen', 'colocar', 'lo')).toBe('colocá-lo');
+    expect(attachClitic('hyphen', 'remover', 'lo')).toBe('removê-lo');
+    expect(attachClitic('hyphen', 'abrir', 'lo')).toBe('abri-lo');
+    expect(attachClitic('suffix', 'ضع', 'ه')).toBe('ضعه');
+  });
+
+  it('read back as the verb and the reference', () => {
+    expect(read('ponerlo', 'es')).toEqual(read('poner ello', 'es'));
+    expect(read('metterlo', 'it')).toEqual(read('mettere esso', 'it'));
+    expect(read('colocá-lo', 'pt')).toEqual(read('colocar ele', 'pt'));
+    expect(read('removê-lo', 'pt')).toEqual(read('remover ele', 'pt'));
+    expect(read('ضعه', 'ar')).toEqual(read('ضع هو', 'ar'));
+  });
+
+  it('leave a word whose stem is no verb', () => {
+    expect(read('silo', 'es')).toEqual(['silo:identifier']);
   });
 });

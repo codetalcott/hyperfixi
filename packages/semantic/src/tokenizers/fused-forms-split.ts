@@ -10,7 +10,7 @@
  * `docs-internal/multilingual/FUSED_FORMS.md`.
  */
 import type { LanguageToken, TokenStream } from '../types';
-import type { LanguageProfile } from '../generators/profiles/types';
+import type { CliticAttach, LanguageProfile } from '../generators/profiles/types';
 import type { KeywordEntry } from './base';
 import { TokenStreamImpl } from './token-utils';
 
@@ -74,4 +74,174 @@ export function splitFusedForms(
     out.push({ ...read[1]![0]!, position: { start: cut, end } });
   }
   return new TokenStreamImpl(out, stream.language);
+}
+
+// ---------------------------------------------------------------------------
+// A verb's object clitic (es `mostrarme`, pt `colocá-lo`, ar `ضعه`)
+// ---------------------------------------------------------------------------
+
+/** pt: the vowel an infinitive's `-r` leaves before `-lo` (`colocar` → `colocá-lo`). */
+const PT_ACCENT: Readonly<Record<string, string>> = { a: 'á', e: 'ê', i: 'i' };
+
+/** The verb with the clitic attached, or undefined where the verb is not a form it attaches to. */
+export function attachClitic(
+  attach: CliticAttach,
+  verb: string,
+  clitic: string
+): string | undefined {
+  switch (attach) {
+    case 'infinitive':
+      return /r$/.test(verb) ? verb + clitic : undefined;
+    case 'infinitive-drop-e':
+      return /re$/.test(verb) ? verb.slice(0, -1) + clitic : undefined;
+    case 'hyphen': {
+      if (!/[aei]r$/.test(verb)) return undefined;
+      if (!clitic.startsWith('l')) return `${verb}-${clitic}`;
+      const vowel = verb[verb.length - 2]!;
+      return `${verb.slice(0, -2)}${PT_ACCENT[vowel]}-${clitic}`;
+    }
+    case 'suffix':
+      return verb + clitic;
+  }
+}
+
+/** The verb a word attaches `clitic` to (es `ponerlo` → `poner`), or undefined. */
+function verbOf(attach: CliticAttach, word: string, clitic: string): string | undefined {
+  if (word.length <= clitic.length || !word.endsWith(clitic)) return undefined;
+  const stem = word.slice(0, -clitic.length);
+  switch (attach) {
+    case 'infinitive':
+      return /r$/.test(stem) ? stem : undefined;
+    case 'infinitive-drop-e':
+      return /r$/.test(stem) ? `${stem}e` : undefined;
+    case 'suffix':
+      return stem;
+    case 'hyphen':
+      return undefined;
+  }
+}
+
+/** pt's verb before a hyphen: the infinitive (`colocá` before `lo` → `colocar`). */
+function hyphenVerb(written: string, clitic: string): string {
+  if (!clitic.startsWith('l')) return written;
+  const vowel = Object.entries(PT_ACCENT).find(([, a]) => written.endsWith(a))?.[0];
+  return vowel ? `${written.slice(0, -1)}${vowel}r` : written;
+}
+
+/**
+ * Commands that take an object: a word splits only where its stem reads as
+ * one of them, so a word that merely ends like a clitic stays a word.
+ */
+const OBJECT_VERBS: ReadonlySet<string> = new Set([
+  'add',
+  'append',
+  'bind',
+  'blur',
+  'call',
+  'clear',
+  'clone',
+  'close',
+  'copy',
+  'decrement',
+  'default',
+  'empty',
+  'focus',
+  'get',
+  'hide',
+  'increment',
+  'log',
+  'make',
+  'measure',
+  'morph',
+  'open',
+  'pick',
+  'prepend',
+  'put',
+  'remove',
+  'render',
+  'reset',
+  'return',
+  'select',
+  'send',
+  'set',
+  'show',
+  'swap',
+  'take',
+  'tell',
+  'throw',
+  'toggle',
+  'transition',
+  'trigger',
+]);
+
+/**
+ * `stream` with each verb + object clitic read as the verb and the reference
+ * (es `ponerlo` → `poner` `ello`; pt `colocá` `-` `lo` → `colocar` `ele`), as
+ * `tokenizeWord` reads each part alone.
+ */
+export function splitObjectClitics(
+  stream: TokenStream,
+  profile: LanguageProfile,
+  tokenizeWord: (word: string) => readonly LanguageToken[]
+): TokenStream {
+  const clitics = profile.objectClitics;
+  if (!clitics) return stream;
+  const entries = Object.entries(clitics.forms).flatMap(([reference, clitic]) => {
+    const pronoun = profile.references?.[reference];
+    return pronoun ? [{ clitic, pronoun }] : [];
+  });
+  const readsAsVerb = (verb: string): LanguageToken | undefined => {
+    const read = tokenizeWord(verb);
+    const token = read.length === 1 ? read[0] : undefined;
+    return token?.kind === 'keyword' && OBJECT_VERBS.has(token.normalized ?? '')
+      ? token
+      : undefined;
+  };
+  const pronounOf = (pronoun: string): LanguageToken | undefined => {
+    const read = tokenizeWord(pronoun);
+    return read.length === 1 ? read[0] : undefined;
+  };
+  const tokens = stream.tokens;
+  const out: LanguageToken[] = [];
+  let changed = false;
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i]!;
+    if (clitics.attach === 'hyphen') {
+      const dash = tokens[i + 1];
+      const after = tokens[i + 2];
+      const entry = entries.find(e => e.clitic === after?.value);
+      const verb =
+        entry && dash?.value === '-'
+          ? readsAsVerb(hyphenVerb(token.value, entry.clitic))
+          : undefined;
+      const pronoun = entry && verb ? pronounOf(entry.pronoun) : undefined;
+      if (verb && pronoun && after) {
+        out.push({ ...verb, position: token.position });
+        out.push({
+          ...pronoun,
+          position: { start: dash!.position.start, end: after.position.end },
+        });
+        i += 2;
+        changed = true;
+        continue;
+      }
+      out.push(token);
+      continue;
+    }
+    let split = false;
+    for (const { clitic, pronoun } of entries) {
+      const written = verbOf(clitics.attach, token.value, clitic);
+      const verb = written ? readsAsVerb(written) : undefined;
+      const reference = verb ? pronounOf(pronoun) : undefined;
+      if (!verb || !reference) continue;
+      const { start, end } = token.position;
+      const cut = end - clitic.length;
+      out.push({ ...verb, position: { start, end: cut } });
+      out.push({ ...reference, position: { start: cut, end } });
+      split = changed = true;
+      break;
+    }
+    if (!split) out.push(token);
+  }
+  return changed ? new TokenStreamImpl(out, stream.language) : stream;
 }

@@ -8,10 +8,11 @@
  * - Uses accent marks that need proper handling
  */
 
-import type { TokenKind } from '../types';
+import type { TokenKind, TokenStream } from '../types';
 import { BaseTokenizer, type KeywordEntry } from './base';
 import { ItalianMorphologicalNormalizer } from './morphology/italian-normalizer';
 import { italianProfile } from '../generators/profiles/italian';
+import { splitObjectClitics } from './fused-forms-split';
 import {
   StringLiteralExtractor,
   NumberExtractor,
@@ -233,6 +234,15 @@ export class ItalianTokenizer extends BaseTokenizer {
     this.registerExtractors(createItalianExtractors()); // Italian keywords (context-aware)
     this.registerExtractor(new OperatorExtractor()); // Operators
     this.registerExtractor(new PunctuationExtractor()); // Punctuation
+  }
+
+  /** A verb with its object attached (`ponerlo`, `poner` + `ello`): see splitObjectClitics. */
+  override tokenize(input: string): TokenStream {
+    return splitObjectClitics(
+      super.tokenize(input),
+      italianProfile,
+      word => super.tokenize(word).tokens
+    );
   }
 
   // tokenize() method removed - now uses extractor-based tokenization from BaseTokenizer

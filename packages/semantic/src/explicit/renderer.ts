@@ -117,6 +117,7 @@ import { OR_WORDS_BY_LANG } from '../parser/utils/or-words';
 import { notThrowWords } from '../parser/utils/not-throw';
 import { grammarWord } from '../parser/utils/grammar-words';
 import { elementScopeWord } from '../element-scope';
+import { attachClitic } from '../tokenizers/fused-forms-split';
 import { PatternMatcher } from '../parser/pattern-matcher';
 import {
   localizeValueInterior,
@@ -1179,7 +1180,7 @@ export class SemanticRendererImpl implements ISemanticRenderer {
 
     const tokens = pattern.template.tokens;
     for (let i = 0; i < tokens.length; i++) {
-      const oblique = this.obliqueAt(tokens, i, node, language);
+      const oblique = this.obliqueAt(tokens, i, node, language, true);
       if (oblique !== undefined) {
         parts.push(oblique.text);
         i += oblique.tokens - 1;
@@ -1288,11 +1289,34 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     tokens: readonly PatternToken[],
     i: number,
     node: SemanticNode,
-    language: string
+    language: string,
+    topLevel = false
   ): { text: string; tokens: number } | undefined {
     const first = tokens[i];
     const second = tokens[i + 1];
     const profile = tryGetProfile(language);
+    // The pattern's verb and the object after it, one word where the language
+    // attaches its object pronoun (es `mostrarme`, pt `colocá-lo`, ar `ضعه`).
+    if (topLevel && i === 0 && first?.type === 'literal' && profile?.objectClitics) {
+      const object =
+        second?.type === 'group' && second.tokens.length === 1 ? second.tokens[0] : second;
+      if (object?.type === 'role' && (object.role === 'patient' || object.role === 'destination')) {
+        const value = node.roles.get(object.role) as
+          (SemanticValue & { implicit?: unknown }) | undefined;
+        const clitic = profile.objectClitics.forms[referenceOf(value) ?? ''];
+        const fused =
+          clitic &&
+          !value?.implicit &&
+          !this.plainWords.has('case') &&
+          !profile.objectClitics.notVerbs?.includes(first.value)
+            ? attachClitic(profile.objectClitics.attach, first.value, clitic)
+            : undefined;
+        if (fused !== undefined) {
+          this.nativeWritten.add('case');
+          return { text: fused, tokens: 2 };
+        }
+      }
+    }
     // A go/scroll position renders its own way (`top of me`).
     const positioned = (role: SemanticRole): boolean =>
       role === 'destination' && !!(node as CommandSemanticNode).scrollPosition;

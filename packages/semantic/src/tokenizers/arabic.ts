@@ -20,7 +20,12 @@ import {
 } from './base';
 import { ArabicMorphologicalNormalizer } from './morphology/arabic-normalizer';
 import { arabicProfile } from '../generators/profiles/arabic';
-import { fusedForms, fusedKeywords, splitFusedForms } from './fused-forms-split';
+import {
+  fusedForms,
+  fusedKeywords,
+  splitFusedForms,
+  splitObjectClitics,
+} from './fused-forms-split';
 import {
   StringLiteralExtractor,
   NumberExtractor,
@@ -246,7 +251,12 @@ export class ArabicTokenizer extends BaseTokenizer {
 
   /** A pronoun fused with its marker (`إليّ`, `إلى` + `أنا`) reads as the two: see splitFusedForms. */
   override tokenize(input: string): TokenStream {
-    return splitFusedForms(super.tokenize(input), this.fused, word => super.tokenize(word).tokens);
+    const word = (w: string) => super.tokenize(w).tokens;
+    return splitObjectClitics(
+      splitFusedForms(super.tokenize(input), this.fused, word),
+      arabicProfile,
+      word
+    );
   }
 
   // Override tokenizeWithExtractors to handle proclitic metadata
