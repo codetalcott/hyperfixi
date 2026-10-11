@@ -272,7 +272,6 @@ interface ProfileLike {
   keywords?: Record<string, KeywordTranslationLike>;
   roleMarkers?: Record<string, KeywordTranslationLike & { position?: string }>;
   references?: Record<string, string>;
-  obliqueReferences?: Record<string, Record<string, string | Record<string, string>>>;
   possessive?: {
     marker?: string;
     specialForms?: Record<string, string>;
@@ -340,12 +339,6 @@ function languageWords(
     add(english === 'me' ? 'my' : english === 'it' ? 'its' : english === 'you' ? 'your' : english, {
       primary: n,
     });
-  // A pronoun after a marker, in the case the marker takes (M2 N3): it `in me`
-  // writes Italian's `me`.
-  for (const forms of Object.values(profile?.obliqueReferences ?? {}))
-    for (const form of Object.values(forms))
-      for (const phrase of typeof form === 'string' ? [form] : Object.values(form))
-        for (const w of wordsOf(phrase)) native.add(w);
   // Native form → the English reference it stands for (es `mi` → `me`).
   for (const n of Object.keys(profile?.possessive?.keywords ?? {}))
     for (const w of wordsOf(n)) native.add(w);
