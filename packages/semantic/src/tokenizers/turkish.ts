@@ -10,10 +10,11 @@
  * - Word order is typically SOV
  */
 
-import type { TokenKind } from '../types';
+import type { TokenKind, TokenStream } from '../types';
 import { BaseTokenizer, type KeywordEntry } from './base';
 import { TurkishMorphologicalNormalizer } from './morphology/turkish-normalizer';
 import { turkishProfile } from '../generators/profiles/turkish';
+import { fusedForms, splitFusedForms } from './fused-forms-split';
 import {
   StringLiteralExtractor,
   NumberExtractor,
@@ -194,8 +195,12 @@ export class TurkishTokenizer extends BaseTokenizer {
     this.registerExtractor(new PunctuationExtractor()); // Punctuation
   }
 
-  // tokenize() method removed - now uses extractor-based tokenization from BaseTokenizer
-  // All tokenization logic delegated to registered extractors (context-aware)
+  private readonly fused = fusedForms(turkishProfile);
+
+  /** A pronoun fused with its marker (`bana`, `ben` + `e`) reads as the two: see splitFusedForms. */
+  override tokenize(input: string): TokenStream {
+    return splitFusedForms(super.tokenize(input), this.fused, word => super.tokenize(word).tokens);
+  }
 
   classifyToken(token: string): TokenKind {
     const lower = token.toLowerCase();

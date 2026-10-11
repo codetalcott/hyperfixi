@@ -1316,7 +1316,12 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     const role = roleToken.role;
     if (role !== 'destination' && role !== 'source' && role !== 'patient') return undefined;
     const after = profile?.roleMarkers[role]?.position === 'after';
-    const [literal, roleAt] = after ? [second, first] : [first, second];
+    const [markerToken, roleAt] = after ? [second, first] : [first, second];
+    // A marker the profile makes optional is a group of its one literal (tr `i`).
+    const literal =
+      markerToken?.type === 'group' && markerToken.tokens.length === 1
+        ? markerToken.tokens[0]
+        : markerToken;
     if (roleAt !== roleToken || literal?.type !== 'literal') return undefined;
     if (positioned(role)) return undefined;
     const words = literal.value.split(' ');

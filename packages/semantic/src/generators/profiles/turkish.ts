@@ -38,6 +38,13 @@ export const turkishProfile: LanguageProfile = {
     window: 'pencere',
     detail: 'detay',
   },
+  // A pronoun and its marker, fused into one word as Turkish writes them (M2 N3;
+  // listed in NATIVE_REVIEW_NEEDED.md): the accusative, dative and ablative.
+  // The reader splits each back (tokenizers/fused-forms-split.ts).
+  obliqueReferences: {
+    me: { i: 'beni', e: 'bana', den: 'benden' },
+    it: { i: 'onu', e: 'ona', den: 'ondan' },
+  },
   possessive: {
     // Genitive suffix, spaced for tokenization like Turkish's other case
     // markers (i/e/de). i18n renders `#picker ın değer`; the parser matches
