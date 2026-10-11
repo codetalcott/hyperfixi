@@ -440,6 +440,19 @@ The reader splits each back into the pronoun and the marker
 (`<p/> içinde ben i`, where `i` marks the phrase), and put's position words (`"x" önce
 beni koy`; Turkish says `benden önce`).
 
+### A pronoun fused with its marker: ar and he (M2 N3, wave 3) ⚠️
+
+| Lang | Marker → `me`                                                                                                         | Marker → `it`                                             |
+| ---- | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| ar   | `في` → `فيّ`, `إلى` → `إليّ`, `من` → `منّي`, `على` → `عليّ`, `ب` → `بي`, `قبل` → `قبلي`, `بعد` → `بعدي`               | `فيه`, `إليه`, `منه`, `عليه`, `به`, `قبله`, `بعده`        |
+| he   | `ב` → `בי`, `אל` → `אליי`, `ל` → `לי`, `על` → `עליי`, `מ` → `ממני`, `את` → `אותי`, `לפני` → `לפניי`, `אחרי` → `אחריי` | unchanged (`זה`: `את זה` is right; `ב זה` is spacing, N5) |
+
+Notes for the reviewer: ar is written with the shadda (`إليّ`, `عليّ`, `منّي`), which tells
+`عليّ` (on me) from the name `علي` and `فيّ` from the marker `في`. Is that what a UI would
+write? The reader takes each fused word whole, before the proclitic extractor could take
+`ب`/`ف`/`מ` off it (`tokenizers/fused-forms-split.ts`). ar's verb + object (`أظهرني`,
+`ضعه`) waits on the object clitics.
+
 ## August 2026 research pass — summary
 
 A follow-up research pass (web sources as a native-speaker proxy; items still
