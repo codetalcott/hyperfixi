@@ -453,6 +453,15 @@ write? The reader takes each fused word whole, before the proclitic extractor co
 `ب`/`ف`/`מ` off it (`tokenizers/fused-forms-split.ts`). ar's verb + object (`أظهرني`,
 `ضعه`) waits on the object clitics.
 
+### A pronoun fused with its marker: bn, hi, tl, pt (M2 N3, wave 3) ⚠️
+
+| Lang | Forms                                                                                                            | Notes for the reviewer                                                                      |
+| ---- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| bn   | `আমি কে` → `আমাকে`, `আমি তে`/`এ` → `আমাতে`, `আমি থেকে` → `আমার থেকে`; `এটি কে` → `এটিকে`, `এটি তে`/`এ` → `এটিতে` | the reader reads `আমাতে` back with `এ` (`তে` is also the event marker)                      |
+| hi   | `मैं को` → `मुझे`, `यह को` → `इसे`                                                                               | the other postpositions stay spaced (`मुझ में`, `इस में`; N5 joins them)                    |
+| tl   | `sa ito` → `dito`                                                                                                | `dito` also means "here": does `ilagay 1 dito` read as "put 1 into it"? `mula_sa ito` stays |
+| pt   | `em ele` → `nele`, `de ele` → `dele`                                                                             | `a ele`, `para ele` are right as written                                                    |
+
 ## August 2026 research pass — summary
 
 A follow-up research pass (web sources as a native-speaker proxy; items still
