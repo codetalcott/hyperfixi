@@ -1,8 +1,8 @@
 {
   "description": "English-leak gate, command-shape half (src/multilingual/english-leaks.ts): per command-shape case, the findings of each language's render (translate(src, 'en', L)): an English grammar word, `event:<name>`, `case:<pronoun>` or `spacing:<marker>`. `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts.",
   "renders": 23801,
-  "leaky": 4552,
-  "findings": 9176,
+  "leaky": 4550,
+  "findings": 9148,
   "kinds": {
     "word": {
       "renders": 2402,
@@ -17,8 +17,8 @@
       "findings": 162
     },
     "spacing": {
-      "renders": 2307,
-      "findings": 4953
+      "renders": 2305,
+      "findings": 4925
     }
   },
   "entries": {
@@ -219,7 +219,7 @@
       "spacing:で spacing:を": "ja"
     },
     "0b202a7fa5": {
-      "spacing:e spacing:i transition view": "tr",
+      "spacing:e transition view": "tr",
       "spacing:কে transition view": "bn",
       "transition view": "ar de es he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
       "view": "fr"
@@ -245,7 +245,7 @@
       "spacing:で spacing:を": "ja"
     },
     "0bc2fc8b64": {
-      "spacing:e spacing:i spacing:i spacing:i": "tr",
+      "spacing:e spacing:i spacing:i": "tr",
       "spacing:কে spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
@@ -273,7 +273,7 @@
       "case:it-object": "fr"
     },
     "0cee637bb9": {
-      "it matches spacing:e spacing:i spacing:i spacing:i where": "tr",
+      "it matches spacing:e spacing:i spacing:i where": "tr",
       "it matches spacing:এ spacing:কে spacing:তে where": "bn",
       "it matches spacing:で spacing:を where": "ja",
       "it matches where": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh"
@@ -284,7 +284,7 @@
       "spacing:で spacing:を": "ja"
     },
     "0df05da43f": {
-      "spacing:e spacing:i spacing:i spacing:i": "tr",
+      "spacing:e spacing:i spacing:i": "tr",
       "spacing:কে spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
@@ -382,7 +382,7 @@
       "spacing:i": "tr"
     },
     "134d2ca857": {
-      "spacing:e spacing:i spacing:i spacing:i": "tr",
+      "spacing:e spacing:i spacing:i": "tr",
       "spacing:কে spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
@@ -405,7 +405,7 @@
       "spacing:で spacing:を": "ja"
     },
     "1489b2b9fb": {
-      "spacing:e spacing:i spacing:i spacing:i": "tr",
+      "spacing:e spacing:i spacing:i": "tr",
       "spacing:কে spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
@@ -415,7 +415,7 @@
       "spacing:で spacing:を": "ja"
     },
     "148af3b352": {
-      "spacing:e spacing:i spacing:i spacing:i": "tr",
+      "spacing:e spacing:i spacing:i": "tr",
       "spacing:কে spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
@@ -1014,7 +1014,6 @@
       "global spacing:で spacing:を": "ja"
     },
     "391f640b6b": {
-      "spacing:i": "tr",
       "spacing:কে": "bn"
     },
     "3943c95dd5": {
@@ -1043,7 +1042,7 @@
       "spacing:i": "tr"
     },
     "3a592b6997": {
-      "spacing:e spacing:i spacing:i spacing:i": "tr",
+      "spacing:e spacing:i spacing:i": "tr",
       "spacing:কে spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
@@ -1077,7 +1076,7 @@
       "spacing:で spacing:を": "ja"
     },
     "3ca1a7a07f": {
-      "spacing:i spacing:i": "tr",
+      "spacing:i": "tr",
       "spacing:কে spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
@@ -1109,7 +1108,7 @@
       "trigger": "qu"
     },
     "3dfa6c3d53": {
-      "spacing:e spacing:i spacing:i spacing:i spacing:le": "tr",
+      "spacing:e spacing:i spacing:le": "tr",
       "spacing:কে spacing:কে spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
@@ -1283,7 +1282,6 @@
       "spacing:で spacing:を": "ja"
     },
     "482bcde10d": {
-      "spacing:i": "tr",
       "spacing:কে": "bn"
     },
     "483d2f33fc": {
@@ -1489,7 +1487,7 @@
       "spacing:で spacing:を": "ja"
     },
     "557f87a625": {
-      "spacing:e spacing:i spacing:i spacing:i": "tr",
+      "spacing:e spacing:i spacing:i": "tr",
       "spacing:কে spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
@@ -2104,7 +2102,7 @@
       "in in of spacing:의 the": "ko",
       "in in of spacing:の the": "ja",
       "in in of the": "ar es fr he hi id ms pl pt qu ru sw th tl uk",
-      "of spacing:i spacing:i spacing:in spacing:in spacing:nin the": "tr",
+      "of spacing:i spacing:in spacing:in spacing:nin the": "tr",
       "of the": "de it vi"
     },
     "7369489c4d": {
@@ -2285,7 +2283,7 @@
       "spacing:e spacing:i spacing:nin": "tr"
     },
     "7beb55b4c4": {
-      "spacing:e spacing:i spacing:i": "tr",
+      "spacing:e spacing:i": "tr",
       "spacing:কে spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
@@ -2378,7 +2376,7 @@
       "having threshold": "ar de es fr he hi id ko ms pl pt qu ru sw tl uk vi zh"
     },
     "7f9dd756b8": {
-      "spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
+      "spacing:e spacing:i spacing:i spacing:i": "tr",
       "spacing:কে spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
@@ -2569,7 +2567,7 @@
     },
     "87250fbc5e": {
       "case:it-object": "ar es it",
-      "spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
+      "spacing:e spacing:i spacing:i spacing:i": "tr",
       "spacing:কে spacing:তে": "bn",
       "spacing:로": "ko",
       "spacing:で spacing:として spacing:を": "ja"
@@ -2695,7 +2693,7 @@
       "spacing:তে spacing:তে": "bn"
     },
     "8e718ade5d": {
-      "spacing:e spacing:i spacing:i spacing:i": "tr",
+      "spacing:e spacing:i spacing:i": "tr",
       "spacing:কে spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
@@ -2895,7 +2893,7 @@
       "spacing:e spacing:i": "tr"
     },
     "9a110b248d": {
-      "it matches spacing:e spacing:i spacing:i spacing:i where": "tr",
+      "it matches spacing:e spacing:i spacing:i where": "tr",
       "it matches spacing:এ spacing:কে spacing:তে where": "bn",
       "it matches spacing:で spacing:を where": "ja",
       "it matches where": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh"
@@ -2912,7 +2910,7 @@
       "spacing:で spacing:を": "ja"
     },
     "9b26201426": {
-      "spacing:e spacing:i spacing:i spacing:i": "tr",
+      "spacing:e spacing:i spacing:i": "tr",
       "spacing:কে spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
@@ -3041,7 +3039,7 @@
       "spacing:i spacing:i": "tr"
     },
     "a37d81f4e5": {
-      "spacing:e spacing:i": "tr",
+      "spacing:e": "tr",
       "spacing:কে": "bn"
     },
     "a3810d939d": {
@@ -3160,7 +3158,7 @@
       "into spacing:で spacing:を": "ja"
     },
     "aa5dcaba5f": {
-      "spacing:e spacing:i spacing:i spacing:i": "tr",
+      "spacing:e spacing:i spacing:i": "tr",
       "spacing:কে spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
@@ -3345,7 +3343,7 @@
     },
     "b365b3c1ad": {
       "at debounced": "ar de es fr he hi id it ms pl pt qu ru sw th uk vi zh",
-      "at debounced spacing:e spacing:i spacing:i": "tr",
+      "at debounced spacing:e spacing:i": "tr",
       "at debounced spacing:কে spacing:তে": "bn",
       "at debounced spacing:로": "ko",
       "at debounced spacing:で spacing:を": "ja",
@@ -3469,7 +3467,7 @@
       "spacing:e spacing:e spacing:e spacing:i spacing:i": "tr"
     },
     "baf8dabbcb": {
-      "spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
+      "spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
       "spacing:কে spacing:কে spacing:তে spacing:তে": "bn",
       "spacing:で spacing:で spacing:を spacing:を spacing:を": "ja",
       "trigger": "qu"
@@ -3668,7 +3666,7 @@
       "spacing:で spacing:を": "ja"
     },
     "c5fcb81749": {
-      "spacing:e spacing:i": "tr",
+      "spacing:i": "tr",
       "spacing:তে": "bn"
     },
     "c6183ad650": {
@@ -3685,7 +3683,7 @@
     },
     "c71951381c": {
       "and": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
-      "and spacing:e spacing:i spacing:i spacing:i": "tr",
+      "and spacing:e spacing:i spacing:i": "tr",
       "and spacing:কে spacing:তে": "bn",
       "and spacing:で spacing:を": "ja"
     },
@@ -4009,7 +4007,7 @@
       "spacing:i": "tr"
     },
     "db306c8d93": {
-      "spacing:i spacing:i spacing:i": "tr",
+      "spacing:i spacing:i": "tr",
       "spacing:কে spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
