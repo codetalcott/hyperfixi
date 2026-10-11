@@ -532,7 +532,28 @@ how it is read aloud (`.active` is 액티브, so `를`). Is the render's choice 
 should a code word take one form always? bn's locative after a Bengali word is `তে` after a
 vowel and the vowel sign `ে` after a consonant (`ক্লিকে`), which the reader does not split
 yet: renders keep `ক্লিক তে` there. Code with a bn ending: `#outএ` (attached) or `#out-এ`
-(hyphenated)? A handler's own event keeps its marker apart (`クリック を で`: N4, its head).
+(hyphenated)? bn's handler head keeps its marker apart (`ক্লিক তে`: N4); ja's is below.
+
+### A handler's head as one word: ja (M2 N4) ⚠️
+
+Renders wrote a handler's event with two particles, its own object marker and the `on` word
+(`クリック を で .aを 切り替え`). They now write the `on` word onto the event, as the profile
+documented (`クリック で`) and the old transformer wrote:
+
+| English                               | written                                   |
+| ------------------------------------- | ----------------------------------------- |
+| `on click toggle .a`                  | `クリックで .aを 切り替え`                |
+| `on click from #b toggle .a`          | `#b から クリックで .aを 切り替え`        |
+| `on click or keyup toggle .a`         | `クリック または キーアップで .aを 切り替え` |
+| `on myEvent(detail) toggle .a`        | `myEvent(detail)で .aを 切り替え`         |
+| `on click debounced at 200ms …`       | `クリックで debounced at 200ms …`         |
+
+The reader still takes `クリック を で`, and `クリック時` (the profile's `時`). Notes for the
+reviewer: is `クリックで` the head you would write, or `クリック時に` / `クリックしたら` / `クリック
+したとき`? (`時に` is not read today; it would need the reader.) A code event takes the particle
+too (`draggable:startで`, `keydown[key=="Escape"]で`), as a selector takes `に` (`#outに`): keep,
+or write code's particle apart? `キープレス で` and `サイズ変更 で` keep a space (the reader
+takes the joined words as one).
 
 ### A query's scope before the query: bn, hi, tr, ja, ko (M2 N3) ⚠️
 
