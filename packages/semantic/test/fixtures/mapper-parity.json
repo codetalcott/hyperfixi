@@ -10313,7 +10313,7 @@
       ]
     },
     "toggle": {
-      "roles": ["patient", "destination", "duration"],
+      "roles": ["patient", "destination", "duration", "goal"],
       "cases": [
         {
           "name": "no-roles",
@@ -10340,6 +10340,10 @@
             "duration": {
               "type": "literal",
               "value": "duration-v"
+            },
+            "goal": {
+              "type": "literal",
+              "value": "goal-v"
             }
           },
           "ast": {
@@ -10359,6 +10363,10 @@
                 "value": "#destination-v",
                 "selector": "#destination-v",
                 "selectorType": "id"
+              },
+              "between": {
+                "type": "literal",
+                "value": "goal-v"
               },
               "for": {
                 "type": "literal",
@@ -10400,6 +10408,10 @@
             "duration": {
               "type": "literal",
               "value": "duration-v"
+            },
+            "goal": {
+              "type": "literal",
+              "value": "goal-v"
             }
           },
           "ast": {
@@ -10412,6 +10424,10 @@
                 "value": "#destination-v",
                 "selector": "#destination-v",
                 "selectorType": "id"
+              },
+              "between": {
+                "type": "literal",
+                "value": "goal-v"
               },
               "for": {
                 "type": "literal",
@@ -10454,6 +10470,10 @@
             "duration": {
               "type": "literal",
               "value": "duration-v"
+            },
+            "goal": {
+              "type": "literal",
+              "value": "goal-v"
             }
           },
           "ast": {
@@ -10468,6 +10488,10 @@
               }
             ],
             "modifiers": {
+              "between": {
+                "type": "literal",
+                "value": "goal-v"
+              },
               "for": {
                 "type": "literal",
                 "value": "duration-v"
@@ -10507,6 +10531,10 @@
               "type": "selector",
               "value": "#destination-v",
               "selectorKind": "id"
+            },
+            "goal": {
+              "type": "literal",
+              "value": "goal-v"
             }
           },
           "ast": {
@@ -10526,6 +10554,73 @@
                 "value": "#destination-v",
                 "selector": "#destination-v",
                 "selectorType": "id"
+              },
+              "between": {
+                "type": "literal",
+                "value": "goal-v"
+              }
+            }
+          }
+        },
+        {
+          "name": "only-goal",
+          "roles": {
+            "goal": {
+              "type": "literal",
+              "value": "goal-v"
+            }
+          },
+          "ast": {
+            "type": "command",
+            "name": "toggle",
+            "args": [],
+            "modifiers": {
+              "between": {
+                "type": "literal",
+                "value": "goal-v"
+              }
+            }
+          }
+        },
+        {
+          "name": "without-goal",
+          "roles": {
+            "patient": {
+              "type": "selector",
+              "value": ".patient-v",
+              "selectorKind": "class"
+            },
+            "destination": {
+              "type": "selector",
+              "value": "#destination-v",
+              "selectorKind": "id"
+            },
+            "duration": {
+              "type": "literal",
+              "value": "duration-v"
+            }
+          },
+          "ast": {
+            "type": "command",
+            "name": "toggle",
+            "args": [
+              {
+                "type": "selector",
+                "value": ".patient-v",
+                "selector": ".patient-v",
+                "selectorType": "class"
+              }
+            ],
+            "modifiers": {
+              "on": {
+                "type": "selector",
+                "value": "#destination-v",
+                "selector": "#destination-v",
+                "selectorType": "id"
+              },
+              "for": {
+                "type": "literal",
+                "value": "duration-v"
               }
             }
           }
@@ -10607,6 +10702,10 @@
                 "value": "#destination-v",
                 "selector": "#destination-v",
                 "selectorType": "id"
+              },
+              "between": {
+                "type": "literal",
+                "value": "goal-v"
               },
               "for": {
                 "type": "literal",

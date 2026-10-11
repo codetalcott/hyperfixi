@@ -3,8 +3,8 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 24637,
-  "refused": 2584,
+  "pass": 24684,
+  "refused": 2537,
   "silent": 19,
   "entries": {
     "6f60177037": {
@@ -404,26 +404,6 @@
       "family": "throw",
       "refused": "ja ko tr"
     },
-    "6428d2ac2e": {
-      "src": "on click toggle between .a and .b for x in [1, 2] put x into #out end",
-      "family": "toggle",
-      "refused": "ar de fr he ja tr"
-    },
-    "f886098f71": {
-      "src": "on click toggle between .foo and .bar",
-      "family": "toggle",
-      "refused": "ar de fr he ja tr"
-    },
-    "237fd5ee40": {
-      "src": "on click toggle between [@data-state='active'] and [@data-state='inactive']",
-      "family": "toggle",
-      "refused": "ar de fr he ja tr"
-    },
-    "1f173a2d64": {
-      "src": "on click toggle between [@enabled='true'] and [@disabled='true']",
-      "family": "toggle",
-      "refused": "ar de fr he ja tr"
-    },
     "df922f3370": {
       "src": "on click toggle my *display",
       "family": "toggle",
@@ -444,16 +424,6 @@
       "family": "toggle",
       "refused": "en *",
       "loud": "rare-values: value spellings rare in pages: an escaped class name (`.group-\\[…\\]`), a comma list in a query (`<#d1, #d2/>`), an attribute after a bare or bracketed reference (`it @a`, `my [@a]`), a dotted path before `of`, a unit after parentheses (`(w)px`), `set {…} on <obj>`"
-    },
-    "47902e382e": {
-      "src": "on click toggle $mode between 'edit' and 'preview'",
-      "family": "toggle",
-      "refused": "ar de fr he ja tr"
-    },
-    "862ede02e6": {
-      "src": "on click toggle $state between 'a', 'b' and 'c'",
-      "family": "toggle",
-      "refused": "ar de fr he ja tr"
     },
     "757da52773": {
       "src": "on click set startWidth to 0 set endWidth to 100 transition *width from (startWidth)px to (endWidth)px",
@@ -1198,7 +1168,7 @@
     "6a6afed6dc": {
       "src": "on click toggle .active on keydown[key==\"Enter\"] submit()",
       "family": "on",
-      "refused": "ar de es fr he id it ms pl pt ru sw th tl uk"
+      "refused": "ar de fr he"
     }
   }
 }

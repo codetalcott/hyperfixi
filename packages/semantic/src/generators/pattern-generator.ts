@@ -280,6 +280,29 @@ export function generatePatternVariants(
     });
   }
 
+  // Required-role variants: inert unless the role's marker is present, so they
+  // may outrank the command's other patterns (see the schema field).
+  for (const v of schema.requiredRoleVariants ?? []) {
+    const variantSchema: CommandSchema = {
+      ...schema,
+      roles: schema.roles
+        .filter(r => !v.omit?.includes(r.role))
+        .map(r =>
+          r.role === v.role
+            ? { ...r, required: true }
+            : r.role === v.widen?.role
+              ? { ...r, expectedTypes: [...v.widen.types] }
+              : r
+        ),
+    };
+    const variant = generatePattern(variantSchema, profile, config);
+    patterns.push({
+      ...variant,
+      id: `${schema.action}-${profile.code}-generated-${v.idSuffix}`,
+      priority: (config.basePriority ?? 100) + (v.priorityDelta ?? 5),
+    });
+  }
+
   // Verb-first fallback for SOV languages (lower priority than the above).
   if (config.generateVerbFirstVariants !== false) {
     const verbFirst = generateVerbFirstPattern(schema, profile, config);
@@ -845,6 +868,7 @@ export function buildRoleToken(roleSpec: RoleSpec, profile: LanguageProfile): Pa
     const isPassthroughOverride =
       overrideMarker !== undefined && overrideMarker === roleSpec.markerOverride?.en;
     const position =
+      roleSpec.markerPositionOverride?.[profile.code] ??
       defaultMarker?.position ??
       (profile.wordOrder === 'SOV' && !isPassthroughOverride ? 'after' : 'before');
     const optionalMarker = roleSpec.markerOptional?.[profile.code] === true;

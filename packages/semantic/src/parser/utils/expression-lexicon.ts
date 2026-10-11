@@ -868,8 +868,10 @@ const CLASS_REF = /^\.[\p{L}_-][\p{L}\p{N}_-]*$/u;
 /** A word-shaped identifier (`p`, `value`, `:count`, `$total`, `^color`), not an
     operator symbol that a tokenizer lexed as an identifier. A word may carry
     combining marks: hi `मान` (value) spells its vowel with one. */
-/** A variable's name, or one the reader fused, `(si)` (registry.tokenize). */
-const OPERAND_WORD = /^(?:[:$^]?[\p{L}_][\p{L}\p{M}\p{N}_]*|\([\p{L}_$][\p{L}\p{M}\p{N}_$]*\))$/u;
+/** A variable's name, or one the reader fused, `(si)` (registry.tokenize). An
+    attribute (`@a`) too, where a tokenizer lexes it as an identifier (sw). */
+const OPERAND_WORD =
+  /^(?:[:$^]?[\p{L}_][\p{L}\p{M}\p{N}_]*|@[\p{L}_][\p{L}\p{M}\p{N}_-]*|\([\p{L}_$][\p{L}\p{M}\p{N}_$]*\))$/u;
 
 /**
  * core's `has` (and the first person's `have`), in the language's own word,
@@ -1668,12 +1670,12 @@ export function joinExpressionTokens(
     // the canonical parser rejects the spaced `beep !` — glue it only when the two
     // were source-adjacent (a spaced `a != b` keeps its space). Both are gated on
     // adjacency, so the possessive run `my value` (neither `.`- nor `!`-prefixed)
-    // still spaces normally.
+    // still spaces normally. A comma glues the same way (`'a', 'b'`, a list).
     const adjacent =
       previous.position?.end !== undefined &&
       token.position?.start !== undefined &&
       previous.position.end === token.position.start;
-    const glue = adjacent && (text.startsWith('.') || text.startsWith('!'));
+    const glue = adjacent && (text.startsWith('.') || text.startsWith('!') || text === ',');
     out += (glue ? '' : ' ') + text;
     previous = token;
   };

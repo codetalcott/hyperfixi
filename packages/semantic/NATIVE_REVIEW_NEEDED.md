@@ -481,6 +481,39 @@ would take the suffix. A verb the renderer does not write as an infinitive (es
 `enfoque`) keeps the separate pronoun. fr is not here: its object pronoun moves before
 the verb (`le mettre`), a word-order change waiting on the owner (FUSED_FORMS.md Q1).
 
+## `toggle … between` (M2, vocabulary sheet A6) ⚠️ (October 2026)
+
+`toggle between .a and .b`, `toggle $x between 'a', 'b' and 'c'`. The `between` word is each dictionary's
+`modifiers.between`. The `and` is the word the value pass writes for `and` anywhere in an expression (the
+language's `and` in `if a and b`), which reads back in every language. Written from grammar references,
+not checked by a native speaker.
+
+| lang | written (`toggle between .a and .b`) | to check                                                                                                                    |
+| ---- | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| ar   | `بدّل بين .a و .b`                   | `و` is written apart from the next word, as the value pass writes it                                                        |
+| bn   | `.a এবং .b মধ্যে টগল`                | `মধ্যে` without the genitive `এর` (`.b এর মধ্যে`)                                                                           |
+| de   | `umschalten zwischen .a und .b`      |                                                                                                                             |
+| es   | `alternar entre .a y .b`             |                                                                                                                             |
+| fr   | `basculer entre .a et .b`            |                                                                                                                             |
+| he   | `מתג בין .a וגם .b`                  | `וגם` is "and also"; a pair takes `ו` (attached)                                                                            |
+| hi   | `.a और .b के बीच टॉगल`               |                                                                                                                             |
+| id   | `alihkan antara .a dan .b`           |                                                                                                                             |
+| it   | `commutare tra .a e .b`              |                                                                                                                             |
+| ja   | `.a そして .b の間で 切り替え`       | `そして` joins clauses; a pair takes `と` (`.a と .b の間で`). ja's dictionary word was `間に`, whose `間` reads as `while` |
+| ko   | `.a 그리고 .b 사이 토글`             | `그리고` joins clauses; a pair takes `와`/`과` or `및`; `사이에서`?                                                         |
+| ms   | `togol antara .a dan .b`             |                                                                                                                             |
+| pl   | `przełącz między .a i .b`            |                                                                                                                             |
+| pt   | `alternar entre .a e .b`             |                                                                                                                             |
+| qu   | `.a hinallataq .b chawpipi t'ikray`  | `hinallataq` joins clauses; a pair takes `-wan … -wan`                                                                      |
+| ru   | `переключить между .a и .b`          |                                                                                                                             |
+| sw   | `badilisha kati .a na .b`            | `kati ya`?                                                                                                                  |
+| th   | `สลับ ระหว่าง .a และ .b`             |                                                                                                                             |
+| tl   | `palitan sa_pagitan .a at .b`        | `sa pagitan ng`; the underscore is the dictionary's                                                                         |
+| tr   | `.a ve .b arasında değiştir`         |                                                                                                                             |
+| uk   | `перемкнути між .a і .b`             |                                                                                                                             |
+| vi   | `chuyển đổi giữa .a và .b`           |                                                                                                                             |
+| zh   | `切换 .a 和 .b 之间`                 | `之间` follows the pair; `在 .a 和 .b 之间 切换` is the textbook order                                                      |
+
 ## August 2026 research pass — summary
 
 A follow-up research pass (web sources as a native-speaker proxy; items still

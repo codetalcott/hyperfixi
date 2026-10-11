@@ -72,6 +72,9 @@ export interface RoleSpec {
    *   none was written. Without it the slot cost every add/remove/hide/show
    *   parse a quarter of its confidence (hi `click पर .a को जोड़ें`: 1.0 →
    *   0.67). The confidence model is the only reader of this kind.
+   * - `'list'` — a clause whose value is a LIST, items separated by commas
+   *   (toggle's `between 'a', 'b' and 'c'`). The value extent reads each item
+   *   as one expression (`readsAsValueList`); otherwise as `'clause'`.
    *
    * Enforced in the CONFIDENCE model (`scoreRoleCoverage`): a shape-anchored
    * role counts toward a pattern's score only when captured, so an uncaptured
@@ -93,7 +96,7 @@ export interface RoleSpec {
    * spurious capture possible again, reinstate it THERE with a failing test
    * first.
    */
-  readonly valueShape?: 'time' | 'reference' | 'keyword' | 'object' | 'clause';
+  readonly valueShape?: 'time' | 'reference' | 'keyword' | 'object' | 'clause' | 'list';
   /**
    * Make this role's object marker OPTIONAL in the generated pattern (wrapped in
    * an optional group), per language, so both the marked and unmarked surface forms
@@ -104,6 +107,13 @@ export interface RoleSpec {
    * Independent of `profile.markersOptional` (which applies the same to every command).
    */
   readonly markerOptional?: Record<string, boolean>;
+  /**
+   * Which side of its value this role's marker goes on, per language, where it
+   * is not the side the profile's markers take (intent's field of the same
+   * name): zh's `之间` follows the pair it names (`切换 .a 和 .b 之间`), as no zh
+   * preposition does.
+   */
+  readonly markerPositionOverride?: Record<string, 'before' | 'after'>;
   /**
    * Additional alternate marker keywords for this role, beyond {@link markerOverride}.
    * Used by schema-driven role inference (e.g., from `@lokascript/intent`) to
@@ -327,6 +337,22 @@ export interface CommandSchema {
     /** Record the matched keyword as this role (fixed-value extraction). */
     readonly methodCarrier?: SemanticRole;
   }>;
+  /**
+   * Generate an EXTRA pattern variant per entry in which an optional `role` is
+   * REQUIRED, with `omit` roles removed and `widen` given more value types. Its
+   * marker must match, so the variant is inert without it and may outrank the
+   * command's other patterns: a hand-crafted `toggle {patient}` otherwise wins
+   * `toggle $x between 1 and 2` by reading `$x` and stranding the rest.
+   */
+  readonly requiredRoleVariants?: ReadonlyArray<{
+    readonly role: SemanticRole;
+    readonly omit?: ReadonlyArray<SemanticRole>;
+    readonly widen?: { readonly role: SemanticRole; readonly types: ReadonlyArray<ExpectedType> };
+    /** Pattern id suffix: `<action>-<lang>-generated-<idSuffix>`. */
+    readonly idSuffix: string;
+    /** Added to `basePriority`. Default +5. */
+    readonly priorityDelta?: number;
+  }>;
   /** Notes about special handling */
   readonly notes?: string;
   /**
@@ -491,7 +517,7 @@ export const toggleSchema: CommandSchema = {
   category: 'dom-class',
   primaryRole: 'patient',
   // `toggle .active on #btn for 2s` → args ['.active'], modifiers { on, for }.
-  ast: { args: ['patient'], modifiers: { on: 'destination', for: 'duration' } },
+  ast: { args: ['patient'], modifiers: { on: 'destination', between: 'goal', for: 'duration' } },
   // Role markers the traditional parser leaves in `args` as bare identifiers.
   // Skipped when schema-driven inference scans args for role VALUES, so the
   // marker cannot be bound as one (interchange `roles` only — the runtime
@@ -501,6 +527,16 @@ export const toggleSchema: CommandSchema = {
   // literal identifier 'on' and `#panel` bound to nothing. Semantic binds
   // patient='.active', destination='me'/'#panel'.
   argSkipTokens: ['on'],
+  requiredRoleVariants: [
+    // `toggle between .a and .b [on #x]`
+    { role: 'goal', omit: ['patient'], idSuffix: 'between-pair' },
+    // `toggle $x between 1, 2 and 3`, `toggle *display of me between …`
+    {
+      role: 'goal',
+      widen: { role: 'patient', types: ['selector', 'reference', 'expression'] },
+      idSuffix: 'between-values',
+    },
+  ],
   roles: [
     {
       role: 'patient',
@@ -533,6 +569,42 @@ export const toggleSchema: CommandSchema = {
       // destination group (behavior-draggable). Per-command merge via the
       // #588 markerVariants machinery.
       markerVariants: { ko: ['에서'] },
+    },
+    {
+      role: 'goal',
+      description: 'What it toggles between (`between .a and .b`, `between 1, 2 and 3`)',
+      required: false,
+      expectedTypes: ['expression', 'literal', 'selector'],
+      valueShape: 'list',
+      svoPosition: 1.5,
+      sovPosition: 2.5,
+      markerOverride: {
+        en: 'between',
+        ar: 'بين',
+        bn: 'মধ্যে',
+        de: 'zwischen',
+        es: 'entre',
+        fr: 'entre',
+        he: 'בין',
+        hi: 'के बीच',
+        id: 'antara',
+        it: 'tra',
+        ja: 'の間で',
+        ko: '사이',
+        ms: 'antara',
+        pl: 'między',
+        pt: 'entre',
+        qu: 'chawpipi',
+        ru: 'между',
+        sw: 'kati',
+        th: 'ระหว่าง',
+        tl: 'sa_pagitan',
+        tr: 'arasında',
+        uk: 'між',
+        vi: 'giữa',
+        zh: '之间',
+      },
+      markerPositionOverride: { zh: 'after' },
     },
     {
       role: 'duration',

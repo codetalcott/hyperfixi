@@ -83,7 +83,7 @@ export const ja: Dictionary = {
     after: '後に',
     over: '上に',
     under: '下に',
-    between: '間に',
+    between: 'の間で', // 間 alone is ja's `while` (M2 A6)
     through: '通して',
     without: 'なしで',
   },

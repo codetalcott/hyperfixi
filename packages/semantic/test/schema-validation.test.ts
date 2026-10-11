@@ -51,6 +51,9 @@ const ALLOWED_WARNINGS: Record<string, string[]> = {
   // (`*width`) or an owner's property, which every language but English writes
   // in the of form (`*width de #foo`): only a property-path role reads it back.
   transition: ['SCHEMA_AMBIGUOUS_TYPE_LITERAL_SELECTOR', 'SCHEMA_TOO_MANY_EXPECTED_TYPES'],
+  // toggle: what it toggles between is a pair of classes or attributes, or a
+  // list of values whose first item is a literal (`between 'a', 'b' and 'c'`).
+  toggle: ['SCHEMA_AMBIGUOUS_TYPE_LITERAL_SELECTOR'],
 };
 
 describe('command schema validation', () => {
