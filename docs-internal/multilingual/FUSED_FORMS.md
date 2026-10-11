@@ -120,7 +120,7 @@ as a profile alternative.
 6. N5 render: ko, bn, ja attach (with the spacing gate if wanted). **Done 2026-10-11** (the gate, #1461;
    the render, `explicit/attached-markers.ts`).
 7. N5 tr apostrophe suffixes (reader first). **Done 2026-10-11** (the reader; code stays spaced, Q2).
-8. fr clitic order: only with the owner's yes (§6 Q1).
+8. fr clitic order: only with the owner's yes (§6 Q1). **Done 2026-10-11** (Q1).
 
 ## 6. Questions for the owner
 
@@ -130,6 +130,13 @@ as a profile alternative.
   (reader takes `le`/`la`/`y`/`en` before a verb); (b) keep `lui` after the preposition
   (wave 2's `dans lui`, already written) and leave the object `il` as is; (c) a
   verb-final paraphrase. Recommended: (b) for now; (a) after a native French reviewer.
+  **Built 2026-10-11 as (a) for the object, (b) after a preposition.** The owner asked for
+  each question "per your recommendation" and builds without waiting for reviewers (2026-10-10),
+  which removes the condition on (a); French grammar leaves one form for an infinitive's object
+  pronoun. Renders write `le mettre`, `l'afficher`, `me cacher`; `lui` after a preposition
+  stays (`dans lui`, not `y`). The reader moves the clitic back after its verb, reading an
+  elided one only with its apostrophe (a bare `l` is a name); a variable named `le` before a
+  verb is written `(le)` where the plain render would misread it.
 - **Q2 (tr suffixes on code words).** Write `#out'a`, `.active'i` (apostrophe + suffix,
   harmony by how the selector is read), or keep the spaced `#out e` until a native
   reviewer picks? Recommended: build the reader for both, render the apostrophe form only

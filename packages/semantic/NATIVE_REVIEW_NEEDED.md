@@ -501,8 +501,19 @@ noun (`enfoque yo`, `perda de foco eu`) until 2026-10-11; they now write the ver
 (`enfocarme`, `desenfocarme`; `focar-me`, `desfocar-me`), as pt's i18n dictionary
 already did, and the events keep their nouns (`al enfoque`, `ao desfoque`). Is the
 verb natural for the command, given that `desenfocar`/`desfocar` also name the visual
-blur (as English `blur` does)? fr is not here: its object pronoun moves before
-the verb (`le mettre`), a word-order change waiting on the owner (FUSED_FORMS.md Q1).
+blur (as English `blur` does)?
+
+### The object pronoun before the infinitive: fr (M2 N3, FUSED_FORMS.md Q1) ⚠️
+
+fr renders write a command's verb as the infinitive, and its object pronoun before it,
+elided before a vowel: `le mettre dans #out`, `l'afficher`, `l'incrémenter`, `me cacher`,
+`m'afficher`, where they wrote `mettre il`, `afficher moi`. After a preposition `lui`
+stays (`mettre "x" dans lui`, `ajouter .a à lui`). fr's `blur` command writes the
+dictionary's verb, `défocaliser` (`me défocaliser`); `perte de focus`, the event's word
+in the 2026-07 review, is read too. Questions for the reviewer: `y` for `dans lui` /
+`à lui` with an element (`y mettre "x"`)? Is `défocaliser` acceptable for the command, or
+should it be `retirer le focus`? A command the profile writes as a noun (`rendu il`,
+`défaut il`) takes no clitic yet.
 
 ### A marker written onto its word: ko, ja, bn (M2 N5) ⚠️
 

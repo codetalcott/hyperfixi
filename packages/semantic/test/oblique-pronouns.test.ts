@@ -312,6 +312,11 @@ describe('fr writes the object pronoun before the verb', () => {
     );
   });
 
+  it('writes no clitic before a command the profile writes as a noun', () => {
+    // `rendu` (render) is a noun, so `il` stays after it, as before.
+    expect(translate('on click render it', 'en', 'fr')).toBe('quand clic rendu il');
+  });
+
   it('reads the clitic beside every verb, and leaves a string alone', () => {
     expect(translate("quand clic l'afficher puis le cacher", 'fr', 'en')).toBe(
       'on click show it then hide it'
