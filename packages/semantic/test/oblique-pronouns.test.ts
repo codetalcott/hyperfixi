@@ -98,6 +98,72 @@ describe('renders write me in the case its marker takes', () => {
   });
 });
 
+const IT_FORMS: Record<string, string[]> = {
+  de: ['ihm'],
+  pl: ['tego', 'tym'],
+  ru: ['этому', 'этого', 'этом', 'этим'],
+  uk: ['цього', 'цьому', 'цим'],
+  fr: ['lui'],
+  hi: ['इस'],
+};
+
+const IT_SHAPES = [
+  'on click put 1 into it',
+  'on click add .x to it',
+  'on click remove .x from it',
+  'on click send foo to it',
+  'on click toggle .x on it',
+  'on click put it into #out',
+];
+
+describe.each(Object.entries(IT_FORMS))('%s reads it', (language, forms) => {
+  const nominative = tryGetProfile(language)!.references.it!;
+  const isIt = (w: string): boolean => w === nominative || forms.includes(w);
+  it.each(IT_SHAPES)('%s', source => {
+    const rendered = translate(source, 'en', language);
+    for (const form of [nominative, ...forms]) {
+      const written = rendered
+        .split(/\s+/)
+        .map(w => (isIt(w) ? form : w))
+        .join(' ');
+      expect(translate(written, language, 'en'), written).toBe(source);
+    }
+  });
+});
+
+describe('renders write it in the case its marker takes, and me as an object', () => {
+  const RENDERS: Array<[string, string, string]> = [
+    ['ru', 'on click add .x to it', 'при клик добавить .x к этому'],
+    ['ru', 'on click toggle .x on it', 'при клик переключить .x на этом'],
+    ['pl', 'on click add .x to it', 'gdy kliknięcie dodaj .x do tego'],
+    ['pl', 'on click hide <p/> in it', 'gdy kliknięcie ukryj <p/> w tym'],
+    ['pl', 'on click put 1 before it', 'gdy kliknięcie umieść 1 przed tym'],
+    ['uk', 'on click remove .x from it', 'при клік видалити .x з цього'],
+    ['de', 'on click add .x to it', 'wenn klick hinzufügen .x zu ihm'],
+    ['de', 'on click toggle .x on it', 'wenn klick umschalten .x auf ihm'],
+    ['fr', 'on click add .x to it', 'quand clic ajouter .x à lui'],
+    ['fr', 'on click put 1 into it', 'quand clic mettre 1 dans lui'],
+    ['fr', 'on click put 1 before it', 'quand clic mettre 1 avant lui'],
+    ['fr', 'on click hide <p/> in it', 'quand clic cacher <p/> en lui'],
+    ['hi', 'on click put 1 into it', 'क्लिक पर 1 को रखें इस में'],
+    // A direction's accusative is the nominative (ru `это`, de `es`): unchanged.
+    ['ru', 'on click put 1 into it', 'при клик положить 1 в это'],
+    ['de', 'on click put 1 into it', 'wenn klick setzen 1 in es'],
+    // `me` as a verb's object: a patient, or a destination right after the verb.
+    ['de', 'on click show me', 'wenn klick zeige mich'],
+    ['ru', 'on click show me', 'при клик показать меня'],
+    ['pl', 'on click put me into #out', 'gdy kliknięcie umieść mnie do #out'],
+    ['uk', 'on click hide me with *opacity', 'при клік сховати мене з *opacity'],
+    ['de', 'bind me to $name', 'binden mich zu $name'],
+    // es fuses its object pronoun into the verb (`mostrarme`): not yet (N5).
+    ['es', 'on click show me', 'al clic mostrar yo'],
+  ];
+  it.each(RENDERS)('%s: %s', (language, source, expected) => {
+    expect(translate(source, 'en', language)).toBe(expected);
+    expect(translate(expected, language, 'en')).toBe(source);
+  });
+});
+
 // The plain render, before the verified render's fallback: a scroll position's
 // phrase is never replaced by a case form (the fallback would hide it).
 it('a scroll position keeps its phrase in the plain render', () => {

@@ -1281,7 +1281,8 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    * or a patient that has one: `set $x to me`, es `a mí`): one oblique phrase
    * (obliquePhrase), the marker the literal's last word (`antes de`), or its
    * first where markers follow their noun (hi). A patient with no marker before
-   * it is a verb's object (de `zeige mich`). undefined where it is neither.
+   * it, or a destination right after the verb, is a verb's object (de `zeige
+   * mich`, `binden mich zu $x`). undefined where it is neither.
    */
   private obliqueAt(
     tokens: readonly PatternToken[],
@@ -1292,18 +1293,24 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     const first = tokens[i];
     const second = tokens[i + 1];
     const profile = tryGetProfile(language);
-    if (
+    // A verb's object: a patient with no marker before it, or a destination
+    // right after the verb (`bind me to $x`, de `binden mich zu $x`).
+    const before = tokens[i - 1];
+    const object =
       first?.type === 'role' &&
-      first.role === 'patient' &&
-      !this.isMarker(tokens[i - 1], language)
-    ) {
-      const object = this.obliquePhrase(
+      (first.role === 'patient'
+        ? !this.isMarker(before, language)
+        : first.role === 'destination' &&
+          before?.type === 'literal' &&
+          !this.isMarker(before, language));
+    if (object) {
+      const form = this.obliquePhrase(
         language,
         '',
-        referenceOf(node.roles.get('patient')),
+        referenceOf(node.roles.get(first.role)),
         'direction'
       );
-      if (object !== undefined) return { text: object, tokens: 1 };
+      if (form !== undefined) return { text: form, tokens: 1 };
     }
     const roleToken = first?.type === 'role' ? first : second;
     if (roleToken?.type !== 'role') return undefined;
