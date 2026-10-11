@@ -1,8 +1,8 @@
 {
   "description": "English-leak gate, corpus half (src/multilingual/english-leaks.ts): per corpus row, the findings of each language's render (render(parse(en), L)): an English grammar word, `event:<name>` (an English event the lexicon has a word for) or `case:me` / `case:it` (a nominative pronoun beside a marker; `-object`: as an unmarked object) or `spacing:<marker>` (a marker the language attaches, written apart). `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts after a fresh populate.",
   "renders": 3519,
-  "leaky": 639,
-  "findings": 1305,
+  "leaky": 644,
+  "findings": 1353,
   "kinds": {
     "word": {
       "renders": 191,
@@ -17,76 +17,77 @@
       "findings": 27
     },
     "spacing": {
-      "renders": 462,
-      "findings": 976
+      "renders": 470,
+      "findings": 1024
     }
   },
   "entries": {
     "accordion-exclusive": {
       "spacing:den spacing:e spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "accordion-toggle": {
       "spacing:e spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "add-class-basic": {
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "add-class-to-other": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "announce-screen-reader": {
-      "of": "bn hi ko tl vi zh",
-      "of spacing:で": "ja",
+      "of": "hi ko tl vi zh",
+      "of spacing:তে": "bn",
+      "of spacing:で spacing:を": "ja",
       "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:nin": "tr"
     },
     "append-content": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "beep-debug-expression": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে spacing:তে": "bn",
-      "spacing:で spacing:に": "ja"
+      "spacing:で spacing:に spacing:を": "ja"
     },
     "behavior-draggable": {
       "case:me": "hi",
       "case:me spacing:den spacing:den spacing:den spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
-      "case:me spacing:কে spacing:কে spacing:কে spacing:কে spacing:কে spacing:কে spacing:কে spacing:কে spacing:তে spacing:তে spacing:তে": "bn",
+      "case:me spacing:কে spacing:কে spacing:তে": "bn",
       "event repeat trigger trigger trigger until": "qu",
       "spacing:에서 spacing:에서": "ko",
-      "spacing:から spacing:から spacing:から spacing:で spacing:に spacing:に spacing:を spacing:を spacing:を spacing:を spacing:を spacing:を spacing:を spacing:を spacing:を": "ja"
+      "spacing:から spacing:から spacing:で spacing:を": "ja"
     },
     "behavior-removable": {
       "case:me": "hi",
       "case:me spacing:den spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
       "case:me spacing:তে": "bn",
       "spacing:에서": "ko",
-      "spacing:から spacing:で": "ja",
+      "spacing:から spacing:で spacing:を": "ja",
       "trigger trigger": "qu"
     },
     "behavior-resizable": {
       "event repeat trigger trigger trigger until": "qu",
       "spacing:den spacing:den spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:কে spacing:কে spacing:কে spacing:কে spacing:কে spacing:কে spacing:কে spacing:কে spacing:কে spacing:কে spacing:কে spacing:কে spacing:কে spacing:কে spacing:কে spacing:কে spacing:কে spacing:তে spacing:তে spacing:তে spacing:তে spacing:তে spacing:তে spacing:তে spacing:তে spacing:তে spacing:তে spacing:তে spacing:তে spacing:তে": "bn",
+      "spacing:কে spacing:কে spacing:তে": "bn",
       "spacing:에서": "ko",
-      "spacing:から spacing:から spacing:で spacing:に spacing:に spacing:に spacing:に spacing:に spacing:に spacing:に spacing:に spacing:に spacing:に spacing:に spacing:に spacing:を spacing:を spacing:を spacing:を spacing:を spacing:を spacing:を spacing:を spacing:を spacing:を spacing:を spacing:を spacing:を spacing:を spacing:を spacing:を spacing:を spacing:を": "ja"
+      "spacing:から spacing:で spacing:を": "ja"
     },
     "behavior-sortable": {
       "event repeat trigger trigger trigger until": "qu",
       "null": "he",
       "spacing:den spacing:den spacing:den spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
-      "spacing:কে spacing:কে spacing:কে spacing:কে spacing:কে spacing:কে spacing:কে spacing:কে spacing:কে spacing:তে spacing:তে spacing:তে spacing:তে": "bn",
+      "spacing:কে spacing:কে spacing:তে": "bn",
       "spacing:에서": "ko",
-      "spacing:から spacing:から spacing:から spacing:で spacing:に spacing:に spacing:に spacing:に spacing:に spacing:に spacing:を spacing:を spacing:を spacing:を spacing:を spacing:を spacing:を spacing:を spacing:を spacing:を": "ja"
+      "spacing:から spacing:で spacing:を": "ja"
     },
     "bind-auto-detect": {
       "spacing:e spacing:i": "tr"
@@ -105,92 +106,93 @@
     "blur-element": {
       "case:me-object": "ar",
       "spacing:i": "tr",
-      "spacing:で": "ja"
+      "spacing:তে": "bn",
+      "spacing:で spacing:を": "ja"
     },
     "book-archive-download-click": {
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "book-counter-increment": {
       "spacing:i spacing:i spacing:nin": "tr",
       "spacing:তে": "bn",
       "spacing:의": "ko",
-      "spacing:で spacing:の": "ja"
+      "spacing:で spacing:の spacing:を": "ja"
     },
     "breakpoint-command": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "call-function": {
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "caret-var-increment": {
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "caret-var-on-target": {
       "on": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
       "on spacing:i spacing:i": "tr",
       "on spacing:তে": "bn",
-      "on spacing:で": "ja"
+      "on spacing:で spacing:を": "ja"
     },
     "caret-var-write": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "chained-access-possessive-dot": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "closest-ancestor": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "computed-value": {
       "of spacing:তে the": "bn",
       "of spacing:로 spacing:로 spacing:에서 the": "ko",
-      "of spacing:から spacing:で spacing:として spacing:として the": "ja",
+      "of spacing:から spacing:で spacing:として spacing:として spacing:を the": "ja",
       "of the": "hi tl vi zh",
       "spacing:den spacing:e spacing:i spacing:i spacing:nin": "tr"
     },
     "copy-to-clipboard": {
       "spacing:i spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "decrement-counter": {
       "spacing:i spacing:i spacing:nin": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "default-value": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "document-ready": {
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "dropdown-close-outside": {
       "spacing:den spacing:den spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:에서": "ko",
-      "spacing:から spacing:で": "ja"
+      "spacing:から spacing:で spacing:を": "ja"
     },
     "dropdown-toggle": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "event-debounce": {
       "at case:it-object debounced": "fr",
@@ -198,209 +200,210 @@
       "at debounced spacing:e spacing:i": "tr",
       "at debounced spacing:তে": "bn",
       "at debounced spacing:로": "ko",
-      "at debounced spacing:で": "ja",
+      "at debounced spacing:で spacing:を": "ja",
       "debounced": "tl"
     },
     "event-from-elsewhere": {
       "spacing:den spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:에서": "ko",
-      "spacing:から spacing:で": "ja"
+      "spacing:から spacing:で spacing:を": "ja"
     },
     "event-key-combo": {
       "spacing:i spacing:i": "tr",
-      "spacing:で": "ja"
+      "spacing:তে": "bn",
+      "spacing:で spacing:を": "ja"
     },
     "event-once": {
       "spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "event-throttle": {
       "at spacing:i spacing:i throttled": "tr",
       "at spacing:তে throttled": "bn",
-      "at spacing:で throttled": "ja",
+      "at spacing:で spacing:を throttled": "ja",
       "at throttled": "ar de es fr he hi id it ko ms pl pt qu ru sw th uk vi zh",
       "throttled": "tl"
     },
     "fade-out-remove": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "fetch-basic": {
       "case:it-object": "fr",
       "spacing:e spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "fetch-do-not-throw": {
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:로": "ko",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "fetch-error-handling": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:로": "ko",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "fetch-formdata": {
       "spacing:i spacing:le": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "fetch-json": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:로": "ko",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "fetch-loading-state": {
       "case:it-object": "fr",
       "spacing:e spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "fetch-with-headers": {
       "spacing:i spacing:i spacing:le": "tr",
       "spacing:তে": "bn",
       "spacing:로": "ko",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "fetch-with-method": {
       "spacing:i spacing:le": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "fetch-with-method-body": {
       "spacing:i spacing:le": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "first-in-parent": {
       "spacing:i spacing:i": "tr",
       "spacing:এ spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "focus-element": {
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "focus-trap": {
       "matches": "th",
-      "matches spacing:এ spacing:এ": "bn",
+      "matches spacing:এ spacing:এ spacing:তে": "bn",
       "spacing:den spacing:i spacing:i": "tr",
       "spacing:에서": "ko",
-      "spacing:から spacing:で": "ja"
+      "spacing:から spacing:で spacing:を": "ja"
     },
     "form-disable-on-submit": {
       "case:me case:me": "hi",
       "case:me case:me spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
       "case:me case:me spacing:এ spacing:এ spacing:এ spacing:তে spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "form-submit-prevent": {
       "spacing:i spacing:i spacing:i spacing:i": "tr",
       "spacing:কে spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "get-attribute-possessive-dot": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "get-value": {
       "case:it-object": "fr",
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "get-value-possessive-dot": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:কে spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:で spacing:を spacing:を": "ja"
     },
     "go-back": {
       "spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:로": "ko",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "go-url": {
       "spacing:e spacing:i url": "tr",
       "spacing:তে url": "bn",
-      "spacing:で url": "ja",
+      "spacing:で spacing:を url": "ja",
       "url": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh"
     },
     "halt-propagation": {
       "spacing:i spacing:i spacing:i": "tr",
       "spacing:কে spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "hide-element": {
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "hide-with-transition": {
       "spacing:i spacing:le": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "if-condition": {
       "spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "if-empty": {
       "spacing:e spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "if-exists": {
       "case:it-object": "fr",
       "spacing:e spacing:i spacing:i spacing:i": "tr",
       "spacing:এ spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "if-matches": {
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "increment-by-amount": {
       "spacing:i spacing:i spacing:nin": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "increment-counter": {
       "spacing:i spacing:i spacing:nin": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "input-char-count": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "input-clear": {
       "spacing:e spacing:i spacing:i spacing:nin": "tr",
       "spacing:কে spacing:তে": "bn",
       "spacing:를 spacing:에 spacing:의": "ko",
-      "spacing:で spacing:の spacing:を": "ja"
+      "spacing:で spacing:の spacing:を spacing:を": "ja"
     },
     "input-mirror": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:কে spacing:তে": "bn",
-      "spacing:で spacing:を": "ja"
+      "spacing:で spacing:を spacing:を": "ja"
     },
     "input-validation": {
       "spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "install-behavior": {
       "spacing:i": "tr"
@@ -408,22 +411,23 @@
     "its-value-possessive-dot": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "js-inline": {
       "spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "keydown-key-is-syntax": {
-      "is": "ar bn de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
+      "is": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
       "is spacing:i": "tr",
-      "is spacing:で": "ja"
+      "is spacing:তে": "bn",
+      "is spacing:で spacing:を": "ja"
     },
     "last-in-collection": {
       "spacing:e spacing:i": "tr",
       "spacing:এ spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "live-derived-value": {
       "spacing:i": "tr"
@@ -434,97 +438,99 @@
     "log-element": {
       "spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "log-value": {
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "make-element": {
       "case:it-object": "fr",
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "make-toast-element": {
       "case:it spacing:de spacing:i spacing:i spacing:i spacing:i spacing:nin": "tr",
       "case:it-object": "fr",
       "spacing:কে spacing:তে": "bn",
       "spacing:를 spacing:에 spacing:의": "ko",
-      "spacing:で spacing:で spacing:の spacing:を": "ja"
+      "spacing:で spacing:で spacing:の spacing:を spacing:を": "ja"
     },
     "method-call-possessive-dot": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "modal-close-backdrop": {
       "matches": "th",
       "matches spacing:তে": "bn",
       "spacing:i spacing:i": "tr",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "modal-close-button": {
       "spacing:den spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "modal-close-escape": {
       "spacing:den spacing:den spacing:i spacing:i spacing:i": "tr",
+      "spacing:তে": "bn",
       "spacing:에서": "ko",
-      "spacing:から spacing:で": "ja"
+      "spacing:から spacing:で spacing:を": "ja"
     },
     "modal-open": {
       "spacing:e spacing:i spacing:i spacing:i": "tr",
       "spacing:তে spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "morph-fetch-result": {
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "morph-form-update": {
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "morph-with-template": {
       "spacing:i spacing:i spacing:i spacing:le": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "multiple-events": {
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "next-element": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "on-custom-event-receive": {
       "spacing:i spacing:i": "tr",
-      "spacing:で": "ja"
+      "spacing:তে": "bn",
+      "spacing:で spacing:を": "ja"
     },
     "optional-chaining-possessive": {
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "pick-text-range": {
       "of": "he",
       "spacing:i spacing:nin": "tr",
       "spacing:তে": "bn",
       "spacing:부터 spacing:의": "ko",
-      "spacing:から spacing:で spacing:の": "ja"
+      "spacing:から spacing:で spacing:の spacing:を": "ja"
     },
     "previous-element": {
       "spacing:den spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "put-after": {
       "after": "hi",
@@ -532,7 +538,7 @@
       "case:me": "tl",
       "spacing:i": "tr",
       "spacing:를": "ko",
-      "spacing:で spacing:を": "ja"
+      "spacing:で spacing:を spacing:を": "ja"
     },
     "put-before": {
       "before": "hi",
@@ -540,271 +546,271 @@
       "case:me": "tl",
       "spacing:i": "tr",
       "spacing:를": "ko",
-      "spacing:で spacing:を": "ja"
+      "spacing:で spacing:を spacing:を": "ja"
     },
     "put-content-basic": {
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "reactive-array-push": {
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "remove-class-basic": {
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "remove-class-from-all": {
       "spacing:den spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "remove-element": {
       "spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "render-template-with-data": {
       "case:it-object": "fr",
       "spacing:e spacing:i spacing:i spacing:le": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "repeat-for-each": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:এ spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "repeat-forever": {
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "repeat-times": {
       "spacing:i spacing:i spacing:i": "tr",
       "spacing:কে spacing:তে": "bn",
       "spacing:를": "ko",
-      "spacing:で spacing:を": "ja"
+      "spacing:で spacing:を spacing:を": "ja"
     },
     "repeat-until-event": {
       "spacing:i spacing:i spacing:i spacing:nin": "tr",
-      "spacing:কে": "bn",
+      "spacing:কে spacing:তে": "bn",
       "spacing:를 spacing:을": "ko",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "repeat-while": {
       "spacing:i spacing:i spacing:nin": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "send-event": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "send-event-to-form": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "send-with-detail": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "set-attribute": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "set-color-variable": {
       "spacing:e spacing:i spacing:i spacing:nin": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "set-inner-html-possessive-dot": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "set-opacity": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "set-style": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "set-text-basic": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "set-text-possessive-dot": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "set-transform": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "settle-animations": {
       "spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "show-element": {
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "show-with-transition": {
       "spacing:i spacing:i spacing:le": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "slide-toggle": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "socket-send": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "stagger-animation": {
       "spacing:e spacing:i spacing:i spacing:i": "tr",
       "spacing:এ spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "swap-content": {
       "spacing:e spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "swap-view-transition": {
       "spacing:e spacing:i transition view": "tr",
       "spacing:তে transition view": "bn",
-      "spacing:で transition view": "ja",
+      "spacing:で spacing:を transition view": "ja",
       "transition view": "ar de es he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
       "view": "fr"
     },
     "tabs-aria": {
       "spacing:e spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "tabs-basic": {
       "spacing:den spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "tabs-content": {
       "spacing:den spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "take-class-from-siblings": {
       "spacing:den spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "tell-command": {
       "spacing:e spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "tell-other-element": {
       "spacing:e spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "template-literal-interpolation": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "template-literal-list-build": {
       "in": "he",
       "spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
       "spacing:এ spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "toggle-aria-expanded": {
       "case:me": "it",
       "spacing:e spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "toggle-class-basic": {
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "toggle-class-on-other": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "toggle-class-temporary": {
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "toggle-visibility": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "transition-color": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "transition-opacity": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "transition-transform": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "trigger-event": {
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja",
+      "spacing:で spacing:を": "ja",
       "trigger": "qu"
     },
     "two-way-binding": {
       "spacing:den spacing:e spacing:i spacing:i": "tr",
       "spacing:তে spacing:তে": "bn",
       "spacing:에서": "ko",
-      "spacing:から spacing:で spacing:に": "ja"
+      "spacing:から spacing:で spacing:に spacing:を": "ja"
     },
     "unless-condition": {
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "wait-for-event": {
       "spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "wait-then": {
       "spacing:i": "tr",
       "spacing:তে": "bn",
-      "spacing:で": "ja"
+      "spacing:で spacing:を": "ja"
     },
     "when-multiple-changes": {
       "spacing:e spacing:i": "tr"
@@ -815,21 +821,23 @@
     },
     "window-keydown": {
       "spacing:den spacing:i spacing:i": "tr",
+      "spacing:তে": "bn",
       "spacing:에서": "ko",
-      "spacing:から spacing:で": "ja"
+      "spacing:から spacing:で spacing:を": "ja"
     },
     "window-resize": {
-      "at debounced": "ar bn de es fr he hi id it ms pl pt qu ru sw th uk vi zh",
+      "at debounced": "ar de es fr he hi id it ms pl pt qu ru sw th uk vi zh",
       "at debounced spacing:den spacing:i spacing:i": "tr",
+      "at debounced spacing:তে": "bn",
       "at debounced spacing:에서": "ko",
-      "at debounced spacing:から spacing:で": "ja",
+      "at debounced spacing:から spacing:で spacing:を": "ja",
       "debounced": "tl"
     },
     "window-scroll": {
       "spacing:den spacing:den spacing:e spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:에서": "ko",
-      "spacing:から spacing:で": "ja"
+      "spacing:から spacing:で spacing:を": "ja"
     }
   },
   "unrendered": {}
