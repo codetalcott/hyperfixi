@@ -144,7 +144,7 @@ export interface CaseRule {
  *   bn  আমি তে → আমাতে
  *   de  zu ich → zu mir; zu es → dazu, zu ihm; messen ich → messen mich
  *   es  a yo → a mí; mostrar yo → mostrarme; poner ello → ponerlo
- *   fr  dans il → dans lui, y; mettre il → le mettre
+ *   fr  dans il → dans lui, y; mettre il → le mettre; cacher moi → me cacher
  *   he  אל אני → אליי
  *   hi  मैं में → मुझमें; यह में → इसमें
  *   it  a io → a me; mostrare io → mostrarmi; mettere esso → metterlo
@@ -156,7 +156,7 @@ export interface CaseRule {
  *   tr  ben e → bana; o e → ona
  *   uk  до я → до мене; до це → до цього, з це → з цього; показати я → показати мене
  *
- * Right as written: fr `à moi`; es `ello`, it `esso` and pt `ele` after any
+ * Right as written: fr `à moi` (after a preposition); es `ello`, it `esso` and pt `ele` after any
  * other marker (`a ello`, `a esso`, `a ele`); ru `в это`, uk `в це`, pl `w to`
  * and `на`/`na` with them, the accusative of a direction (a location wants
  * `в этом`, which the text cannot tell apart: not counted); tl `bago ito`,
@@ -172,7 +172,7 @@ export const CASE_RULES: Readonly<Record<string, CaseRule>> = {
   bn: { me: true },
   de: { me: true, it: true, meObject: true },
   es: { me: true, meObject: true, itObject: true },
-  fr: { it: true, itObject: true },
+  fr: { it: true, meObject: true, itObject: true },
   he: { me: true },
   hi: { me: true, it: true },
   it: { me: true, meObject: true, itObject: true },
@@ -311,6 +311,7 @@ interface ProfileLike {
     keywords?: Record<string, string>;
   };
   eventHandler?: Record<string, unknown>;
+  objectClitics?: { forms?: Record<string, string>; attach?: string };
 }
 type LexiconLike = Record<string, Record<string, KeywordTranslationLike> | undefined>;
 interface PatternLike {
@@ -375,6 +376,10 @@ function languageWords(
   // Native form → the English reference it stands for (es `mi` → `me`).
   for (const n of Object.keys(profile?.possessive?.keywords ?? {}))
     for (const w of wordsOf(n)) native.add(w);
+  // A clitic written as its own word (fr `me cacher`) is the language's; one
+  // attached to its verb (es `mostrarme`) never stands alone.
+  if (profile?.objectClitics?.attach === 'before')
+    for (const clitic of Object.values(profile.objectClitics.forms ?? {})) native.add(clitic);
   for (const w of wordsOf(profile?.possessive?.marker)) native.add(w);
   const handler = JSON.stringify(profile?.eventHandler ?? {});
   for (const m of handler.matchAll(

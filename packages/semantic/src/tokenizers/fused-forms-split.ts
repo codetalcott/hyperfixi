@@ -102,6 +102,12 @@ export function attachClitic(
     }
     case 'suffix':
       return verb + clitic;
+    case 'before':
+      // An infinitive of one word; elided before a vowel or a mute h.
+      if (!/^\p{L}+(?:er|ir|re)$/u.test(verb)) return undefined;
+      return /^[aeiouyàâäéèêëîïôöùûüœh]/iu.test(verb)
+        ? `${clitic.slice(0, -1)}'${verb}`
+        : `${clitic} ${verb}`;
   }
 }
 
@@ -117,6 +123,7 @@ function verbOf(attach: CliticAttach, word: string, clitic: string): string | un
     case 'suffix':
       return stem;
     case 'hyphen':
+    case 'before':
       return undefined;
   }
 }
@@ -206,6 +213,23 @@ export function splitObjectClitics(
   let changed = false;
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i]!;
+    if (clitics.attach === 'before') {
+      // fr `le mettre`, `l afficher` (spaceElisions): the verb, then its object.
+      const word = token.value.toLowerCase();
+      const entry = entries.find(e => e.clitic === word || e.clitic.slice(0, -1) === word);
+      const next = tokens[i + 1];
+      const verb = entry && next ? readsAsVerb(next.value) : undefined;
+      const pronoun = entry && verb ? pronounOf(entry.pronoun) : undefined;
+      if (verb && pronoun && next) {
+        out.push({ ...verb, position: next.position });
+        out.push({ ...pronoun, position: token.position });
+        i += 1;
+        changed = true;
+        continue;
+      }
+      out.push(token);
+      continue;
+    }
     if (clitics.attach === 'hyphen') {
       const dash = tokens[i + 1];
       const after = tokens[i + 2];

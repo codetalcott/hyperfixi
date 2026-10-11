@@ -35,6 +35,10 @@ export const frenchProfile: LanguageProfile = {
     window: 'fenêtre',
     detail: 'détail',
   },
+  // `me` and `it` as a verb's object: the clitic before the infinitive, elided
+  // before a vowel (`le mettre`, `l'afficher`, `me cacher`; FUSED_FORMS.md Q1,
+  // M2 N3). The reader moves it back after the verb (splitObjectClitics).
+  objectClitics: { forms: { me: 'me', it: 'le' }, attach: 'before' },
   // `it` next to a marker, in the stressed form a preposition takes (M2 N3;
   // listed in NATIVE_REVIEW_NEEDED.md). `moi` already is one.
   obliqueReferences: {
