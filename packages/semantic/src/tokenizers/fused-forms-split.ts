@@ -214,16 +214,22 @@ export function splitObjectClitics(
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i]!;
     if (clitics.attach === 'before') {
-      // fr `le mettre`, `l afficher` (spaceElisions): the verb, then its object.
+      // fr `le mettre`, `l'afficher` (`l` `'` `afficher`): the verb, then its
+      // object. An elided clitic only with its apostrophe: a bare `l` is a name.
       const word = token.value.toLowerCase();
-      const entry = entries.find(e => e.clitic === word || e.clitic.slice(0, -1) === word);
-      const next = tokens[i + 1];
+      const elided = /^['’]$/.test(tokens[i + 1]?.value ?? '');
+      const entry = entries.find(e => (elided ? e.clitic.slice(0, -1) : e.clitic) === word);
+      const last = i + (elided ? 1 : 0);
+      const next = tokens[last + 1];
       const verb = entry && next ? readsAsVerb(next.value) : undefined;
       const pronoun = entry && verb ? pronounOf(entry.pronoun) : undefined;
       if (verb && pronoun && next) {
         out.push({ ...verb, position: next.position });
-        out.push({ ...pronoun, position: token.position });
-        i += 1;
+        out.push({
+          ...pronoun,
+          position: { start: token.position.start, end: tokens[last]!.position.end },
+        });
+        i = last + 1;
         changed = true;
         continue;
       }

@@ -14,7 +14,6 @@ import { BaseTokenizer, type KeywordEntry } from './base';
 import { frenchProfile } from '../generators/profiles/french';
 import { FrenchMorphologicalNormalizer } from './morphology/french-normalizer';
 import { splitObjectClitics } from './fused-forms-split';
-import { spaceElisions } from './apostrophe-suffixes';
 import {
   StringLiteralExtractor,
   NumberExtractor,
@@ -133,9 +132,6 @@ const FRENCH_EXTRAS: KeywordEntry[] = [
 // French Tokenizer Implementation
 // =============================================================================
 
-/** The clitics a verb starting with a vowel elides (`l'`, `m'`). */
-const ELIDED: ReadonlySet<string> = new Set(['l', 'm']);
-
 export class FrenchTokenizer extends BaseTokenizer {
   readonly language = 'fr';
   readonly direction = 'ltr' as const;
@@ -156,13 +152,10 @@ export class FrenchTokenizer extends BaseTokenizer {
     this.registerExtractor(new PunctuationExtractor()); // Punctuation
   }
 
-  /**
-   * A clitic before its verb (`le mettre`, `l'afficher`: see spaceElisions)
-   * reads as the verb and its object: see splitObjectClitics.
-   */
+  /** A clitic before its verb (`le mettre`, `l'afficher`) reads as the verb and its object: see splitObjectClitics. */
   override tokenize(input: string): TokenStream {
     return splitObjectClitics(
-      super.tokenize(spaceElisions(input, ELIDED)),
+      super.tokenize(input),
       frenchProfile,
       word => super.tokenize(word).tokens
     );
