@@ -297,16 +297,17 @@ parse lost the value, and every translation is rendered from it. Fix that first.
 ## English left in a translation
 
 Every gate above asks whether a translation means what the source means; none asks
-whether it reads as the language. `english-leaks.ts` counts, in each render, three kinds
+whether it reads as the language. `english-leaks.ts` counts, in each render, four kinds
 of finding:
 
-| Finding                             | What it is                                                                                |
-| ----------------------------------- | ----------------------------------------------------------------------------------------- |
-| `<word>`                            | an English word the engine reads as grammar in the source, written in English             |
-| `event:<name>`                      | an English event name where the language's lexicon has a word and the renderer may use it |
-| `case:me`                           | the nominative `me` beside a role marker, in the 13 languages where that form is wrong    |
-| `case:it`                           | the nominative `it` beside a role marker that wants another form (`CASE_RULES`)           |
-| `case:me-object` / `case:it-object` | the nominative pronoun as a command's unmarked object, where that form is wrong           |
+| Finding                             | What it is                                                                                    |
+| ----------------------------------- | --------------------------------------------------------------------------------------------- |
+| `<word>`                            | an English word the engine reads as grammar in the source, written in English                 |
+| `event:<name>`                      | an English event name where the language's lexicon has a word and the renderer may use it     |
+| `case:me`                           | the nominative `me` beside a role marker, in the 13 languages where that form is wrong        |
+| `case:it`                           | the nominative `it` beside a role marker that wants another form (`CASE_RULES`)               |
+| `case:me-object` / `case:it-object` | the nominative pronoun as a command's unmarked object, where that form is wrong               |
+| `spacing:<marker>`                  | a marker ko, ja, bn or tr attaches to its noun, written apart (`#out 에`; `ATTACHED_MARKERS`) |
 
 "Grammar" is derived per source: the tokens the engine's own parser matched as words, plus
 the references in its parse. A word the language spells the same (es `a`, de `in`) and a

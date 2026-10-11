@@ -135,7 +135,10 @@ as a profile alternative.
   for pronouns and words, keep selectors spaced until review.
 - **Q3 (N5 gate).** Add a `spacing:` finding to the leak gate for ko, bn, ja, tr (qu?)
   before the render work, as `case` was? Recommended: yes, ko/bn/ja/tr; qu after a
-  check.
+  check. **Built 2026-10-11, as recommended** (`ATTACHED_MARKERS` in `english-leaks.ts`):
+  the case particles and suffixes only; a postposition that is its own word (tr `içinde`,
+  ko `사이`, bn `থেকে`) is not counted. qu's check failed: its reader takes `#outman` as
+  one selector, so qu joins once its reader splits a suffix (as tr's must first, Q2).
 - **Q4 (de).** For `it` after a preposition: da-compounds (`darin`, `darauf`, `dazu`),
   natural German, fused; or `ihm` (wave 2, written now for the dative and location)?
   Recommended: da-compounds for every preposition, `ihm` kept as a reader form.

@@ -28,6 +28,7 @@ import {
   diffLeakBaseline,
   gainedLeaks,
   initLeakScanner,
+  KINDS,
   leakBaselineFrom,
   leakRatesByLanguage,
   LEAK_TARGETS,
@@ -43,12 +44,13 @@ const DESCRIPTION: Record<LeakHalf, string> = {
     'English-leak gate, corpus half (src/multilingual/english-leaks.ts): per corpus row, the ' +
     "findings of each language's render (render(parse(en), L)): an English grammar word, " +
     '`event:<name>` (an English event the lexicon has a word for) or `case:me` / `case:it` (a ' +
-    'nominative pronoun beside a marker; `-object`: as an unmarked object). `*` stands for all 23 languages. Shrink-only: regenerate with ' +
+    'nominative pronoun beside a marker; `-object`: as an unmarked object) or `spacing:<marker>` (a marker ' +
+    'the language attaches, written apart). `*` stands for all 23 languages. Shrink-only: regenerate with ' +
     'tools/regen-english-leaks-baseline.ts after a fresh populate.',
   shapes:
     'English-leak gate, command-shape half (src/multilingual/english-leaks.ts): per command-shape ' +
     "case, the findings of each language's render (translate(src, 'en', L)): an English grammar " +
-    'word, `event:<name>` or `case:<pronoun>`. `*` stands for all 23 languages. Shrink-only: regenerate ' +
+    'word, `event:<name>`, `case:<pronoun>` or `spacing:<marker>`. `*` stands for all 23 languages. Shrink-only: regenerate ' +
     'with tools/regen-english-leaks-baseline.ts.',
 };
 
@@ -63,9 +65,9 @@ function report(half: LeakHalf, results: LeakResults, doc: LeakBaseline): void {
     `\n## ${half}: ${results.size} sources, ${doc.renders} renders; ${doc.leaky} (${pct(doc.leaky, doc.renders)}) ` +
       `with a finding; ${doc.findings} findings`
   );
-  for (const kind of ['word', 'event', 'case'] as const)
+  for (const kind of KINDS)
     console.log(
-      `  ${kind.padEnd(5)}  ${String(doc.kinds[kind].renders).padStart(6)} renders (${pct(doc.kinds[kind].renders, doc.renders)}), ` +
+      `  ${kind.padEnd(7)}  ${String(doc.kinds[kind].renders).padStart(6)} renders (${pct(doc.kinds[kind].renders, doc.renders)}), ` +
         `${doc.kinds[kind].findings} findings`
     );
   const words = new Map<
@@ -74,6 +76,7 @@ function report(half: LeakHalf, results: LeakResults, doc: LeakBaseline): void {
   >();
   const events = new Map<string, { n: number; languages: Set<string> }>();
   const cases = new Map<string, Map<string, number>>();
+  const spacing = new Map<string, Map<string, number>>();
   for (const byLanguage of results.values()) {
     for (const [language, findings] of byLanguage) {
       if (!findings) continue;
@@ -96,9 +99,10 @@ function report(half: LeakHalf, results: LeakResults, doc: LeakBaseline): void {
           e.languages.add(language);
           events.set(f.word, e);
         } else {
-          const c = cases.get(f.word) ?? new Map<string, number>();
+          const table = f.kind === 'case' ? cases : spacing;
+          const c = table.get(f.word) ?? new Map<string, number>();
           c.set(language, (c.get(language) ?? 0) + 1);
-          cases.set(f.word, c);
+          table.set(f.word, c);
         }
       }
     }
@@ -108,21 +112,19 @@ function report(half: LeakHalf, results: LeakResults, doc: LeakBaseline): void {
     (a, b) => b[1].rate.word - a[1].rate.word
   );
   console.log(
-    `\nby language: share of renders with an English word / event / pronoun case ` +
-      `(M2 exit targets: at most ${pct(targets.word, 1)} / ${pct(targets.event, 1)} / ${pct(targets.case, 1)} each; \`!\` = not met)`
+    `\nby language: share of renders with an English word / event / pronoun case / spaced marker ` +
+      `(M2 exit targets: at most ${KINDS.map(k => pct(targets[k], 1)).join(' / ')} each; \`!\` = not met)`
   );
   const mark = (ok: boolean): string => (ok ? ' ' : '!');
   for (const [language, r] of rates) {
     console.log(
       `  ${language}  ${String(r.renders).padStart(5)}  ` +
-        (['word', 'event', 'case'] as const)
-          .map(k => `${pct(r.rate[k], 1).padStart(6)}${mark(r.met[k])}`)
-          .join(' ')
+        KINDS.map(k => `${pct(r.rate[k], 1).padStart(6)}${mark(r.met[k])}`).join(' ')
     );
   }
-  for (const kind of ['word', 'event', 'case'] as const) {
+  for (const kind of KINDS) {
     const met = rates.filter(([, r]) => r.met[kind]).length;
-    console.log(`  ${kind.padEnd(5)} target met in ${met}/${rates.length} languages`);
+    console.log(`  ${kind.padEnd(7)} target met in ${met}/${rates.length} languages`);
   }
   console.log(
     '\nby English word (tokens, languages, contexts; `+` = the language has a word for it):'
@@ -135,15 +137,19 @@ function report(half: LeakHalf, results: LeakResults, doc: LeakBaseline): void {
     );
   }
   if (words.size > 70) console.log(`  … and ${words.size - 70} more words`);
-  if (cases.size) {
-    console.log('\nby pronoun case (findings; per language):');
-    for (const [pronoun, c] of [...cases].sort()) {
+  for (const [title, table] of [
+    ['pronoun case', cases],
+    ['spaced marker', spacing],
+  ] as const) {
+    if (!table.size) continue;
+    console.log(`\nby ${title} (findings; per language):`);
+    for (const [word, c] of [...table].sort()) {
       const n = [...c.values()].reduce((a, b) => a + b, 0);
       const per = [...c]
         .sort((a, b) => b[1] - a[1])
         .map(([l, k]) => `${l}:${k}`)
         .join(' ');
-      console.log(`  ${String(n).padStart(6)}  ${pronoun.padEnd(10)} ${per}`);
+      console.log(`  ${String(n).padStart(6)}  ${word.padEnd(10)} ${per}`);
     }
   }
   if (events.size) {

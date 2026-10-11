@@ -34,6 +34,11 @@ function keys(source: string, render: string, language: string): string[] {
   return scanner.scan(render, info, language).map(findingKey).sort();
 }
 
+/** The same, of one kind (the spaced markers of tr and ja stand beside their cases). */
+function keysOf(kind: string, source: string, render: string, language: string): string[] {
+  return keys(source, render, language).filter(k => k.startsWith(`${kind}:`));
+}
+
 function findings(source: string, render: string, language: string): LeakFinding[] {
   const info = scanner.sourceInfo(source, 'program');
   if (!info) throw new Error(`the engine rejects ${source}`);
@@ -195,23 +200,29 @@ describe('english-leaks scanner', () => {
 
   it('counts a nominative `me` beside a marker, in the languages where that is wrong', () => {
     expect(keys('on click add .b to me', 'al clic agregar .b a yo', 'es')).toEqual(['case:me']);
-    expect(keys('on click add .b to me', 'tıklama da .b i ben e ekle', 'tr')).toEqual(['case:me']);
+    expect(keysOf('case', 'on click add .b to me', 'tıklama da .b i ben e ekle', 'tr')).toEqual([
+      'case:me',
+    ]);
     // fr writes the stressed form; ja's particle attaches to any noun.
     expect(keys('on click add .b to me', 'sur clic ajouter .b à moi', 'fr')).toEqual([]);
-    expect(keys('on click add .b to me', 'クリック で 自分 に .b を 追加', 'ja')).toEqual([]);
+    expect(keysOf('case', 'on click add .b to me', 'クリック で 自分 に .b を 追加', 'ja')).toEqual(
+      []
+    );
     // The oblique forms are right.
     expect(keys('on click add .b to me', 'al clic agregar .b a mí', 'es')).toEqual([]);
     expect(keys('on click add .b to me', 'при клик добавить .b ко мне', 'ru')).toEqual([]);
     // it writes `me` after a marker: the profile's own word, not English's.
     expect(keys('on click put "x" into me', 'su clic mettere "x" in me', 'it')).toEqual([]);
-    expect(keys('on click put "x" into me', 'su clic mettere "x" in io', 'it')).toEqual(['case:me']);
+    expect(keys('on click put "x" into me', 'su clic mettere "x" in io', 'it')).toEqual([
+      'case:me',
+    ]);
   });
 
   it('counts a nominative `it` beside a marker, where the language has another form', () => {
     const source = 'on click add .b to it';
     expect(keys(source, 'при клик добавить .b к это', 'ru')).toEqual(['case:it']);
     expect(keys(source, 'wenn klick hinzufügen .b zu es', 'de')).toEqual(['case:it']);
-    expect(keys(source, 'tıklama i üzerinde o e .b i ekle', 'tr')).toEqual(['case:it']);
+    expect(keysOf('case', source, 'tıklama i üzerinde o e .b i ekle', 'tr')).toEqual(['case:it']);
     expect(keys(source, 'при клик добавить .b к этому', 'ru')).toEqual([]);
     // es `ello` and it `esso` are right after a marker.
     expect(keys(source, 'al clic agregar .b a ello', 'es')).toEqual([]);
@@ -261,6 +272,41 @@ describe('english-leaks scanner', () => {
     ).toEqual(['case:me-object']);
     // A word before the pronoun that is no verb at all.
     expect(keys('on click put it into #o', 'al clic ello en #o', 'es')).toEqual([]);
+  });
+
+  it('counts a marker its language attaches, written apart (N5)', () => {
+    const source = 'on click put "x" into #out';
+    expect(keys(source, '클릭 할 때 "x" 을 #out 에 넣다', 'ko')).toEqual([
+      'spacing:에',
+      'spacing:을',
+    ]);
+    expect(keys(source, 'クリック で "x" を #out に 置く', 'ja')).toEqual([
+      'spacing:で',
+      'spacing:に',
+      'spacing:を',
+    ]);
+    expect(keys(source, 'ক্লিক তে "x" কে #out এ রাখুন', 'bn')).toEqual([
+      'spacing:এ',
+      'spacing:কে',
+      'spacing:তে',
+    ]);
+    expect(keys(source, 'tıklama i üzerinde "x" i #out e koy', 'tr')).toEqual([
+      'spacing:e',
+      'spacing:i',
+      'spacing:i',
+    ]);
+    // Attached, nothing; a postposition that is its own word is spaced.
+    expect(keys(source, '클릭 할 때 "x"를 #out에 넣다', 'ko')).toEqual([]);
+    expect(keys(source, 'クリックで "x"を #outに 置く', 'ja')).toEqual([]);
+    expect(keys(source, 'tıklamada "x"\'i #out\'a koy', 'tr')).toEqual([]);
+    expect(
+      keys('on click hide <p/> in #list', "tıklamada #list içindeki <p/>'yi gizle", 'tr')
+    ).toEqual([]);
+    // A marker that opens a line has nothing to attach to.
+    expect(keys(source, 'クリックで "x"を\nに 置く', 'ja')).toEqual([]);
+    // Not in a language whose markers are words (es `a`), nor in qu's yet.
+    expect(keys(source, 'al clic poner "x" en #out', 'es')).toEqual([]);
+    expect(keys(source, 'maykama ñitiy "x" ta #out man churay', 'qu')).toEqual([]);
   });
 });
 
@@ -390,8 +436,8 @@ describe('M2 exit targets', () => {
 
   it('allows no event and no pronoun case, and skips a lane with no render', () => {
     const rates = leakRatesByLanguage(rows({ ru: ['event'], pl: ['case'], he: 'none' }), 'shapes');
-    expect(rates.get('ru')!.met).toEqual({ word: true, event: false, case: true });
-    expect(rates.get('pl')!.met).toEqual({ word: true, event: true, case: false });
+    expect(rates.get('ru')!.met).toEqual({ word: true, event: false, case: true, spacing: true });
+    expect(rates.get('pl')!.met).toEqual({ word: true, event: true, case: false, spacing: true });
     expect(rates.has('he')).toBe(false);
   });
 

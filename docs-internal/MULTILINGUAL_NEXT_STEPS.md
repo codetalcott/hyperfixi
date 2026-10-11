@@ -107,7 +107,8 @@ never occur in the corpus). **Exit targets (decided 2026-10-08), in every langua
 5% of corpus renders and 10% of command-shape renders, not counting English a recorded decision keeps
 (policy 6, the sheet's keep rows); no `event:` finding (a denylisted event, each with its reason, is
 none); no `case:` finding (`me`, `it`, an unmarked object), its forms checked by a native speaker (de, pl, ru and uk pick the case by
-the marker). `--report` prints each language against them (`LEAK_TARGETS`). Words are mostly vocabulary:
+the marker); since 2026-10-11 (owner, FUSED_FORMS.md Q3), no `spacing:` finding (a marker ko, ja, bn
+or tr attaches to its noun, written as its own word: N5). `--report` prints each language against them (`LEAK_TARGETS`). Words are mostly vocabulary:
 without the sheet the floor is 13.3% / 19.4% (renders with a word the language has none for).
 
 **Step 2 — no decision needed (N2): done 2026-10-08.** Native event names in he, hi, it, pl, qu, ru, th, uk
