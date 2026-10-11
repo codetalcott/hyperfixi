@@ -1,8 +1,8 @@
 {
   "description": "English-leak gate, corpus half (src/multilingual/english-leaks.ts): per corpus row, the findings of each language's render (render(parse(en), L)): an English grammar word, `event:<name>` (an English event the lexicon has a word for) or `case:me` / `case:it` (a nominative pronoun beside a marker; `-object`: as an unmarked object). `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts after a fresh populate.",
   "renders": 3519,
-  "leaky": 410,
-  "findings": 578,
+  "leaky": 376,
+  "findings": 532,
   "kinds": {
     "word": {
       "renders": 191,
@@ -13,13 +13,13 @@
       "findings": 0
     },
     "case": {
-      "renders": 243,
-      "findings": 276
+      "renders": 206,
+      "findings": 230
     }
   },
   "entries": {
     "add-class-basic": {
-      "case:me": "ar bn he tr"
+      "case:me": "ar bn he"
     },
     "announce-screen-reader": {
       "of": "bn hi ja ko tl vi zh"
@@ -29,8 +29,8 @@
       "event repeat trigger trigger trigger until": "qu"
     },
     "behavior-removable": {
-      "case:me": "he",
-      "case:me case:me": "bn hi tr",
+      "case:me": "he tr",
+      "case:me case:me": "bn hi",
       "case:me-object": "ar es it pt",
       "trigger trigger": "qu"
     },
@@ -38,60 +38,59 @@
       "event repeat trigger trigger trigger until": "qu"
     },
     "behavior-sortable": {
-      "case:me case:me case:me": "ar bn tr",
+      "case:me case:me case:me": "ar bn",
       "case:me case:me case:me null": "he",
       "event repeat trigger trigger trigger until": "qu"
     },
     "blur-element": {
-      "case:me": "bn he hi tr",
+      "case:me": "bn he hi",
       "case:me-object": "ar es it pt"
     },
     "caret-var-on-target": {
-      "case:me on": "ar bn he tr",
-      "on": "de es fr hi id it ja ko ms pl pt qu ru sw th tl uk vi zh"
+      "case:me on": "ar bn he",
+      "on": "de es fr hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh"
     },
     "computed-value": {
       "of the": "bn hi ja ko tl vi zh"
     },
     "copy-to-clipboard": {
-      "case:me case:me": "ar bn he tr"
+      "case:me case:me": "ar bn he"
     },
     "event-debounce": {
-      "at case:it debounced": "hi tr",
+      "at case:it debounced": "hi",
       "at case:it-object debounced": "ar es fr it pt",
-      "at debounced": "bn de he id ja ko ms pl qu ru sw th uk vi zh",
+      "at debounced": "bn de he id ja ko ms pl qu ru sw th tr uk vi zh",
       "debounced": "tl"
     },
     "event-from-elsewhere": {
-      "case:me": "ar bn he tr"
+      "case:me": "ar bn he"
     },
     "event-once": {
-      "case:me": "ar bn he tr"
+      "case:me": "ar bn he"
     },
     "event-throttle": {
       "at throttled": "ar bn de es fr he hi id it ja ko ms pl pt qu ru sw th tr uk vi zh",
       "throttled": "tl"
     },
     "fade-out-remove": {
-      "case:me": "bn he hi tr",
+      "case:me": "bn he hi",
       "case:me-object": "ar es it pt"
     },
     "fetch-basic": {
-      "case:it": "hi tr",
+      "case:it": "hi",
       "case:it-object": "ar es fr it pt"
     },
     "fetch-do-not-throw": {
-      "case:it": "ar de tl tr"
+      "case:it": "ar de tl"
     },
     "fetch-loading-state": {
       "case:it": "hi",
-      "case:it case:me case:me": "tr",
       "case:it-object": "es fr it pt",
       "case:it-object case:me case:me": "ar",
       "case:me case:me": "bn he"
     },
     "fetch-with-headers": {
-      "case:me": "ar bn he tr"
+      "case:me": "ar bn he"
     },
     "focus-trap": {
       "matches": "bn th"
@@ -100,45 +99,44 @@
       "case:me case:me": "ar bn hi tr"
     },
     "get-value": {
-      "case:it": "hi tr",
+      "case:it": "hi",
       "case:it-object": "ar es fr it pt"
     },
     "go-url": {
       "url": "*"
     },
     "hide-with-transition": {
-      "case:me": "bn he hi tr",
+      "case:me": "bn he hi",
       "case:me-object": "ar es it pt"
     },
     "if-empty": {
-      "case:me": "ar bn he tr"
+      "case:me": "ar bn he"
     },
     "if-exists": {
-      "case:it": "hi tr",
+      "case:it": "hi",
       "case:it-object": "ar es fr it pt"
     },
     "input-validation": {
-      "case:me case:me": "ar bn he tr"
+      "case:me case:me": "ar bn he"
     },
     "keydown-key-is-syntax": {
-      "case:me is": "bn he hi tr",
+      "case:me is": "bn he hi",
       "case:me-object is": "ar es it pt",
-      "is": "de fr id ja ko ms pl qu ru sw th tl uk vi zh"
+      "is": "de fr id ja ko ms pl qu ru sw th tl tr uk vi zh"
     },
     "live-derived-value": {
-      "case:me": "ar bn he tr"
+      "case:me": "ar bn he"
     },
     "log-element": {
-      "case:me": "bn he hi tr",
+      "case:me": "bn he hi",
       "case:me-object": "ar es it pt"
     },
     "make-element": {
-      "case:it": "hi tr",
+      "case:it": "hi",
       "case:it-object": "ar es fr it pt"
     },
     "make-toast-element": {
-      "case:it": "de tl",
-      "case:it case:it": "tr",
+      "case:it": "de tl tr",
       "case:it case:it-object": "ar pt",
       "case:it-object": "es fr it"
     },
@@ -146,16 +144,16 @@
       "matches": "bn th"
     },
     "morph-fetch-result": {
-      "case:it": "ar de pt tl tr"
+      "case:it": "ar de pt tl"
     },
     "morph-form-update": {
-      "case:it": "ar de pt tl tr"
+      "case:it": "ar de pt tl"
     },
     "morph-with-template": {
-      "case:it": "ar de pt tl tr"
+      "case:it": "ar de pt tl"
     },
     "on-custom-event-receive": {
-      "case:me": "ar bn he tr"
+      "case:me": "ar bn he"
     },
     "pick-text-range": {
       "of": "he"
@@ -169,55 +167,54 @@
       "case:me": "ar tl"
     },
     "put-content-basic": {
-      "case:me": "ar bn he tr"
+      "case:me": "ar bn he"
     },
     "remove-class-basic": {
-      "case:me": "ar bn he tr"
+      "case:me": "ar bn he"
     },
     "remove-element": {
-      "case:me": "bn he hi tr",
+      "case:me": "bn he hi",
       "case:me-object": "ar es it pt"
     },
     "render-template-with-data": {
-      "case:it": "hi tr",
+      "case:it": "hi",
       "case:it-object": "ar es fr it pt"
     },
     "repeat-times": {
-      "case:me": "ar bn he tr"
+      "case:me": "ar bn he"
     },
     "swap-view-transition": {
       "transition view": "ar bn de es he hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh",
       "view": "fr"
     },
     "tabs-aria": {
-      "case:me": "ar bn he tr"
+      "case:me": "ar bn he"
     },
     "tabs-basic": {
-      "case:me": "ar bn he tr"
+      "case:me": "ar bn he"
     },
     "tabs-content": {
-      "case:me": "ar bn he tr"
+      "case:me": "ar bn he"
     },
     "template-literal-list-build": {
       "in": "he"
     },
     "toggle-aria-expanded": {
-      "case:me": "ar bn he it tr"
+      "case:me": "ar bn he it"
     },
     "transition-opacity": {
-      "case:me": "bn he hi tr",
+      "case:me": "bn he hi",
       "case:me-object": "ar es it pt"
     },
     "trigger-event": {
       "trigger": "qu"
     },
     "wait-then": {
-      "case:me": "bn he hi tr",
+      "case:me": "bn he hi",
       "case:me-object": "ar es it pt"
     },
     "when-value-changes": {
-      "case:it": "hi",
-      "case:it case:me": "tr",
+      "case:it": "hi tr",
       "case:me": "ar bn he"
     },
     "window-resize": {
