@@ -21,7 +21,7 @@ surfaces (2i, 11). Counts re-checked 2026-10-07 at `2124e1561`.
 
 Format: **ID · title**: what is broken · lines · date · gate · category · status.
 
-### 2a. Parser correctness, semantic front-end (39)
+### 2a. Parser correctness, semantic front-end (40)
 
 The dominant pattern: most of these fail **in English's semantic parse**, so every
 translation inherits the loss. English on a page is unaffected, because `@hyperfixi/engine` reads
@@ -71,6 +71,7 @@ silent; the others marked *refused* are loud.
 32. **P57 · Collection expressions**: upstream 0.9.93's `<q/> in #box where it matches .a`, `… mapped to its textContent`, `repeat for x in :items where …` are refused in all 24 lanes (semantic's reader has no `where` / `mapped to`) · 2026-10-07 (M1 step 3) · yes (LOUD `collection-expressions`) · parser · refused.
 33. **P58 · `at end of` inside a behavior's or a def's body**: `behavior B on click put "x" at end of me end` and the def form are refused; the block parser's `end` tests lack the position check the handler path has (`at end of`, `at the end of`) · 2026-10-07 (M1 step 3) · no · parser · probe confirmed.
 34. **P59 · `wait for reset from #b` loses its source in English**: the English reader takes `reset` (a command too) for the command, so `on click wait for reset from #b then log 1` is refused en → en (invariant: `#b`); the engine reads it. No translation can carry a native `reset` event through `wait for` until this is fixed, so every language's `reset` is denylisted (M2 N2) · 10-08 · command-event-names.test.ts (once `reset` renders) · parser · open.
+35. **P60 · The fused handler path reads less than the clause walk**: where a fused `<command>-event-*` pattern wins a handler (bn, hi, ko and 12 more; `buildEventHandler`'s hand-built body), a `js … end` block after `then` is left unread and `fetch /x as Number` loses its response type; the pure head path (en, and ja since N4 made its head outrank the fused patterns, `headOutranksFused`) reads both. Repro: `translate('on click set t to true then js(t) window.testSuccess = t end', 'en', 'bn')`, and the same with `fetch /test as Number then put it into my.innerHTML` (command-shape cases 540540cc5a, bd56aad55e: refused in bn/hi/ko) · 2026-10-11 · no · parser · open. A candidate for the reliability rows: either read the fused body with the clause walk, or let the head outrank the fused patterns where its words are the fused head's (bn `তে`, hi `पर`, ko `할 때`).
 
 ### 2b. Render / naturalness (6)
 
