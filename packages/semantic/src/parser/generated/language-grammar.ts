@@ -1918,6 +1918,7 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   warten: ['de'],
   watachiy: ['qu'],
   watay: ['qu'],
+  we: ['pl'],
   websocket: [
     'en',
     'es',
@@ -2224,6 +2225,7 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   клонируй: ['ru'],
   клонувати: ['uk'],
   клонуй: ['uk'],
+  ко: ['ru'],
   когда: ['ru'],
   кожний: ['uk'],
   коли: ['uk'],
@@ -3550,7 +3552,7 @@ export const SCRIPT_RANGES: readonly {
 ];
 
 /**
- * Total keywords: 3347
+ * Total keywords: 3349
  * Total languages: 24
  * Ambiguous keywords (match 2+ languages): 199
  */
