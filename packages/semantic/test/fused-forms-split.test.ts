@@ -24,6 +24,12 @@ describe('fused forms', () => {
     expect(read('ondan', 'tr')).toEqual(read('o den', 'tr'));
   });
 
+  it('reads a fused word whole where a proclitic would split it (ar, he)', () => {
+    // Before: ar `فيه` read as `ف` (then) + `يه`, he `ממני` as `מ` + `מ` + `ני`.
+    expect(read('فيه', 'ar')).toEqual(read('في هو', 'ar'));
+    expect(read('ממני', 'he')).toEqual(read('מ אני', 'he'));
+  });
+
   it('keeps the positions inside the word', () => {
     const [pronoun, marker] = tokenize('bana', 'tr').tokens;
     expect(pronoun!.position).toEqual({ start: 0, end: 3 });

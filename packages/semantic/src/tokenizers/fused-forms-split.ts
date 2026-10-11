@@ -11,6 +11,7 @@
  */
 import type { LanguageToken, TokenStream } from '../types';
 import type { LanguageProfile } from '../generators/profiles/types';
+import type { KeywordEntry } from './base';
 import { TokenStreamImpl } from './token-utils';
 
 /** A fused word → the nominative pronoun and the marker, in the order they are written apart. */
@@ -30,6 +31,20 @@ export function fusedForms(profile: LanguageProfile): ReadonlyMap<string, readon
       }
     }
   }
+  return out;
+}
+
+/**
+ * Each fused word as a keyword of its reference, so a proclitic extractor
+ * leaves it whole (ar `فيه` stays one word, not `ف` + `يه`) for the split.
+ */
+export function fusedKeywords(profile: LanguageProfile): KeywordEntry[] {
+  const out: KeywordEntry[] = [];
+  for (const [reference, forms] of Object.entries(profile.obliqueReferences ?? {}))
+    for (const [marker, form] of Object.entries(forms))
+      for (const phrase of typeof form === 'string' ? [form] : [form.direction, form.location])
+        if (marker && phrase && !/\s/.test(phrase))
+          out.push({ native: phrase, normalized: reference });
   return out;
 }
 

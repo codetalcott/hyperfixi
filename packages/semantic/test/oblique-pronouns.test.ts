@@ -179,6 +179,26 @@ describe('tr writes a pronoun fused with its marker', () => {
   });
 });
 
+describe('ar and he write a pronoun fused with its marker', () => {
+  const RENDERS: Array<[string, string, string]> = [
+    ['ar', 'on click put 1 into me', 'على النقر ضع 1 فيّ'],
+    ['ar', 'on click add .x to me', 'على النقر أضف .x إليّ'],
+    ['ar', 'on click remove .x from me', 'على النقر احذف .x منّي'],
+    ['ar', 'on click add .x to it', 'على النقر أضف .x إليه'],
+    ['ar', 'on click take .x from it', 'على النقر خذ .x منه'],
+    ['ar', 'on click get it', 'على النقر احصل عليه'],
+    ['he', 'on click put 1 into me', 'ב לחיצה שים את 1 בי'],
+    ['he', 'on click add .x to me', 'ב לחיצה הוסף את .x אליי'],
+    ['he', 'on click remove .x from me', 'ב לחיצה הסר את .x ממני'],
+    ['he', 'on click show me', 'ב לחיצה הראה אותי'],
+    ['he', 'on click put 1 before me', 'ב לחיצה שים את 1 לפניי'],
+  ];
+  it.each(RENDERS)('%s: %s', (language, source, expected) => {
+    expect(translate(source, 'en', language)).toBe(expected);
+    expect(translate(expected, language, 'en')).toBe(source);
+  });
+});
+
 // The plain render, before the verified render's fallback: a scroll position's
 // phrase is never replaced by a case form (the fallback would hide it).
 it('a scroll position keeps its phrase in the plain render', () => {

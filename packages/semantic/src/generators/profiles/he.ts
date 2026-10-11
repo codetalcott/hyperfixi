@@ -32,6 +32,21 @@ export const hebrewProfile: LanguageProfile = {
     document: 'מסמך',
     window: 'חלון',
   },
+  // A pronoun and its marker, fused into one word as Hebrew writes them (M2 N3;
+  // listed in NATIVE_REVIEW_NEEDED.md). The reader splits each back
+  // (tokenizers/fused-forms-split.ts). `it` (`זה`) stays: `ב זה` is spacing (N5).
+  obliqueReferences: {
+    me: {
+      ב: 'בי',
+      אל: 'אליי',
+      ל: 'לי',
+      על: 'עליי',
+      מ: 'ממני',
+      את: 'אותי',
+      לפני: 'לפניי',
+      אחרי: 'אחריי',
+    },
+  },
   possessive: {
     marker: 'של', // "of" - used for general possession
     markerPosition: 'before-property',
