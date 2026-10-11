@@ -249,8 +249,10 @@ describe('es, it, pt and ar attach the object pronoun to the verb', () => {
     ['pt', 'on click remove me', 'ao clique remover-me'],
     ['ar', 'on click show me', 'على النقر اظهرني'],
     ['ar', 'on click put it into #out', 'على النقر ضعه في #out'],
-    // A bare command keeps its bare verb; a verbal noun takes no suffix (ar `قياس`).
+    // A bare command keeps its bare verb, with the `me` the parser supplied left
+    // unwritten (`settle` is not `settle me`); a verbal noun takes no suffix (ar `قياس`).
     ['es', 'on click show', 'al clic mostrar'],
+    ['es', 'on click settle then add .x', 'al clic estabilizar entonces agregar .x'],
     ['ar', 'on click measure me', 'على النقر قياس أنا'],
   ];
   it.each(RENDERS)('%s: %s', (language, source, expected) => {
