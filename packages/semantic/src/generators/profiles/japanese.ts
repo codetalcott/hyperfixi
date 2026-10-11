@@ -259,6 +259,11 @@ export const japaneseProfile: LanguageProfile = {
     particles: ['を', 'に', 'で', 'から', 'の', 'が', 'は', 'も', 'へ', 'と'],
     boundaryStrategy: 'particle',
   },
+  // Japanese writes a particle onto its noun (`#outに`, `自分から`; M2 N5).
+  attachedMarkers: {
+    markers: ['を', 'に', 'へ', 'で', 'の', 'から', 'として', 'の間で'],
+    afterWords: 'all',
+  },
   eventHandler: {
     // Event marker: で (at/on/when), used in SOV pattern
     // Pattern: [event] で [destination] の [patient] を [action]

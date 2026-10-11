@@ -48,6 +48,20 @@ export function render(written: SemanticNode, language: string): string {
       plain = ['value', 'case'];
     }
   }
+  // A marker written onto the word before it (ko `#out에`, N5) must read as
+  // the spaced one does; where it does not, spaced, as before.
+  if (wrote.has('attach')) {
+    const spaced = semanticRenderer.renderPlainWords(
+      () => renderReadable(node, language),
+      [...plain.filter(k => k !== 'value'), 'attach']
+    );
+    const spacedWrote = semanticRenderer.takeNativeWords();
+    if (!readAlike(text, spaced, language)) {
+      text = spaced;
+      wrote = spacedWrote;
+      plain = [...plain, 'attach'];
+    }
+  }
   // A value's grammar word in the language's own can read as something else:
   // a query's `in` as a marker the command wants (es `obtener valor de primero
   // <input/> en yo` read `en yo` as get's `on me`), a conversion's `as` as a

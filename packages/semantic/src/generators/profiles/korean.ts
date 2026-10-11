@@ -230,6 +230,11 @@ export const koreanProfile: LanguageProfile = {
     particles: ['을', '를', '이', '가', '은', '는', '에', '에서', '으로', '로', '와', '과', '도'],
     boundaryStrategy: 'space',
   },
+  // Korean writes a particle onto its noun (`#out에`, `나를`; M2 N5).
+  attachedMarkers: {
+    markers: ['을', '를', '에', '으로', '로', '의', '에서', '부터', '에게'],
+    afterWords: 'all',
+  },
   eventHandler: {
     // Event marker: 할 때 (when/at the time of), used in SOV pattern
     // Pattern: [event] 할 때 [destination] 의 [patient] 를 [action]

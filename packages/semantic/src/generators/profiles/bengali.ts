@@ -211,6 +211,11 @@ export const bengaliProfile: LanguageProfile = {
     particles: ['কে', 'তে', 'থেকে', 'র', 'এর', 'দিয়ে', 'জন্য', 'পর্যন্ত'],
     boundaryStrategy: 'space',
   },
+  // Bengali writes a case ending onto its noun (`#outকে`, `#outএ`; M2 N5).
+  // After a Bengali word only `কে`, which never changes: the locative is `তে`
+  // after a vowel and the vowel sign `ে` after a consonant (`ক্লিকে`), which
+  // the reader does not split.
+  attachedMarkers: { markers: ['কে', 'তে', 'এ'], afterWords: ['কে'] },
   eventHandler: {
     keyword: { primary: 'তে', alternatives: ['এ', 'যখন'], normalized: 'on' },
     sourceMarker: { primary: 'থেকে', position: 'after' },

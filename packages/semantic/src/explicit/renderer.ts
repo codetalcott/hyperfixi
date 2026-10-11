@@ -48,9 +48,10 @@ const BLOCK_HEADER_ACTIONS = new Set<ActionType>([
  * What a render can write in the language's own words that its reader may
  * misread, so the verified render re-reads it ({@link SemanticRendererImpl.takeNativeWords}):
  * `value`, a value's grammar word (a query's `in`, a conversion's `as`, `the X
- * of Y`; M2 sheet A3–A5); `case`, a pronoun in the case its marker takes (N3).
+ * of Y`; M2 sheet A3–A5); `case`, a pronoun in the case its marker takes (N3);
+ * `attach`, a marker written onto the word before it (N5: ko `#out에`).
  */
-export type NativeWordKind = 'value' | 'case';
+export type NativeWordKind = 'value' | 'case' | 'attach';
 
 /**
  * Commands whose destination is where something is, not where it goes: their
@@ -118,6 +119,7 @@ import { notThrowWords } from '../parser/utils/not-throw';
 import { grammarWord } from '../parser/utils/grammar-words';
 import { elementScopeWord } from '../element-scope';
 import { attachClitic } from '../tokenizers/fused-forms-split';
+import { attachMarker, marksRole } from './attached-markers';
 import { PatternMatcher } from '../parser/pattern-matcher';
 import {
   localizeValueInterior,
@@ -254,7 +256,10 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    * render's fallbacks): a value's grammar words in English's, a pronoun in
    * the nominative.
    */
-  renderPlainWords<T>(render: () => T, kinds: readonly NativeWordKind[] = ['value', 'case']): T {
+  renderPlainWords<T>(
+    render: () => T,
+    kinds: readonly NativeWordKind[] = ['value', 'case', 'attach']
+  ): T {
     const previous = this.plainWords;
     this.plainWords = new Set([...previous, ...kinds]);
     try {
@@ -1189,7 +1194,7 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       const token = tokens[i]!;
       const rendered = this.renderPatternToken(token, node, language);
       if (rendered !== null) {
-        parts.push(rendered);
+        this.pushPart(parts, rendered, token, tokens[i - 1], node, language);
         // A marker-less wait renders its event through the duration slot.
         if (
           token.type === 'role' &&
@@ -1254,6 +1259,43 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     }
 
     return parts.join(' ');
+  }
+
+  /**
+   * A pattern token's text after `parts`: the marker of the role before it
+   * (`previous`), where the language writes it onto its word (ko `#out에`, M2
+   * N5), joins the last part; anything else is a part of its own.
+   */
+  private pushPart(
+    parts: string[],
+    text: string,
+    token: PatternToken,
+    previous: PatternToken | undefined,
+    node: SemanticNode,
+    language: string
+  ): void {
+    const last = parts[parts.length - 1];
+    const profile = tryGetProfile(language);
+    const attached =
+      token.type === 'literal' &&
+      previous?.type === 'role' &&
+      last !== undefined &&
+      profile?.attachedMarkers &&
+      !this.plainWords.has('attach') &&
+      marksRole(profile, node.action, previous.role, text)
+        ? attachMarker(profile, last, text)
+        : undefined;
+    // Only where the reader splits it back: the word's own tokens, then the
+    // marker (ja `値を` after a possessive is one word to it).
+    const words = (text: string): string[] => tokenize(text, language).tokens.map(t => t.value);
+    const splits = (joined: string, word: string, marker: string): boolean =>
+      words(joined).join('\u0000') === [...words(word), ...words(marker)].join('\u0000');
+    if (attached === undefined || !splits(attached, last!, attached.slice(last!.length))) {
+      parts.push(text);
+      return;
+    }
+    parts[parts.length - 1] = attached;
+    this.nativeWritten.add('attach');
   }
 
   /**
@@ -1577,7 +1619,7 @@ export class SemanticRendererImpl implements ISemanticRenderer {
           const subToken = token.tokens[i];
           const rendered = this.renderPatternToken(subToken, node, language);
           if (rendered !== null) {
-            groupParts.push(rendered);
+            this.pushPart(groupParts, rendered, subToken, token.tokens[i - 1], node, language);
             if (subToken.type === 'role') hasRoleValue = true;
           }
         }
