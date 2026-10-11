@@ -280,6 +280,54 @@ describe('es, it, pt and ar attach the object pronoun to the verb', () => {
   });
 });
 
+// fr writes the object pronoun before the infinitive, elided before a vowel
+// (FUSED_FORMS.md Q1): `le mettre`, `l'afficher`, `me cacher`. After a
+// preposition it keeps `lui` (`dans lui`). A body re-read from its first
+// token keeps the clitic (`def`).
+describe('fr writes the object pronoun before the verb', () => {
+  it.each([
+    ['on click put it into #out', 'quand clic le mettre dans #out'],
+    ['on click show it', "quand clic l'afficher"],
+    ['on click hide me', 'quand clic me cacher'],
+    ['on click show me', "quand clic m'afficher"],
+    ['on click put me into #o', 'quand clic me mettre dans #o'],
+    ['on click get #a then put it into me', 'quand clic obtenir #a puis le mettre dans moi'],
+    ['on click put "x" into it', 'quand clic mettre "x" dans lui'],
+    ['on click blur me', 'quand clic me défocaliser'],
+    ['def foo() log me end', "fonction foo\n  m'enregistrer\nfin"],
+  ])('%s', (source, expected) => {
+    expect(translate(source, 'en', 'fr')).toBe(expected);
+    expect(translate(expected, 'fr', 'en')).toBe(translate(source, 'en', 'en'));
+  });
+
+  it('writes a variable spelled like a clitic in parentheses before a verb, and reads a bare l as a name', () => {
+    const source = 'on click if le put "Y" into #out else put "N" into #out end';
+    const rendered = translate(source, 'en', 'fr');
+    expect(rendered).toContain('si (le) mettre');
+    expect(translate(rendered, 'fr', 'en')).toBe(
+      'on click if (le) put "Y" into #out else put "N" into #out end'
+    );
+    expect(translate('quand clic si l mettre "Y" dans #out fin', 'fr', 'en')).toBe(
+      'on click if l put "Y" into #out end'
+    );
+  });
+
+  it('writes no clitic before a command the profile writes as a noun', () => {
+    // `rendu` (render) is a noun, so `il` stays after it, as before.
+    expect(translate('on click render it', 'en', 'fr')).toBe('quand clic rendu il');
+  });
+
+  it('reads the clitic beside every verb, and leaves a string alone', () => {
+    expect(translate("quand clic l'afficher puis le cacher", 'fr', 'en')).toBe(
+      'on click show it then hide it'
+    );
+    expect(translate('quand clic l’incrémenter', 'fr', 'en')).toBe('on click increment it');
+    expect(translate('quand clic mettre "l\'eau" dans #out', 'fr', 'en')).toBe(
+      'on click put "l\'eau" into #out'
+    );
+  });
+});
+
 // es and pt's focus and blur commands write the verb, which takes the pronoun;
 // the events keep their nouns, and code written with the nouns still reads.
 describe('es and pt write focus and blur as verbs', () => {

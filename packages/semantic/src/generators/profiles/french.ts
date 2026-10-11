@@ -35,6 +35,10 @@ export const frenchProfile: LanguageProfile = {
     window: 'fenêtre',
     detail: 'détail',
   },
+  // `me` and `it` as a verb's object: the clitic before the infinitive, elided
+  // before a vowel (`le mettre`, `l'afficher`, `me cacher`; FUSED_FORMS.md Q1,
+  // M2 N3). The reader moves it back after the verb (splitObjectClitics).
+  objectClitics: { forms: { me: 'me', it: 'le' }, attach: 'before' },
   // `it` next to a marker, in the stressed form a preposition takes (M2 N3;
   // listed in NATIVE_REVIEW_NEEDED.md). `moi` already is one.
   obliqueReferences: {
@@ -112,9 +116,13 @@ export const frenchProfile: LanguageProfile = {
     trigger: { primary: 'déclencher', normalized: 'trigger' },
     send: { primary: 'envoyer', alternatives: ['envoie'], normalized: 'send' },
     focus: { primary: 'focaliser', alternatives: ['concentrer'], normalized: 'focus' },
-    // `défocaliser` is an unattested infinitive; French pedagogy writes
-    // `perte de focus` for the event (2026-07 terminology review).
-    blur: { primary: 'perte de focus', alternatives: ['défocaliser'], normalized: 'blur' },
+    // The COMMAND, so the verb, as the i18n dictionary has it: it takes the object
+    // pronoun (`me défocaliser`, M2 N3). `perte de focus` is French pedagogy's
+    // word for the EVENT (2026-07 terminology review), which renders from
+    // eventNameTranslations; it stays an alternative, so code written with it
+    // reads. `défocaliser` is rare in UI prose (MDN writes `retirer le focus`);
+    // listed for review in NATIVE_REVIEW_NEEDED.md.
+    blur: { primary: 'défocaliser', alternatives: ['perte de focus'], normalized: 'blur' },
     // Phase 1 (v0.9.90): DOM / form state / debug
     // `vide` (adjective, "empty") is the i18n transformer's `is empty` predicate
     // form; `vider` is the verb ("to empty"). Accept both so the emptiness check

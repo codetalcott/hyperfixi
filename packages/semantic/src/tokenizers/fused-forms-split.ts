@@ -102,6 +102,12 @@ export function attachClitic(
     }
     case 'suffix':
       return verb + clitic;
+    case 'before':
+      // An infinitive of one word; elided before a vowel or a mute h.
+      if (!/^\p{L}+(?:er|ir|re)$/u.test(verb)) return undefined;
+      return /^[aeiouyàâäéèêëîïôöùûüœh]/iu.test(verb)
+        ? `${clitic.slice(0, -1)}'${verb}`
+        : `${clitic} ${verb}`;
   }
 }
 
@@ -117,6 +123,7 @@ function verbOf(attach: CliticAttach, word: string, clitic: string): string | un
     case 'suffix':
       return stem;
     case 'hyphen':
+    case 'before':
       return undefined;
   }
 }
@@ -206,6 +213,31 @@ export function splitObjectClitics(
   let changed = false;
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i]!;
+    if (clitics.attach === 'before') {
+      // fr `le mettre`, `l'afficher` (`l` `'` `afficher`): the verb, then its
+      // object. An elided clitic only with its apostrophe: a bare `l` is a name.
+      const word = token.value.toLowerCase();
+      const elided = /^['’]$/.test(tokens[i + 1]?.value ?? '');
+      const entry = entries.find(e => (elided ? e.clitic.slice(0, -1) : e.clitic) === word);
+      const last = i + (elided ? 1 : 0);
+      const next = tokens[last + 1];
+      const verb = entry && next ? readsAsVerb(next.value) : undefined;
+      const pronoun = entry && verb ? pronounOf(entry.pronoun) : undefined;
+      if (verb && pronoun && next) {
+        // The verb's span starts at the clitic: a body re-read from the
+        // statement's first token (its start) keeps the clitic.
+        out.push({ ...verb, position: { start: token.position.start, end: next.position.end } });
+        out.push({
+          ...pronoun,
+          position: { start: token.position.start, end: tokens[last]!.position.end },
+        });
+        i = last + 1;
+        changed = true;
+        continue;
+      }
+      out.push(token);
+      continue;
+    }
     if (clitics.attach === 'hyphen') {
       const dash = tokens[i + 1];
       const after = tokens[i + 2];

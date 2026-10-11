@@ -84,6 +84,11 @@ function readingOf(name: string, language: string): Reading | null {
     // Structure the tokenizer does not mark: a schema's role marker (de `um`),
     // a connective the join reads (tl `o`, `or`), an English article.
     if (schemaMarkers(language).has(name)) return { collision: 'structure', word: 'marker' };
+    // A clitic written before its verb (fr `le mettre`): beside a verb it is the object.
+    const clitics = tryGetProfile(language)?.objectClitics;
+    if (clitics?.attach === 'before' && Object.values(clitics.forms).includes(name)) {
+      return { collision: 'structure', word: 'pronoun' };
+    }
     const connective = translateConnective(language, name);
     if (connective !== name) {
       return { collision: 'structure', word: 'connective', sense: connective };

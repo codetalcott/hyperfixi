@@ -64,9 +64,11 @@ export type ObliqueForm = string | { readonly direction?: string; readonly locat
  * How a clitic attaches to the verb a render writes: `infinitive` (es: the
  * infinitive + clitic), `infinitive-drop-e` (it: `mettere` → `metterlo`),
  * `hyphen` (pt: `mostrar-me`; before `lo` the `-r` drops and the vowel takes
- * an accent, `colocá-lo`), `suffix` (ar: the imperative + suffix).
+ * an accent, `colocá-lo`), `suffix` (ar: the imperative + suffix), `before`
+ * (fr: the clitic before the infinitive, `le mettre`, elided before a vowel,
+ * `l'afficher`).
  */
-export type CliticAttach = 'infinitive' | 'infinitive-drop-e' | 'hyphen' | 'suffix';
+export type CliticAttach = 'infinitive' | 'infinitive-drop-e' | 'hyphen' | 'suffix' | 'before';
 
 export interface PossessiveConfig {
   /** Possessive marker (e.g., "'s" in English, "の" in Japanese) */

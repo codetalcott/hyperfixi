@@ -1,8 +1,8 @@
 {
   "description": "English-leak gate, corpus half (src/multilingual/english-leaks.ts): per corpus row, the findings of each language's render (render(parse(en), L)): an English grammar word, `event:<name>` (an English event the lexicon has a word for) or `case:me` / `case:it` (a nominative pronoun beside a marker; `-object`: as an unmarked object) or `spacing:<marker>` (a marker the language attaches, written apart). `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts after a fresh populate.",
   "renders": 3519,
-  "leaky": 644,
-  "findings": 1340,
+  "leaky": 637,
+  "findings": 1332,
   "kinds": {
     "word": {
       "renders": 191,
@@ -13,8 +13,8 @@
       "findings": 0
     },
     "case": {
-      "renders": 24,
-      "findings": 27
+      "renders": 16,
+      "findings": 19
     },
     "spacing": {
       "renders": 470,
@@ -195,8 +195,7 @@
       "spacing:で spacing:を": "ja"
     },
     "event-debounce": {
-      "at case:it-object debounced": "fr",
-      "at debounced": "ar de es he hi id it ms pl pt qu ru sw th uk vi zh",
+      "at debounced": "ar de es fr he hi id it ms pl pt qu ru sw th uk vi zh",
       "at debounced spacing:e spacing:i": "tr",
       "at debounced spacing:তে": "bn",
       "at debounced spacing:로": "ko",
@@ -232,7 +231,6 @@
       "spacing:で spacing:を": "ja"
     },
     "fetch-basic": {
-      "case:it-object": "fr",
       "spacing:e spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
@@ -261,7 +259,6 @@
       "spacing:で spacing:を": "ja"
     },
     "fetch-loading-state": {
-      "case:it-object": "fr",
       "spacing:e spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
@@ -316,7 +313,6 @@
       "spacing:で spacing:を": "ja"
     },
     "get-value": {
-      "case:it-object": "fr",
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
@@ -364,7 +360,6 @@
       "spacing:で spacing:を": "ja"
     },
     "if-exists": {
-      "case:it-object": "fr",
       "spacing:i spacing:i spacing:i": "tr",
       "spacing:এ spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
@@ -446,14 +441,12 @@
       "spacing:で spacing:を": "ja"
     },
     "make-element": {
-      "case:it-object": "fr",
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
     "make-toast-element": {
       "case:it spacing:de spacing:i spacing:i spacing:i spacing:nin": "tr",
-      "case:it-object": "fr",
       "spacing:কে spacing:তে": "bn",
       "spacing:를 spacing:에 spacing:의": "ko",
       "spacing:で spacing:で spacing:の spacing:を spacing:を": "ja"
@@ -574,7 +567,6 @@
       "spacing:で spacing:を": "ja"
     },
     "render-template-with-data": {
-      "case:it-object": "fr",
       "spacing:e spacing:i spacing:i spacing:le": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"

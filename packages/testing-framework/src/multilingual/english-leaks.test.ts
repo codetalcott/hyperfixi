@@ -264,8 +264,12 @@ describe('english-leaks scanner', () => {
     expect(keys('on click measure me', 'wenn klick messen mich', 'de')).toEqual([]);
     expect(keys('on click hide it', 'wenn klick verstecke es', 'de')).toEqual([]);
     expect(keys('on click hide it', 'при клик скрыть это', 'ru')).toEqual([]);
-    // fr `moi` is not counted as an object.
-    expect(keys('on click show me', 'quand clic afficher moi', 'fr')).toEqual([]);
+    // fr writes the clitic before the infinitive (`m'afficher`, `me cacher`), and
+    // `me` there is its own word.
+    expect(keys('on click show me', 'quand clic afficher moi', 'fr')).toEqual(['case:me-object']);
+    expect(keys('on click show me', "quand clic m'afficher", 'fr')).toEqual([]);
+    expect(keys('on click hide me', 'quand clic me cacher', 'fr')).toEqual([]);
+    expect(keys('on click hide it', 'quand clic le cacher', 'fr')).toEqual([]);
     // A condition is not an object: `if` is no verb.
     expect(
       keys('on click if it is empty hide me end', 'al clic si ello es vacío ocultar yo fin', 'es')

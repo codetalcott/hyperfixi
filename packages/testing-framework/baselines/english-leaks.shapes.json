@@ -1,20 +1,20 @@
 {
   "description": "English-leak gate, command-shape half (src/multilingual/english-leaks.ts): per command-shape case, the findings of each language's render (translate(src, 'en', L)): an English grammar word, `event:<name>`, `case:<pronoun>` or `spacing:<marker>`. `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts.",
   "renders": 23801,
-  "leaky": 4550,
-  "findings": 9148,
+  "leaky": 4460,
+  "findings": 9041,
   "kinds": {
     "word": {
-      "renders": 2402,
-      "findings": 4061
+      "renders": 2401,
+      "findings": 4060
     },
     "event": {
       "renders": 0,
       "findings": 0
     },
     "case": {
-      "renders": 160,
-      "findings": 162
+      "renders": 56,
+      "findings": 56
     },
     "spacing": {
       "renders": 2305,
@@ -23,7 +23,6 @@
   },
   "entries": {
     "3137245779": {
-      "case:it-object": "fr",
       "spacing:e spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
@@ -32,7 +31,6 @@
       "spacing:e spacing:i": "tr"
     },
     "3810571169": {
-      "case:it-object": "fr",
       "spacing:e spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
@@ -43,7 +41,6 @@
       "spacing:で spacing:を": "ja"
     },
     "00d90195c2": {
-      "case:it-object": "fr",
       "spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
@@ -97,7 +94,6 @@
       "for spacing:で spacing:を": "ja"
     },
     "042ed66aa1": {
-      "case:it-object": "fr",
       "spacing:e spacing:i spacing:le": "tr"
     },
     "044528a979": {
@@ -138,17 +134,11 @@
       "spacing:를 spacing:에 spacing:의": "ko",
       "spacing:で spacing:で spacing:の spacing:を spacing:を": "ja"
     },
-    "060fa72711": {
-      "case:it-object": "fr"
-    },
     "0660772f01": {
       "spacing:e spacing:i": "tr",
       "spacing:কে": "bn",
       "spacing:를 spacing:에": "ko",
       "spacing:を": "ja"
-    },
-    "06921f9cba": {
-      "case:it-object": "fr"
     },
     "069dd1170d": {
       "spacing:i": "tr"
@@ -263,14 +253,8 @@
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
-    "0c745460ab": {
-      "case:it-object": "fr"
-    },
     "0c784075be": {
       "spacing:e spacing:i": "tr"
-    },
-    "0ce653fc28": {
-      "case:it-object": "fr"
     },
     "0cee637bb9": {
       "it matches spacing:e spacing:i spacing:i where": "tr",
@@ -289,7 +273,6 @@
       "spacing:で spacing:を": "ja"
     },
     "0eaa74fad5": {
-      "case:it-object": "fr",
       "spacing:i spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
@@ -478,7 +461,6 @@
       "spacing:i": "tr"
     },
     "190d9ca9e9": {
-      "case:it-object": "fr",
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
@@ -490,8 +472,7 @@
       "spacing:e": "tr"
     },
     "1a2a9cbb2e": {
-      "case:it-object in of the": "fr",
-      "in of the": "ar bn es he hi id ja ko ms pl pt qu ru sw th tl uk zh",
+      "in of the": "ar bn es fr he hi id ja ko ms pl pt qu ru sw th tl uk zh",
       "of spacing:i spacing:in the": "tr",
       "of the": "de it vi"
     },
@@ -512,7 +493,6 @@
       "spacing:で spacing:を": "ja"
     },
     "1ba900c09e": {
-      "case:it-object": "fr",
       "spacing:e spacing:i": "tr",
       "spacing:তে": "bn"
     },
@@ -538,7 +518,6 @@
       "of spacing:で spacing:を": "ja"
     },
     "1d2b7f9432": {
-      "case:it-object": "fr",
       "spacing:a spacing:e spacing:e spacing:i spacing:i": "tr",
       "spacing:で spacing:を": "ja"
     },
@@ -584,13 +563,9 @@
       "spacing:e spacing:i": "tr"
     },
     "20102b64ce": {
-      "case:it-object": "fr",
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
-    },
-    "20111d0749": {
-      "case:it-object": "fr"
     },
     "20161acab0": {
       "in": "ar es fr he hi id ko ms pl pt qu ru sw th tl uk zh",
@@ -666,9 +641,6 @@
       "spacing:e spacing:e spacing:e spacing:i spacing:i": "tr",
       "spacing:で spacing:を": "ja"
     },
-    "24134ecc72": {
-      "case:it-object": "fr"
-    },
     "24725909ec": {
       "spacing:e spacing:i spacing:i spacing:nin": "tr",
       "spacing:তে": "bn",
@@ -682,7 +654,6 @@
       "of spacing:で spacing:を": "ja"
     },
     "259c31588b": {
-      "case:it-object": "fr",
       "spacing:e spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
@@ -704,9 +675,6 @@
       "case:it": "hi",
       "case:it spacing:i": "tr"
     },
-    "26e0df8d83": {
-      "case:it-object": "fr"
-    },
     "26fa66d19d": {
       "dom": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
       "dom spacing:i spacing:i": "tr",
@@ -715,7 +683,6 @@
     },
     "280d64d892": {
       "as spacing:로": "ko",
-      "case:it-object": "fr",
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:として spacing:を": "ja"
@@ -732,9 +699,6 @@
     },
     "28527260ec": {
       "spacing:i": "tr"
-    },
-    "294059e33b": {
-      "case:it-object": "fr"
     },
     "294aed5746": {
       "spacing:e spacing:i spacing:i": "tr",
@@ -888,9 +852,6 @@
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
-    "30e41b2965": {
-      "case:it-object": "fr"
-    },
     "314a8e8e46": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
@@ -902,13 +863,9 @@
       "spacing:で spacing:を": "ja"
     },
     "31c9cb395d": {
-      "case:it-object in of the": "fr",
-      "in of the": "ar bn es he hi id ja ko ms pl pt qu ru sw th tl uk zh",
+      "in of the": "ar bn es fr he hi id ja ko ms pl pt qu ru sw th tl uk zh",
       "of spacing:in the": "tr",
       "of the": "de it vi"
-    },
-    "321028e6ee": {
-      "case:it-object": "fr"
     },
     "32502101bd": {
       "in": "he",
@@ -925,8 +882,7 @@
       "from items to": "bn"
     },
     "32f8f63295": {
-      "case:it-object in of the": "fr",
-      "in of the": "ar bn es he hi id ja ko ms pl pt qu ru sw th tl uk zh",
+      "in of the": "ar bn es fr he hi id ja ko ms pl pt qu ru sw th tl uk zh",
       "of spacing:in the": "tr",
       "of the": "de it vi"
     },
@@ -934,9 +890,6 @@
       "spacing:i spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
-    },
-    "334e47e14e": {
-      "case:it-object": "fr"
     },
     "335ef48f4a": {
       "spacing:e spacing:i spacing:i": "tr",
@@ -954,8 +907,7 @@
       "spacing:で spacing:を": "ja"
     },
     "3423ecf5af": {
-      "case:it-object of": "fr",
-      "of": "ar bn de es he hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh"
+      "of": "*"
     },
     "352263a923": {
       "spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
@@ -1057,9 +1009,6 @@
     "3ae4f408b8": {
       "spacing:i": "tr"
     },
-    "3b56aa6b90": {
-      "case:it-object": "fr"
-    },
     "3b67c3d1a7": {
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
@@ -1092,9 +1041,6 @@
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:কে spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
-    },
-    "3d414a00d8": {
-      "case:it-object": "fr"
     },
     "3d5f26b854": {
       "spacing:i spacing:i": "tr",
@@ -1154,7 +1100,6 @@
       "spacing:i": "tr"
     },
     "400eb0bd39": {
-      "case:it-object": "fr",
       "spacing:nin": "tr"
     },
     "40e898455f": {
@@ -1192,9 +1137,6 @@
       "giving spacing:den spacing:i spacing:i": "tr",
       "giving spacing:তে": "bn",
       "giving spacing:で spacing:を": "ja"
-    },
-    "42e782253d": {
-      "case:it-object": "fr"
     },
     "433228d9f9": {
       "spacing:i": "tr"
@@ -1242,7 +1184,6 @@
       "spacing:で spacing:を": "ja"
     },
     "46a7aa63c2": {
-      "case:it-object": "fr",
       "spacing:e spacing:i spacing:le": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
@@ -1302,9 +1243,6 @@
     },
     "49dbf3593a": {
       "spacing:i spacing:i": "tr"
-    },
-    "49dc8e89a2": {
-      "case:it-object": "fr"
     },
     "49fb56b31b": {
       "spacing:i spacing:i": "tr"
@@ -1416,9 +1354,6 @@
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
-    "50f45f7eb6": {
-      "case:it-object": "fr"
-    },
     "50f53e2178": {
       "spacing:i": "tr",
       "spacing:তে": "bn",
@@ -1519,13 +1454,9 @@
       "spacing:で spacing:を": "ja"
     },
     "567ce21730": {
-      "case:it-object": "fr",
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
-    },
-    "56bb56445c": {
-      "case:it-object": "fr"
     },
     "57470de5ba": {
       "spacing:i": "tr",
@@ -1534,7 +1465,6 @@
     },
     "5761791c05": {
       "as spacing:로": "ko",
-      "case:it-object": "fr",
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:として spacing:を": "ja"
@@ -1598,7 +1528,6 @@
       "spacing:i": "tr"
     },
     "5b70a6f411": {
-      "case:it-object": "fr",
       "spacing:e spacing:e spacing:i spacing:i": "tr"
     },
     "5b97d98650": {
@@ -1674,7 +1603,6 @@
       "spacing:で spacing:を spacing:を": "ja"
     },
     "5ecd22f354": {
-      "case:it-object": "fr",
       "spacing:e": "tr",
       "spacing:로": "ko"
     },
@@ -1694,9 +1622,6 @@
     },
     "5ff6a6eb86": {
       "spacing:e spacing:i": "tr"
-    },
-    "605bdcf98c": {
-      "case:it-object": "fr"
     },
     "60770598a3": {
       "spacing:i spacing:i": "tr",
@@ -1721,7 +1646,6 @@
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr"
     },
     "6178899ead": {
-      "case:it-object": "fr",
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
@@ -1735,7 +1659,6 @@
       "spacing:で spacing:を": "ja"
     },
     "62b066758c": {
-      "case:it-object": "fr",
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
@@ -1808,7 +1731,6 @@
       "spacing:で spacing:を": "ja"
     },
     "66a3e903a3": {
-      "case:it-object": "fr",
       "spacing:e spacing:i": "tr",
       "spacing:তে": "bn"
     },
@@ -1847,9 +1769,6 @@
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
-    },
-    "68a6274f34": {
-      "case:it-object": "fr"
     },
     "68eeb5b1b8": {
       "spacing:i spacing:i": "tr",
@@ -1895,8 +1814,7 @@
       "spacing:で spacing:を": "ja"
     },
     "6b4e1662ba": {
-      "case:it-object of the": "fr",
-      "of the": "ar bn de es he hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh"
+      "of the": "*"
     },
     "6b508f9f6a": {
       "having margin": "ar de es fr he hi id ko ms pl pt qu ru sw tl uk vi zh",
@@ -1954,16 +1872,12 @@
     "6d51cb6e38": {
       "spacing:i spacing:i": "tr"
     },
-    "6d7fec5727": {
-      "case:it-object": "fr"
-    },
     "6db594c0c9": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
     "6dd0088239": {
-      "case:it-object": "fr",
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
@@ -2110,7 +2024,6 @@
     },
     "7371a42494": {
       "as spacing:로": "ko",
-      "case:it-object": "fr",
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:として spacing:を": "ja"
@@ -2141,9 +2054,6 @@
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
-    },
-    "76130fbf7d": {
-      "case:it-object": "fr"
     },
     "765b8ac520": {
       "spacing:i spacing:i": "tr",
@@ -2204,11 +2114,7 @@
       "spacing:তে": "bn",
       "spacing:に": "ja"
     },
-    "782e7e32f6": {
-      "case:it-object": "fr"
-    },
     "7835c70e58": {
-      "case:it-object": "fr",
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:で spacing:として spacing:を": "ja"
     },
@@ -2276,7 +2182,6 @@
       "spacing:で spacing:を": "ja"
     },
     "7b70b33883": {
-      "case:it-object": "fr",
       "spacing:e spacing:i": "tr"
     },
     "7bc08adb98": {
@@ -2310,14 +2215,12 @@
       "spacing:e spacing:i spacing:i spacing:nin": "tr"
     },
     "7d534a111c": {
-      "case:it-object in of the": "fr",
-      "in of the": "ar bn es he hi id ja ko ms pl pt qu ru sw th tl uk zh",
+      "in of the": "ar bn es fr he hi id ja ko ms pl pt qu ru sw th tl uk zh",
       "of spacing:in the": "tr",
       "of the": "de it vi"
     },
     "7d70d649bb": {
-      "case:it-object in of the": "fr",
-      "in of the": "ar bn es he hi id ja ko ms pl pt qu ru sw th tl uk zh",
+      "in of the": "ar bn es fr he hi id ja ko ms pl pt qu ru sw th tl uk zh",
       "of spacing:in the": "tr",
       "of the": "de it vi"
     },
@@ -2357,7 +2260,7 @@
       "spacing:i": "tr"
     },
     "7ef504c57f": {
-      "me": "ar de es fr he hi id ko ms pl pt qu ru sw th tl uk vi zh",
+      "me": "ar de es he hi id ko ms pl pt qu ru sw th tl uk vi zh",
       "me spacing:e spacing:i spacing:i spacing:i": "tr",
       "me spacing:তে": "bn",
       "me spacing:で spacing:を": "ja"
@@ -2402,16 +2305,12 @@
     "801e211f5c": {
       "spacing:i": "tr"
     },
-    "806f429e17": {
-      "case:it-object": "fr"
-    },
     "8085b8ef86": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
     "80f4300e27": {
-      "case:it-object": "fr",
       "spacing:e spacing:i spacing:le": "tr",
       "spacing:তে": "bn",
       "spacing:로": "ko",
@@ -2465,7 +2364,6 @@
       "spacing:で spacing:を": "ja"
     },
     "83186964ec": {
-      "case:it-object": "fr",
       "spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
@@ -2494,8 +2392,7 @@
       "spacing:i": "tr"
     },
     "8485a42376": {
-      "case:it-object in of the": "fr",
-      "in of the": "ar bn es he hi id ja ko ms pl pt qu ru sw th tl uk zh",
+      "in of the": "ar bn es fr he hi id ja ko ms pl pt qu ru sw th tl uk zh",
       "of spacing:in the": "tr",
       "of the": "de it vi"
     },
@@ -2580,7 +2477,6 @@
     },
     "87d42db63b": {
       "after": "bn hi",
-      "case:it-object": "fr",
       "case:me": "tl",
       "spacing:i": "tr",
       "spacing:를": "ko",
@@ -2749,8 +2645,7 @@
       "spacing:i": "tr"
     },
     "8fe4616a43": {
-      "case:it-object in of the": "fr",
-      "in of the": "ar bn es he hi id ja ko ms pl pt qu ru sw th tl uk zh",
+      "in of the": "ar bn es fr he hi id ja ko ms pl pt qu ru sw th tl uk zh",
       "of spacing:i spacing:in the": "tr",
       "of the": "de it vi"
     },
@@ -2782,9 +2677,6 @@
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
-    "9150f6f97b": {
-      "case:it-object": "fr"
-    },
     "91b558959a": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
@@ -2810,7 +2702,6 @@
       "spacing:で spacing:を": "ja"
     },
     "93ee1ead94": {
-      "case:it-object case:it-object": "fr",
       "spacing:e spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:로": "ko",
@@ -2842,8 +2733,7 @@
       "spacing:i spacing:i": "tr"
     },
     "958f0101c2": {
-      "case:it-object in of the": "fr",
-      "in of the": "ar bn es he hi id ja ko ms pl pt qu ru sw th tl uk zh",
+      "in of the": "ar bn es fr he hi id ja ko ms pl pt qu ru sw th tl uk zh",
       "of spacing:in the": "tr",
       "of the": "de it vi"
     },
@@ -2919,12 +2809,8 @@
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
-    "9be9d3a6eb": {
-      "case:it-object": "fr"
-    },
     "9c2d74510e": {
-      "case:it-object in of the": "fr",
-      "in of the": "ar bn es he hi id ja ko ms pl pt qu ru sw th tl uk zh",
+      "in of the": "ar bn es fr he hi id ja ko ms pl pt qu ru sw th tl uk zh",
       "of spacing:in the": "tr",
       "of the": "de it vi"
     },
@@ -2952,7 +2838,6 @@
       "spacing:i spacing:i": "tr"
     },
     "9e62601731": {
-      "case:it-object": "fr",
       "spacing:e spacing:i spacing:le": "tr"
     },
     "9edb2416e1": {
@@ -3092,7 +2977,6 @@
       "url": "ar bn de es fr he hi id it ja ms pl pt qu ru sw th tl uk vi zh"
     },
     "a6b7b1862e": {
-      "case:it-object": "fr",
       "spacing:e spacing:i": "tr"
     },
     "a6b880e963": {
@@ -3139,7 +3023,6 @@
       "spacing:で spacing:を": "ja"
     },
     "a95285c5d7": {
-      "case:it-object": "fr",
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
@@ -3171,16 +3054,12 @@
       "spacing:で spacing:を": "ja"
     },
     "ab061cfe15": {
-      "case:it-object": "fr",
       "spacing:e spacing:i spacing:le": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
     "ab10f94541": {
       "spacing:i": "tr"
-    },
-    "ab1d7fd38a": {
-      "case:it-object": "fr"
     },
     "ab5abf9b63": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
@@ -3270,7 +3149,6 @@
       "spacing:で spacing:を": "ja"
     },
     "af7b70a9e3": {
-      "case:it-object": "fr",
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
@@ -3394,9 +3272,6 @@
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
-    "b7f2f02c7c": {
-      "case:it-object": "fr"
-    },
     "b80e4f0edf": {
       "spacing:i spacing:i spacing:le": "tr",
       "spacing:তে": "bn",
@@ -3408,12 +3283,8 @@
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
-    "b839394853": {
-      "case:it-object": "fr"
-    },
     "b854e91693": {
-      "case:it-object in of the": "fr",
-      "in of the": "ar bn es he hi id ja ko ms pl pt qu ru sw th tl uk zh",
+      "in of the": "ar bn es fr he hi id ja ko ms pl pt qu ru sw th tl uk zh",
       "of spacing:i spacing:in the": "tr",
       "of the": "de it vi"
     },
@@ -3440,7 +3311,6 @@
       "spacing:で spacing:を": "ja"
     },
     "b9502de444": {
-      "case:it-object": "fr",
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:で spacing:として spacing:を": "ja"
     },
@@ -3511,7 +3381,6 @@
       "spacing:i spacing:le": "tr"
     },
     "bd56aad55e": {
-      "case:it-object": "fr",
       "spacing:e spacing:i": "tr",
       "spacing:で spacing:を": "ja"
     },
@@ -3551,13 +3420,11 @@
       "spacing:i": "tr"
     },
     "bf94702b15": {
-      "case:it-object": "fr",
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
     "bf9d889f42": {
-      "case:it-object case:it-object": "fr",
       "spacing:e spacing:e": "tr"
     },
     "bff15140bc": {
@@ -3596,9 +3463,6 @@
     },
     "c1d1b5cdc8": {
       "spacing:로": "ko"
-    },
-    "c1f215b555": {
-      "case:it-object": "fr"
     },
     "c20d43a6aa": {
       "spacing:den spacing:i spacing:i": "tr",
@@ -3660,7 +3524,6 @@
       "spacing:で spacing:を": "ja"
     },
     "c5f12a5862": {
-      "case:it-object": "fr",
       "spacing:e spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
@@ -3687,14 +3550,8 @@
       "and spacing:কে spacing:তে": "bn",
       "and spacing:で spacing:を": "ja"
     },
-    "c7228ea809": {
-      "case:it-object": "fr"
-    },
     "c7245165f5": {
       "spacing:e spacing:e spacing:i spacing:i": "tr"
-    },
-    "c763dc2c55": {
-      "case:it-object": "fr"
     },
     "c7f012aba7": {
       "spacing:i spacing:i": "tr",
@@ -3718,12 +3575,11 @@
       "spacing:で spacing:を": "ja"
     },
     "c9cd8a23c1": {
-      "case:it-object with": "fr",
       "spacing:e spacing:i with": "tr",
       "spacing:তে with": "bn",
       "spacing:로 with": "ko",
       "spacing:で spacing:を with": "ja",
-      "with": "ar de es he hi id it ms pl pt qu ru sw th tl uk vi zh"
+      "with": "ar de es fr he hi id it ms pl pt qu ru sw th tl uk vi zh"
     },
     "c9d4a80d65": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
@@ -3968,9 +3824,6 @@
     "d996916cf7": {
       "spacing:e spacing:i": "tr"
     },
-    "d9af1c14cf": {
-      "case:it-object": "fr"
-    },
     "d9ec1b5498": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
@@ -4058,19 +3911,12 @@
       "spacing:তে spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
-    "dcf31afb1f": {
-      "case:it-object": "fr"
-    },
     "dd1f412689": {
       "spacing:e": "tr"
     },
     "dd2ca23457": {
-      "case:it-object in": "fr",
-      "in": "ar es he hi id ko ms pl pt qu ru sw tl uk zh",
+      "in": "ar es fr he hi id ko ms pl pt qu ru sw tl uk zh",
       "in spacing:で spacing:を": "ja"
-    },
-    "dd33bcc5dd": {
-      "case:it-object": "fr"
     },
     "dd7f5e28a1": {
       "spacing:i": "tr"
@@ -4103,7 +3949,6 @@
     },
     "deac58c100": {
       "case:it spacing:de spacing:i spacing:nin": "tr",
-      "case:it-object": "fr",
       "spacing:তে": "bn",
       "spacing:를 spacing:에 spacing:의": "ko",
       "spacing:で spacing:で spacing:の spacing:を spacing:を": "ja"
@@ -4154,17 +3999,13 @@
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
-    "e094621ad0": {
-      "case:it-object": "fr"
-    },
     "e09708409c": {
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
     "e0fca05a2f": {
-      "case:it-object in of the": "fr",
-      "in of the": "ar bn es he hi id ja ko ms pl pt qu ru sw th tl uk zh",
+      "in of the": "ar bn es fr he hi id ja ko ms pl pt qu ru sw th tl uk zh",
       "of spacing:in the": "tr",
       "of the": "de it vi"
     },
@@ -4265,9 +4106,6 @@
       "matches": "th",
       "spacing:で spacing:を": "ja"
     },
-    "e7687f49e4": {
-      "case:it-object": "fr"
-    },
     "e775a2bad3": {
       "spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
@@ -4275,9 +4113,6 @@
     },
     "e7bfc6833b": {
       "spacing:i": "tr"
-    },
-    "e7ed10dbe7": {
-      "case:it-object": "fr"
     },
     "e82246290a": {
       "spacing:i spacing:i": "tr",
@@ -4308,9 +4143,6 @@
       "spacing:den spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
-    },
-    "e8a3bc0263": {
-      "case:it-object": "fr"
     },
     "e8afa42b5a": {
       "spacing:e spacing:i spacing:i": "tr",
@@ -4367,7 +4199,6 @@
       "spacing:を": "ja"
     },
     "ec97ae1115": {
-      "case:it-object": "fr",
       "spacing:e spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
@@ -4410,7 +4241,6 @@
       "spacing:で spacing:を": "ja"
     },
     "ee4d586d20": {
-      "case:it-object": "fr",
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
@@ -4431,13 +4261,9 @@
     },
     "eff1f1e59f": {
       "as spacing:로": "ko",
-      "case:it-object": "fr",
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:で spacing:として spacing:を": "ja"
-    },
-    "f147cadda2": {
-      "case:it-object": "fr"
     },
     "f1554089dd": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
@@ -4445,7 +4271,6 @@
       "spacing:で spacing:で spacing:を spacing:を": "ja"
     },
     "f18d740a54": {
-      "case:it-object": "fr",
       "spacing:e spacing:i": "tr"
     },
     "f195fb7855": {
@@ -4464,9 +4289,6 @@
     },
     "f22d539d09": {
       "spacing:i": "tr"
-    },
-    "f24b5ab7b2": {
-      "case:it-object": "fr"
     },
     "f276988f08": {
       "spacing:i": "tr"
@@ -4530,9 +4352,6 @@
       "spacing:তে": "bn",
       "spacing:로": "ko",
       "spacing:で spacing:として spacing:を": "ja"
-    },
-    "f692d12d6d": {
-      "case:it-object": "fr"
     },
     "f6a0197bd9": {
       "spacing:e spacing:i spacing:i spacing:i": "tr",
@@ -4600,12 +4419,6 @@
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
-    "faf29d32b8": {
-      "case:it-object": "fr"
-    },
-    "fb120db463": {
-      "case:it-object": "fr"
-    },
     "fb29eb9039": {
       "spacing:e spacing:i": "tr"
     },
@@ -4638,9 +4451,6 @@
       "spacing:তে": "bn",
       "spacing:で spacing:を": "ja"
     },
-    "fc4fc8f3f1": {
-      "case:it-object": "fr"
-    },
     "fc731ea661": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr"
     },
@@ -4656,7 +4466,6 @@
       "spacing:で spacing:を": "ja"
     },
     "fd5f27f62d": {
-      "case:it-object": "fr",
       "spacing:e spacing:i": "tr"
     },
     "fda9236be6": {
@@ -4671,7 +4480,6 @@
       "spacing:から spacing:から spacing:で spacing:で spacing:を spacing:を": "ja"
     },
     "fef0cd8bed": {
-      "case:it-object": "fr",
       "spacing:e spacing:i": "tr"
     },
     "ff30aeb427": {

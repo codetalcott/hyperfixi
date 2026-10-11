@@ -9,10 +9,11 @@
  * - Accent marks (é, è, ê, ë, à, â, ù, û, ô, î, ï, ç, œ, æ)
  */
 
-import type { TokenKind } from '../types';
+import type { TokenKind, TokenStream } from '../types';
 import { BaseTokenizer, type KeywordEntry } from './base';
 import { frenchProfile } from '../generators/profiles/french';
 import { FrenchMorphologicalNormalizer } from './morphology/french-normalizer';
+import { splitObjectClitics } from './fused-forms-split';
 import {
   StringLiteralExtractor,
   NumberExtractor,
@@ -151,8 +152,14 @@ export class FrenchTokenizer extends BaseTokenizer {
     this.registerExtractor(new PunctuationExtractor()); // Punctuation
   }
 
-  // tokenize() method removed - now uses extractor-based tokenization from BaseTokenizer
-  // All tokenization logic delegated to registered extractors (context-aware)
+  /** A clitic before its verb (`le mettre`, `l'afficher`) reads as the verb and its object: see splitObjectClitics. */
+  override tokenize(input: string): TokenStream {
+    return splitObjectClitics(
+      super.tokenize(input),
+      frenchProfile,
+      word => super.tokenize(word).tokens
+    );
+  }
 
   classifyToken(token: string): TokenKind {
     // O(1) Map lookup instead of O(n) array search
