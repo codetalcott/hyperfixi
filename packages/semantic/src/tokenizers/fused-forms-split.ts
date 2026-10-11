@@ -27,7 +27,9 @@ export function fusedForms(profile: LanguageProfile): ReadonlyMap<string, readon
         const after = Object.values(profile.roleMarkers).some(
           m => m?.position === 'after' && (m.primary === marker || m.alternatives?.includes(marker))
         );
-        out.set(phrase, after ? [pronoun, marker] : [marker, pronoun]);
+        // One word for two markers (bn `আমাতে`, `তে` and `এ`) reads as the
+        // first, the role marker's primary (`এ` is its alternative).
+        if (!out.has(phrase)) out.set(phrase, after ? [pronoun, marker] : [marker, pronoun]);
       }
     }
   }

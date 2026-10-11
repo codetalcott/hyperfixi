@@ -1304,9 +1304,14 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         const value = node.roles.get(object.role) as
           (SemanticValue & { implicit?: unknown }) | undefined;
         const clitic = profile.objectClitics.forms[referenceOf(value) ?? ''];
+        // An implicit `me` attaches only where the plain render writes it: a
+        // patient another role follows (`ocultarme con display`, as `ocultar yo
+        // con display`), never a bare `settle`.
+        const written =
+          !value?.implicit || (object.role === 'patient' && hasOtherRealRole(node, 'patient'));
         const fused =
           clitic &&
-          !value?.implicit &&
+          written &&
           !this.plainWords.has('case') &&
           !profile.objectClitics.notVerbs?.includes(first.value)
             ? attachClitic(profile.objectClitics.attach, first.value, clitic)
