@@ -5,7 +5,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { tokenize, tryGetProfile } from '../src/index';
-import { fusedForms } from '../src/tokenizers/fused-forms-split';
+import { fusedForms, splitFusedForms } from '../src/tokenizers/fused-forms-split';
 
 const read = (text: string, language: string): string[] =>
   tokenize(text, language).tokens.map(t => `${t.value}:${t.normalized ?? t.kind}`);
@@ -28,6 +28,20 @@ describe('fused forms', () => {
     const [pronoun, marker] = tokenize('bana', 'tr').tokens;
     expect(pronoun!.position).toEqual({ start: 0, end: 3 });
     expect(marker!.position).toEqual({ start: 3, end: 4 });
+  });
+
+  it("reads no fused form from a verb's object (`''`, de `mich`): no marker fuses there", () => {
+    expect([...fusedForms(tryGetProfile('de')!).keys()]).not.toContain('mich');
+  });
+
+  it('splits only where each part reads as one token', () => {
+    // A stream no split has touched (es has no fused forms).
+    const stream = tokenize('bana', 'es');
+    const forms = new Map([['bana', ['ben', 'e']]]);
+    const values = (words: (w: string) => readonly unknown[]) =>
+      splitFusedForms(stream, forms, words as never).tokens.map(t => t.value);
+    expect(values(word => tokenize(word, 'tr').tokens)).toEqual(['ben', 'e']);
+    expect(values(word => tokenize(`${word} ${word}`, 'tr').tokens)).toEqual(['bana']);
   });
 
   it('leaves every other word alone', () => {
