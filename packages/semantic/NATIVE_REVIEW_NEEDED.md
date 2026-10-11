@@ -534,6 +534,26 @@ vowel and the vowel sign `ে` after a consonant (`ক্লিকে`), which t
 yet: renders keep `ক্লিক তে` there. Code with a bn ending: `#outএ` (attached) or `#out-এ`
 (hyphenated)? A handler's own event keeps its marker apart (`クリック を で`: N4, its head).
 
+### A query's scope before the query: bn, hi, tr, ja, ko (M2 N3) ⚠️
+
+A query with a scope (`<p/> in me`, `<li/> in #list`, `the first <p/> in me`) was written
+in English's order in the verb-final languages, with the language's `in` between
+(`<p/> içinde ben`). It is now written scope first, as they write a modifier:
+
+| Lang | `<p/> in me`         | `<li/> in #list`        | words                                      |
+| ---- | -------------------- | ----------------------- | ------------------------------------------ |
+| tr   | `bendeki <p/>`       | `#list içindeki <li/>`  | `içindeki`; `bendeki`, `ondaki` for me, it |
+| hi   | `मुझ में स्थित <p/>` | `#list में स्थित <li/>` | `में स्थित`, located in                    |
+| bn   | `আমাতে থাকা <p/>`    | `#list এ থাকা <li/>`    | `এ থাকা`, being in                         |
+| ja   | `自分 の中の <p/>`   | `#list の中の <li/>`    | `の中の`                                   |
+| ko   | `나 안의 <p/>`       | `#list 안의 <li/>`      | `안의`                                     |
+
+A positional query takes its scope first too (`bendeki ilk <p/>`, `मुझ में स्थित पहला
+<p/>`). In a condition the render keeps English's order, which its reader takes. Notes for
+the reviewer: tr `#list içindeki` leaves out the genitive (`#list'in içindeki`), as a
+compound noun does; hi `स्थित` is formal, `वाले` colloquial; ko `내 안의` would be the
+usual `me` (the render writes `나 안의`); ja's spacing (`自分 の中の`) is the renderer's.
+
 ## `toggle … between` (M2, vocabulary sheet A6) ⚠️ (October 2026)
 
 `toggle between .a and .b`, `toggle $x between 'a', 'b' and 'c'`. The `between` word is each dictionary's
