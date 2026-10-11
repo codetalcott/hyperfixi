@@ -221,7 +221,10 @@ describe('a VERB-FINAL block is claimed whole', () => {
     // The other half of the same fact: accepted on input, never emitted.
     const reference = parseSemantic('on click js(me) return 1; end', 'en')!.node!;
     const rendered = render(reference, language);
-    const head = rendered.slice(HANDLER_HEAD[language].length).trim();
+    // The render's own head: ja writes it as one word (`クリックで`, N4), and
+    // still reads the two-marker HANDLER_HEAD above.
+    const renderedHead = language === 'ja' ? 'クリックで' : HANDLER_HEAD[language];
+    const head = rendered.slice(renderedHead.length).trim();
     expect(head.startsWith(JS_VERB[language]), `${language} renders: ${rendered}`).toBe(true);
   });
 
