@@ -44,6 +44,21 @@ const BLOCK_HEADER_ACTIONS = new Set<ActionType>([
   'viewTransition',
 ]);
 
+/**
+ * What a render can write in the language's own words that its reader may
+ * misread, so the verified render re-reads it ({@link SemanticRendererImpl.takeNativeWords}):
+ * `value`, a value's grammar word (a query's `in`, a conversion's `as`, `the X
+ * of Y`; M2 sheet A3–A5); `case`, a pronoun in the case its marker takes (N3).
+ */
+export type NativeWordKind = 'value' | 'case';
+
+/**
+ * Commands whose destination is where something is, not where it goes: their
+ * marker takes a location's case (de `auf mir`, ru `на мне`), as a query's
+ * `in` does. Every other destination is a direction (de `in mich`).
+ */
+const LOCATION_DESTINATIONS: ReadonlySet<string> = new Set(['toggle', 'trigger']);
+
 /** Commands that are features when written at the top of a script (see tryParseProgram). */
 const TOP_LEVEL_FEATURE_COMMANDS: ReadonlySet<string> = new Set(['bind', 'set', 'install', 'js']);
 
@@ -198,40 +213,48 @@ export class SemanticRendererImpl implements ISemanticRenderer {
   /** A variable was written in the language's own word during this render. */
   private localizedVariable = false;
 
-  /** Write a value's grammar words in English's (renderEnglishValueWords). */
-  private englishValueWords = false;
+  /** The kinds of native word this render writes plain (renderPlainWords). */
+  private plainWords: ReadonlySet<NativeWordKind> = new Set();
 
-  /** A value's grammar word was written in the language's own since the last reset. */
-  private nativeValueWord = false;
+  /** The kinds of native word written since the last takeNativeWords. */
+  private nativeWritten = new Set<NativeWordKind>();
 
   /** The grammar words a value is written with in this render: a query's `in`, a conversion's `as`. */
   private valueWords(language: string): ValueWords {
-    const words = this.englishValueWords
+    const words = this.plainWords.has('value')
       ? { queryIn: 'in', conversionAs: 'as' }
       : nativeValueWords(language);
-    return { ...words, wrote: () => (this.nativeValueWord = true) };
+    const scopeIn = (reference: string): string | undefined =>
+      this.obliquePhrase(language, words.queryIn, reference, 'location');
+    return { ...words, wrote: () => this.nativeWritten.add('value'), scopeIn };
   }
 
   /**
-   * Whether a render since the last call wrote one of a value's grammar words
-   * in the language's own (es `<button/> en yo`, M2 sheet A5; es `ello como
-   * String`, A4), which the verified render re-reads: where the word is also
-   * a marker the command wants (es `en`, ko `로`), or has another sense (th
-   * `เป็น` is also `is`), the reader can take it as that.
+   * The kinds of native word a render wrote since the last call, which the
+   * verified render re-reads. A value's grammar word (`value`: es
+   * `<button/> en yo`, M2 sheet A5; es `ello como String`, A4) can be read as
+   * a marker the command wants (es `en`, ko `로`) or another sense (th `เป็น`
+   * is also `is`); a pronoun in the case its marker takes (`case`: es
+   * `en mí`, N3) can be a form the reader does not bring back.
    */
-  takeNativeValueWords(): boolean {
-    const wrote = this.nativeValueWord;
-    this.nativeValueWord = false;
+  takeNativeWords(): ReadonlySet<NativeWordKind> {
+    const wrote = this.nativeWritten;
+    this.nativeWritten = new Set();
     return wrote;
   }
 
-  /** Run `render` with a value's grammar words in English's (the verified render's fallback). */
-  renderEnglishValueWords<T>(render: () => T): T {
-    this.englishValueWords = true;
+  /**
+   * Run `render` with these kinds of native word written plain (the verified
+   * render's fallbacks): a value's grammar words in English's, a pronoun in
+   * the nominative.
+   */
+  renderPlainWords<T>(render: () => T, kinds: readonly NativeWordKind[] = ['value', 'case']): T {
+    const previous = this.plainWords;
+    this.plainWords = new Set([...previous, ...kinds]);
     try {
       return render();
     } finally {
-      this.englishValueWords = false;
+      this.plainWords = previous;
     }
   }
 
@@ -637,7 +660,6 @@ export class SemanticRendererImpl implements ISemanticRenderer {
   private keyword(language: string, action: string): string {
     return tryGetProfile(language)?.keywords?.[action]?.primary ?? action;
   }
-
 
   /** `Name` or `Name(p1, p2)` — the parameter list renders verbatim (identifiers). */
   private renderBlockHeader(keyword: string, name: string, parameters: readonly string[]): string {
@@ -1150,7 +1172,15 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     const language = pattern.language;
     let eventPart = -1;
 
-    for (const token of pattern.template.tokens) {
+    const tokens = pattern.template.tokens;
+    for (let i = 0; i < tokens.length; i++) {
+      const oblique = this.obliqueAt(tokens, i, node, language);
+      if (oblique !== undefined) {
+        parts.push(oblique);
+        i++;
+        continue;
+      }
+      const token = tokens[i]!;
       const rendered = this.renderPatternToken(token, node, language);
       if (rendered !== null) {
         parts.push(rendered);
@@ -1218,6 +1248,60 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     }
 
     return parts.join(' ');
+  }
+
+  /**
+   * A marker and the reference beside it, as one phrase in the case the
+   * marker takes (M2 N3): es `en` + `me` → `en mí`, ru `к` → `ко мне`, de `in`
+   * → `in mich` (a direction) or `in mir` (a location). From the profile's
+   * `obliqueReferences`; undefined where the language keeps the nominative.
+   */
+  private obliquePhrase(
+    language: string,
+    marker: string,
+    reference: string | undefined,
+    sense: 'direction' | 'location'
+  ): string | undefined {
+    if (this.plainWords.has('case') || reference === undefined) return undefined;
+    const form = tryGetProfile(language)?.obliqueReferences?.[reference]?.[marker];
+    if (!form) return undefined;
+    this.nativeWritten.add('case');
+    return typeof form === 'string' ? form : form[sense];
+  }
+
+  /**
+   * Tokens `i` and `i + 1`, a marker and the role it marks (a destination, a
+   * source, or a patient that has one: `set $x to me`, es `a mí`),
+   * written as one oblique phrase (obliquePhrase): the marker is the literal's
+   * last word (`antes de`), or its first where markers follow their noun (hi).
+   * undefined where they are not such a pair.
+   */
+  private obliqueAt(
+    tokens: readonly PatternToken[],
+    i: number,
+    node: SemanticNode,
+    language: string
+  ): string | undefined {
+    const first = tokens[i];
+    const second = tokens[i + 1];
+    const roleToken = first?.type === 'role' ? first : second;
+    if (roleToken?.type !== 'role') return undefined;
+    const role = roleToken.role;
+    if (role !== 'destination' && role !== 'source' && role !== 'patient') return undefined;
+    const after = tryGetProfile(language)?.roleMarkers[role]?.position === 'after';
+    const [literal, roleAt] = after ? [second, first] : [first, second];
+    if (roleAt !== roleToken || literal?.type !== 'literal') return undefined;
+    // A go/scroll position renders its own way (`top of me`).
+    if (role === 'destination' && (node as CommandSemanticNode).scrollPosition) return undefined;
+    const words = literal.value.split(' ');
+    const marker = after ? words[0]! : words[words.length - 1]!;
+    const sense =
+      role === 'destination' && LOCATION_DESTINATIONS.has(node.action) ? 'location' : 'direction';
+    const value = node.roles.get(role);
+    const reference = value?.type === 'reference' ? value.value : undefined;
+    const phrase = this.obliquePhrase(language, marker, reference, sense);
+    if (phrase === undefined) return undefined;
+    return (after ? [phrase, ...words.slice(1)] : [...words.slice(0, -1), phrase]).join(' ');
   }
 
   /**
@@ -1423,7 +1507,15 @@ export class SemanticRendererImpl implements ISemanticRenderer {
 
         const groupParts: string[] = [];
         let hasRoleValue = false;
-        for (const subToken of token.tokens) {
+        for (let i = 0; i < token.tokens.length; i++) {
+          const oblique = this.obliqueAt(token.tokens, i, node, language);
+          if (oblique !== undefined) {
+            groupParts.push(oblique);
+            hasRoleValue = true;
+            i++;
+            continue;
+          }
+          const subToken = token.tokens[i];
           const rendered = this.renderPatternToken(subToken, node, language);
           if (rendered !== null) {
             groupParts.push(rendered);
@@ -1504,7 +1596,13 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         {
           const words = this.valueWords(language);
           if (words.queryIn !== 'in') words.wrote?.();
-          return `${value.value} ${words.queryIn} ${this.valueToNaturalString(value.scope, language)}`;
+          // `in me` in the case the `in` takes, a location (de `in mir`, N3).
+          const scope =
+            (tryGetProfile(language)?.roleMarkers.destination?.position !== 'after' &&
+              value.scope.type === 'reference' &&
+              this.obliquePhrase(language, words.queryIn, value.scope.value, 'location')) ||
+            `${words.queryIn} ${this.valueToNaturalString(value.scope, language)}`;
+          return `${value.value} ${scope}`;
         }
 
       case 'reference':
@@ -1768,36 +1866,39 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    * one-link phrase that is the whole value (`set @role of #x`), which it would
    * read back as a property path where English reads an expression. The verified
    * render re-reads a translation that wrote one, and writes the English where
-   * it does not read back (renderEnglishValueWords).
+   * it does not read back (renderPlainWords).
    */
   private localizeOfPossessives(
     raw: string,
     link: (object: SemanticValue, property: string) => string
   ): string {
-    if (this.englishValueWords || !/\bof\b/.test(raw)) return raw;
+    if (this.plainWords.has('value') || !/\bof\b/.test(raw)) return raw;
     return outsideQuotes(raw, text =>
-      text.replace(OF_PHRASE, (whole, lead: string, chain: string, owner: string, offset: number) => {
-        const properties = ofPhraseProperties(chain);
-        if (!properties) return whole;
-        const [innermost, ...outer] = properties.reverse();
-        let rendered = link(createSelector(owner), innermost!);
-        if (!rendered) return whole;
-        const propertyFirst = !rendered.startsWith(owner);
-        if (!propertyFirst && convertedAt(text, offset + whole.length)) return whole;
-        // One link that is the whole value, written possessive-first (ja
-        // `#xの@role`), reads back as a property path, where English read an
-        // expression: a role of another type. (A chain reads back an
-        // expression, `#d1's parentNode's innerHTML`.)
-        const wholeValue = offset === 0 && whole.length === text.trimEnd().length;
-        if (!propertyFirst && outer.length === 0 && wholeValue) return whole;
-        if (propertyFirst) {
-          for (const property of outer) rendered = link(createSelector(rendered), property);
-        } else {
-          rendered += outer.map(property => `'s ${property}`).join('');
+      text.replace(
+        OF_PHRASE,
+        (whole, lead: string, chain: string, owner: string, offset: number) => {
+          const properties = ofPhraseProperties(chain);
+          if (!properties) return whole;
+          const [innermost, ...outer] = properties.reverse();
+          let rendered = link(createSelector(owner), innermost!);
+          if (!rendered) return whole;
+          const propertyFirst = !rendered.startsWith(owner);
+          if (!propertyFirst && convertedAt(text, offset + whole.length)) return whole;
+          // One link that is the whole value, written possessive-first (ja
+          // `#xの@role`), reads back as a property path, where English read an
+          // expression: a role of another type. (A chain reads back an
+          // expression, `#d1's parentNode's innerHTML`.)
+          const wholeValue = offset === 0 && whole.length === text.trimEnd().length;
+          if (!propertyFirst && outer.length === 0 && wholeValue) return whole;
+          if (propertyFirst) {
+            for (const property of outer) rendered = link(createSelector(rendered), property);
+          } else {
+            rendered += outer.map(property => `'s ${property}`).join('');
+          }
+          this.nativeWritten.add('value');
+          return `${lead}${rendered}`;
         }
-        this.nativeValueWord = true;
-        return `${lead}${rendered}`;
-      })
+      )
     );
   }
 

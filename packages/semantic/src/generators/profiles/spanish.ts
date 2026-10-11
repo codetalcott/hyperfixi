@@ -36,6 +36,16 @@ export const spanishProfile: LanguageProfile = {
     window: 'ventana',
     detail: 'detalle',
   },
+  // `me` next to a marker, in the case the marker takes (M2 N3; listed in
+  // NATIVE_REVIEW_NEEDED.md).
+  obliqueReferences: {
+    me: {
+      en: 'en mí',
+      a: 'a mí',
+      de: 'de mí',
+      desde: 'desde mí',
+    },
+  },
   possessive: {
     marker: 'de', // Spanish uses "de" for general possession
     markerPosition: 'before-property',

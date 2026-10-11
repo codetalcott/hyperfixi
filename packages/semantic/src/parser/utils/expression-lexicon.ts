@@ -278,6 +278,35 @@ const LOCATIVE_SURFACES: Record<string, ReadonlySet<string>> = {
   zh: new Set(["在", "进入"]),
 };
 
+/**
+ * A language's within-surfaces, with each one's spelling before a pronoun in
+ * the case it takes (ru `в` → `во мне`, pl `w` → `we mnie`; M2 N3): a render
+ * writes `<li/> во мне`, so the reader takes the vocalized marker there too.
+ * Derived from the profile's `obliqueReferences`.
+ */
+const locativeSurfacesCache = new Map<string, ReadonlySet<string> | undefined>();
+function locativeSurfaces(profile: LanguageProfile | undefined): ReadonlySet<string> | undefined {
+  const code = profile?.code;
+  if (!code) return undefined;
+  if (locativeSurfacesCache.has(code)) return locativeSurfacesCache.get(code);
+  const base = LOCATIVE_SURFACES[code];
+  let surfaces = base;
+  if (base && profile.obliqueReferences) {
+    const all = new Set(base);
+    for (const forms of Object.values(profile.obliqueReferences))
+      for (const [marker, form] of Object.entries(forms)) {
+        if (!base.has(marker)) continue;
+        for (const phrase of typeof form === 'string' ? [form] : [form.direction, form.location]) {
+          const words = phrase.split(' ');
+          if (words.length > 1) all.add(words[0]!.toLowerCase());
+        }
+      }
+    surfaces = all;
+  }
+  locativeSurfacesCache.set(code, surfaces);
+  return surfaces;
+}
+
 /** English prepositions that mean `in` when they land in the locative slot. */
 const ENGLISH_LOCATIVE_SENSES = new Set(['in', 'into', 'at', 'within', 'inside']);
 
@@ -291,7 +320,7 @@ export function toEnglishLocative(
   marker: LanguageToken
 ): string {
   const surface = marker.value.toLowerCase();
-  const langSurfaces = profile?.code ? LOCATIVE_SURFACES[profile.code] : undefined;
+  const langSurfaces = locativeSurfaces(profile);
   if (langSurfaces?.has(surface)) return 'in';
 
   const normalized = marker.normalized ?? marker.value;
@@ -308,7 +337,7 @@ export function toEnglishLocative(
  */
 function isLocativeMarker(profile: LanguageProfile | undefined, marker: LanguageToken): boolean {
   if (marker.value.toLowerCase() === 'in') return true;
-  const langSurfaces = profile?.code ? LOCATIVE_SURFACES[profile.code] : undefined;
+  const langSurfaces = locativeSurfaces(profile);
   if (langSurfaces?.has(marker.value.toLowerCase())) return true;
   return ENGLISH_LOCATIVE_SENSES.has((marker.normalized ?? marker.value).toLowerCase());
 }

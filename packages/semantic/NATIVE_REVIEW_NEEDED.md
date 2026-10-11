@@ -365,6 +365,46 @@ wrote all 48 corpus rows in and the order the structural parser reads. A native
 SOV reviewer may prefer the expression-first shape (`$a または $b が変わったら …`);
 that would be a renderer change plus a second accepted head shape.
 
+## `me` after a marker, in the case the marker takes (M2 N3) ⚠️ (October 2026)
+
+Translations used to write the nominative pronoun after every marker (es `a yo`,
+de `zu ich`, ru `к я`). They now write the form the marker takes, from each
+profile's `obliqueReferences`. **The forms come from grammar references, not
+a native speaker** (owner decision, 2026-10-10: native review trails the build).
+A form is written only where the reader brings it back as the nominative would be;
+elsewhere the render keeps the nominative.
+
+Where a marker takes a different case for a direction and for a location (de, ru, uk),
+a render picks by command. **Direction:** put into, append to, send to, set … to,
+prepend, add to. **Location:** toggle … on, trigger … on, and a query's `in`
+(`<p/> in me`). Please check this split per command too.
+
+| Lang | Marker → form                                                                                                                                                                                        | Notes for the reviewer                                                                                                       |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| es   | `en` → `en mí`, `a` → `a mí`, `de` → `de mí`, `desde` → `desde mí`                                                                                                                                   | `antes de mí`, `después de mí`, `en fin de mí` follow from `de`                                                              |
+| pt   | `em` → `em mim`, `a` → `a mim`, `para` → `para mim`, `de` → `de mim`                                                                                                                                 | `em fim de mim` follows from `de`                                                                                            |
+| it   | `in` → `in me`, `a` → `a me`, `da` → `da me`, `di` → `di me`                                                                                                                                         | `a fine di me` follows from `di`                                                                                             |
+| tl   | `sa` → `sa akin`, `mula_sa` → `mula_sa akin`                                                                                                                                                         | `mula_sa` is written as the profile's marker is (`mula sa` does not read back)                                               |
+| pl   | `do` → `do mnie`, `w` → `we mnie`, `na` → `na mnie`, `z` → `ze mnie`, `po` → `po mnie`, `przed` → `przede mną`                                                                                       | vocalized `we`, `ze`, `przede`; `mnie` is the same form for a direction and a location; `przy koniec ze mnie` (at end of me) |
+| ru   | `к` → `ко мне`, `в` → `в меня` (direction) / `во мне` (location), `на` → `на меня` / `на мне`, `из` → `из меня`, `после` → `после меня`, `перед` → `передо мной`                                     | vocalized `ко`, `во`, `передо`; `у конец из меня` (at end of me)                                                             |
+| uk   | `до` → `до мене`, `в` → `в мене` / `в мені`, `у` → `у мене` / `у мені`, `на` → `на мене` / `на мені`, `з` → `з мене`, `після` → `після мене`, `перед` → `переді мною`                                | `в мене` also reads as "I have"; is it natural for "into me"?                                                                |
+| de   | `zu` → `zu mir`, `von` → `von mir`, `nach` → `nach mir`, `in` → `in mich` / `in mir`, `auf` → `auf mich` / `auf mir`, `an` → `an mich` / `an mir`, `vor` → `vor mich` / `vor mir` | accusative for a direction, dative for a location; `bei ende von mir` (at end of me)                                         |
+| hi   | `में` → `मुझ में`, `पर` → `मुझ पर`, `से` → `मुझ से`                                                                                                                                                  | oblique `मुझ`, spaced as the renderer spaces every marker (N5 would join them: `मुझमें`)                                     |
+
+**Still the nominative (open).** These need a reader change or a decision:
+
+- pt `antes eu`, `depois eu` (put before/after me): `antes de mim`, `depois de mim`.
+  pt `<p/> dentro eu` (a query's `in`): `dentro de mim`.
+- it `su io` (toggle on me): `su di me`. it `prima io` / `dopo io`: `prima di me`, `dopo di me`.
+- tl `bago ako` / `matapos ako` (put before/after me): which form is natural here?
+  tl `sa wakas ng ako` (at end of me), `<p/> sa_loob ako`.
+  tl `akin` followed by another word reads as the possessive "my" (`sa akin for 2s`), so
+  the render keeps `ako` there.
+- hi `मैं को` (`को` fuses: `मुझे`) and every fused form (tr `bana`, ar `إليّ`, he `אליי`, bn
+  `আমাকে`): they wait on N5's attached suffixes.
+- `it` after a marker, and `me` as an unmarked object (de `messen ich` → `messen mich`):
+  the next step.
+
 ## August 2026 research pass — summary
 
 A follow-up research pass (web sources as a native-speaker proxy; items still

@@ -35,6 +35,19 @@ export const ukrainianProfile: LanguageProfile = {
     window: 'вікно',
     detail: 'деталі',
   },
+  // `me` next to a marker, in the case the marker takes (M2 N3; listed in
+  // NATIVE_REVIEW_NEEDED.md).
+  obliqueReferences: {
+    me: {
+      до: 'до мене',
+      в: { direction: 'в мене', location: 'в мені' },
+      у: { direction: 'у мене', location: 'у мені' },
+      на: { direction: 'на мене', location: 'на мені' },
+      з: 'з мене',
+      після: 'після мене',
+      перед: 'переді мною',
+    },
+  },
   possessive: {
     marker: '',
     markerPosition: 'after-object',

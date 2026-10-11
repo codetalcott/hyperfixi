@@ -35,6 +35,17 @@ export const hindiProfile: LanguageProfile = {
     window: 'विंडो',
     detail: 'विवरण',
   },
+  // `me` next to a marker, in the case the marker takes (M2 N3; listed in
+  // NATIVE_REVIEW_NEEDED.md).
+  obliqueReferences: {
+    // The oblique `मुझ` before a postposition, spaced as the renderer spaces
+    // markers (N5 joins them: मुझमें). `को` fuses to `मुझे` (later, with N5).
+    me: {
+      में: 'मुझ में',
+      पर: 'मुझ पर',
+      से: 'मुझ से',
+    },
+  },
   possessive: {
     marker: 'का',
     markerPosition: 'between',

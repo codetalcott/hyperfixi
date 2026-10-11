@@ -36,6 +36,21 @@ export const germanProfile: LanguageProfile = {
     window: 'fenster',
     detail: 'detail',
   },
+  // `me` next to a marker, in the case the marker takes (M2 N3; listed in
+  // NATIVE_REVIEW_NEEDED.md).
+  obliqueReferences: {
+    // Dative after zu/von/nach; in/auf/an/vor take the accusative for
+    // a direction (put into), the dative for a location (toggle on).
+    me: {
+      zu: 'zu mir',
+      von: 'von mir',
+      nach: 'nach mir',
+      in: { direction: 'in mich', location: 'in mir' },
+      auf: { direction: 'auf mich', location: 'auf mir' },
+      an: { direction: 'an mich', location: 'an mir' },
+      vor: { direction: 'vor mich', location: 'vor mir' },
+    },
+  },
   possessive: {
     marker: '', // German uses possessive pronouns directly
     markerPosition: 'before-property',

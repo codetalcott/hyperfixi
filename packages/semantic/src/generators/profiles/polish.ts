@@ -37,6 +37,19 @@ export const polishProfile: LanguageProfile = {
     window: 'okno',
     detail: 'szczegół',
   },
+  // `me` next to a marker, in the case the marker takes (M2 N3; listed in
+  // NATIVE_REVIEW_NEEDED.md).
+  obliqueReferences: {
+    // `w`, `z` and `przed` take a vowel before `mnie`/`mną` (`we`, `ze`, `przede`).
+    me: {
+      do: 'do mnie',
+      w: 'we mnie',
+      na: 'na mnie',
+      z: 'ze mnie',
+      po: 'po mnie',
+      przed: 'przede mną',
+    },
+  },
   possessive: {
     marker: '', // Polish uses genitive case, not a marker
     markerPosition: 'after-object',
@@ -61,7 +74,7 @@ export const polishProfile: LanguageProfile = {
     },
   },
   roleMarkers: {
-    destination: { primary: 'do', alternatives: ['w', 'na'], position: 'before' },
+    destination: { primary: 'do', alternatives: ['w', 'na', 'we'], position: 'before' },
     source: { primary: 'z', alternatives: ['od', 'ze'], position: 'before' },
     patient: { primary: '', position: 'before' },
     style: { primary: 'z', alternatives: ['ze'], position: 'before' },

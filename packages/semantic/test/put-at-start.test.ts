@@ -29,5 +29,5 @@ describe.each([
 });
 
 it('a put at the end is still a put', () => {
-  expect(translate('on click put x at end of me', 'en', 'es')).toBe('al clic poner x en fin de yo');
+  expect(translate('on click put x at end of me', 'en', 'es')).toBe('al clic poner x en fin de mí');
 });

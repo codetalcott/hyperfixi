@@ -35,6 +35,19 @@ export const russianProfile: LanguageProfile = {
     window: 'окно',
     detail: 'детали',
   },
+  // `me` next to a marker, in the case the marker takes (M2 N3; listed in
+  // NATIVE_REVIEW_NEEDED.md).
+  obliqueReferences: {
+    // `к`, `в` and `перед` take a vowel before `мне`/`мной` (`ко`, `во`, `передо`).
+    me: {
+      к: 'ко мне',
+      в: { direction: 'в меня', location: 'во мне' },
+      на: { direction: 'на меня', location: 'на мне' },
+      из: 'из меня',
+      после: 'после меня',
+      перед: 'передо мной',
+    },
+  },
   possessive: {
     marker: '',
     markerPosition: 'after-object',
@@ -61,7 +74,7 @@ export const russianProfile: LanguageProfile = {
     },
   },
   roleMarkers: {
-    destination: { primary: 'в', alternatives: ['на', 'к'], position: 'before' },
+    destination: { primary: 'в', alternatives: ['на', 'к', 'во', 'ко'], position: 'before' },
     source: { primary: 'из', alternatives: ['от', 'с'], position: 'before' },
     patient: { primary: '', position: 'before' },
     style: { primary: 'с', alternatives: ['со'], position: 'before' },

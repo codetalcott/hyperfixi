@@ -33,6 +33,16 @@ export const portugueseProfile: LanguageProfile = {
     window: 'janela',
     detail: 'detalhe',
   },
+  // `me` next to a marker, in the case the marker takes (M2 N3; listed in
+  // NATIVE_REVIEW_NEEDED.md).
+  obliqueReferences: {
+    me: {
+      em: 'em mim',
+      a: 'a mim',
+      para: 'para mim',
+      de: 'de mim',
+    },
+  },
   possessive: {
     marker: 'de', // Uses "de" for general possession
     markerPosition: 'before-property',
