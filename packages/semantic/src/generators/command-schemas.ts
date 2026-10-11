@@ -1299,6 +1299,10 @@ export const bindSchema: CommandSchema = {
         qu: 'man',
         hi: 'में', // SOV locative the transformer emits for the bind target
       },
+      // bn's locative is `তে` after a vowel and `এ` after a consonant, one marker:
+      // the fused `আমাতে` reads back as `আমি` + `এ` (as the profile's destination
+      // takes both), so bind's `আমাতে বাইন্ড` read as nothing.
+      markerVariants: { bn: ['এ'] },
     },
   ],
   errorCodes: ['MISSING_TARGET', 'MISSING_VALUE', 'INVALID_SYNTAX'],

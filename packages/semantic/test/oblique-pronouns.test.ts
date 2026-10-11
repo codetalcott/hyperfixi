@@ -222,8 +222,7 @@ describe('bn, hi, tl and pt write a pronoun fused with its marker', () => {
     ['bn', 'on click add .x to me', 'ক্লিক তে আমাতে .x কে যোগ'],
     ['bn', 'on click remove .x from me', 'ক্লিক তে আমার থেকে .x কে সরান'],
     ['bn', 'on click put it into #out', 'ক্লিক তে এটিকে #out এ রাখুন'],
-    // One word for two markers (`আমাতে` is `তে` and `এ`) reads as the primary,
-    // `তে`, which bind's source takes and `এ`'s patterns take as an alternative.
+    // `আমাতে` is `তে` and `এ`, one locative; bind's source takes both.
     ['bn', 'bind $x to me', '$x কে আমাতে বাইন্ড'],
     ['bn', 'bind $x to it', '$x কে এটিতে বাইন্ড'],
     ['hi', 'on click show me', 'क्लिक पर मुझे दिखाएं'],
