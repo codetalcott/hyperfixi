@@ -39,13 +39,12 @@ export const germanProfile: LanguageProfile = {
   // `me` next to a marker, in the case the marker takes (M2 N3; listed in
   // NATIVE_REVIEW_NEEDED.md).
   obliqueReferences: {
-    // Dative after zu/von/nach/bei; in/auf/an/vor take the accusative for
+    // Dative after zu/von/nach; in/auf/an/vor take the accusative for
     // a direction (put into), the dative for a location (toggle on).
     me: {
       zu: 'zu mir',
       von: 'von mir',
       nach: 'nach mir',
-      bei: 'bei mir',
       in: { direction: 'in mich', location: 'in mir' },
       auf: { direction: 'auf mich', location: 'auf mir' },
       an: { direction: 'an mich', location: 'an mir' },

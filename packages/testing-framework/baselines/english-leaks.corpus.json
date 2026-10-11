@@ -1,8 +1,8 @@
 {
   "description": "English-leak gate, corpus half (src/multilingual/english-leaks.ts): per corpus row, the findings of each language's render (render(parse(en), L)): an English grammar word, `event:<name>` (an English event the lexicon has a word for) or `case:me` / `case:it` (a nominative pronoun beside a marker; `-object`: as an unmarked object). `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts after a fresh populate.",
   "renders": 3519,
-  "leaky": 626,
-  "findings": 864,
+  "leaky": 454,
+  "findings": 628,
   "kinds": {
     "word": {
       "renders": 191,
@@ -13,13 +13,13 @@
       "findings": 0
     },
     "case": {
-      "renders": 472,
-      "findings": 562
+      "renders": 291,
+      "findings": 326
     }
   },
   "entries": {
     "add-class-basic": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:me": "ar bn he tr"
     },
     "announce-screen-reader": {
       "of": "bn hi ja ko tl vi zh"
@@ -38,7 +38,7 @@
       "event repeat trigger trigger trigger until": "qu"
     },
     "behavior-sortable": {
-      "case:me case:me case:me": "ar bn de es hi it pl pt ru tl tr uk",
+      "case:me case:me case:me": "ar bn tr",
       "case:me case:me case:me null": "he",
       "event repeat trigger trigger trigger until": "qu"
     },
@@ -47,14 +47,14 @@
       "case:me-object": "ar de es it pl pt ru uk"
     },
     "caret-var-on-target": {
-      "case:me on": "ar bn de es he hi it pl pt ru tl tr uk",
-      "on": "fr id ja ko ms qu sw th vi zh"
+      "case:me on": "ar bn he tr",
+      "on": "de es fr hi id it ja ko ms pl pt qu ru sw th tl uk vi zh"
     },
     "computed-value": {
       "of the": "bn hi ja ko tl vi zh"
     },
     "copy-to-clipboard": {
-      "case:me case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:me case:me": "ar bn he tr"
     },
     "event-debounce": {
       "at case:it debounced": "hi tr",
@@ -63,10 +63,10 @@
       "debounced": "tl"
     },
     "event-from-elsewhere": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:me": "ar bn he tr"
     },
     "event-once": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:me": "ar bn he tr"
     },
     "event-throttle": {
       "at throttled": "ar bn de es fr he hi id it ja ko ms pl pt qu ru sw th tr uk vi zh",
@@ -84,19 +84,20 @@
       "case:it": "ar de fr tl tr"
     },
     "fetch-loading-state": {
-      "case:it case:me case:me": "hi tr",
-      "case:it-object": "fr",
-      "case:it-object case:me case:me": "ar es it pt",
-      "case:me case:me": "bn de he pl ru tl uk"
+      "case:it": "hi",
+      "case:it case:me case:me": "tr",
+      "case:it-object": "es fr it pt",
+      "case:it-object case:me case:me": "ar",
+      "case:me case:me": "bn he"
     },
     "fetch-with-headers": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:me": "ar bn he tr"
     },
     "focus-trap": {
       "matches": "bn th"
     },
     "form-disable-on-submit": {
-      "case:me case:me": "ar bn de es hi it pl ru tr"
+      "case:me case:me": "ar bn hi tr"
     },
     "get-value": {
       "case:it": "hi tr",
@@ -110,14 +111,14 @@
       "case:me-object": "ar de es it pl pt ru uk"
     },
     "if-empty": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:me": "ar bn he tr"
     },
     "if-exists": {
       "case:it": "hi tr",
       "case:it-object": "ar es fr it pt"
     },
     "input-validation": {
-      "case:me case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:me case:me": "ar bn he tr"
     },
     "keydown-key-is-syntax": {
       "case:me is": "bn he hi tr",
@@ -125,7 +126,7 @@
       "is": "fr id ja ko ms qu sw th tl vi zh"
     },
     "live-derived-value": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:me": "ar bn he tr"
     },
     "log-element": {
       "case:me": "bn he hi tr",
@@ -154,24 +155,24 @@
       "case:it": "ar de fr hi pl pt tl tr"
     },
     "on-custom-event-receive": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:me": "ar bn he tr"
     },
     "pick-text-range": {
       "of": "he"
     },
     "put-after": {
       "after case:me": "bn hi",
-      "case:me": "ar es tl"
+      "case:me": "ar tl"
     },
     "put-before": {
       "before case:me": "bn hi",
-      "case:me": "ar es tl"
+      "case:me": "ar tl"
     },
     "put-content-basic": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:me": "ar bn he tr"
     },
     "remove-class-basic": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:me": "ar bn he tr"
     },
     "remove-element": {
       "case:me": "bn he hi tr",
@@ -182,26 +183,26 @@
       "case:it-object": "ar es fr it pt"
     },
     "repeat-times": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:me": "ar bn he tr"
     },
     "swap-view-transition": {
       "transition view": "ar bn de es he hi id it ja ko ms pl pt qu ru sw th tl tr uk vi zh",
       "view": "fr"
     },
     "tabs-aria": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:me": "ar bn he tr"
     },
     "tabs-basic": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:me": "ar bn he tr"
     },
     "tabs-content": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:me": "ar bn he tr"
     },
     "template-literal-list-build": {
       "in": "he"
     },
     "toggle-aria-expanded": {
-      "case:me": "ar bn de es he hi it pl pt ru tl tr uk"
+      "case:me": "ar bn he it tr"
     },
     "transition-opacity": {
       "case:me": "bn he hi tr",
@@ -215,8 +216,9 @@
       "case:me-object": "ar de es it pl pt ru uk"
     },
     "when-value-changes": {
-      "case:it case:me": "hi tr",
-      "case:me": "ar bn de es he it pl pt ru tl uk"
+      "case:it": "hi",
+      "case:it case:me": "tr",
+      "case:me": "ar bn he"
     },
     "window-resize": {
       "at debounced": "ar bn de es fr he hi id it ja ko ms pl pt qu ru sw th tr uk vi zh",
