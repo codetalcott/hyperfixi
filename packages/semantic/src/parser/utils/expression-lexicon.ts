@@ -405,14 +405,12 @@ const POSITIONAL_HEADS: ReadonlySet<string> = new Set([
  * (`ben` `içindeki` `<p/>`), hi `मुझ में स्थित <p/>`, `#list の中の <li/>`, also
  * after a positional word (`bendeki ilk <p/>`). `phrase` is the marker and
  * participle (`में स्थित`), matched by the tokens' text however the tokenizer
- * cut it (ja `の中` `の`); `classOk`, whether a class query (`.item`) stands
- * for a query in this slot.
+ * cut it (ja `の中` `の`).
  */
 export function matchScopeFirstQuery(
   tokens: readonly LanguageToken[],
   at: number,
-  phrase: string,
-  classOk: boolean
+  phrase: string
 ): {
   readonly scope: LocativeScope;
   readonly positional?: string | undefined;
@@ -438,10 +436,7 @@ export function matchScopeFirstQuery(
   if (positional) q++;
   const query = tokens[q];
   if (query?.kind !== 'selector') return null;
-  const isQuery =
-    query.value.startsWith('<') ||
-    (query.value.startsWith('.') && (classOk || positional !== undefined)) ||
-    (query.value.startsWith('#') && positional !== undefined);
+  const isQuery = query.value.startsWith('<') || query.value.startsWith('.');
   if (!isQuery) return null;
   return { scope, positional, query, consumed: q + 1 - at };
 }

@@ -1168,8 +1168,7 @@ export class PatternMatcher {
     const found = matchScopeFirstQuery(
       tokens.tokens,
       tokens.position(),
-      `${entry.marker}${entry.participle ?? ''}`,
-      !this.isClassNameSlot(patternToken)
+      `${entry.marker}${entry.participle ?? ''}`
     );
     if (!found) return null;
     const [first, second] = found.scope.parts;

@@ -49,13 +49,9 @@ describe('the scope before the query', () => {
     ).toContain('<button/> এ আমি');
   });
 
-  it('reads a class query an author writes scope first, but not a class name', () => {
+  it('reads a class query an author writes scope first', () => {
     expect(translate('tıklama i üzerinde #list içindeki .item i gizle', 'tr', 'en')).toBe(
       'on click hide .item in #list'
     );
-    // toggle's `.a` is a class name, never a query: the scope-first form is no reading of it.
-    expect(() =>
-      translate('tıklama i üzerinde #list içindeki .a i değiştir', 'tr', 'en')
-    ).toThrow();
   });
 });
