@@ -19,15 +19,20 @@ const words = (text: string): string[] => text.split(/\s+/);
 
 /**
  * Does a render write the language's query `in`? Before a pronoun it can take
- * a vowel (pl `we mnie`, ru `во мне`; M2 N3).
+ * a vowel (pl `we mnie`, ru `во мне`; M2 N3). A verb-final language writes
+ * the scope first, with its own marker (tr `#list içindeki <li/>`, `bendeki`).
  */
 function writesQueryIn(rendered: string, language: string): boolean {
-  const word = QUERY_IN[language]!;
-  const form = tryGetProfile(language)?.obliqueReferences?.me?.[word];
-  const phrases = (typeof form === 'string' ? [form] : [form?.location]).filter(
-    (p): p is string => p !== undefined
-  );
-  const spellings = [word, ...phrases.map(p => p.split(' ')[0]!)];
+  const profile = tryGetProfile(language);
+  const spellings: string[] = [];
+  for (const word of [QUERY_IN[language]!, profile?.queryScopeFirst?.marker]) {
+    if (!word) continue;
+    const form = profile?.obliqueReferences?.me?.[word];
+    const phrases = (typeof form === 'string' ? [form] : [form?.location]).filter(
+      (p): p is string => p !== undefined
+    );
+    spellings.push(word, ...phrases.map(p => p.split(' ')[0]!));
+  }
   return words(rendered).some(w => spellings.includes(w));
 }
 
