@@ -532,7 +532,7 @@ how it is read aloud (`.active` is 액티브, so `를`). Is the render's choice 
 should a code word take one form always? bn's locative after a Bengali word is `তে` after a
 vowel and the vowel sign `ে` after a consonant (`ক্লিকে`), which the reader does not split
 yet: renders keep `ক্লিক তে` there. Code with a bn ending: `#outএ` (attached) or `#out-এ`
-(hyphenated)? bn's handler head keeps its marker apart (`ক্লিক তে`: N4); ja's is below.
+(hyphenated)? bn's handler head, and the locative after a Bengali word, are below (N4).
 
 ### A handler's head as one word: ja (M2 N4) ⚠️
 
@@ -554,6 +554,27 @@ reviewer: is `クリックで` the head you would write, or `クリック時に`
 too (`draggable:startで`, `keydown[key=="Escape"]で`), as a selector takes `に` (`#outに`): keep,
 or write code's particle apart? `キープレス で` and `サイズ変更 で` keep a space (the reader
 takes the joined words as one).
+
+### A handler's head as one word: bn (M2 N4) ⚠️
+
+Renders wrote a handler's event and the `on` word apart (`ক্লিক তে .aকে টগল করুন`). They now
+write the locative onto the event, in the form the word takes:
+
+| English                        | written                               | rule                                   |
+| ------------------------------ | ------------------------------------- | -------------------------------------- |
+| `on click toggle .a`           | `ক্লিকে .aকে টগল করুন`                | the vowel sign `ে` after a consonant   |
+| `on load toggle .a`            | `লোডে .aকে টগল করুন`                  | same                                   |
+| `on change put "x" into #out`  | `পরিবর্তনে "x"কে #outএ রাখুন`         | same                                   |
+| `on submit toggle .a`          | `জমাতে .aকে টগল করুন`                 | `তে` after a vowel                     |
+| `on click from #b toggle .a`   | `#b থেকে ক্লিকে .aকে টগল করুন`        |                                        |
+| `on keyup toggle .a`           | `keyupতে .aকে টগল করুন`               | after code, `তে` as N5 writes it       |
+| `on click or keyup toggle .a`  | `ক্লিক অথবা keyupতে .aকে টগল করুন`    | the last leg takes it                  |
+
+The same rule now writes the locative onto any Bengali word it marks (`বডিতে`); a word
+ending in an anusvara or a hasant keeps it apart. The reader still takes `ক্লিক তে` and
+`ক্লিক এ`. Notes for the reviewer: after a vowel, `-তে` or `-য়` (`জমায়`)? Is `ক্লিকে`
+the head you would write for `on click`, or `ক্লিক করলে` / `ক্লিক হলে`? For code, `keyupতে`
+or `keyup-এ`?
 
 ### A query's scope before the query: bn, hi, tr, ja, ko (M2 N3) ⚠️
 

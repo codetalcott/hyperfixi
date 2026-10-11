@@ -119,7 +119,7 @@ counted). The sheet lists the PRs and the words that changed; the words target i
 - N5: suffixes attached in the agglutinative languages, with N3's fused forms (design:
   `multilingual/FUSED_FORMS.md`, 2026-10-10);
 - N4: the ja/tr/bn handler heads (`クリック を で`, `tıklama i üzerinde`, `ক্লিক তে`): one marker, written
-  onto the event (ja `クリックで` since 2026-10-11; the reader keeps taking the two-marker head);
+  onto the event (ja `クリックで` and bn `ক্লিকে` since 2026-10-11; the readers keep taking the spaced heads);
 - N6: the article and marker slips.
 
 **Step 5 — native review of what changed** (N8, V2, V3, `packages/semantic/NATIVE_REVIEW_NEEDED.md`).

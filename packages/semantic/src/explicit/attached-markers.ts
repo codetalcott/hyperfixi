@@ -9,9 +9,24 @@
 import type { LanguageProfile } from '../generators/profiles/types';
 import { getSchema } from '../generators/command-schemas';
 import type { ActionType } from '../types';
+import { bengaliLocative } from '../tokenizers/bengali-script';
 
-/** Does `word` end in a letter of a script other than Latin (a word of the language, not code)? */
-const endsInWord = (word: string): boolean => /[^\p{Script=Latin}\P{L}]$/u.test(word);
+/**
+ * Does `word` end in a letter of a script other than Latin, with any marks on
+ * it (bn `বডি` ends in a vowel sign): a word of the language, not code.
+ */
+const endsInWord = (word: string): boolean => /[^\p{Script=Latin}\P{L}]\p{M}*$/u.test(word);
+
+/** bn's locative, as a role marker and as the `on` word. */
+const BN_LOCATIVE: ReadonlySet<string> = new Set(['তে', 'এ']);
+
+/**
+ * The marker the reader gives back for a suffix written onto a word: bn's
+ * vowel sign `ে` reads as `তে` (bengali.ts); every other suffix reads as itself.
+ */
+export function attachedSuffixReads(profile: LanguageProfile | undefined, suffix: string): string {
+  return profile?.code === 'bn' && suffix === '\u09c7' ? 'তে' : suffix;
+}
 
 /**
  * ko's particles that take another form after a vowel: the form after a
@@ -63,8 +78,8 @@ export function marksRole(
 /**
  * `word` with `marker` written onto it, or undefined where the language writes
  * the marker apart: it attaches no marker, `marker` is not one it attaches, or
- * `word` is a word of the language that changes the marker's form (bn's
- * locative is `তে` after a vowel and the vowel sign `ে` after a consonant).
+ * `word` is a word of the language whose spelling the marker does not follow.
+ * bn's locative takes the word's form (`ক্লিকে`, `জমাতে`: bengaliLocative).
  */
 export function attachMarker(
   profile: LanguageProfile | undefined,
@@ -74,6 +89,9 @@ export function attachMarker(
   const attached = profile?.attachedMarkers;
   if (!attached || !word || /\s$/.test(word) || !attached.markers.includes(marker)) {
     return undefined;
+  }
+  if (profile.code === 'bn' && endsInWord(word) && BN_LOCATIVE.has(marker)) {
+    return bengaliLocative(word);
   }
   if (endsInWord(word) && attached.afterWords !== 'all' && !attached.afterWords?.includes(marker)) {
     return undefined;
