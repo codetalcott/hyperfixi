@@ -10,9 +10,10 @@
  * - Compound nouns
  */
 
-import type { TokenKind } from '../types';
+import type { TokenKind, TokenStream } from '../types';
 import { BaseTokenizer, type KeywordEntry } from './base';
 import { germanProfile } from '../generators/profiles/german';
+import { fusedForms, splitFusedForms } from './fused-forms-split';
 import { GermanMorphologicalNormalizer } from './morphology/german-normalizer';
 import {
   StringLiteralExtractor,
@@ -154,6 +155,13 @@ export class GermanTokenizer extends BaseTokenizer {
     this.registerExtractors(createGermanExtractors()); // German keywords (context-aware)
     this.registerExtractor(new OperatorExtractor()); // Operators
     this.registerExtractor(new PunctuationExtractor()); // Punctuation
+  }
+
+  private readonly fused = fusedForms(germanProfile);
+
+  /** A da-compound (`dazu`, `zu` + `es`) reads as the two: see splitFusedForms. */
+  override tokenize(input: string): TokenStream {
+    return splitFusedForms(super.tokenize(input), this.fused, word => super.tokenize(word).tokens);
   }
 
   // tokenize() method removed - now uses extractor-based tokenization from BaseTokenizer

@@ -147,16 +147,22 @@ describe('renders write it in the case its marker takes, and me as an object', (
     ['pl', 'on click hide <p/> in it', 'gdy kliknięcie ukryj <p/> w tym'],
     ['pl', 'on click put 1 before it', 'gdy kliknięcie umieść 1 przed tym'],
     ['uk', 'on click remove .x from it', 'при клік видалити .x з цього'],
-    ['de', 'on click add .x to it', 'wenn klick hinzufügen .x zu ihm'],
-    ['de', 'on click toggle .x on it', 'wenn klick umschalten .x auf ihm'],
+    // de writes a da-compound (FUSED_FORMS.md Q4), split back by its reader.
+    ['de', 'on click add .x to it', 'wenn klick hinzufügen .x dazu'],
+    ['de', 'on click toggle .x on it', 'wenn klick umschalten .x darauf'],
+    ['de', 'on click take .x from it', 'wenn klick nehmen .x davon'],
+    ['de', 'on click put 1 into it', 'wenn klick setzen 1 darein'],
+    ['de', 'on click hide <p/> in it', 'wenn klick verstecke <p/> darin'],
+    ['de', 'on click put 1 before it', 'wenn klick setzen 1 davor'],
+    // `danach` is de's `then`: `nach` keeps the dative.
+    ['de', 'on click put 1 after it', 'wenn klick setzen 1 nach ihm'],
     ['fr', 'on click add .x to it', 'quand clic ajouter .x à lui'],
     ['fr', 'on click put 1 into it', 'quand clic mettre 1 dans lui'],
     ['fr', 'on click put 1 before it', 'quand clic mettre 1 avant lui'],
     ['fr', 'on click hide <p/> in it', 'quand clic cacher <p/> en lui'],
     ['hi', 'on click put 1 into it', 'क्लिक पर 1 को रखें इस में'],
-    // A direction's accusative is the nominative (ru `это`, de `es`): unchanged.
+    // A direction's accusative is the nominative (ru `это`): unchanged.
     ['ru', 'on click put 1 into it', 'при клик положить 1 в это'],
-    ['de', 'on click put 1 into it', 'wenn klick setzen 1 in es'],
     // `me` as a verb's object: a patient, or a destination right after the verb.
     ['de', 'on click show me', 'wenn klick zeige mich'],
     ['ru', 'on click show me', 'при клик показать меня'],

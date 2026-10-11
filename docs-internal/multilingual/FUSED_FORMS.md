@@ -139,3 +139,6 @@ as a profile alternative.
 - **Q4 (de).** For `it` after a preposition: da-compounds (`darin`, `darauf`, `dazu`),
   natural German, fused; or `ihm` (wave 2, written now for the dative and location)?
   Recommended: da-compounds for every preposition, `ihm` kept as a reader form.
+  **Answered 2026-10-10: as recommended.** Built with two exceptions the tokenizer forced:
+  `danach` is de's `then` (so `nach ihm`), and `hinein` is its `into` (so a direction is
+  `darein`).
