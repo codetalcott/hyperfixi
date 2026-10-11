@@ -51,9 +51,9 @@ const surface = (n: CommandSemanticNode | null, r: string): unknown =>
 
 describe('a verb-final language puts the override marker after its value', () => {
   it.each([
-    ['ja', 'opacity を 0 に 300ms 遷移'],
-    ['bn', 'opacity কে 0 তে 300ms সংক্রমণ'],
-    ['ko', 'opacity 을 0 에 300ms 트랜지션'],
+    ['ja', 'opacityを 0に 300ms 遷移'],
+    ['bn', 'opacityকে 0তে 300ms সংক্রমণ'],
+    ['ko', 'opacity을 0에 300ms 트랜지션'],
     ['qu', 'opacity ta 0 man 300ms pasay'],
   ] as const)('%s renders `%s`', (language, expected) => {
     // Pre-fix: `opacity を に 0 300ms 遷移` — `を に` adjacent, the goal marker

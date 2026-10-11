@@ -74,10 +74,10 @@ describe('a clitic marker stays glued — the change is scoped by the profile', 
   // trailing particle from the preceding word, so gluing is both correct
   // orthography and round-trip safe. Their rendered surfaces must not move.
   it.each([
-    ['ko', '$message 를 #status의 textContent 에 바인드'],
-    ['bn', '$message কে #statusর textContent তে বাইন্ড'],
+    ['ko', '$message를 #status의 textContent에 바인드'],
+    ['bn', '$messageকে #statusর textContentতে বাইন্ড'],
     ['hi', '$message को #statusका textContent में bind'],
-    ['ja', '$message を #statusのtextContent に バインド'],
+    ['ja', '$messageを #statusのtextContentに バインド'],
     ['zh', '绑定 $message 到 #status的textContent'],
   ] as const)('%s still renders `%s`', (language, expected) => {
     expect(translate(EN, 'en', language)).toBe(expected);

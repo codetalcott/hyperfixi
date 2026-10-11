@@ -1276,9 +1276,17 @@ export class SemanticRendererImpl implements ISemanticRenderer {
   ): void {
     const last = parts[parts.length - 1];
     const profile = tryGetProfile(language);
+    // Not a handler's or a wait's event: or-legs, parameters and modifiers
+    // splice onto the event word itself (spliceOrEvents), and the handler head
+    // is N4's. A sent or triggered event is a value like any other.
+    const eventSlot =
+      previous?.type === 'role' &&
+      ((previous.role === 'event' && node.kind === 'event-handler') ||
+        (node.action === 'wait' && (previous.role === 'event' || previous.role === 'duration')));
     const attached =
       token.type === 'literal' &&
       previous?.type === 'role' &&
+      !eventSlot &&
       last !== undefined &&
       profile?.attachedMarkers &&
       !this.plainWords.has('attach') &&

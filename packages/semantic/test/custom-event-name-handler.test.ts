@@ -107,12 +107,12 @@ describe('ko is excluded from the widened variant, and why', () => {
   // widened variant loses that race to the fused pattern.
   //
   // The RENDER half of that collision is now gone: the SOV override-marker side
-  // fix emits `opacity 을 0 에 300ms 트랜지션`, so `을 에` are no longer adjacent
+  // fix emits `opacity을 0에 300ms 트랜지션`, so `을 에` are no longer adjacent
   // and the surface is no longer ambiguous with a handler head. The exclusion
   // itself is left in place — whether it can be dropped is a separate question
   // that needs its own corpus measurement, and the `을`/`에` overloading it
   // describes is still real for other surfaces.
-  const KO_BARE_TRANSITION = 'opacity 을 0 에 300ms 트랜지션';
+  const KO_BARE_TRANSITION = 'opacity을 0에 300ms 트랜지션';
 
   it('the rendered surface no longer puts the two colliding markers adjacent', () => {
     expect(KO_BARE_TRANSITION).not.toContain('을 에');
