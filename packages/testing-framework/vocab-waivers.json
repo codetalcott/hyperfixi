@@ -274,5 +274,37 @@
   {
     "key": "V4|zh|成",
     "reason": "Adapter-residuals Item A probe: set.patient markerVariants zh — resultative value marker, accepted by handcrafted set-zh-full for years; `设置 x 成 5` captures destination=x patient=5 on the schema-generated pattern (probed on the slim chain)."
+  },
+  {
+    "key": "V4|de|zwischen",
+    "reason": "M2 A6: toggle's `between` marker (toggle.goal), the dictionary's modifiers.between. A pattern literal matches by raw token.value, so the identifier classification does not matter; packages/semantic/test/toggle-between.test.ts round-trips every between form in all 23 languages."
+  },
+  {
+    "key": "V4|en|between",
+    "reason": "M2 A6: toggle's `between` marker (toggle.goal), the dictionary's modifiers.between. A pattern literal matches by raw token.value, so the identifier classification does not matter; packages/semantic/test/toggle-between.test.ts round-trips every between form in all 23 languages."
+  },
+  {
+    "key": "V4|fr|entre",
+    "reason": "M2 A6: toggle's `between` marker (toggle.goal), the dictionary's modifiers.between. A pattern literal matches by raw token.value, so the identifier classification does not matter; packages/semantic/test/toggle-between.test.ts round-trips every between form in all 23 languages."
+  },
+  {
+    "key": "V4|ko|사이",
+    "reason": "M2 A6: toggle's `between` marker (toggle.goal), the dictionary's modifiers.between. A pattern literal matches by raw token.value, so the identifier classification does not matter; packages/semantic/test/toggle-between.test.ts round-trips every between form in all 23 languages."
+  },
+  {
+    "key": "V4|ms|antara",
+    "reason": "M2 A6: toggle's `between` marker (toggle.goal), the dictionary's modifiers.between. A pattern literal matches by raw token.value, so the identifier classification does not matter; packages/semantic/test/toggle-between.test.ts round-trips every between form in all 23 languages."
+  },
+  {
+    "key": "V4|tl|sa_pagitan",
+    "reason": "M2 A6: toggle's `between` marker (toggle.goal), the dictionary's modifiers.between. A pattern literal matches by raw token.value, so the identifier classification does not matter; packages/semantic/test/toggle-between.test.ts round-trips every between form in all 23 languages."
+  },
+  {
+    "key": "V4|vi|giữa",
+    "reason": "M2 A6: toggle's `between` marker (toggle.goal), the dictionary's modifiers.between. A pattern literal matches by raw token.value, so the identifier classification does not matter; packages/semantic/test/toggle-between.test.ts round-trips every between form in all 23 languages."
+  },
+  {
+    "key": "V4|zh|之间",
+    "reason": "M2 A6: toggle's `between` marker (toggle.goal), the dictionary's modifiers.between. A pattern literal matches by raw token.value, so the identifier classification does not matter; packages/semantic/test/toggle-between.test.ts round-trips every between form in all 23 languages."
   }
 ]
