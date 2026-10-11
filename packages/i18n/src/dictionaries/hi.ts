@@ -84,7 +84,7 @@ export const hindiDictionary: Dictionary = {
     after: 'के बाद',
     over: 'के_ऊपर',
     under: 'के_नीचे',
-    between: 'के_बीच',
+    between: 'के बीच', // spaced: के_बीच splits at _ in the hi extractor (M2 A6)
     through: 'के_माध्यम_से',
     without: 'के_बिना',
     on: 'पर',

@@ -67,6 +67,7 @@ export const he: Dictionary = {
     into: 'לתוך',
     to: 'על',
     with: 'עם',
+    between: 'בין',
   },
 
   events: {
