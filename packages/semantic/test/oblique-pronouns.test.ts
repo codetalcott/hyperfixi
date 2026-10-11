@@ -218,10 +218,10 @@ describe('ar and he write a pronoun fused with its marker', () => {
 
 describe('bn, hi, tl and pt write a pronoun fused with its marker', () => {
   const RENDERS: Array<[string, string, string]> = [
-    ['bn', 'on click show me', 'ক্লিক তে আমাকে দেখান'],
-    ['bn', 'on click add .x to me', 'ক্লিক তে আমাতে .xকে যোগ'],
-    ['bn', 'on click remove .x from me', 'ক্লিক তে আমার থেকে .xকে সরান'],
-    ['bn', 'on click put it into #out', 'ক্লিক তে এটিকে #outএ রাখুন'],
+    ['bn', 'on click show me', 'ক্লিকে আমাকে দেখান'],
+    ['bn', 'on click add .x to me', 'ক্লিকে আমাতে .xকে যোগ'],
+    ['bn', 'on click remove .x from me', 'ক্লিকে আমার থেকে .xকে সরান'],
+    ['bn', 'on click put it into #out', 'ক্লিকে এটিকে #outএ রাখুন'],
     // `আমাতে` is `তে` and `এ`, one locative; bind's source takes both.
     ['bn', 'bind $x to me', '$xকে আমাতে বাইন্ড'],
     ['bn', 'bind $x to it', '$xকে এটিতে বাইন্ড'],

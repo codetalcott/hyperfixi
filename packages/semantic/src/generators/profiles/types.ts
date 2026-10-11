@@ -167,10 +167,11 @@ export interface LanguageProfile {
    * case particles (M2 N5): ko `#out에`, ja `#outに`, bn `#outকে`. `markers`
    * attach after code (a selector, a variable, a string); `afterWords` also
    * after a word of the language, where its spelling does not change the
-   * marker (`'all'`; bn `কে` only: its locative is `তে` after a vowel and a
-   * vowel sign after a consonant). ko picks each particle's form by the word's
-   * final consonant (`나를`). The verified render keeps an attached marker only
-   * where the reader reads it as the spaced one (explicit/attached-markers.ts).
+   * marker (`'all'`; bn lists `কে`, and its locative takes the word's form by
+   * its own rule: `ক্লিকে`, `জমাতে`). ko picks each particle's form by the
+   * word's final consonant (`나를`). The verified render keeps an attached
+   * marker only where the reader reads it as the spaced one
+   * (explicit/attached-markers.ts).
    */
   readonly attachedMarkers?: {
     readonly markers: readonly string[];

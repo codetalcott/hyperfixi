@@ -121,7 +121,7 @@ import { notThrowWords } from '../parser/utils/not-throw';
 import { grammarWord } from '../parser/utils/grammar-words';
 import { elementScopeWord } from '../element-scope';
 import { attachClitic } from '../tokenizers/fused-forms-split';
-import { attachMarker, marksRole } from './attached-markers';
+import { attachMarker, attachedSuffixReads, marksRole } from './attached-markers';
 import { PatternMatcher } from '../parser/pattern-matcher';
 import {
   localizeValueInterior,
@@ -1327,7 +1327,7 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    */
   private splitsBack(joined: string, word: string, language: string): boolean {
     const words = (text: string): string[] => tokenize(text, language).tokens.map(t => t.value);
-    const marker = joined.slice(word.length);
+    const marker = attachedSuffixReads(tryGetProfile(language), joined.slice(word.length));
     return words(joined).join('\u0000') === [...words(word), ...words(marker)].join('\u0000');
   }
 

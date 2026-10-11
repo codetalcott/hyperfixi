@@ -15,6 +15,8 @@ import { BaseTokenizer, type KeywordEntry } from './base';
 import { bengaliMorphologicalNormalizer } from './morphology/bengali-normalizer';
 import { bengaliProfile } from '../generators/profiles/bengali';
 import { fusedForms, splitFusedForms } from './fused-forms-split';
+import { splitAttachedSuffixes, type AttachedSuffix } from './attached-suffix-split';
+import { endsInBengaliConsonant } from '../explicit/attached-markers';
 import {
   StringLiteralExtractor,
   NumberExtractor,
@@ -126,12 +128,27 @@ export class BengaliTokenizer extends BaseTokenizer {
   private readonly fused = fusedForms(bengaliProfile);
 
   /**
+   * The locative written onto a Bengali word (M2 N4): the vowel sign `ে` after
+   * a consonant (`ক্লিকে`, read as `ক্লিক` + `এ`), `তে` after a vowel (`জমাতে`).
+   */
+  private readonly attached: readonly AttachedSuffix[] = [
+    { written: 'ে', marker: 'এ', fits: endsInBengaliConsonant },
+    { written: 'তে', marker: 'তে' },
+  ];
+
+  /**
    * `if not` is written `যদি না`, which is also its `unless`: see splitIfNot. A
    * pronoun fused with its marker (`আমাকে`, `আমি` + `কে`): see splitFusedForms.
+   * A word with its locative written on (`ক্লিকে`): see splitAttachedSuffixes.
    */
   override tokenize(input: string): TokenStream {
     const word = (w: string) => super.tokenize(w).tokens;
-    return splitFusedForms(splitIfNot(super.tokenize(input), 'যদি না', word), this.fused, word);
+    const stream = splitFusedForms(
+      splitIfNot(super.tokenize(input), 'যদি না', word),
+      this.fused,
+      word
+    );
+    return splitAttachedSuffixes(stream, this.attached, word);
   }
 
   // tokenize() method removed - now uses extractor-based tokenization from BaseTokenizer
