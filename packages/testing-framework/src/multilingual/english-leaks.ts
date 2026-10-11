@@ -7,7 +7,7 @@
  * passes all of them. Measured 2026-10-08, 18% of corpus renders and 24% of
  * the command-shape scripts' renders hold at least one English word.
  *
- * This gate counts three kinds of finding in a render of English `source`
+ * This gate counts four kinds of finding in a render of English `source`
  * into a language:
  *   - `word`   an English word the engine reads as grammar in the source (or a
  *              reference: `me`, `my`, `I`, `it`, …), written as English in the
@@ -17,7 +17,10 @@
  *              the renderer's denylist (OPEN_ITEMS N2);
  *   - `case`   the language's nominative `me` or `it` next to a role marker,
  *              or as a command's unmarked object, in the languages where that
- *              form is wrong (N3, see CASE_RULES).
+ *              form is wrong (N3, see CASE_RULES);
+ *   - `spacing` a marker the language attaches to its noun, written as its
+ *              own word after one (ko `#out 에`, tr `#out e`; N5, see
+ *              ATTACHED_MARKERS).
  *
  * ## What counts as English
  * Derived, never a hand list. A source's grammar words are the tokens the
@@ -67,14 +70,16 @@ export type LeakHalf = keyof typeof LEAK_BASELINE_PATHS;
 // Findings
 // ---------------------------------------------------------------------------
 
-export type LeakKind = 'word' | 'event' | 'case';
+export type LeakKind = 'word' | 'event' | 'case' | 'spacing';
 export type LeakContext = 'plain' | 'clause' | 'bracket' | 'call' | 'property';
+export const KINDS: readonly LeakKind[] = ['word', 'event', 'case', 'spacing'];
 
 export interface LeakFinding {
   kind: LeakKind;
   /**
    * The English word; for `event` the event name; for `case` the pronoun (`me`,
-   * `it`), with `-object` when it is a verb's unmarked object (`me-object`).
+   * `it`), with `-object` when it is a verb's unmarked object (`me-object`); for
+   * `spacing` the marker.
    */
   word: string;
   context: LeakContext;
@@ -110,7 +115,7 @@ export const KEPT_ENGLISH: {
   ],
 };
 
-/** A finding as the baseline writes it: the word, or `event:<name>` / `case:<pronoun>`. */
+/** A finding as the baseline writes it: the word, or `event:<name>` / `case:<pronoun>` / `spacing:<marker>`. */
 export const findingKey = (f: Pick<LeakFinding, 'kind' | 'word'>): string =>
   f.kind === 'word' ? f.word : `${f.kind}:${f.word}`;
 
@@ -177,6 +182,34 @@ export const CASE_RULES: Readonly<Record<string, CaseRule>> = {
   tl: { me: true, it: ['sa', 'mula_sa'] },
   tr: { me: true, it: true },
   uk: { me: true, it: ['до', 'з', 'із', 'від'], meObject: true },
+};
+
+/**
+ * The markers each language attaches to the word before them, where a render
+ * that writes them apart reads as broken (OPEN_ITEMS N5, FUSED_FORMS.md §3.3):
+ * a `spacing:<marker>` finding is one of these written as its own word after
+ * another word (`#out 에` → `#out에`, `.active i` → `.active'i`). The case
+ * particles and suffixes only, which attach in the language's own writing; a
+ * postposition that is a word of its own (tr `içinde`, `arasında`, ko `사이`,
+ * `동안`, bn `থেকে`, `মধ্যে`) is spaced there and is not listed. tr's suffixes
+ * are every harmony form its reader takes. qu attaches its suffixes too, but
+ * its reader takes an attached one into the word before (`#outman` is one
+ * selector), so it waits on the reader (FUSED_FORMS.md Q2, Q3).
+ */
+export const ATTACHED_MARKERS: Readonly<Record<string, ReadonlySet<string>>> = {
+  bn: new Set(['কে', 'তে', 'এ']),
+  ja: new Set(['を', 'に', 'へ', 'で', 'の', 'から', 'として', 'の間で']),
+  ko: new Set(['을', '를', '에', '으로', '로', '의', '에서', '부터', '에게']),
+  tr: new Set(
+    [
+      'i ı u ü yi yı yu yü ni nı nu nü',
+      'e a ye ya ne na',
+      'de da te ta',
+      'den dan ten tan',
+      'in ın un ün nin nın nun nün',
+      'le la yle yla',
+    ].flatMap(forms => forms.split(' '))
+  ),
 };
 
 /**
@@ -660,6 +693,15 @@ export async function initLeakScanner(): Promise<LeakScanner> {
             });
         }
       }
+      const attached = ATTACHED_MARKERS[language];
+      if (attached) {
+        for (const { word, offset } of words) {
+          if (!attached.has(word)) continue;
+          // After a word on its line, strings included (`"x" 을`): the render, not the code.
+          const before = /(\S)[^\S\n]+$/.exec(render.slice(0, offset));
+          if (before) findings.push({ kind: 'spacing', word, context: 'plain', hasWord: true });
+        }
+      }
       return findings;
     },
   };
@@ -715,6 +757,7 @@ export function leakBaselineFrom(results: LeakResults, description: string): Lea
       word: { renders: 0, findings: 0 },
       event: { renders: 0, findings: 0 },
       case: { renders: 0, findings: 0 },
+      spacing: { renders: 0, findings: 0 },
     },
     entries: {},
     unrendered: {},
@@ -731,7 +774,7 @@ export function leakBaselineFrom(results: LeakResults, description: string): Lea
       if (!findings.length) continue;
       doc.leaky++;
       doc.findings += findings.length;
-      for (const kind of ['word', 'event', 'case'] as const) {
+      for (const kind of KINDS) {
         const n = findings.filter(f => f.kind === kind).length;
         doc.kinds[kind].findings += n;
         if (n) doc.kinds[kind].renders++;
@@ -829,14 +872,13 @@ export function loadLeakBaseline(half: LeakHalf): LeakBaseline {
  * reader reads one, and an average hid he (35% of corpus renders with an English
  * word where the others sit near 18%). Words count only English no recorded
  * decision keeps ({@link KEPT_ENGLISH}). Events are already net of the denylist,
- * whose entries carry reasons.
+ * whose entries carry reasons. Spacing (N5) joined on 2026-10-11, with none
+ * allowed, as case did (FUSED_FORMS.md Q3).
  */
 export const LEAK_TARGETS: Readonly<Record<LeakHalf, Readonly<Record<LeakKind, number>>>> = {
-  corpus: { word: 0.05, event: 0, case: 0 },
-  shapes: { word: 0.1, event: 0, case: 0 },
+  corpus: { word: 0.05, event: 0, case: 0, spacing: 0 },
+  shapes: { word: 0.1, event: 0, case: 0, spacing: 0 },
 };
-
-const KINDS: readonly LeakKind[] = ['word', 'event', 'case'];
 
 export interface LanguageLeakRates {
   renders: number;
@@ -855,7 +897,7 @@ export function leakRatesByLanguage(
   for (const byLanguage of results.values()) {
     for (const [language, findings] of byLanguage) {
       if (!findings) continue;
-      const row = counts.get(language) ?? { renders: 0, word: 0, event: 0, case: 0 };
+      const row = counts.get(language) ?? { renders: 0, word: 0, event: 0, case: 0, spacing: 0 };
       row.renders++;
       for (const kind of KINDS) if (findings.some(f => f.kind === kind && !f.kept)) row[kind]++;
       counts.set(language, row);
@@ -863,8 +905,8 @@ export function leakRatesByLanguage(
   }
   const out = new Map<string, LanguageLeakRates>();
   for (const [language, row] of counts) {
-    const rate = { word: 0, event: 0, case: 0 };
-    const met = { word: true, event: true, case: true };
+    const rate = { word: 0, event: 0, case: 0, spacing: 0 };
+    const met = { word: true, event: true, case: true, spacing: true };
     for (const kind of KINDS) {
       rate[kind] = row[kind] / row.renders;
       met[kind] = rate[kind] <= LEAK_TARGETS[half][kind];

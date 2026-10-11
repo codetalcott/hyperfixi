@@ -666,8 +666,8 @@ Every gate above asks whether a translation MEANS what the source means; the
 **English-leak** gate (`english-leaks.ts`, 2026-10-08, M2) asks whether it READS as the
 language. It counts, per render, English grammar words (derived per source: the tokens
 the engine's own parser matched as words), English event names where the lexicon has a
-word (N2), and a nominative `me` beside a marker in the 13 languages where that is wrong
-(N3). Two shrink-only halves: the corpus (`test:canonical`) and the command-shape cases'
+word (N2), a nominative `me` beside a marker in the 13 languages where that is wrong
+(N3), and a marker ko, ja, bn or tr attaches to its noun, written apart (`spacing:`, N5). Two shrink-only halves: the corpus (`test:canonical`) and the command-shape cases'
 renders (in those shards; no second translation pass). After a fix, prune with
 `npx tsx tools/regen-english-leaks-baseline.ts`; `--report` is M2's queue (per language,
 per word with its context, per event).
