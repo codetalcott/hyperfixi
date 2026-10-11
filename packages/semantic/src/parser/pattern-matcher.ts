@@ -52,6 +52,7 @@ import {
 import {
   type ExtentContext,
   longestWholeRun,
+  readsAsValueList,
   possessiveLinkEnds,
   tokensAdjacent,
   valueTailEnds,
@@ -751,15 +752,28 @@ export class PatternMatcher {
     startIdx: number
   ): void {
     if (patternToken.role === 'event' || patternToken.role === 'action') return;
-    if (this.isClassNameSlot(patternToken)) return;
-    if (!captured.has(patternToken.role)) return;
+    // A style is no class name: its element follows it (`toggle *display of me
+    // between …`), as one value.
+    const value = captured.get(patternToken.role);
+    const style = value?.type === 'selector' && value.value.startsWith('*');
+    if (this.isClassNameSlot(patternToken) && !style) return;
+    if (!value) return;
     if (tokens.position() <= startIdx) return;
     const types = patternToken.expectedTypes;
     if (types && types.length > 0 && !types.includes('expression')) return;
-    const ends = PatternMatcher.boundedByMarker(nextPatternToken)
-      ? valueTailEnds(tokens.tokens, tokens.position(), this.extentContext())
-      : possessiveLinkEnds(tokens.tokens, tokens.position(), this.currentProfile);
-    const run = longestWholeRun(tokens.tokens, startIdx, ends, this.currentProfile);
+    // A list runs on to the longest run that reads as one, whatever follows it
+    // (a fused handler puts toggle's unmarked duration slot after it).
+    const ends =
+      PatternMatcher.boundedByMarker(nextPatternToken) || patternToken.valueShape === 'list'
+        ? valueTailEnds(tokens.tokens, tokens.position(), this.extentContext())
+        : possessiveLinkEnds(tokens.tokens, tokens.position(), this.currentProfile);
+    const run = longestWholeRun(
+      tokens.tokens,
+      startIdx,
+      ends,
+      this.currentProfile,
+      patternToken.valueShape === 'list' ? readsAsValueList : undefined
+    );
     if (!run) return;
     while (tokens.position() < run.end) tokens.advance();
     captured.set(patternToken.role, {
@@ -1068,7 +1082,14 @@ export class PatternMatcher {
     if (this.currentSchema()?.roles.some(r => r.role === 'responseType')) return false;
     const all = tokens.tokens;
     const at = tokens.position();
-    const word = expressionWordOf(language, all[at]!, all[at - 1], all[at + 1], undefined, all[at + 2]);
+    const word = expressionWordOf(
+      language,
+      all[at]!,
+      all[at - 1],
+      all[at + 1],
+      undefined,
+      all[at + 2]
+    );
     return word.toLowerCase() === 'as';
   }
 
@@ -1141,6 +1162,15 @@ export class PatternMatcher {
 
     const token = tokens.peek();
     if (!token) {
+      return patternToken.optional || false;
+    }
+    // A class name is never its command's own marker word: a fused `togol
+    // {patient}` read ms `togol antara .a dan .b` (toggle between .a and .b) as
+    // a toggle of `antara`.
+    if (
+      this.isClassNameSlot(patternToken) &&
+      this.commandMarkers().has(token.value.toLowerCase())
+    ) {
       return patternToken.optional || false;
     }
     const slot = this.slotAt(tokens, patternToken, nextPatternToken);

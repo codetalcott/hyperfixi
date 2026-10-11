@@ -76,6 +76,8 @@ const HEBREW_EXTRAS: KeywordEntry[] = [
   { native: 'הבא', normalized: 'next' },
   { native: 'הקודם', normalized: 'previous' },
   { native: 'הקרוב', normalized: 'closest' },
+  // toggle's `between` (M2 A6): whole, or the proclitic extractor reads ב + ין.
+  { native: 'בין', normalized: 'between' },
   // A query's scope and a loop's `in` (M2 sheet B7): whole, or the proclitic
   // extractor reads ב + תוך.
   { native: 'בתוך', normalized: 'in' },

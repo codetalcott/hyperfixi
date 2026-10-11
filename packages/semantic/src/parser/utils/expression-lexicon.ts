@@ -1668,12 +1668,12 @@ export function joinExpressionTokens(
     // the canonical parser rejects the spaced `beep !` — glue it only when the two
     // were source-adjacent (a spaced `a != b` keeps its space). Both are gated on
     // adjacency, so the possessive run `my value` (neither `.`- nor `!`-prefixed)
-    // still spaces normally.
+    // still spaces normally. A comma glues the same way (`'a', 'b'`, a list).
     const adjacent =
       previous.position?.end !== undefined &&
       token.position?.start !== undefined &&
       previous.position.end === token.position.start;
-    const glue = adjacent && (text.startsWith('.') || text.startsWith('!'));
+    const glue = adjacent && (text.startsWith('.') || text.startsWith('!') || text === ',');
     out += (glue ? '' : ' ') + text;
     previous = token;
   };

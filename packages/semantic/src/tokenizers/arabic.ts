@@ -120,6 +120,8 @@ const ARABIC_EXTRAS: KeywordEntry[] = [
   // the prefix split read as `ل` (to) and `ديه`/`دي`.
   { native: 'لديه', normalized: 'has' },
   { native: 'لدي', normalized: 'have' },
+  // toggle's `between` (M2 A6): whole, or the prefix split reads ب (with) + ين.
+  { native: 'بين', normalized: 'between' },
   { native: 'صحيح', normalized: 'true' },
   { native: 'خطأ', normalized: 'false' },
   { native: 'null', normalized: 'null' },

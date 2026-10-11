@@ -118,6 +118,8 @@ const QUECHUA_EXTRAS: KeywordEntry[] = [
   // unset variable.
   // Pick unit word (arc 3) — mirrors the i18n dict's `characters: 'sanampa'`.
   { native: 'sanampa', normalized: 'characters' },
+  // toggle's `between` (M2 A6): whole, or the suffix split reads chawpi + pi.
+  { native: 'chawpipi', normalized: 'between' },
   { native: 'cheqaq', normalized: 'true' },
   { native: 'arí', normalized: 'true' },
   { native: 'ari', normalized: 'true' },

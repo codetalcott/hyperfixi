@@ -72,6 +72,8 @@ const THAI_EXTRAS: KeywordEntry[] = [
   { native: 'ยกเว้น', normalized: 'exclusive' },
   { native: 'อักขระ', normalized: 'characters' },
   { native: 'สุ่ม', normalized: 'random' },
+  // toggle's `between` (M2 A6): whole, or the greedy scan reads ระห + ว่าง (null).
+  { native: 'ระหว่าง', normalized: 'between' },
 ];
 
 // =============================================================================

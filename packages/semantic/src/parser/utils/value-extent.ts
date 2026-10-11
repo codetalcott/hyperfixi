@@ -217,6 +217,31 @@ export function readsAsOneExpression(raw: string): boolean {
   return conversionTypes(result.node).every(isConversionTypeName);
 }
 
+/**
+ * Does `raw` read as a list of expressions, separated by commas outside quotes
+ * and brackets (toggle's `between 'a', 'b' and 'c'`)? One item is a list too.
+ */
+export function readsAsValueList(raw: string): boolean {
+  const items: string[] = [];
+  let depth = 0;
+  let quote = '';
+  let from = 0;
+  for (let i = 0; i < raw.length; i++) {
+    const c = raw[i]!;
+    if (quote) {
+      if (c === quote) quote = '';
+    } else if (c === '"' || (c === "'" && !/\w/.test(raw[i - 1] ?? ''))) quote = c;
+    else if ('([{'.includes(c)) depth++;
+    else if (')]}'.includes(c)) depth--;
+    else if (c === ',' && depth === 0) {
+      items.push(raw.slice(from, i));
+      from = i + 1;
+    }
+  }
+  items.push(raw.slice(from));
+  return items.every(item => item.trim() !== '' && readsAsOneExpression(item.trim()));
+}
+
 /** The type names of every conversion in a parsed expression. */
 function conversionTypes(node: unknown): string[] {
   const out: string[] = [];
@@ -449,11 +474,12 @@ export function longestWholeRun(
   all: readonly LanguageToken[],
   start: number,
   ends: readonly number[],
-  profile: LanguageProfile | undefined
+  profile: LanguageProfile | undefined,
+  reads: (raw: string) => boolean = readsAsOneExpression
 ): { end: number; raw: string } | undefined {
   for (const end of ends) {
     const raw = joinExpressionTokens(all.slice(start, end), profile);
-    if (readsAsOneExpression(raw)) return { end, raw };
+    if (reads(raw)) return { end, raw };
   }
   return undefined;
 }

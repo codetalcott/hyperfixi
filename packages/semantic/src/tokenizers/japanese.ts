@@ -77,6 +77,8 @@ const JAPANESE_EXTRAS: KeywordEntry[] = [
   { native: '偽', normalized: 'false' },
   { native: 'ヌル', normalized: 'null' },
   { native: '未定義', normalized: 'undefined' },
+  // toggle's `between` (M2 A6): whole, or 間 reads as `while`.
+  { native: 'の間で', normalized: 'between' },
 
   // Positional
   { native: '最初', normalized: 'first' },
