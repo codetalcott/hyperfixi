@@ -224,7 +224,9 @@ export function splitObjectClitics(
       const verb = entry && next ? readsAsVerb(next.value) : undefined;
       const pronoun = entry && verb ? pronounOf(entry.pronoun) : undefined;
       if (verb && pronoun && next) {
-        out.push({ ...verb, position: next.position });
+        // The verb's span starts at the clitic: a body re-read from the
+        // statement's first token (its start) keeps the clitic.
+        out.push({ ...verb, position: { start: token.position.start, end: next.position.end } });
         out.push({
           ...pronoun,
           position: { start: token.position.start, end: tokens[last]!.position.end },

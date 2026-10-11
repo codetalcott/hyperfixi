@@ -282,7 +282,8 @@ describe('es, it, pt and ar attach the object pronoun to the verb', () => {
 
 // fr writes the object pronoun before the infinitive, elided before a vowel
 // (FUSED_FORMS.md Q1): `le mettre`, `l'afficher`, `me cacher`. After a
-// preposition it keeps `lui` (`dans lui`); a noun takes no clitic.
+// preposition it keeps `lui` (`dans lui`). A body re-read from its first
+// token keeps the clitic (`def`).
 describe('fr writes the object pronoun before the verb', () => {
   it.each([
     ['on click put it into #out', 'quand clic le mettre dans #out'],
@@ -292,10 +293,11 @@ describe('fr writes the object pronoun before the verb', () => {
     ['on click put me into #o', 'quand clic me mettre dans #o'],
     ['on click get #a then put it into me', 'quand clic obtenir #a puis le mettre dans moi'],
     ['on click put "x" into it', 'quand clic mettre "x" dans lui'],
-    ['on click blur me', 'quand clic perte de focus moi'],
+    ['on click blur me', 'quand clic me défocaliser'],
+    ['def foo() log me end', "fonction foo\n  m'enregistrer\nfin"],
   ])('%s', (source, expected) => {
     expect(translate(source, 'en', 'fr')).toBe(expected);
-    expect(translate(expected, 'fr', 'en')).toBe(source);
+    expect(translate(expected, 'fr', 'en')).toBe(translate(source, 'en', 'en'));
   });
 
   it('writes a variable spelled like a clitic in parentheses before a verb, and reads a bare l as a name', () => {
