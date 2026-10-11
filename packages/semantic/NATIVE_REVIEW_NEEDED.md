@@ -409,20 +409,36 @@ prepend, add to. **Location:** toggle … on, trigger … on, and a query's `in`
 accusative for a direction (ru `в это`, de `in es`), so those stay. A location and
 the other markers take another case:
 
-| Lang | Marker → form                                                                                                                                                  | Notes for the reviewer                                                                                                                                               |
-| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ru   | `к` → `к этому`, `в` → `в этом` (location), `на` → `на этом` (location), `из` → `из этого`, `после` → `после этого`, `перед` → `перед этим`                    |                                                                                                                                                                      |
-| uk   | `до` → `до цього`, `в`/`у` → `в цьому`/`у цьому` (location), `на` → `на цьому` (location), `з` → `з цього`, `після` → `після цього`, `перед` → `перед цим`     |                                                                                                                                                                      |
-| pl   | `do` → `do tego`, `w` → `w tym` (location), `na` → `na tym` (location), `z` → `z tego`, `po` → `po tym`, `przed` → `przed tym`                                 |                                                                                                                                                                      |
-| de   | `zu` → `zu ihm`, `von` → `von ihm`, `nach` → `nach ihm`; for a location `in ihm`, `auf ihm`, `an ihm`, `vor ihm`                                               | natively a da-compound (`dazu`, `davon`, `darin`, `darauf`): would it read better? A direction keeps `in es`, `auf es` (`hinein`, `darauf` are fused forms, with N5) |
-| fr   | `à` → `à lui`, `dans` → `dans lui`, `sur` → `sur lui`, `de` → `de lui`, `avant` → `avant lui`, `après` → `après lui`, `en` → `en lui` | `lui` for an element (masculine `il`). Natively `y` / `dedans` / `dessus`, which move before the verb (`y mettre`): a word-order change the owner has to approve     |
-| hi   | `में` → `इस में`, `पर` → `इस पर`, `से` → `इस से`                                                                                                               | oblique `इस`, spaced like `मुझ में`; `यह को` → `इसे` is fused (N5)                                                                                                   |
+| Lang | Marker → form                                                                                                                                              | Notes for the reviewer                                                                                                                                               |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ru   | `к` → `к этому`, `в` → `в этом` (location), `на` → `на этом` (location), `из` → `из этого`, `после` → `после этого`, `перед` → `перед этим`                |                                                                                                                                                                      |
+| uk   | `до` → `до цього`, `в`/`у` → `в цьому`/`у цьому` (location), `на` → `на цьому` (location), `з` → `з цього`, `після` → `після цього`, `перед` → `перед цим` |                                                                                                                                                                      |
+| pl   | `do` → `do tego`, `w` → `w tym` (location), `na` → `na tym` (location), `z` → `z tego`, `po` → `po tym`, `przed` → `przed tym`                             |                                                                                                                                                                      |
+| de   | `zu` → `zu ihm`, `von` → `von ihm`, `nach` → `nach ihm`; for a location `in ihm`, `auf ihm`, `an ihm`, `vor ihm`                                           | natively a da-compound (`dazu`, `davon`, `darin`, `darauf`): would it read better? A direction keeps `in es`, `auf es` (`hinein`, `darauf` are fused forms, with N5) |
+| fr   | `à` → `à lui`, `dans` → `dans lui`, `sur` → `sur lui`, `de` → `de lui`, `avant` → `avant lui`, `après` → `après lui`, `en` → `en lui`                      | `lui` for an element (masculine `il`). Natively `y` / `dedans` / `dessus`, which move before the verb (`y mettre`): a word-order change the owner has to approve     |
+| hi   | `में` → `इस में`, `पर` → `इस पर`, `से` → `इस से`                                                                                                           | oblique `इस`, spaced like `मुझ में`; `यह को` → `इसे` is fused (N5)                                                                                                   |
 
 **`me` as a verb's object** (no marker): de `mich` (`zeige mich`, `binden mich zu $x`),
 ru `меня` (`показать меня`), uk `мене`, pl `mnie`. It counts as an object when it is
 the command's patient, or its destination written right after the verb (`bind me to $x`).
 es, pt, it and ar attach the object pronoun to the verb (`mostrarme`, `mostrar-me`,
 `mostrarmi`, `أظهرني`), so they wait on N5.
+
+### A pronoun fused with its marker: tr (M2 N3, wave 3) ⚠️
+
+Turkish writes the case on the pronoun, as one word. Renders now write it where a
+marker follows `ben` (me) or `o` (it):
+
+| Marker           | `ben` →  | `o` →   |
+| ---------------- | -------- | ------- |
+| `i` (accusative) | `beni`   | `onu`   |
+| `e` (dative)     | `bana`   | `ona`   |
+| `den` (ablative) | `benden` | `ondan` |
+
+The reader splits each back into the pronoun and the marker
+(`tokenizers/fused-forms-split.ts`). Still spaced: a marker after a whole query phrase
+(`<p/> içinde ben i`, where `i` marks the phrase), and put's position words (`"x" önce
+beni koy`; Turkish says `benden önce`).
 
 ## August 2026 research pass — summary
 
