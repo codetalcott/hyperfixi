@@ -760,7 +760,7 @@ export class PatternMatcher {
     if (!value) return;
     if (tokens.position() <= startIdx) return;
     const types = patternToken.expectedTypes;
-    if (types && types.length > 0 && !types.includes('expression')) return;
+    if (!style && types && types.length > 0 && !types.includes('expression')) return;
     // A list runs on to the longest run that reads as one, whatever follows it
     // (a fused handler puts toggle's unmarked duration slot after it).
     const ends =

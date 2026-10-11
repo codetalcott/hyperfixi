@@ -532,10 +532,7 @@ export const toggleSchema: CommandSchema = {
     // `toggle $x between 1, 2 and 3`, `toggle *display of me between …`
     {
       role: 'goal',
-      widen: {
-        role: 'patient',
-        types: ['literal', 'selector', 'reference', 'expression', 'property-path'],
-      },
+      widen: { role: 'patient', types: ['selector', 'reference', 'expression'] },
       idSuffix: 'between-values',
     },
   ],
