@@ -222,6 +222,9 @@ describe('bn, hi, tl and pt write a pronoun fused with its marker', () => {
     ['bn', 'on click add .x to me', 'ক্লিক তে আমাতে .x কে যোগ'],
     ['bn', 'on click remove .x from me', 'ক্লিক তে আমার থেকে .x কে সরান'],
     ['bn', 'on click put it into #out', 'ক্লিক তে এটিকে #out এ রাখুন'],
+    // `আমাতে` is `তে` and `এ`, one locative; bind's source takes both.
+    ['bn', 'bind $x to me', '$x কে আমাতে বাইন্ড'],
+    ['bn', 'bind $x to it', '$x কে এটিতে বাইন্ড'],
     ['hi', 'on click show me', 'क्लिक पर मुझे दिखाएं'],
     ['hi', 'on click put it into #out', 'क्लिक पर इसे रखें #out में'],
     ['tl', 'on click add .x to it', 'kapag click idagdag .x dito'],
@@ -258,6 +261,22 @@ describe('es, it, pt and ar attach the object pronoun to the verb', () => {
   it.each(RENDERS)('%s: %s', (language, source, expected) => {
     expect(translate(source, 'en', language)).toBe(expected);
     expect(translate(expected, language, 'en')).toBe(source);
+  });
+
+  // The `me` the parser supplied, where the plain render writes it (another
+  // role follows the verb): attached, as a written one is. English writes it too.
+  it.each([
+    [
+      'es',
+      'on click hide with display then add .foo',
+      'al clic ocultarme con display entonces agregar .foo',
+    ],
+    ['it', 'on click show with *opacity', 'su clic mostrarmi con *opacity'],
+    ['pt', 'on click show with *opacity', 'ao clique mostrar-me com *opacity'],
+    ['ar', 'on click hide with display then add .foo', 'على النقر اخفني بـ display ثم أضف .foo'],
+  ])('%s: %s', (language, source, expected) => {
+    expect(translate(source, 'en', language)).toBe(expected);
+    expect(translate(expected, language, 'en')).toBe(translate(source, 'en', 'en'));
   });
 });
 

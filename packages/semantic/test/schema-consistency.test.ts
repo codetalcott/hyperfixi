@@ -86,6 +86,8 @@ describe('Schema Consistency', () => {
       'set.patient': { languages: ['tr', 'zh'], methodCarrier: null },
       'trigger.event': { languages: ['bn', 'hi', 'qu'], methodCarrier: null },
       'go.destination': { languages: ['zh'], methodCarrier: null },
+      // bn's locative after a consonant (`এ`) beside the override's `তে`
+      'bind.source': { languages: ['bn'], methodCarrier: null },
       // the profile's other spellings of `when` (whenConditionRole)
       'add.condition': { languages: ['he', 'ja', 'tr'], methodCarrier: null },
       'remove.condition': { languages: ['he', 'ja', 'tr'], methodCarrier: null },
