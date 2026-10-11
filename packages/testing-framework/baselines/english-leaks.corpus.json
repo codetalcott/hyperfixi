@@ -1,8 +1,8 @@
 {
   "description": "English-leak gate, corpus half (src/multilingual/english-leaks.ts): per corpus row, the findings of each language's render (render(parse(en), L)): an English grammar word, `event:<name>` (an English event the lexicon has a word for) or `case:me` / `case:it` (a nominative pronoun beside a marker; `-object`: as an unmarked object). `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts after a fresh populate.",
   "renders": 3519,
-  "leaky": 278,
-  "findings": 401,
+  "leaky": 273,
+  "findings": 396,
   "kinds": {
     "word": {
       "renders": 191,
@@ -13,8 +13,8 @@
       "findings": 0
     },
     "case": {
-      "renders": 96,
-      "findings": 99
+      "renders": 91,
+      "findings": 94
     }
   },
   "entries": {
@@ -61,9 +61,6 @@
     "fetch-basic": {
       "case:it-object": "ar es fr it pt"
     },
-    "fetch-do-not-throw": {
-      "case:it": "de"
-    },
     "fetch-loading-state": {
       "case:it-object": "ar es fr it pt"
     },
@@ -96,20 +93,11 @@
       "case:it-object": "ar es fr it pt"
     },
     "make-toast-element": {
-      "case:it": "de tr",
+      "case:it": "tr",
       "case:it-object": "ar es fr it pt"
     },
     "modal-close-backdrop": {
       "matches": "bn th"
-    },
-    "morph-fetch-result": {
-      "case:it": "de"
-    },
-    "morph-form-update": {
-      "case:it": "de"
-    },
-    "morph-with-template": {
-      "case:it": "de"
     },
     "pick-text-range": {
       "of": "he"

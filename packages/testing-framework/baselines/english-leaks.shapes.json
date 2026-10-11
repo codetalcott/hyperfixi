@@ -1,8 +1,8 @@
 {
   "description": "English-leak gate, command-shape half (src/multilingual/english-leaks.ts): per command-shape case, the findings of each language's render (translate(src, 'en', L)): an English grammar word, `event:<name>` or `case:<pronoun>`. `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts.",
   "renders": 23754,
-  "leaky": 3212,
-  "findings": 5223,
+  "leaky": 3208,
+  "findings": 5217,
   "kinds": {
     "word": {
       "renders": 2562,
@@ -13,8 +13,8 @@
       "findings": 0
     },
     "case": {
-      "renders": 744,
-      "findings": 759
+      "renders": 739,
+      "findings": 753
     }
   },
   "entries": {
@@ -48,9 +48,6 @@
     },
     "04a57faf6e": {
       "case:me": "bn"
-    },
-    "056a1e4975": {
-      "case:it": "de"
     },
     "05f81357fb": {
       "case:me-object": "ar es it pt"
@@ -133,9 +130,6 @@
     },
     "1aa9c955fa": {
       "trigger trigger": "qu"
-    },
-    "1adc1489c4": {
-      "case:it case:it": "de"
     },
     "1ba900c09e": {
       "case:it-object": "ar es fr it pt"
@@ -480,9 +474,8 @@
       "of": "*"
     },
     "73325ff027": {
-      "case:it of the": "de",
       "in in of the": "ar es fr he hi id ja ko ms pl pt qu ru sw th tl uk",
-      "of the": "it tr vi"
+      "of the": "de it tr vi"
     },
     "7371a42494": {
       "as": "ko",
@@ -756,9 +749,6 @@
       "case:me-object case:me-object": "ar es it pt",
       "matches": "bn th"
     },
-    "b2cf479f04": {
-      "case:it": "de"
-    },
     "b365b3c1ad": {
       "at debounced": "ar bn de es fr he hi id it ja ko ms pl pt qu ru sw th tr uk vi zh",
       "debounced": "tl"
@@ -973,7 +963,6 @@
       "trigger": "qu"
     },
     "e9f06fbe94": {
-      "case:it": "de",
       "case:me-object": "ar es it pt"
     },
     "ec97ae1115": {
