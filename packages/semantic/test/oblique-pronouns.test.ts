@@ -298,6 +298,18 @@ describe('fr writes the object pronoun before the verb', () => {
     expect(translate(expected, 'fr', 'en')).toBe(source);
   });
 
+  it('writes a variable spelled like a clitic in parentheses before a verb, and reads a bare l as a name', () => {
+    const source = 'on click if le put "Y" into #out else put "N" into #out end';
+    const rendered = translate(source, 'en', 'fr');
+    expect(rendered).toContain('si (le) mettre');
+    expect(translate(rendered, 'fr', 'en')).toBe(
+      'on click if (le) put "Y" into #out else put "N" into #out end'
+    );
+    expect(translate('quand clic si l mettre "Y" dans #out fin', 'fr', 'en')).toBe(
+      'on click if l put "Y" into #out end'
+    );
+  });
+
   it('reads the clitic beside every verb, and leaves a string alone', () => {
     expect(translate("quand clic l'afficher puis le cacher", 'fr', 'en')).toBe(
       'on click show it then hide it'
