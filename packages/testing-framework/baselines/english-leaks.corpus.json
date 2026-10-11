@@ -1,8 +1,8 @@
 {
   "description": "English-leak gate, corpus half (src/multilingual/english-leaks.ts): per corpus row, the findings of each language's render (render(parse(en), L)): an English grammar word, `event:<name>` (an English event the lexicon has a word for) or `case:me` / `case:it` (a nominative pronoun beside a marker; `-object`: as an unmarked object). `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts after a fresh populate.",
   "renders": 3519,
-  "leaky": 216,
-  "findings": 331,
+  "leaky": 214,
+  "findings": 329,
   "kinds": {
     "word": {
       "renders": 191,
@@ -13,8 +13,8 @@
       "findings": 0
     },
     "case": {
-      "renders": 26,
-      "findings": 29
+      "renders": 24,
+      "findings": 27
     }
   },
   "entries": {
@@ -37,7 +37,7 @@
       "null": "he"
     },
     "blur-element": {
-      "case:me-object": "ar es pt"
+      "case:me-object": "ar"
     },
     "caret-var-on-target": {
       "on": "*"
