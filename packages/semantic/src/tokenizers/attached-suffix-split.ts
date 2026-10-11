@@ -15,8 +15,6 @@ export interface AttachedSuffix {
   readonly written: string;
   /** The marker the reader gives back for it (bn `ে` reads as `এ`). */
   readonly marker: string;
-  /** Does the suffix fit this stem (tr's harmony, bn's consonant)? */
-  readonly fits?: (stem: string) => boolean;
 }
 
 export function splitAttachedSuffixes(
@@ -30,10 +28,9 @@ export function splitAttachedSuffixes(
   for (const token of tokens) {
     let split = false;
     if (token.kind === 'identifier') {
-      for (const { written, marker, fits } of suffixes) {
+      for (const { written, marker } of suffixes) {
         if (token.value.length <= written.length || !token.value.endsWith(written)) continue;
         const stem = token.value.slice(0, -written.length);
-        if (fits && !fits(stem)) continue;
         const read = tokenizeWord(stem);
         const word = read.length === 1 ? read[0]! : undefined;
         if (word?.kind !== 'keyword') continue;
