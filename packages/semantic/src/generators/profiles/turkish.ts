@@ -40,10 +40,21 @@ export const turkishProfile: LanguageProfile = {
   },
   // A pronoun and its marker, fused into one word as Turkish writes them (M2 N3;
   // listed in NATIVE_REVIEW_NEEDED.md): the accusative, dative and ablative.
-  // The reader splits each back (tokenizers/fused-forms-split.ts).
+  // The reader splits each back (tokenizers/fused-forms-split.ts). The other
+  // references are Turkish words too, whose harmony their spelling gives (N5,
+  // FUSED_FORMS.md Q2; `sonuç` softens to `sonuc-` before a vowel). Code takes
+  // its suffix after an apostrophe (`#out'a`), which the reader takes; renders
+  // keep it apart until a reviewer picks a code word's harmony.
   obliqueReferences: {
     me: { i: 'beni', e: 'bana', den: 'benden' },
     it: { i: 'onu', e: 'ona', den: 'ondan' },
+    result: { i: 'sonucu', e: 'sonuca', den: 'sonuçtan' },
+    event: { i: 'olayı', e: 'olaya', den: 'olaydan' },
+    target: { i: 'hedefi', e: 'hedefe', den: 'hedeften' },
+    body: { i: 'gövdeyi', e: 'gövdeye', den: 'gövdeden' },
+    document: { i: 'belgeyi', e: 'belgeye', den: 'belgeden' },
+    window: { i: 'pencereyi', e: 'pencereye', den: 'pencereden' },
+    detail: { i: 'detayı', e: 'detaya', den: 'detaydan' },
   },
   possessive: {
     // Genitive suffix, spaced for tokenization like Turkish's other case

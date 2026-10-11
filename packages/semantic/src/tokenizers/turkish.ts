@@ -15,6 +15,7 @@ import { BaseTokenizer, type KeywordEntry } from './base';
 import { TurkishMorphologicalNormalizer } from './morphology/turkish-normalizer';
 import { turkishProfile } from '../generators/profiles/turkish';
 import { fusedForms, splitFusedForms } from './fused-forms-split';
+import { spaceApostropheSuffixes } from './apostrophe-suffixes';
 import {
   StringLiteralExtractor,
   NumberExtractor,
@@ -197,9 +198,25 @@ export class TurkishTokenizer extends BaseTokenizer {
 
   private readonly fused = fusedForms(turkishProfile);
 
-  /** A pronoun fused with its marker (`bana`, `ben` + `e`) reads as the two: see splitFusedForms. */
+  /** The case suffixes a marker is written as: every harmony and buffer form the profile reads. */
+  private readonly suffixes: ReadonlySet<string> = new Set([
+    ...CASE_SUFFIXES,
+    ...Object.values(turkishProfile.roleMarkers)
+      .flatMap(m => [m.primary, ...(m.alternatives ?? [])])
+      .filter(w => /^\p{L}{1,3}$/u.test(w) && w !== 'ile'),
+  ]);
+
+  /**
+   * A pronoun fused with its marker (`bana`, `ben` + `e`) reads as the two: see
+   * splitFusedForms. A suffix on code after an apostrophe (`#out'a`) reads as
+   * the marker apart: see spaceApostropheSuffixes.
+   */
   override tokenize(input: string): TokenStream {
-    return splitFusedForms(super.tokenize(input), this.fused, word => super.tokenize(word).tokens);
+    return splitFusedForms(
+      super.tokenize(spaceApostropheSuffixes(input, this.suffixes)),
+      this.fused,
+      word => super.tokenize(word).tokens
+    );
   }
 
   classifyToken(token: string): TokenKind {

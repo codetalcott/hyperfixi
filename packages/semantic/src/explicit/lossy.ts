@@ -222,7 +222,8 @@ function endsValue(text: string, i: number): boolean {
  * contents, numbers, `.class` / `#id` / `<query/>` refs, `@attribute`,
  * `*style`, and `$` / `:` / `^` variables. A `.x` or `#x` right after a value
  * is a property or part of a word, as the engine's tokenizer reads it; an
- * apostrophe inside a word (`#a's`, uk `прив'язати`) is not a quote; a name
+ * apostrophe inside a word (`#a's`, uk `прив'язати`) or before a suffix on a
+ * value (tr `"x"'i`, `5'e`) is not a quote; a name
  * ends at its last ASCII word character, since an SOV render writes a particle
  * onto it (ja `#d1の`).
  */
@@ -233,7 +234,7 @@ export function invariantValues(text: string): Map<string, number> {
   while (i < text.length) {
     const c = text[i] as string;
     const next = text[i + 1] ?? '';
-    if (c === "'" && LETTER.test(text[i - 1] ?? '') && LETTER.test(next)) {
+    if (c === "'" && /[\p{L}\p{M}\p{N}_)\]}"`]/u.test(text[i - 1] ?? '') && LETTER.test(next)) {
       i++;
       continue;
     }
