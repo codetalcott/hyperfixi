@@ -620,6 +620,29 @@ the reviewer: tr `#list içindeki` leaves out the genitive (`#list'in içindeki`
 compound noun does; hi `स्थित` is formal, `वाले` colloquial; ko `내 안의` would be the
 usual `me` (the render writes `나 안의`); ja's spacing (`自分 の中の`) is the renderer's.
 
+## `wait for <custom event>`: the language's `event` word (M2 row 8, P52) ⚠️ (October 2026)
+
+A wait for an event no table knows (`wait for myEvent`, `wait for draggable:start`) was
+written bare (`esperar myEvent`), which every reader took for a time wait. It is now written
+with the language's `event` word before the name, as `repeat until event X` already is:
+
+| lang | `on click wait for foo then log 1`          | notes                                     |
+| ---- | ------------------------------------------- | ----------------------------------------- |
+| es   | `al clic esperar evento foo entonces …`     | `esperar el evento foo`? the article      |
+| de   | `wenn klick warten Ereignis foo dann …`     | `auf das Ereignis foo warten`?            |
+| fr   | `quand clic attendre événement foo puis …`  | `attendre l'événement foo`?               |
+| ru   | `при клик ждать событие foo затем …`        | `ждать события foo` (genitive)?           |
+| ja   | `クリックで イベント foo 待つ それから …`  | `イベント foo を 待つ`?                   |
+| ko   | `클릭 할 때 이벤트 foo 대기 그다음 …`       | `이벤트 foo를 대기`?                      |
+| tr   | `tıklamada olay foo bekle ardından …`       | `foo olayını bekle`?                      |
+| zh   | `一 点击 就 等待 把 事件 foo 然后 …`        | the `把` is the wait pattern's            |
+
+A known DOM event keeps the bare form (`esperar transitionend`), a source follows the event
+(`esperar evento foo de #b`), and a bare name stays a time wait (`esperar delay`). Questions
+for the reviewer: is the bare `event` word natural before a name, or does your language want
+an article or a case (ru genitive, tr `olayını`)? Should a known event take the word too, for
+one shape (`esperar evento transitionend`)?
+
 ## `toggle … between` (M2, vocabulary sheet A6) ⚠️ (October 2026)
 
 `toggle between .a and .b`, `toggle $x between 'a', 'b' and 'c'`. The `between` word is each dictionary's

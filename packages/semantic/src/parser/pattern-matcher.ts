@@ -2956,6 +2956,19 @@ export class PatternMatcher {
       // chained member access is folded on. `my valor` renders `my value`; `my
       // valor.length` renders `my value.length` (the chained `.length` is code).
       propertyName = this.toEnglishProperty(propertyName);
+      // A property the lexicon does not list but the tokenizer knows (es
+      // `detalle`, tr `detay`: the `detail` reference word, which the renderer
+      // writes for `its.detail`) is its English word too; read as written it
+      // was a wrong property name (`its detalle`), silently.
+      if (
+        propertyName === propertyToken.value &&
+        propertyToken.kind === 'keyword' &&
+        propertyToken.normalized &&
+        /^[A-Za-z]+$/.test(propertyToken.normalized) &&
+        propertyToken.normalized.toLowerCase() !== propertyToken.value.toLowerCase()
+      ) {
+        propertyName = propertyToken.normalized;
+      }
 
       // Consume chained dot-property access (.parentElement.style.display),
       // including optional-chaining links: the tokenizer splits `?.prop` into
