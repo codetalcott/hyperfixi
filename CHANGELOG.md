@@ -28,6 +28,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Thai also read every clause between a handler's event and its body (`on click elsewhere`, `on
   mutation of attributes`, `on foo queue first`), which their head pattern skipped. In the command-shape
   gate, 375 lanes that were refused now pass.
+- **`@lokascript/semantic`: a query of a pseudo-class alone** (`<:checked/>`, `<:not(.done)/>`) reads
+  as a query in every language, English too. Every tokenizer read `<` and then a local variable
+  `:checked`, so a translation was refused. In the command-shape gate, 161 lanes that were refused now
+  pass.
 
 ## [4.5.0] - 2026-10-11
 

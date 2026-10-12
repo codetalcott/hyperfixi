@@ -18,7 +18,7 @@ What the gates measure. Each claim carries its re-check command:
 | --------------------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | Corpus fidelity, 11 ratchet signals     | 1.000 in all 24 languages (baseline 2026-09-25)                     | `cd packages/testing-framework && npx tsx src/multilingual/cli.ts --full --bundle browser-priority --regression` (after `populate`) |
 | Value matrix (4,537 cells × 48 lanes)   | 6 failing, all ACCEPTED, 0 open (2026-10-07)                        | `npx tsx tools/regen-value-matrix-baseline.ts --dry-run` (testing-framework)                                                        |
-| Command shapes (1,135 scripts × 24)     | 25,725 pass, 1,504 refused, 11 silent; en 1,089 / 46 / 0 (10-12)    | `npx tsx tools/regen-command-shapes-baseline.ts --report` (testing-framework)                                                       |
+| Command shapes (1,135 scripts × 24)     | 25,886 pass, 1,343 refused, 11 silent; en 1,089 / 46 / 0 (10-12)    | `npx tsx tools/regen-command-shapes-baseline.ts --report` (testing-framework)                                                       |
 | English left in renders: words / events / `me` case | corpus 5.4% / 0.0% / 9.0% of renders; command shapes 10.8% / 0.0% / 16.3%. Words counted toward the target (kept English out), per language: corpus 0.7–4.6%, shapes 3.9–6.2%, met in 23/23 (10-10) | `npx tsx tools/regen-english-leaks-baseline.ts --report` (testing-framework; corpus after `populate`) |
 | Canonical validity (upstream parses it) | both allowlists empty (3174/3174 foreign, 138/138 en on 2026-09-23) | `npm run test:canonical --prefix packages/testing-framework`                                                                        |
 | English reference preserved             | 162/163 units (1 allowlisted: async-block, by design; 2026-10-06)   | same                                                                                                                                |
@@ -154,7 +154,7 @@ it `get … in me` (3), qu/vi `if no <span/> in #box where …` (2), qu possessi
 @data-x changes` (1); each fixed, or its reason written in `SILENT_FAMILIES`. (2) Refusals by reach:
 handler-head counts (`on click 1`; done 2026-10-12: 375 lanes, with every head clause bn, it and th
 dropped, `on click elsewhere` among them; residue P61), `wait for <custom event>` (P52, done), pseudo-class
-queries (`<:checked/>`, LOUD, 209 lanes), then `fetch … as JSON` in qu, `transition` with two properties
+queries (`<:checked/>`; done 2026-10-12: 161 lanes; the two cases left are P62's), then `fetch … as JSON` in qu, `transition` with two properties
 in SOV, and the rest by the regen tool's family table. A refused pair that starts to render can come out silent: the
 command-shape dry run shows each move.
 
