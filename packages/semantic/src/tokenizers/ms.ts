@@ -42,6 +42,10 @@ const MALAY_EXTRAS: KeywordEntry[] = [
   // back `"" is null`, which is false.
   { native: 'kosong', normalized: 'empty' },
   { native: 'tak_tentu', normalized: 'undefined' },
+  // The lexicon's word (what every render writes): without it `x adalah
+  // tidak_ditakrifkan` read back as a variable named so, and the command-shape
+  // gate listed the lanes as silent (M2 row 7).
+  { native: 'tidak_ditakrifkan', normalized: 'undefined' },
 
   // Positional
   { native: 'pertama', normalized: 'first' },

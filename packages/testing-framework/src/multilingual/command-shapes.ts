@@ -728,16 +728,8 @@ export const SILENT_FAMILIES: readonly SilentFamily[] = [
     name: 'value-words',
     reason:
       "a language's word inside a value reads back as another English word: pl `to` → " +
-      '`it`, qu `where` → `target`, ms/pl `undefined`',
-    ids: [
-      'a30e7d6174',
-      '69537d01ae',
-      'd74a86f3a0',
-      'da24c9d768',
-      'b948ed872b',
-      'a4c56acf1e',
-      '54a65f4602',
-    ],
+      '`it` (its `it` word, after `closest`), qu `where` → `target`, vi `where` split at `_`',
+    ids: ['d74a86f3a0', 'da24c9d768', 'b948ed872b'],
   },
   {
     name: 'it-locative',
