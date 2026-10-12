@@ -20,6 +20,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   direction had a word, and scroll's schema modeled `scroll to <el>` alone. Listed for native review in
   `packages/semantic/NATIVE_REVIEW_NEEDED.md`.
 
+### Fixed
+
+- **`@lokascript/semantic`: a handler's count** (`on click 1 …`, the first click only; `on click 2 …`)
+  is read in every language. The renders already wrote it (es `al clic 1 ocultar`), but every reader
+  outside English dropped it, so the translation was refused in all 23 languages. Bengali, Italian and
+  Thai also read every clause between a handler's event and its body (`on click elsewhere`, `on
+  mutation of attributes`, `on foo queue first`), which their head pattern skipped. In the command-shape
+  gate, 375 lanes that were refused now pass.
+
 ## [4.5.0] - 2026-10-11
 
 Pronouns, suffixes and handler heads read as their language. In 4.4.0 every translation wrote `me` and

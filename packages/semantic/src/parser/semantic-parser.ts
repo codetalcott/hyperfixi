@@ -3581,6 +3581,8 @@ export class SemanticParserImpl implements ISemanticParser {
           (tokens.tokens as LanguageToken[]).slice(actionStart),
           language
         );
+        // The slot can hold a count (bn `ক্লিকে 1 xকে 10তে সেট`), read as the head's.
+        headClause = this.takeHeadClause(bodyStream, commandPatterns, language);
         body = this.parseBodyWithClauses(bodyStream, commandPatterns, language);
         while (!tokens.isAtEnd()) tokens.advance();
       } else {
@@ -3647,13 +3649,15 @@ export class SemanticParserImpl implements ISemanticParser {
     }
     if (end >= all.length || end - start > HEAD_CLAUSE_WORDS) return undefined;
     const run = all.slice(start, end);
-    // A count is upstream's `1` or `1 to 2`; a number that opens the body (an
-    // SOV loop's `3 + 3 times`) is no head clause. Another language's body can
-    // open with a number where its head ends (ja `2 is in [1, 2] を #out に
-    // 置く`), so there a count is read only in the form no value takes, `1 to 2`.
+    // A count is upstream's `1` or `1 to 2`, where no command begins at the
+    // number: a body can open with one where the head ends (ja `2 is in [1, 2]
+    // を #out に 置く`, an SOV loop's `3 + 3 times`), and it is the body's there.
+    // `クリックで 1 xを 10に 設定` is the count, then the body.
     const words = run.map(t => t.value).join(' ');
-    const count = language === 'en' ? /^\d+(?: to \d+)?$/ : /^\d+ to \d+$/;
-    if (/^\d/.test(first.value) && !count.test(words)) return undefined;
+    if (/^\d/.test(first.value)) {
+      if (!/^\d+(?: to \d+)?$/.test(words)) return undefined;
+      if (this.tokensBeginCommand(all.slice(start), commandPatterns, language)) return undefined;
+    }
     const holder = { kind: 'command', action: 'on' } as unknown as SemanticNode;
     if (!this.keepVerbatimClause(holder, run, all[start - 1], language)) return undefined;
     while (tokens.position() < end) tokens.advance();

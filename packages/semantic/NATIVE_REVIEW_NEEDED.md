@@ -643,6 +643,26 @@ for the reviewer: is the bare `event` word natural before a name, or does your l
 an article or a case (ru genitive, tr `olayını`)? Should a known event take the word too, for
 one shape (`esperar evento transitionend`)?
 
+## A handler's count, after the head (M2 reliability row 8) ⚠️ (October 2026)
+
+Upstream's `on click 1` runs on the first click only (`on click 2`, the second; `on click 1 to 2`,
+the first two). Every language writes the count as English does, a bare numeral after the handler's
+head, and a range keeps English's `to`. Before October 2026 the reader dropped the count and the
+translation was refused; it now reads back, so authors can see these renders:
+
+| lang | `on click 1 hide`         | a native writer might say       |
+| ---- | ------------------------- | ------------------------------- |
+| es   | `al clic 1 ocultar`       | `al primer clic ocultar`?       |
+| de   | `wenn klick 1 verbergen`  | `beim ersten Klick verbergen`?  |
+| ja   | `クリックで 1 隠す`       | `1回目のクリックで 隠す`?        |
+| ko   | `클릭 할 때 1 숨기다`     | `첫 번째 클릭 할 때 숨기다`?     |
+| tr   | `tıklamada 1 gizle`       | `ilk tıklamada gizle`?          |
+| ru   | `при клик 1 скрыть`       | `при первом клике скрыть`?      |
+
+Question for the reviewer: is a bare number after the event readable as "the Nth click" at all, or
+does it read as a value? An ordinal (`primer`, `ersten`, `1回目`) is a new form, and waits for this
+answer.
+
 ## `ask` and `answer` in the language's own verbs (M2, vocabulary sheet B8) ⚠️ (October 2026)
 
 Upstream's two dialog commands, refused in every language until now: `ask "Name?"` prompts and the

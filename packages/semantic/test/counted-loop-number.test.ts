@@ -160,11 +160,12 @@ describe('an SOV loop verb ends its head', () => {
     );
   });
 
-  // Only where the verb ends the head: before a verb-first loop a stray
-  // number is not its count, and the loop keeps its form.
+  // Only where the verb ends the head: before a verb-first loop a number is
+  // not its count, and the loop keeps its form. It is the handler's (upstream's
+  // `on click 3`, the third click), as English's render writes it.
   it('a number before a verb-first loop (es)', () => {
     expect(english('al clic 3 repetir mientras x < 3 incrementar x fin', 'es')).toBe(
-      'on click repeat while x < 3 increment x end'
+      'on click 3 repeat while x < 3 increment x end'
     );
   });
 
