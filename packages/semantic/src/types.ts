@@ -598,6 +598,12 @@ export interface LanguagePattern {
 
   /** Optional constraints on when this pattern applies */
   readonly constraints?: PatternConstraints;
+  /**
+   * The pattern reads a form the renderer does not write by choosing it
+   * (wait's `esperar evento {event}`: the renderer writes the event word
+   * itself, before a name no table knows). The renderer skips it.
+   */
+  readonly parseOnly?: boolean;
 }
 
 /**

@@ -23,6 +23,7 @@
 
 import type { LanguagePattern } from '../types';
 import { handcrafted } from './handcrafted';
+import { tryGetProfile } from '../registry';
 
 export function getWaitPatternsZh(): LanguagePattern[] {
   return [
@@ -373,6 +374,65 @@ export function getWaitPatternsQu(): LanguagePattern[] {
   ];
 }
 
+/**
+ * A custom event in a wait, in the language's own words (OPEN_ITEMS P52):
+ * `esperar evento foo`, de `warten ereignis foo`, ja `イベント foo 待つ`, Built
+ * from the profile: its `wait` and `event` words and its word order. A source
+ * or an or-leg after the event (`esperar evento foo de #b`) is the leg
+ * scanner's (tryWaitAlternatives), which cuts it before this head reads. The renderer writes the event word only before a
+ * name no event table knows; a known event keeps the marker-less form
+ * (`esperar transitionend`), which the generated pattern and the relabel in
+ * the parser read, and a bare name stays a time wait (`esperar delay`), as
+ * upstream reads `wait delay`. Above the generated pattern (100), which would
+ * take the event word for the duration.
+ */
+export function waitEventHeads(language: string): LanguagePattern[] {
+  if (language === 'en') return [];
+  const profile = tryGetProfile(language);
+  const verb = profile?.keywords?.wait;
+  const eventWord = profile?.keywords?.event;
+  if (!profile || !verb?.primary || !eventWord?.primary) return [];
+  const literal = (entry: { primary: string; alternatives?: readonly string[] }) => ({
+    type: 'literal' as const,
+    value: entry.primary,
+    ...(entry.alternatives?.length ? { alternatives: [...entry.alternatives] } : {}),
+  });
+  const event = {
+    type: 'role' as const,
+    role: 'event' as const,
+    expectedTypes: ['literal', 'expression'] as const,
+  };
+  // zh and he write their object marker after the verb (`等待 把 事件 foo`,
+  // `חכה את אירוע foo`: wait-zh-ba, wait-he-et); the group is optional.
+  const patient = profile.roleMarkers?.patient;
+  const patientGroup =
+    patient && patient.position !== 'after'
+      ? [{ type: 'group' as const, optional: true, tokens: [literal(patient)] }]
+      : [];
+  const sov = profile.wordOrder === 'SOV';
+  const tokens = sov
+    ? [literal(eventWord), event, literal(verb)]
+    : [literal(verb), ...patientGroup, literal(eventWord), event];
+  return [
+    {
+      id: `wait-${language}-event-head`,
+      language,
+      command: 'wait',
+      priority: 110,
+      parseOnly: true,
+      template: {
+        format: sov
+          ? `${eventWord.primary} {event} ${verb.primary}`
+          : `${verb.primary} ${eventWord.primary} {event}`,
+        tokens,
+      },
+      extraction: {
+        event: { position: sov ? 1 : 2 + patientGroup.length },
+      },
+    } as LanguagePattern,
+  ];
+}
+
 export function getWaitPatternsForLanguage(language: string): LanguagePattern[] {
-  return handcrafted('wait', language) ?? [];
+  return [...(handcrafted('wait', language) ?? []), ...waitEventHeads(language)];
 }

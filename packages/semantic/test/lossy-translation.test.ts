@@ -222,9 +222,15 @@ describe('the read-back sees a lost role', () => {
     expect(() => translate(translate(code, 'en', 'ar'), 'ar', 'en')).not.toThrow();
   });
 
-  it.each(['es', 'ja', 'de'])('refuses a dropped wait-for in %s', language => {
-    expect(() => translate('on foo wait for bar then log 1', 'en', language)).toThrow(
-      LossyTranslationError
+  // Until P52 (2026-10-12) every language dropped `wait for bar`'s event in the
+  // read-back (`wait bar`, a time wait) and this check refused the translation;
+  // the renders now carry the language's event word (`esperar evento bar`) and
+  // round-trip. The check itself still sees that loss.
+  it.each(['es', 'ja', 'de'])('a dropped wait-for is a loss the check sees (%s)', language => {
+    const source = 'on foo wait for bar then log 1';
+    expect(translate(translate(source, 'en', language), language, 'en')).toBe(source);
+    expect(lostRoles(parse(source, 'en'), parse('on foo wait bar then log 1', 'en'))).toContain(
+      '-wait.event'
     );
   });
 });

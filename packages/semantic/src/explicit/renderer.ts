@@ -110,7 +110,8 @@ const BLOCK_NEEDS_TRAILING_END = new Set<ActionType>(['js']);
 // Import from registry for tree-shaking (registry uses directly-registered patterns first)
 import { getPatternsForLanguageAndCommand, tryGetProfile } from '../registry';
 import { getSupportedLanguages as getTokenizerLanguages, tokenize } from '../tokenizers';
-import { localizeEventName } from '../patterns/event-handler';
+import { eventNameTranslations, localizeEventName } from '../patterns/event-handler';
+import { WAITABLE_EVENT_WORDS } from '../parser/semantic-parser';
 import {
   getOfPossessiveMarker,
   loneKeywordKind,
@@ -875,9 +876,10 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     // candidates to pure event-trigger patterns (ids without the `-event-`
     // fused-command segment: `on-*`, `event-*`, `event-handler-*`). The fused
     // patterns stay available for parsing.
-    let candidates = patterns;
+    let candidates = patterns.filter(pattern => !pattern.parseOnly);
+    if (candidates.length === 0) candidates = patterns;
     if (node.kind === 'event-handler') {
-      const triggers = patterns.filter(pattern => !/-event-/i.test(pattern.id));
+      const triggers = candidates.filter(pattern => !/-event-/i.test(pattern.id));
       if (triggers.length > 0) candidates = triggers;
     }
 
@@ -1331,6 +1333,14 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     return token?.kind === 'keyword' && token.normalized !== undefined;
   }
 
+  /** A wait's event no table knows: not a DOM event, not a word of the language's event table. */
+  private isCustomWaitEvent(name: string, language: string): boolean {
+    const bare = name.replace(/\(.*$/, '').toLowerCase();
+    if (WAITABLE_EVENT_WORDS.has(bare)) return false;
+    const table = eventNameTranslations[language] ?? {};
+    return !(bare in table) && !Object.values(table).includes(bare);
+  }
+
   /**
    * Does the reader split `joined` back into `word` and the marker written
    * onto it? Only then is the attached form written (ja `値を` after a
@@ -1511,7 +1521,15 @@ export class SemanticRendererImpl implements ISemanticRenderer {
           // outscores this pattern and never reaches here.
           if (token.role === 'duration' && node.action === 'wait') {
             const event = node.roles.get('event');
-            if (event) return this.renderEventName(event, language);
+            if (event) {
+              const name = this.renderEventName(event, language);
+              // A name no event table knows takes the language's `event` word
+              // before it (`esperar evento foo`, OPEN_ITEMS P52): bare, every
+              // reader took it for a time wait (`wait foo`). A known event
+              // keeps the marker-less form the relabel reads.
+              const word = tryGetProfile(language)?.keywords?.event?.primary;
+              return word && this.isCustomWaitEvent(name, language) ? `${word} ${name}` : name;
+            }
           }
           if (token.optional) return null;
           // Use default if available

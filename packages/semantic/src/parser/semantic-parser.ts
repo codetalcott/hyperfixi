@@ -324,7 +324,7 @@ function commandWordsFor(language: string): ReadonlySet<string> {
  * language-invariant. Superset of the handler-side KNOWN_EVENTS plus the
  * transition/animation/pointer/touch/drag families that waits actually target.
  */
-const WAITABLE_EVENT_WORDS = new Set([
+export const WAITABLE_EVENT_WORDS = new Set([
   // handler-side KNOWN_EVENTS
   'click',
   'dblclick',
@@ -3360,7 +3360,16 @@ export class SemanticParserImpl implements ISemanticParser {
           const wNode = commandNode as CommandSemanticNode;
           if (!wNode.roles.has('event')) {
             const trailing = tokens.peek();
-            if (trailing && WAITABLE_EVENT_WORDS.has(trailing.value.toLowerCase())) {
+            // The language's `event` word captured as the duration, a name
+            // after it (`al clic esperar evento foo`, P52): the name is the
+            // event, as the wait-<lang>-event-head reads it off the fused path.
+            const previous = tokens.peek(-1);
+            const eventWordRead =
+              !!trailing && !!previous && (previous.normalized ?? '').toLowerCase() === 'event';
+            if (
+              trailing &&
+              (WAITABLE_EVENT_WORDS.has(trailing.value.toLowerCase()) || eventWordRead)
+            ) {
               const roles = Object.fromEntries(wNode.roles) as Record<string, SemanticValue>;
               const dur = roles.duration as { type?: string } | undefined;
               if (dur && dur.type !== 'literal' && dur.type !== 'expression') {
@@ -7090,10 +7099,15 @@ export class SemanticParserImpl implements ISemanticParser {
     // Looking on both sides let a head's run take the body's verb.
     const verbFinal = tryGetProfile(language)?.wordOrder === 'SOV';
     /** The wait verb next to the run `[start, end)`. */
+    /** The language's `event` word before a wait's event (`esperar evento foo`, P52). */
+    const eventWordAt = (k: number): boolean => !!arr[k] && norm(arr[k]) === 'event';
     const nearWait = (start: number, end: number): boolean =>
       verbFinal
         ? isWait(arr[end]) || (arr[end]?.kind === 'particle' && isWait(arr[end + 1]))
-        : isWait(arr[start - 1]) || isWait(arr[start - 2]);
+        : isWait(arr[start - 1]) ||
+          isWait(arr[start - 2]) ||
+          // `等待 把 事件 foo`: the event word, and zh/he's object marker, between.
+          (eventWordAt(start - 1) && arr[start - 2]?.kind === 'particle' && isWait(arr[start - 3]));
 
     /** A source phrase starts at `k`: `from X`, or `X から` where the marker follows. */
     const sourceAt = (k: number): boolean =>
@@ -7127,7 +7141,15 @@ export class SemanticParserImpl implements ISemanticParser {
       if (known) return known;
       if (!isPlainName(arr[i])) return undefined;
       const afterFor = arr[i - 1]?.value.toLowerCase() === 'for' && isWait(arr[i - 2]);
-      return afterFor || sourceAfterLegs(i + 1) ? arr[i].value : undefined;
+      // A name after the language's `event` word is one (`esperar evento foo`,
+      // `イベント foo 待つ`: the renderer writes it before a name no table
+      // knows, P52); verb-first the wait verb stands before the word.
+      const afterEventWord =
+        eventWordAt(i - 1) &&
+        (verbFinal ||
+          isWait(arr[i - 2]) ||
+          (arr[i - 2]?.kind === 'particle' && isWait(arr[i - 3])));
+      return afterFor || afterEventWord || sourceAfterLegs(i + 1) ? arr[i].value : undefined;
     };
 
     for (let i = 0; i < arr.length; i++) {
