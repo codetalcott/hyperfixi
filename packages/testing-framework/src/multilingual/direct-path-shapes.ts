@@ -57,6 +57,11 @@ export interface DirectPathCase {
   event: string | null;
   /** The languages the core test ran; `[]` = English only. */
   languages: 'all23' | string[];
+  /**
+   * The source defines a behavior of this name (a hand-written task): it is
+   * defined under a fresh name and installed with no arguments.
+   */
+  behaviorName?: string;
 }
 
 const CASES_PATH = path.resolve(
@@ -234,6 +239,12 @@ export function caseFails(r: DirectPathResult): boolean {
 
 export interface DirectPathHosts {
   runCase(c: DirectPathCase): Promise<DirectPathResult>;
+  /**
+   * One translation someone WROTE (the hand-written-input gate), run as
+   * runCase runs a render: `written` as written on the engine with the
+   * adapter, against upstream on the English source.
+   */
+  runWritten(c: DirectPathCase, lang: string, written: string): Promise<PairResult>;
   /** Restore the console, the rejection listeners and EventTarget. */
   close(): Promise<void>;
 }
@@ -321,14 +332,17 @@ export async function initDirectPathHosts(): Promise<DirectPathHosts> {
     document.documentElement.removeAttribute('lang');
     try {
       let install = code;
-      if (c.id.startsWith('behavior-handlers')) {
+      const coreBehavior = c.id.startsWith('behavior-handlers');
+      if (coreBehavior || c.behaviorName) {
         // The source defines a behavior: define it (under a fresh name), then
-        // install it in English, as the core test does.
+        // install it in English, as the core test does. A hand-written task
+        // names its behavior (`Hider`) and installs it with no arguments.
         const name = `Demo${letter(behaviorSerial)}${letter(Math.floor(behaviorSerial / 26))}`;
         behaviorSerial++;
-        const definition = code.replace(/Demo[A-Z]+/g, name);
+        const pattern = coreBehavior ? /Demo[A-Z]+/g : new RegExp(`\\b${c.behaviorName}\\b`, 'g');
+        const definition = code.replace(pattern, name);
         host.evaluate(lang === 'en' ? definition : preprocess(definition, lang));
-        install = `install ${name}(h: 1)`;
+        install = coreBehavior ? `install ${name}(h: 1)` : `install ${name}()`;
         lang = 'en';
       }
       document.body.innerHTML = c.fixture;
@@ -386,15 +400,44 @@ export async function initDirectPathHosts(): Promise<DirectPathHosts> {
     }
   };
 
-  return {
-    async runCase(c) {
-      // A behavior definition is not a handler: it is checked by running it.
-      const rejected = c.id.startsWith('behavior-handlers')
+  /** Upstream on the English source: the oracle, or why there is none. */
+  type Oracle = { rejected: string | undefined; want: string };
+  const oracle = async (c: DirectPathCase): Promise<Oracle> => {
+    // A behavior definition is not a handler: it is checked by running it.
+    const rejected =
+      c.id.startsWith('behavior-handlers') || c.behaviorName
         ? undefined
         : rejects(upstream, c.source);
-      const want = rejected
-        ? `✗upstream rejects: ${rejected}`
-        : await runAll(upstream, c, c.source, 'en');
+    const want = rejected
+      ? `✗upstream rejects: ${rejected}`
+      : await runAll(upstream, c, c.source, 'en');
+    return { rejected, want };
+  };
+  /** One translation, written or rendered, on the engine against the oracle. */
+  const pairFor = async (
+    c: DirectPathCase,
+    { rejected, want }: Oracle,
+    lang: string,
+    written: string
+  ): Promise<PairResult> => {
+    let english: string;
+    try {
+      english = preprocess(written, lang);
+    } catch (e) {
+      english = `✗${(e as Error).message}`;
+    }
+    const got = await runAll(engine, c, written, lang);
+    let ref = want;
+    if (rejected && !english.startsWith('✗') && !rejects(upstream, english)) {
+      ref = await runAll(upstream, c, english, 'en');
+    }
+    const ok = got === ref && !EMPTY.test(ref) && !ref.startsWith('✗');
+    return { lang, written, english, got, ref, ok };
+  };
+
+  return {
+    async runCase(c) {
+      const o = await oracle(c);
       const eng = await runAll(engine, c, c.source, 'en');
       const languages = c.languages === 'all23' ? [...FOREIGN_LANGUAGES] : c.languages;
       const node = parseSemantic(c.source, 'en').node;
@@ -407,24 +450,15 @@ export async function initDirectPathHosts(): Promise<DirectPathHosts> {
           written = null;
         }
         if (written === null) {
-          pairs.push({ lang, written, english: '', got: '✗untranslatable', ref: want, ok: false });
+          pairs.push({ lang, written, english: '', got: '✗untranslatable', ref: o.want, ok: false });
           continue;
         }
-        let english: string;
-        try {
-          english = preprocess(written, lang);
-        } catch (e) {
-          english = `✗${(e as Error).message}`;
-        }
-        const got = await runAll(engine, c, written, lang);
-        let ref = want;
-        if (rejected && !english.startsWith('✗') && !rejects(upstream, english)) {
-          ref = await runAll(upstream, c, english, 'en');
-        }
-        const ok = got === ref && !EMPTY.test(ref) && !ref.startsWith('✗');
-        pairs.push({ lang, written, english, got, ref, ok });
+        pairs.push(await pairFor(c, o, lang, written));
       }
-      return { id: c.id, want, eng, pairs };
+      return { id: c.id, want: o.want, eng, pairs };
+    },
+    async runWritten(c, lang, written) {
+      return pairFor(c, await oracle(c), lang, written);
     },
     async close() {
       await new Promise(resolve => setTimeout(resolve, 0));

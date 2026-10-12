@@ -1,0 +1,3 @@
+import { getTokenizer } from '../../semantic/src/index';
+const rows: [string, string][] = [['tr','bendeki <p/> i gizle'],['tr','#list içindeki <li/> e .x i ekle'],['tr','bendeki ilk <p/> i al'],['hi','मुझ में मौजूद <p/> को छिपाएं'],['hi','#list में मौजूद <li/> में .x जोड़ें'],['bn','আমাতে থাকা <p/> কে লুকান'],['bn','#list এ থাকা <li/> তে .x কে যোগ'],['ja','自分 の中の <p/> を 隠す'],['ja','#list の中の <li/>に .xを 追加'],['ko','나 안의 <p/> 을 숨기다'],['ko','#list 안의 <li/>에 .x을 추가'],['ja','の中の'],['ko','안의'],['tr','içindeki'],['hi','मौजूद'],['bn','থাকা']];
+for (const [l, s] of rows) { const tk: any = getTokenizer(l); console.log(l, s, '\n   ', tk.tokenize(s).tokens.map((t: any) => `${t.value}:${t.kind}${t.normalized && t.normalized !== t.value ? '=' + t.normalized : ''}`).join(' | ')); }

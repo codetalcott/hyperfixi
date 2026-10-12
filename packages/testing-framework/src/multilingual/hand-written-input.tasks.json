@@ -1,0 +1,162 @@
+[
+ {
+  "id": "t01",
+  "ask": "When the button is clicked, toggle the class \"active\" on it.",
+  "source": "on click toggle .active on me",
+  "fixture": "<button></button>",
+  "installOn": "button",
+  "event": "click"
+ },
+ {
+  "id": "t02",
+  "ask": "When the button is clicked, put the text Saved into the element with id out.",
+  "source": "on click put \"Saved\" into #out",
+  "fixture": "<button></button><div id=\"out\"></div>",
+  "installOn": "button",
+  "event": "click"
+ },
+ {
+  "id": "t03",
+  "ask": "When the button is clicked, hide the element with id panel.",
+  "source": "on click hide #panel",
+  "fixture": "<button></button><div id=\"panel\">x</div>",
+  "installOn": "button",
+  "event": "click"
+ },
+ {
+  "id": "t04",
+  "ask": "When the button is clicked, add the class \"open\" to the element with id menu, then remove its class \"closed\".",
+  "source": "on click add .open to #menu then remove .closed from #menu",
+  "fixture": "<button></button><div id=\"menu\" class=\"closed\"></div>",
+  "installOn": "button",
+  "event": "click"
+ },
+ {
+  "id": "t05",
+  "ask": "When the button is clicked, fetch /api/greeting and put the result into the element with id out.",
+  "source": "on click fetch /api/greeting then put it into #out",
+  "fixture": "<button></button><div id=\"out\"></div>",
+  "installOn": "button",
+  "event": "click"
+ },
+ {
+  "id": "t06",
+  "ask": "When the button is clicked: if it has the class \"on\", remove that class; otherwise add it.",
+  "source": "on click if I match .on remove .on else add .on end",
+  "fixture": "<button class=\"on\"></button>",
+  "installOn": "button",
+  "event": "click"
+ },
+ {
+  "id": "t07",
+  "ask": "When the button is clicked, append the text \"x\" to the element with id out three times.",
+  "source": "on click repeat 3 times append \"x\" to #out end",
+  "fixture": "<button></button><div id=\"out\"></div>",
+  "installOn": "button",
+  "event": "click"
+ },
+ {
+  "id": "t08",
+  "ask": "When the button is clicked, send a custom event named refresh to the element with id list, then add the class \"sent\" to the button.",
+  "source": "on click send refresh to #list then add .sent to me",
+  "fixture": "<button></button><ul id=\"list\"></ul>",
+  "installOn": "button",
+  "event": "click"
+ },
+ {
+  "id": "t09",
+  "ask": "When the button is clicked, set the variable $n to 5 and put it into the element with id out.",
+  "source": "on click set $n to 5 then put $n into #out",
+  "fixture": "<button></button><div id=\"out\"></div>",
+  "installOn": "button",
+  "event": "click"
+ },
+ {
+  "id": "t10",
+  "ask": "When the button is clicked, increase the variable $count by one and put it into the element with id out.",
+  "source": "on click increment $count then put $count into #out",
+  "fixture": "<button></button><div id=\"out\"></div>",
+  "installOn": "button",
+  "event": "click"
+ },
+ {
+  "id": "t11",
+  "ask": "Define a behavior named Hider that hides the element when it is clicked (the page installs it on the button with: install Hider).",
+  "source": "behavior Hider\n  on click hide me end\nend",
+  "fixture": "<button></button>",
+  "installOn": "button",
+  "event": "click"
+ },
+ {
+  "id": "t12",
+  "ask": "When the input receives input, put its value into the element with id out.",
+  "source": "on input put my value into #out",
+  "fixture": "<input value=\"hi\"><div id=\"out\"></div>",
+  "installOn": "input",
+  "event": "input"
+ },
+ {
+  "id": "t13",
+  "ask": "When the button is clicked, put the value of the input with id field into the element with id out.",
+  "source": "on click put the value of #field into #out",
+  "fixture": "<button></button><input id=\"field\" value=\"abc\"><div id=\"out\"></div>",
+  "installOn": "button",
+  "event": "click"
+ },
+ {
+  "id": "t14",
+  "ask": "When the button is clicked, add the class \"sel\" to the first list item inside the element with id list.",
+  "source": "on click add .sel to the first <li/> in #list",
+  "fixture": "<button></button><ul id=\"list\"><li>a</li><li>b</li></ul>",
+  "installOn": "button",
+  "event": "click"
+ },
+ {
+  "id": "t15",
+  "ask": "When the button is clicked, set its attribute aria-expanded to \"true\".",
+  "source": "on click set @aria-expanded to \"true\"",
+  "fixture": "<button aria-expanded=\"false\"></button>",
+  "installOn": "button",
+  "event": "click"
+ },
+ {
+  "id": "t16",
+  "ask": "When the button is clicked, put the text \"x\" at the end of the element with id out.",
+  "source": "on click put \"x\" at end of #out",
+  "fixture": "<button></button><div id=\"out\">start</div>",
+  "installOn": "button",
+  "event": "click"
+ },
+ {
+  "id": "t17",
+  "ask": "When the button is clicked, for every element with the class \"item\", add the class \"seen\" to it.",
+  "source": "on click for item in .item add .seen to item end",
+  "fixture": "<button></button><p class=\"item\"></p><p class=\"item\"></p>",
+  "installOn": "button",
+  "event": "click"
+ },
+ {
+  "id": "t18",
+  "ask": "When the button is clicked, if there is no element with class \"item\" inside the element with id list, put the text \"empty\" into the element with id out.",
+  "source": "on click if no .item in #list put \"empty\" into #out end",
+  "fixture": "<button></button><ul id=\"list\"></ul><div id=\"out\"></div>",
+  "installOn": "button",
+  "event": "click"
+ },
+ {
+  "id": "t19",
+  "ask": "When the button is clicked, take the class \"selected\" from whichever element with class \"tab\" has it, and give it to the button.",
+  "source": "on click take .selected from .tab for me",
+  "fixture": "<button class=\"tab\"></button><a class=\"tab selected\"></a>",
+  "installOn": "button",
+  "event": "click"
+ },
+ {
+  "id": "t20",
+  "ask": "When the button is clicked, remove the button.",
+  "source": "on click remove me",
+  "fixture": "<button></button>",
+  "installOn": "button",
+  "event": "click"
+ }
+]
