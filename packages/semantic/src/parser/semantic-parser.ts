@@ -752,10 +752,11 @@ function normalizeCommandRoles(
 
     // scroll's by-form on a handler's fused path, which reads the schema's main
     // pattern with the destination's marker optional: a bare amount is the
-    // destination (`클릭 할 때 200px 스크롤`), and an element before an amount is
-    // (`desplazamiento #box abajo por 200px`). Upstream's `scroll … by` has no
-    // destination: a numeric or length destination is the amount, and an
-    // element beside an amount is the patient (the element scrolled).
+    // destination (`클릭 할 때 200px 스크롤`), and a chain's first command reads an
+    // element before an amount as the destination (`прокрутити мене 50 потім …`).
+    // Upstream's `scroll … by` has no destination: a numeric or length
+    // destination is the amount, and an element beside an amount is the patient
+    // (the element scrolled).
     if (node.action === 'scroll') {
       const roles = node.roles as Map<SemanticRole, SemanticValue>;
       const dest = roles.get('destination');
@@ -6823,8 +6824,7 @@ export class SemanticParserImpl implements ISemanticParser {
           dest &&
           !targetRoles.has('quantity') &&
           (dest.type === 'selector' || dest.type === 'reference') &&
-          isScrollAmount(amount) &&
-          amountAt === direction + 1
+          isScrollAmount(amount)
         ) {
           const without = `${head} ${input.slice(amount.position.end).trimStart()}`.trim();
           const again = this.parse(without, language);

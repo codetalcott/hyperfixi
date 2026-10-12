@@ -3888,7 +3888,8 @@ export const scrollSchema: CommandSchema = {
   category: 'navigation',
   primaryRole: 'destination',
   // `scroll [#box] [down] by 200px` (B9): the amount is required and the
-  // destination absent; the element scrolled is the bare patient. The direction
+  // destination absent; the element scrolled is the bare patient; both are
+  // variant-only (`variantOnly`), so `scroll to {destination}` stays as it was. The direction
   // is the node's `scrollDirection`, read and written beside the amount
   // (tryScrollModifiers, the renderer), in the language's word (grammar-words).
   // Below the `to` patterns: where the amount is bare (tl, vi, uk), a variant
@@ -3946,6 +3947,9 @@ export const scrollSchema: CommandSchema = {
       sovPosition: 2,
       // As increment's: the by-marker languages, the rest bare (`#boxを 200px スクロール`).
       markerOverride: { en: 'by', es: 'por', pt: 'por', fr: 'par', de: 'um' },
+      // `scroll to #x by 5` is no form: in the main pattern a bare trailing slot
+      // took `in` from `scroll to #item in #box` (ar, zh).
+      variantOnly: true,
     },
   ],
 };

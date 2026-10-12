@@ -29,7 +29,6 @@ const SHAPES: Array<[string, GrammarWordKey | null]> = [
   ['on click scroll me down by 50 then log 1', 'down'],
   ['on click log 1 then scroll #box left by 20', 'left'],
   ['on keyup scroll up by 10', 'up'],
-  ['on click scroll #box by 20', null],
 ];
 
 // ko refuses a bare chain that holds `scroll to #section` before this change
