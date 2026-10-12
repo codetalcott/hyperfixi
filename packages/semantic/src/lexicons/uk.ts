@@ -127,6 +127,10 @@ export const ukrainianLexicon: LanguageLexicon = {
     text: { primary: 'текст' },
   },
   expressions: {
+    up: { primary: 'вгору' },
+    down: { primary: 'вниз' },
+    left: { primary: 'вліво' },
+    right: { primary: 'вправо' },
     at: { primary: 'в' },
     back: { primary: 'назад' },
     characters: { primary: 'символи' },

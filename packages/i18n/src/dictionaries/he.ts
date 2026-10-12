@@ -122,6 +122,10 @@ export const he: Dictionary = {
   attributes: {},
 
   expressions: {
+    up: 'למעלה',
+    down: 'למטה',
+    left: 'שמאלה',
+    right: 'ימינה',
     back: 'אחורה',
     elsewhere: 'חוץ',
     index: 'אינדקס',

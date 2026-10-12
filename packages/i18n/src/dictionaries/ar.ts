@@ -196,6 +196,10 @@ export const ar: Dictionary = {
   },
 
   expressions: {
+    up: 'أعلى',
+    down: 'أسفل',
+    left: 'يسار',
+    right: 'يمين',
     back: 'خلفا',
     elsewhere: 'الخارج',
     index: 'مؤشر',

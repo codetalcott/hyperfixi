@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   "Name?"` prompts; `answer "Save?" with "Yes" or "No"` confirms, the choices after the language's
   `with`). Both were refused in every language. Listed for native review in
   `packages/semantic/NATIVE_REVIEW_NEEDED.md`.
+- **`@lokascript/semantic`: `scroll … by` with a direction** in every language's own words
+  (`scroll #box down by 200px`: es `desplazamiento #box abajo por 200px`, ja `#boxを 下 200px スクロール`,
+  ru `прокрутить #box вниз 200px`). Upstream's relative scroll was refused in every language: no
+  direction had a word, and scroll's schema modeled `scroll to <el>` alone. Listed for native review in
+  `packages/semantic/NATIVE_REVIEW_NEEDED.md`.
 
 ## [4.5.0] - 2026-10-11
 

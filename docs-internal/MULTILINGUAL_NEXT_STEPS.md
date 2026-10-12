@@ -69,7 +69,7 @@ pair left is in a named family with a reason (`SILENT_FAMILIES`); the English la
 **Fixes by family** (#1404–#1422, released in 4.2.0 and 4.3.0; the stories are in the PR bodies):
 program structure, control flow, clauses no pattern models kept as written, scoped names, values as one
 token, a word written only where its reader brings it back, and the English refusals. The 61 English
-refusals left are LOUD, each family with its reason: `scroll … by` and `beep!` wait on vocabulary (the
+refusals left are LOUD, each family with its reason: `beep!` waits on vocabulary (the
 M2 sheet), halt's `default` modes and collection expressions are filed (P56, P57), the rest are shapes
 rare in pages.
 

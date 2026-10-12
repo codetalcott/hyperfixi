@@ -109,6 +109,10 @@ export const chineseLexicon: LanguageLexicon = {
     styles: { primary: '样式集' },
   },
   expressions: {
+    up: { primary: '向上' },
+    down: { primary: '向下' },
+    left: { primary: '向左' },
+    right: { primary: '向右' },
     at: { primary: '在' },
     back: { primary: '后退' },
     characters: { primary: '字符' },

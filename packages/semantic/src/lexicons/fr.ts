@@ -108,6 +108,10 @@ export const frenchLexicon: LanguageLexicon = {
     styles: { primary: 'styles' },
   },
   expressions: {
+    up: { primary: 'haut' },
+    down: { primary: 'bas' },
+    left: { primary: 'gauche' },
+    right: { primary: 'droite' },
     at: { primary: 'à' },
     back: { primary: 'arrière' },
     characters: { primary: 'caractères' },

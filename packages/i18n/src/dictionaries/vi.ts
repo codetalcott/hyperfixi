@@ -193,6 +193,10 @@ export const vi: Dictionary = {
   },
 
   expressions: {
+    up: 'lên',
+    down: 'xuống',
+    left: 'trái',
+    right: 'phải',
     back: 'lùi',
     elsewhere: 'ngoài',
     index: 'chỉ số',

@@ -105,6 +105,10 @@ export const vietnameseLexicon: LanguageLexicon = {
     value: { primary: 'giá trị' },
   },
   expressions: {
+    up: { primary: 'lên' },
+    down: { primary: 'xuống' },
+    left: { primary: 'trái' },
+    right: { primary: 'phải' },
     back: { primary: 'lùi' },
     characters: { primary: 'ký tự' },
     children: { primary: 'con' },

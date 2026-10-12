@@ -127,6 +127,10 @@ export const hindiLexicon: LanguageLexicon = {
     text: { primary: 'पाठ' },
   },
   expressions: {
+    up: { primary: 'ऊपर' },
+    down: { primary: 'नीचे' },
+    left: { primary: 'बाएं' },
+    right: { primary: 'दाएं' },
     at: { primary: 'पर' },
     back: { primary: 'पीछे' },
     characters: { primary: 'अक्षर' },

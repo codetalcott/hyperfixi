@@ -124,6 +124,10 @@ export const tagalogLexicon: LanguageLexicon = {
     value: { primary: 'halaga' },
   },
   expressions: {
+    up: { primary: 'pataas' },
+    down: { primary: 'pababa' },
+    left: { primary: 'pakaliwa' },
+    right: { primary: 'pakanan' },
     at: { primary: 'sa' },
     back: { primary: 'pabalik' },
     characters: { primary: 'karakter' },

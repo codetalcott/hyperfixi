@@ -109,6 +109,10 @@ export const koreanLexicon: LanguageLexicon = {
     styles: { primary: '스타일들' },
   },
   expressions: {
+    up: { primary: '위쪽' },
+    down: { primary: '아래쪽' },
+    left: { primary: '왼쪽' },
+    right: { primary: '오른쪽' },
     at: { primary: '에서' },
     back: { primary: '뒤로' },
     characters: { primary: '문자' },

@@ -60,6 +60,10 @@ export const hebrewLexicon: LanguageLexicon = {
     your: { primary: 'שלך' },
   },
   expressions: {
+    up: { primary: 'למעלה' },
+    down: { primary: 'למטה' },
+    left: { primary: 'שמאלה' },
+    right: { primary: 'ימינה' },
     back: { primary: 'אחורה' },
     characters: { primary: 'תווים' },
     elsewhere: { primary: 'חוץ' },

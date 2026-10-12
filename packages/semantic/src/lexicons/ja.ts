@@ -109,6 +109,10 @@ export const japaneseLexicon: LanguageLexicon = {
     styles: { primary: 'スタイル群' },
   },
   expressions: {
+    up: { primary: '上' },
+    down: { primary: '下' },
+    left: { primary: '左' },
+    right: { primary: '右' },
     at: { primary: 'で' },
     back: { primary: 'バック' },
     characters: { primary: '文字' },

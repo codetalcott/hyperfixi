@@ -29,6 +29,16 @@ export interface RoleSpec {
   readonly description: string;
   /** Whether this role is required */
   readonly required: boolean;
+  /**
+   * The role belongs only to the `requiredRoleVariants` patterns, never to the
+   * main, simple, omit or widened patterns, nor to a handler's fused patterns
+   * (`variantOnlyRoles` strips it). For a slot that exists only beside another
+   * role's marker: scroll's bare element before `by` (`scroll #box by 200px`).
+   * In the main pattern an optional bare slot before the destination took the
+   * destination's own marker (th `ใน`, tl `sa`) on the fused path, and a fused
+   * SOV head made it the command's primary slot.
+   */
+  readonly variantOnly?: boolean;
   /** Expected value types */
   readonly expectedTypes: Array<ExpectedType>;
   /** Default value if not provided */
@@ -377,6 +387,13 @@ export interface CommandSchema {
   readonly preconditions?: readonly CommandPrecondition[];
   /** Recovery hints mapping error code to suggestion */
   readonly recoveryHints?: Readonly<Record<string, string>>;
+}
+
+/** The schema without its variant-only roles: what every pattern but a required-role variant is built from. */
+export function withoutVariantOnlyRoles(schema: CommandSchema): CommandSchema {
+  return schema.roles.some(r => r.variantOnly)
+    ? { ...schema, roles: schema.roles.filter(r => !r.variantOnly) }
+    : schema;
 }
 
 /**
@@ -3867,9 +3884,16 @@ export const pickSchema: CommandSchema = {
  */
 export const scrollSchema: CommandSchema = {
   action: 'scroll',
-  description: 'Scroll the viewport to a target element',
+  description: 'Scroll the viewport to a target element, or by an amount',
   category: 'navigation',
   primaryRole: 'destination',
+  // `scroll [#box] [down] by 200px` (B9): the amount is required and the
+  // destination absent; the element scrolled is the bare patient. The direction
+  // is the node's `scrollDirection`, read and written beside the amount
+  // (tryScrollModifiers, the renderer), in the language's word (grammar-words).
+  // Below the `to` patterns: where the amount is bare (tl, vi, uk), a variant
+  // that outranked them read `sa #item` as the amount.
+  requiredRoleVariants: [{ role: 'quantity', omit: ['destination'], idSuffix: 'by', priorityDelta: -10 }],
   // ScrollCommand's parseInput reads ONLY `raw.args` (`parsePosition` and
   // `resolveTarget` both walk that list) and throws when it is empty, so the
   // destination has to be an ARG. The blanket fallback mapping emitted
@@ -3902,6 +3926,26 @@ export const scrollSchema: CommandSchema = {
       svoPosition: 1,
       sovPosition: 1,
       markerOverride: { en: 'to' },
+    },
+    {
+      role: 'patient',
+      description: 'The element scrolled by an amount (`scroll #box down by 200px`); the window when absent',
+      required: false,
+      // An element only: a bare word here would take the direction (`down`).
+      expectedTypes: ['selector', 'reference'],
+      variantOnly: true,
+      svoPosition: 0.5,
+      sovPosition: 0.5,
+    },
+    {
+      role: 'quantity',
+      description: 'The amount (`by 200px`)',
+      required: false,
+      expectedTypes: ['literal', 'expression', 'reference'],
+      svoPosition: 2,
+      sovPosition: 2,
+      // As increment's: the by-marker languages, the rest bare (`#boxを 200px スクロール`).
+      markerOverride: { en: 'by', es: 'por', pt: 'por', fr: 'par', de: 'um' },
     },
   ],
 };

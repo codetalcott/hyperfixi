@@ -594,14 +594,6 @@ export const LOUD: readonly LoudFamily[] = [
   }, // M1 step 3 (2026-10-07): the English refusals left after the value and
   // command-form fixes, each family with why it is not carried.
   {
-    name: 'scroll-by',
-    reason:
-      "scroll's relative form (`scroll #box down by 200px`) names a direction, which no " +
-      "language's dictionary has: adding them is an owner vocabulary decision (the M2 sheet)",
-    matches: (_source, _types, plain) =>
-      someNode(plain, node => node.type === 'scrollCommand' && 'by' in node),
-  },
-  {
     name: 'beep',
     reason:
       "`beep!`, upstream's debugging command, has no schema: its form in each language is an " +

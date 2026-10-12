@@ -9,7 +9,7 @@
 import type { LanguagePattern, PatternToken, ExtractionRule } from '../types';
 import type { LanguageProfile } from './language-profiles';
 import type { CommandSchema, RoleSpec } from './command-schemas';
-import { getDefinedSchemas } from './command-schemas';
+import { getDefinedSchemas, withoutVariantOnlyRoles } from './command-schemas';
 
 // Import shared utilities
 import { sortRolesByWordOrder } from '../parser/utils/role-positioning';
@@ -226,6 +226,9 @@ export function generatePatternVariants(
   config: GeneratorConfig = defaultConfig
 ): LanguagePattern[] {
   const patterns: LanguagePattern[] = [];
+  // A variant-only role is in the required-role variants alone.
+  const full = schema;
+  schema = withoutVariantOnlyRoles(schema);
 
   // Main pattern
   patterns.push(generatePattern(schema, profile, config));
@@ -282,10 +285,10 @@ export function generatePatternVariants(
 
   // Required-role variants: inert unless the role's marker is present, so they
   // may outrank the command's other patterns (see the schema field).
-  for (const v of schema.requiredRoleVariants ?? []) {
+  for (const v of full.requiredRoleVariants ?? []) {
     const variantSchema: CommandSchema = {
-      ...schema,
-      roles: schema.roles
+      ...full,
+      roles: full.roles
         .filter(r => !v.omit?.includes(r.role))
         .map(r =>
           r.role === v.role
@@ -377,7 +380,12 @@ export function generatePatternsForLanguage(
     // Generate event handler patterns (on [event] [command] [patient])
     // Only generate for languages with eventHandler configuration
     if (profile.eventHandler?.eventMarker) {
-      const eventHandlerPatterns = generateEventHandlerPatterns(schema, profile, config);
+      // A handler's fused patterns never carry a variant-only role.
+      const eventHandlerPatterns = generateEventHandlerPatterns(
+        withoutVariantOnlyRoles(schema),
+        profile,
+        config
+      );
       patterns.push(...eventHandlerPatterns);
     }
   }

@@ -209,6 +209,10 @@ export const zh: Dictionary = {
   },
 
   expressions: {
+    up: '向上',
+    down: '向下',
+    left: '向左',
+    right: '向右',
     back: '后退',
     elsewhere: '外部',
     index: '索引',

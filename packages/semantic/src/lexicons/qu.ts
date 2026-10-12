@@ -108,6 +108,10 @@ export const quechuaLexicon: LanguageLexicon = {
     styles: { primary: 'samikuna' },
   },
   expressions: {
+    up: { primary: 'hanaq' },
+    down: { primary: 'uray' },
+    left: { primary: 'lluqi' },
+    right: { primary: 'paña' },
     at: { primary: 'pi' },
     back: { primary: 'kutiy' },
     characters: { primary: 'sanampa' },

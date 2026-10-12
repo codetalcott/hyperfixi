@@ -108,6 +108,10 @@ export const spanishLexicon: LanguageLexicon = {
     styles: { primary: 'estilos' },
   },
   expressions: {
+    up: { primary: 'arriba' },
+    down: { primary: 'abajo' },
+    left: { primary: 'izquierda' },
+    right: { primary: 'derecha' },
     at: { primary: 'en' },
     back: { primary: 'atrás' },
     characters: { primary: 'caracteres' },

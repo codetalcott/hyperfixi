@@ -120,6 +120,13 @@ import {
 import { OR_WORDS_BY_LANG } from '../parser/utils/or-words';
 import { notThrowWords } from '../parser/utils/not-throw';
 import { grammarWord } from '../parser/utils/grammar-words';
+
+/** Does the pattern token, or a group it holds, hold the role? */
+function mentionsRole(token: PatternToken, role: string): boolean {
+  if (token.type === 'role') return token.role === role;
+  if (token.type === 'group') return token.tokens.some(t => mentionsRole(t, role));
+  return false;
+}
 import { elementScopeWord } from '../element-scope';
 import { attachClitic } from '../tokenizers/fused-forms-split';
 import { attachMarker, attachedSuffixReads, marksRole } from './attached-markers';
@@ -1199,7 +1206,14 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     let eventPart = -1;
 
     const tokens = pattern.template.tokens;
+    // `scroll #box down by 200px`: the direction in the language's word before
+    // the amount's phrase (grammar-words.ts), where readNativeDirection reads it.
+    const direction = node.action === 'scroll' ? (node as CommandSemanticNode).scrollDirection : undefined;
+    // The phrase starts at its marker, a literal just before the slot (`by`).
+    let directionAt = direction ? tokens.findIndex(t => mentionsRole(t, 'quantity')) : -1;
+    while (directionAt > 1 && tokens[directionAt - 1]!.type === 'literal') directionAt--;
     for (let i = 0; i < tokens.length; i++) {
+      if (i === directionAt) parts.push(grammarWord(language, direction!));
       const oblique = this.obliqueAt(tokens, i, node, language, true);
       if (oblique !== undefined) {
         parts.push(oblique.text);

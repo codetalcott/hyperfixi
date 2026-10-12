@@ -110,6 +110,10 @@ export const turkishLexicon: LanguageLexicon = {
     styles: { primary: 'stiller' },
   },
   expressions: {
+    up: { primary: 'yukarı' },
+    down: { primary: 'aşağı' },
+    left: { primary: 'sola' },
+    right: { primary: 'sağa' },
     at: { primary: 'de' },
     back: { primary: 'geri' },
     characters: { primary: 'karakterler' },

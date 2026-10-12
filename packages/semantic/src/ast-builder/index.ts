@@ -351,9 +351,12 @@ export class ASTBuilder {
     // the positional arg; both commands read it where core's parser writes `of`.
     if (
       (node.action === 'go' || node.action === 'scroll') &&
-      (node.scrollPosition || node.scrollBehavior)
+      (node.scrollPosition || node.scrollBehavior || node.scrollDirection)
     ) {
       const modifiers: Record<string, ExpressionNode> = { ...cmd.modifiers };
+      if (node.scrollDirection) {
+        modifiers.direction = { type: 'string', value: node.scrollDirection } as ExpressionNode;
+      }
       const position = node.scrollPosition?.split(' ').find(word => word !== 'the');
       if (position) {
         modifiers.position = { type: 'string', value: position } as ExpressionNode;

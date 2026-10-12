@@ -173,6 +173,10 @@ export const bengaliDictionary: Dictionary = {
   },
 
   expressions: {
+    up: 'উপরে',
+    down: 'নিচে',
+    left: 'বামে',
+    right: 'ডানে',
     back: 'পিছনে',
     elsewhere: 'বাইরে',
     start: 'আরম্ভ',

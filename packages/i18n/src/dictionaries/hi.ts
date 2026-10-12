@@ -221,6 +221,10 @@ export const hindiDictionary: Dictionary = {
   },
 
   expressions: {
+    up: 'ऊपर',
+    down: 'नीचे',
+    left: 'बाएं',
+    right: 'दाएं',
     back: 'पीछे',
     elsewhere: 'अन्यत्र',
     index: 'सूचकांक',

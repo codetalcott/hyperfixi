@@ -208,6 +208,10 @@ export const id: Dictionary = {
   },
 
   expressions: {
+    up: 'atas',
+    down: 'bawah',
+    left: 'kiri',
+    right: 'kanan',
     back: 'mundur',
     elsewhere: 'luaran',
     index: 'indeks',

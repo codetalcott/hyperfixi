@@ -196,6 +196,10 @@ export const ko: Dictionary = {
   },
 
   expressions: {
+    up: '위쪽',
+    down: '아래쪽',
+    left: '왼쪽',
+    right: '오른쪽',
     back: '뒤로',
     elsewhere: '바깥',
     index: '인덱스',

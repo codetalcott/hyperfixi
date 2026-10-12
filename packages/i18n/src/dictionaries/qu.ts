@@ -219,6 +219,10 @@ export const qu: Dictionary = {
   },
 
   expressions: {
+    up: 'hanaq',
+    down: 'uray',
+    left: 'lluqi',
+    right: 'paña',
     back: 'kutiy',
     elsewhere: 'hawa',
     index: 'yupay',

@@ -109,6 +109,10 @@ export const arabicLexicon: LanguageLexicon = {
     styles: { primary: 'أساليب' },
   },
   expressions: {
+    up: { primary: 'أعلى' },
+    down: { primary: 'أسفل' },
+    left: { primary: 'يسار' },
+    right: { primary: 'يمين' },
     at: { primary: 'عند' },
     back: { primary: 'خلفا' },
     characters: { primary: 'حروف' },
