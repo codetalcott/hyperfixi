@@ -3,8 +3,8 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 24708,
-  "refused": 2521,
+  "pass": 24991,
+  "refused": 2238,
   "silent": 11,
   "entries": {
     "6f60177037": {
@@ -461,26 +461,6 @@
       "refused": "en *",
       "loud": "colon-event-arguments: a colon-qualified event name with arguments (`send foo:bar(x:42)`), rare in pages"
     },
-    "32ce88b2e0": {
-      "src": "on click add .foo then wait for foo then add .bar",
-      "family": "wait",
-      "refused": "*"
-    },
-    "8c8e27625d": {
-      "src": "on click wait for foo then put its.detail into me",
-      "family": "wait",
-      "refused": "*"
-    },
-    "2965af0447": {
-      "src": "on click wait for foo(bar) then put bar into me",
-      "family": "wait",
-      "refused": "*"
-    },
-    "a76cd09b5c": {
-      "src": "on click add .foo then wait for foo or 0ms then add .bar",
-      "family": "wait",
-      "refused": "*"
-    },
     "394a7bfb45": {
       "src": "(on click (log me) (trigger foo)) (on foo (put \"clicked\" into my.innerHTML))",
       "family": "core/parser",
@@ -788,11 +768,6 @@
       "refused": "en *",
       "loud": "rare-heads: handler heads rare in pages: a quoted event name (`on \"a-b\"`), a filter after parameters (`on foo(bar)[bar]`), `and on`, a source on each `or` leg, a parenthesized feature (`(on click …)`)"
     },
-    "d9c92a211d": {
-      "src": "on every click put increment() into my.innerHTML then wait for a customEvent",
-      "family": "on",
-      "refused": "*"
-    },
     "239cba8b61": {
       "src": "on foo put increment() into my.innerHTML end on bar put increment() into my.innerHTML",
       "family": "on",
@@ -803,30 +778,25 @@
       "family": "on",
       "refused": "pt"
     },
-    "cd6bf33ac9": {
-      "src": "on foo wait for bar then call increment()",
-      "family": "on",
-      "refused": "*"
-    },
     "9beb7b2c68": {
       "src": "on foo queue first wait for bar then call increment()",
       "family": "on",
-      "refused": "*"
+      "refused": "bn it th"
     },
     "49a761fabb": {
       "src": "on foo queue last wait for bar then call increment()",
       "family": "on",
-      "refused": "*"
+      "refused": "bn it th"
     },
     "78bd8bf920": {
       "src": "on foo queue all wait for bar then call increment()",
       "family": "on",
-      "refused": "*"
+      "refused": "bn it th"
     },
     "ba54beb9d5": {
       "src": "on click queue none put increment() into my.innerHTML then wait for a customEvent",
       "family": "on",
-      "refused": "*"
+      "refused": "bn it th"
     },
     "16fb80c097": {
       "src": "on click or foo call increment()",
@@ -859,11 +829,6 @@
       "family": "on",
       "refused": "*"
     },
-    "558a1f8b25": {
-      "src": "on mutation put \"Mutated\" into me then wait for hyperscript:mutation",
-      "family": "on",
-      "refused": "*"
-    },
     "13cff46824": {
       "src": "on mutation of attributes put \"Mutated\" into me",
       "family": "on",
@@ -882,7 +847,7 @@
     "7e4f56fe1b": {
       "src": "on mutation of childList put \"Mutated\" into me then wait for hyperscript:mutation",
       "family": "on",
-      "refused": "*"
+      "refused": "bn it th"
     },
     "611ee442a1": {
       "src": "on mutation of childList put \"Mutated\" into me",
@@ -1076,7 +1041,7 @@
     "2c6143ba00": {
       "src": "wait 1s wait 500ms then remove .loading wait for htmx:afterSwap",
       "family": "wait",
-      "refused": "*"
+      "refused": "ko"
     },
     "129c41c03b": {
       "src": "send myEvent to #target send refresh to <body/>",
