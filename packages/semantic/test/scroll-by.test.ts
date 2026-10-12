@@ -29,12 +29,21 @@ const SHAPES: Array<[string, GrammarWordKey | null]> = [
   ['on click scroll me down by 50 then log 1', 'down'],
   ['on click log 1 then scroll #box left by 20', 'left'],
   ['on keyup scroll up by 10', 'up'],
+  // Not a by-form: a trailing `in` clause stayed with the destination before, and must
+  // (a first cut's bare amount slot took the `in` in ar and zh).
+  ['on click scroll to #item in #box', null],
 ];
 
 // ko refuses a bare chain that holds `scroll to #section` before this change
 // (`scroll to #section then log 1` → `#section에 …` reads back short), with or
 // without a by-form; inside a handler the same chain round-trips.
-const KNOWN_REFUSED = new Set(['ko|scroll to #section scroll to the top of me scroll down by 200']);
+const KNOWN_REFUSED = new Set([
+  'ko|scroll to #section scroll to the top of me scroll down by 200',
+  // The `in #box` clause: refused in these three before this change (the shapes baseline).
+  'de|on click scroll to #item in #box',
+  'it|on click scroll to #item in #box',
+  'tr|on click scroll to #item in #box',
+]);
 
 describe.each(SHAPES)('%s', (source, direction) => {
   it.each(FOREIGN)('%s', language => {
