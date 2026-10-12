@@ -44,6 +44,14 @@ review in `packages/semantic/NATIVE_REVIEW_NEEDED.md`; none has been reviewed ye
   fuses a suffix with its own reference words (`sonucu`, `hedefe`, `belgeye`) while code keeps its
   suffix apart (`#out e`) until a reviewer picks a code word's harmony. tr also reads a suffix on code
   after an apostrophe (`#out'a`, `.active'i`).
+- **`@lokascript/semantic`: a custom event in a wait takes the language's `event` word** (`esperar evento foo`,
+  ja `イベント foo 待つ`), as `repeat until event X` already does; a known DOM event keeps `esperar transitionend`.
+  `wait for <custom event>` was refused in every language. A possessive whose property is a reference word
+  (`its.detail`) now reads back as that property, not the language's word for it.
+- **`@lokascript/semantic`: ms and pl read their lexicon's `undefined` word** (`tidak_ditakrifkan`, `niezdefiniowane`),
+  which read back as a variable name.
+- **`@lokascript/testing-framework`: the hand-written-input gate** (`hand-written-input.test.ts`): twenty tasks a
+  native speaker writes from English, run as written on the engine against upstream; committed with no inputs.
 - **`@lokascript/semantic` writes a handler head as one word**: ja `クリックで` (was `クリック を で`),
   bn `ক্লিকে` (the locative in the form the word takes: `জমাতে` after a vowel; was `ক্লিক তে`),
   tr `tıklamada` (the locative in the form harmony gives: `göndermede`, `değişiklikte`; code keeps it apart, `keyup da`; was `tıklama i üzerinde`). The readers keep taking the two-marker heads.
