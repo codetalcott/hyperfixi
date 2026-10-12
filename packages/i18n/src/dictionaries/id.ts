@@ -36,6 +36,8 @@ export const id: Dictionary = {
     return: 'kembali',
     make: 'buat',
     log: 'catat',
+    ask: 'tanya',
+    answer: 'jawab',
     throw: 'lempar',
     catch: 'tangkap',
     measure: 'ukur',

@@ -217,6 +217,8 @@ export const germanProfile: LanguageProfile = {
     install: { primary: 'installieren', normalized: 'install' },
     measure: { primary: 'messen', normalized: 'measure' },
     beep: { primary: 'piepton', normalized: 'beep' },
+    ask: { primary: 'frage', normalized: 'ask' },
+    answer: { primary: 'antworte', normalized: 'answer' },
     break: { primary: 'unterbrechen', normalized: 'break' },
     copy: { primary: 'kopieren', normalized: 'copy' },
     exit: { primary: 'beenden', normalized: 'exit' },

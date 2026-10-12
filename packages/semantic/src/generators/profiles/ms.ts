@@ -177,6 +177,8 @@ export const malayProfile: LanguageProfile = {
     install: { primary: 'pasang', normalized: 'install' },
     measure: { primary: 'ukur', normalized: 'measure' },
     beep: { primary: 'bunyi', normalized: 'beep' },
+    ask: { primary: 'tanya', normalized: 'ask' },
+    answer: { primary: 'jawab', normalized: 'answer' },
     break: { primary: 'pecah', normalized: 'break' },
     copy: { primary: 'salin', normalized: 'copy' },
     exit: { primary: 'keluar', normalized: 'exit' },

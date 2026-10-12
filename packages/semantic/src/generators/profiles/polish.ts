@@ -311,6 +311,8 @@ export const polishProfile: LanguageProfile = {
     install: { primary: 'zainstaluj', normalized: 'install', form: 'imperative' },
     measure: { primary: 'zmierz', normalized: 'measure', form: 'imperative' },
     beep: { primary: 'sygnał', normalized: 'beep' },
+    ask: { primary: 'zapytaj', normalized: 'ask' },
+    answer: { primary: 'odpowiedz', normalized: 'answer' },
     break: { primary: 'przerwij', normalized: 'break' },
     copy: { primary: 'kopiuj', normalized: 'copy' },
     exit: { primary: 'wyjdź', normalized: 'exit' },

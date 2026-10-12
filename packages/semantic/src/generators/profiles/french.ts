@@ -202,6 +202,8 @@ export const frenchProfile: LanguageProfile = {
     install: { primary: 'installer', normalized: 'install' },
     measure: { primary: 'mesurer', normalized: 'measure' },
     beep: { primary: 'bip', normalized: 'beep' },
+    ask: { primary: 'demander', normalized: 'ask' },
+    answer: { primary: 'répondre', normalized: 'answer' },
     break: { primary: 'interrompre', normalized: 'break' },
     copy: { primary: 'copier', normalized: 'copy' },
     exit: { primary: 'sortir', normalized: 'exit' },

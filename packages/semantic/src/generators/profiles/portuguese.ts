@@ -213,6 +213,8 @@ export const portugueseProfile: LanguageProfile = {
     install: { primary: 'instalar', normalized: 'install' },
     measure: { primary: 'medir', normalized: 'measure' },
     beep: { primary: 'apitar', normalized: 'beep' },
+    ask: { primary: 'perguntar', normalized: 'ask' },
+    answer: { primary: 'responder', normalized: 'answer' },
     break: { primary: 'interromper', normalized: 'break' },
     copy: { primary: 'copiar', normalized: 'copy' },
     exit: { primary: 'sair', normalized: 'exit' },

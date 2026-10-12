@@ -436,6 +436,8 @@ function getValidCommandsForLanguage(language: string): string[] {
     'settle',
     'measure',
     'take',
+    'ask',
+    'answer',
   ];
 
   if (!semanticPackage || language === 'en') {
@@ -987,6 +989,18 @@ const COMMAND_SUGGESTIONS: Record<
     explicitSyntax: '[beep patient:me]',
     description: 'Debug output with type info',
   },
+  ask: {
+    command: 'ask',
+    example: 'ask "Your name?"',
+    explicitSyntax: '[ask patient:"Your name?"]',
+    description: 'Prompt the user; the reply is `it`',
+  },
+  answer: {
+    command: 'answer',
+    example: 'answer "Save?" with "Yes" or "No"',
+    explicitSyntax: '[answer patient:"Save?" style:"Yes" or "No"]',
+    description: 'Show a message, or confirm with two choices',
+  },
   break: {
     command: 'break',
     example: 'break',
@@ -1037,6 +1051,8 @@ const TASK_KEYWORDS: Record<string, string[]> = {
   call: ['call', 'execute', 'run', 'invoke', 'function'],
   log: ['log', 'debug', 'console', 'print', 'output'],
   beep: ['beep', 'debug', 'inspect', 'type info', 'dump'],
+  ask: ['ask', 'prompt', 'question', 'input dialog'],
+  answer: ['answer', 'alert', 'confirm', 'message box', 'dialog'],
   break: ['break', 'exit loop', 'stop loop', 'end loop'],
   copy: ['copy', 'clipboard', 'copy text', 'copy value'],
   exit: ['exit', 'stop', 'abort', 'quit handler', 'early return'],

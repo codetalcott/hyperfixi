@@ -61,6 +61,8 @@ const MULTI_TYPE_PATIENT_COMMANDS = new Set([
   'swap',
   'morph', // DOM manipulation commands that accept various content types
   'beep', // Debug command — accepts any expression type
+  'ask', // A prompt's message: any expression
+  'answer', // A message, or a confirm's message
   'copy', // Clipboard — accepts text literals, selectors, or references
 ]);
 

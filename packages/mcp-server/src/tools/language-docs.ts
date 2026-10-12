@@ -743,6 +743,8 @@ const ROLE_CATALOG: Record<
       'focus',
       'blur',
       'beep',
+      'ask',
+      'answer',
       'pick',
       'render',
       'morph',
@@ -1093,6 +1095,16 @@ const BUILTIN_COMMANDS: Record<string, any> = {
     name: 'beep',
     description: 'Debug output — logs a value with type info to the console',
     syntax: 'beep [<expression>]',
+  },
+  ask: {
+    name: 'ask',
+    description: 'Prompt the user for a value; the reply is `it`',
+    syntax: 'ask <message>',
+  },
+  answer: {
+    name: 'answer',
+    description: 'Show a message, or confirm with two choices; the chosen one is `it`',
+    syntax: 'answer <message> [with <a> or <b>]',
   },
   break: {
     name: 'break',

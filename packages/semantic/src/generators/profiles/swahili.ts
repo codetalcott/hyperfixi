@@ -162,6 +162,8 @@ export const swahiliProfile: LanguageProfile = {
     install: { primary: 'sakinisha', normalized: 'install' },
     measure: { primary: 'pima', normalized: 'measure' },
     beep: { primary: 'lia', normalized: 'beep' },
+    ask: { primary: 'uliza', normalized: 'ask' },
+    answer: { primary: 'jibu', normalized: 'answer' },
     break: { primary: 'vunja', normalized: 'break' },
     copy: { primary: 'nakala', normalized: 'copy' },
     exit: { primary: 'toka', normalized: 'exit' },

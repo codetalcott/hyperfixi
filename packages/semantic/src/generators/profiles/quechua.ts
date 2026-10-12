@@ -186,6 +186,8 @@ export const quechuaProfile: LanguageProfile = {
     install: { primary: 'tarpuy', normalized: 'install' },
     measure: { primary: 'tupuy', normalized: 'measure' },
     beep: { primary: 'waqay', normalized: 'beep' },
+    ask: { primary: 'tapuy', normalized: 'ask' },
+    answer: { primary: 'kutichipuy', normalized: 'answer' },
     break: { primary: "p'akiy", normalized: 'break' },
     copy: { primary: 'qillqay', normalized: 'copy' },
     exit: { primary: 'lluqsiy', normalized: 'exit' },

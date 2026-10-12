@@ -102,7 +102,9 @@ export const ENGLISH_MODIFIERS: Set<string> = new Set([
  */
 export const ENGLISH_COMMANDS: Set<string> = new Set([
   'add',
+  'answer',
   'append',
+  'ask',
   'async',
   'beep',
   'blur', // v0.9.90 phase 1

@@ -42,6 +42,8 @@ export const sw: Dictionary = {
     return: 'rudisha',
     make: 'tengeneza', // auditor: dict emitted a word the profile reads differently
     log: 'andika',
+    ask: 'uliza',
+    answer: 'jibu',
     throw: 'tupa',
     catch: 'shika',
     measure: 'pima',

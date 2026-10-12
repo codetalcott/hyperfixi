@@ -168,6 +168,8 @@ export const vietnameseProfile: LanguageProfile = {
     install: { primary: 'cài đặt', normalized: 'install' },
     measure: { primary: 'đo lường', normalized: 'measure' },
     beep: { primary: 'beep', normalized: 'beep' },
+    ask: { primary: 'hỏi', normalized: 'ask' },
+    answer: { primary: 'trả lời', normalized: 'answer' },
     break: { primary: 'ngắt', normalized: 'break' },
     copy: { primary: 'sao chép', normalized: 'copy' },
     exit: { primary: 'thoát', alternatives: ['thoát ra'], normalized: 'exit' },

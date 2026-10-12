@@ -161,6 +161,8 @@ export const thaiProfile: LanguageProfile = {
     install: { primary: 'ติดตั้ง', alternatives: [], normalized: 'install' },
     measure: { primary: 'วัด', alternatives: [], normalized: 'measure' },
     beep: { primary: 'บี๊บ', alternatives: [], normalized: 'beep' },
+    ask: { primary: 'ถาม', normalized: 'ask' },
+    answer: { primary: 'ตอบ', normalized: 'answer' },
     break: { primary: 'ขัดจังหวะ', alternatives: [], normalized: 'break' },
     copy: { primary: 'คัดลอก', alternatives: [], normalized: 'copy' },
     exit: { primary: 'ออก', alternatives: [], normalized: 'exit' },

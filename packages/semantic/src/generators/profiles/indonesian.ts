@@ -163,6 +163,8 @@ export const indonesianProfile: LanguageProfile = {
     install: { primary: 'pasang', alternatives: ['instal'], normalized: 'install' },
     measure: { primary: 'ukur', normalized: 'measure' },
     beep: { primary: 'bunyi', normalized: 'beep' },
+    ask: { primary: 'tanya', normalized: 'ask' },
+    answer: { primary: 'jawab', normalized: 'answer' },
     break: { primary: 'putuskan', normalized: 'break' },
     copy: { primary: 'salin', normalized: 'copy' },
     exit: { primary: 'keluar', normalized: 'exit' },

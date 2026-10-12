@@ -165,6 +165,8 @@ export const chineseProfile: LanguageProfile = {
     install: { primary: '安装', normalized: 'install' },
     measure: { primary: '测量', normalized: 'measure' },
     beep: { primary: '蜂鸣', normalized: 'beep' },
+    ask: { primary: '询问', normalized: 'ask' },
+    answer: { primary: '回答', normalized: 'answer' },
     break: { primary: '中断', normalized: 'break' },
     copy: { primary: '复制', normalized: 'copy' },
     exit: { primary: '退出', normalized: 'exit' },

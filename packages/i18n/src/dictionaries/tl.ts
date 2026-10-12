@@ -36,6 +36,8 @@ export const tagalogDictionary: Dictionary = {
     return: 'ibalik',
     make: 'gumawa',
     log: 'itala',
+    ask: 'tanungin',
+    answer: 'sagutin',
     throw: 'ihagis',
     catch: 'hulihin',
     measure: 'sukatin',

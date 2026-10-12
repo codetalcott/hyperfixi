@@ -294,6 +294,8 @@ export const spanishProfile: LanguageProfile = {
     install: { primary: 'instalar', normalized: 'install' },
     measure: { primary: 'medir', normalized: 'measure' },
     beep: { primary: 'pitido', normalized: 'beep' },
+    ask: { primary: 'preguntar', normalized: 'ask' },
+    answer: { primary: 'responder', normalized: 'answer' },
     break: { primary: 'romper', normalized: 'break' },
     copy: { primary: 'copiar', normalized: 'copy' },
     exit: { primary: 'salir', normalized: 'exit' },

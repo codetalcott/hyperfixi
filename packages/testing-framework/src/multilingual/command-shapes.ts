@@ -574,13 +574,6 @@ function someNode(plain: unknown, test: (node: PlainNode) => boolean): boolean {
 
 export const LOUD: readonly LoudFamily[] = [
   {
-    name: 'ask-answer',
-    reason:
-      'semantic has no schema and no dictionary word for `ask` / `answer`; adding them is an ' +
-      'owner vocabulary decision (the M2 sheet)',
-    matches: (_source, types) => types.has('askCommand') || types.has('answerCommand'),
-  },
-  {
     name: 'templated-selector',
     reason:
       'a templated selector (`#{…}`, `.{"…"}`, `<${…}/>`) is rare, and its fix is in the tokenizer',

@@ -33,6 +33,8 @@ export const malayDictionary: Dictionary = {
     return: 'pulang',
     make: 'buat',
     log: 'catat',
+    ask: 'tanya',
+    answer: 'jawab',
     throw: 'lempar',
     catch: 'tangkap',
     measure: 'ukur',

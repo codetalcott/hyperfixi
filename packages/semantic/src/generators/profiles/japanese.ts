@@ -222,6 +222,8 @@ export const japaneseProfile: LanguageProfile = {
     install: { primary: 'インストール', alternatives: ['導入'], normalized: 'install' },
     measure: { primary: '測定', alternatives: ['計測', 'メジャー'], normalized: 'measure' },
     beep: { primary: 'ビープ', normalized: 'beep' },
+    ask: { primary: '尋ねる', normalized: 'ask' },
+    answer: { primary: '答える', normalized: 'answer' },
     break: { primary: '中断', normalized: 'break' },
     copy: { primary: 'コピー', normalized: 'copy' },
     exit: { primary: '退出', normalized: 'exit' },

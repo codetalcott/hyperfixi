@@ -36,6 +36,8 @@ export const fr: Dictionary = {
     return: 'retourner',
     make: 'créer',
     log: 'enregistrer',
+    ask: 'demander',
+    answer: 'répondre',
     throw: 'lancer',
     catch: 'attraper',
     measure: 'mesurer',

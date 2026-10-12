@@ -33,6 +33,8 @@ export const it: Dictionary = {
     return: 'ritornare',
     make: 'fare',
     log: 'registrare',
+    ask: 'chiedi',
+    answer: 'rispondi',
     throw: 'lanciare',
     catch: 'catturare',
     measure: 'misurare',

@@ -33,6 +33,8 @@ export const ja: Dictionary = {
     return: '戻る',
     make: '作る',
     log: '記録',
+    ask: '尋ねる',
+    answer: '答える',
     throw: '投げる',
     catch: '捕まえる',
     measure: '測定',
