@@ -93,6 +93,10 @@ const POLISH_EXTRAS: KeywordEntry[] = [
   { native: 'null', normalized: 'null' },
   { native: 'nieokreślony', normalized: 'undefined' },
   { native: 'nieokreslony', normalized: 'undefined' },
+  // The lexicon's word (what every render writes): without it `x jest
+  // niezdefiniowane` read back as a variable named so, and the command-shape
+  // gate listed the lanes as silent (M2 row 7).
+  { native: 'niezdefiniowane', normalized: 'undefined' },
 
   // `equals`, which the lexicon writes `równa się`: as two words it was a
   // variable `równa` and a stray `się`.
