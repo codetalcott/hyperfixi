@@ -37,6 +37,15 @@ describe('extractCssSelector — pseudo-class/pseudo-element segments', () => {
     expect(extractCssSelector('<.foo:hover/>', 0)).toBe('<.foo:hover/>');
   });
 
+  it('reads a query of a pseudo-class alone (`<:checked/>`)', () => {
+    expect(extractCssSelector('<:checked/>', 0)).toBe('<:checked/>');
+    expect(extractCssSelector('<:not(.done)/>', 0)).toBe('<:not(.done)/>');
+    // A less-than before a local variable is no query.
+    expect(extractCssSelector('< :checked/>', 0)).toBeNull();
+    expect(extractCssSelector('<:2/>', 0)).toBeNull();
+    expect(extractCssSelector('<:x and y', 0)).toBeNull();
+  });
+
   it('stops before a non-pseudo colon tail', () => {
     // `:2` / trailing `:` are not pseudo names — the colon stays outside
     expect(extractCssSelector('#x:2', 0)).toBe('#x');

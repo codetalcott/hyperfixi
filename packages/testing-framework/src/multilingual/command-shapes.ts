@@ -618,11 +618,12 @@ export const LOUD: readonly LoudFamily[] = [
     matches: (source, types) => types.has('collectionExpression') && !/\bif\s+no\s+</.test(source),
   },
   {
-    name: 'pseudo-class-query',
+    name: 'scoped-query-phrase',
     reason:
-      'a query of a pseudo-class (`<:checked/>`): the tokenizers read `:checked` as a local ' +
-      'variable; a tokenizer item, rare in pages',
-    matches: source => /<:[\w-]+\/>/.test(source),
+      "a query's scope inside a phrase: `the length of <q/> in #box` as put's value (`in` is " +
+      "also put's own marker), and a positional scope (`<q/> in the next <tbody/>`): the " +
+      'English reader ends the value at `in` (OPEN_ITEMS P62)',
+    matches: source => /\bof <[^<>]*\/> in (?:the (?:next|previous)\b|\S+ into\b)/.test(source),
   },
   {
     name: 'closest-forms',

@@ -113,16 +113,16 @@ export function extractCssSelector(input: string, position: number): string | nu
   }
 
   // HTML tag selector: <tag/>, <tag#id.class[attr]/>, <tag[attr=value]/>, and
-  // tag-less query selectors <.class/>, <#id/>, <[attr]/> (hyperscript treats
-  // `<.message/>` as "all .message elements"). Pseudo segments are allowed in
-  // the clause chain (<.foo:hover/>). The tag name is optional, but the
-  // lookahead requires the char after `<` to start a tag/`#`/`.`/`[` clause — so
-  // a less-than comparison (`a < b`) is never mis-extracted (the space fails it).
+  // tag-less query selectors <.class/>, <#id/>, <[attr]/>, <:checked/> (hyperscript
+  // treats `<.message/>` as "all .message elements"). Pseudo segments are allowed
+  // in the clause chain (<.foo:hover/>). The tag name is optional, but the
+  // lookahead requires the char after `<` to start a tag/`#`/`.`/`[`/pseudo clause
+  // — so a less-than comparison (`a < b`) is never mis-extracted (the space fails it).
   if (char === '<') {
     const match = input
       .slice(position)
       .match(
-        /^<(?=[\w.#[])[\w-]*(?:[#.][\w-]+|\[[^\]]+\]|::?[a-zA-Z][a-zA-Z0-9-]*(?:\([^)]*\))?)*\s*\/>/
+        /^<(?=[\w.#[:])[\w-]*(?:[#.][\w-]+|\[[^\]]+\]|::?[a-zA-Z][a-zA-Z0-9-]*(?:\([^)]*\))?)*\s*\/>/
       );
     return match ? match[0] : null;
   }
