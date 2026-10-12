@@ -37,6 +37,8 @@ export const russianDictionary: Dictionary = {
     return: 'вернуть',
     make: 'создать',
     log: 'записать',
+    ask: 'спросить',
+    answer: 'ответить',
     throw: 'бросить',
     catch: 'поймать',
     measure: 'измерить',

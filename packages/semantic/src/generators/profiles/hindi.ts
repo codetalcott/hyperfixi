@@ -218,6 +218,8 @@ export const hindiProfile: LanguageProfile = {
     install: { primary: 'इंस्टॉल', alternatives: [], normalized: 'install' },
     measure: { primary: 'मापें', alternatives: [], normalized: 'measure' },
     beep: { primary: 'बीप', alternatives: [], normalized: 'beep' },
+    ask: { primary: 'पूछें', normalized: 'ask' },
+    answer: { primary: 'जवाब', alternatives: ['उत्तर'], normalized: 'answer' },
     break: { primary: 'तोड़ें', alternatives: [], normalized: 'break' },
     copy: { primary: 'कॉपी', alternatives: [], normalized: 'copy' },
     exit: { primary: 'बाहर', alternatives: [], normalized: 'exit' },

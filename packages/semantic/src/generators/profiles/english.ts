@@ -126,6 +126,8 @@ export const englishProfile: LanguageProfile = {
     install: { primary: 'install' },
     measure: { primary: 'measure' },
     beep: { primary: 'beep' },
+    ask: { primary: 'ask' },
+    answer: { primary: 'answer' },
     break: { primary: 'break' },
     copy: { primary: 'copy' },
     exit: { primary: 'exit' },

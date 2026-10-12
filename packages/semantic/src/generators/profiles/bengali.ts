@@ -176,6 +176,8 @@ export const bengaliProfile: LanguageProfile = {
     install: { primary: 'ইনস্টল', alternatives: [], normalized: 'install' },
     measure: { primary: 'মাপুন', alternatives: [], normalized: 'measure' },
     beep: { primary: 'বীপ', alternatives: [], normalized: 'beep' },
+    ask: { primary: 'জিজ্ঞাসা', normalized: 'ask' },
+    answer: { primary: 'উত্তর', normalized: 'answer' },
     break: { primary: 'ভাঙুন', alternatives: [], normalized: 'break' },
     copy: { primary: 'কপি', alternatives: [], normalized: 'copy' },
     exit: { primary: 'বের', alternatives: [], normalized: 'exit' },

@@ -51,7 +51,7 @@ const ALWAYS_HAND_WRITTEN = ['go', 'pick', 'put', 'wait'];
 // the `if` shape) — see command-schemas `whenSchema`. 46 since `asyncSchema`
 // was deleted (2026-09-03): the parser never emitted the action — it strips
 // `async` as a modifier — and core dropped the command in 3.0.0.
-const EXPECTED_MIGRATED = 46;
+const EXPECTED_MIGRATED = 48;
 
 function emit(action: ActionType, roles: Record<string, SemanticValue>): unknown {
   const mapper = resolveCommandMapper(action);

@@ -27,6 +27,8 @@ export const bengaliDictionary: Dictionary = {
     call: 'কল',
     return: 'ফিরুন',
     log: 'লগ',
+    ask: 'জিজ্ঞাসা',
+    answer: 'উত্তর',
     trigger: 'ট্রিগার',
     send: 'পাঠান',
     go: 'যান',

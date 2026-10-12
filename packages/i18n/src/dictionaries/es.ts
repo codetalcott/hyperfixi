@@ -33,6 +33,8 @@ export const es: Dictionary = {
     return: 'retornar',
     make: 'hacer',
     log: 'registrar',
+    ask: 'preguntar',
+    answer: 'responder',
     throw: 'lanzar',
     catch: 'atrapar',
     measure: 'medir',

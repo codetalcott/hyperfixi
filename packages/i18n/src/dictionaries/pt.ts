@@ -37,6 +37,8 @@ export const pt: Dictionary = {
     return: 'retornar',
     make: 'fazer',
     log: 'registrar',
+    ask: 'perguntar',
+    answer: 'responder',
     throw: 'lançar',
     catch: 'capturar',
     measure: 'medir',

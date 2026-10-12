@@ -265,6 +265,8 @@ export const turkishProfile: LanguageProfile = {
     install: { primary: 'kur', alternatives: ['yüklemek'], normalized: 'install' },
     measure: { primary: 'ölç', normalized: 'measure' },
     beep: { primary: 'bip', normalized: 'beep' },
+    ask: { primary: 'sor', normalized: 'ask' },
+    answer: { primary: 'cevapla', normalized: 'answer' },
     break: { primary: 'dur', normalized: 'break' },
     copy: { primary: 'kopyala', normalized: 'copy' },
     exit: { primary: 'çık', normalized: 'exit' },

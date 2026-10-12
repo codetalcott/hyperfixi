@@ -3692,6 +3692,62 @@ export const beepSchema: CommandSchema = {
 };
 
 /**
+ * `ask <message>`: a prompt; the reply is `it` (`ask "Name?" then put it into
+ * #out`). Upstream's command (`askAnswer` in the engine's commands/misc.ts).
+ */
+export const askSchema: CommandSchema = {
+  action: 'ask',
+  description: 'Prompt the user for a value (the reply is `it`)',
+  category: 'variable',
+  primaryRole: 'patient',
+  // `ask "Name?"` → args ['Name?'].
+  ast: { args: ['patient'] },
+  roles: [
+    {
+      role: 'patient',
+      description: 'The question',
+      required: true,
+      expectedTypes: ['literal', 'reference', 'expression', 'property-path'],
+      svoPosition: 1,
+      sovPosition: 1,
+    },
+  ],
+};
+
+/**
+ * `answer <message>` alerts; `answer <message> with <a> or <b>` confirms, and
+ * `it` is the chosen value. The choices are one `style` role, whose marker is
+ * `with` in every profile (es `con`, ja `で`, ko `로`): an expression the value
+ * pass writes with the language's `or`.
+ */
+export const answerSchema: CommandSchema = {
+  action: 'answer',
+  description: 'Show a message, or ask a yes/no question with two choices',
+  category: 'variable',
+  primaryRole: 'patient',
+  // `answer "Save?" with "Yes" or "No"` → args ['Save?'], modifiers { with }.
+  ast: { args: ['patient'], modifiers: { with: 'style' } },
+  roles: [
+    {
+      role: 'patient',
+      description: 'The message',
+      required: true,
+      expectedTypes: ['literal', 'reference', 'expression', 'property-path'],
+      svoPosition: 1,
+      sovPosition: 1,
+    },
+    {
+      role: 'style',
+      description: 'The two choices (`with "Yes" or "No"`)',
+      required: false,
+      expectedTypes: ['expression', 'literal'],
+      svoPosition: 2,
+      sovPosition: 2,
+    },
+  ],
+};
+
+/**
  * Break command: exits from the current loop.
  * Syntax: break
  */
@@ -4080,6 +4136,8 @@ export const commandSchemas: Record<ActionType, CommandSchema> = {
   morph: morphSchema,
   // Batch 6 - Missing Commands
   beep: beepSchema,
+  ask: askSchema,
+  answer: answerSchema,
   break: breakSchema,
   copy: copySchema,
   exit: exitSchema,

@@ -40,6 +40,8 @@ export const pl: Dictionary = {
     return: 'zwróć',
     make: 'utwórz',
     log: 'loguj',
+    ask: 'zapytaj',
+    answer: 'odpowiedz',
     throw: 'rzuć',
     catch: 'złap',
     measure: 'zmierz',

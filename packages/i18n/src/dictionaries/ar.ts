@@ -36,6 +36,8 @@ export const ar: Dictionary = {
     return: 'ارجع',
     make: 'اصنع',
     log: 'سجل',
+    ask: 'اسأل',
+    answer: 'أجب',
     throw: 'ارم',
     catch: 'التقط',
     measure: 'قس',

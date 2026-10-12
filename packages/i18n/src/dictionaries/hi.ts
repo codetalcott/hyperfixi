@@ -33,6 +33,8 @@ export const hindiDictionary: Dictionary = {
     return: 'लौटाएं',
     make: 'बनाएं',
     log: 'लॉग',
+    ask: 'पूछें',
+    answer: 'जवाब',
     throw: 'फेंकें',
     catch: 'पकड़ें',
     measure: 'मापें',

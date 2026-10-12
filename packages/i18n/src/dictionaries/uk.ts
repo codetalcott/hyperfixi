@@ -37,6 +37,8 @@ export const ukrainianDictionary: Dictionary = {
     return: 'повернути',
     make: 'створити',
     log: 'записати',
+    ask: 'запитати',
+    answer: 'відповісти',
     throw: 'кинути',
     catch: 'зловити',
     measure: 'виміряти',

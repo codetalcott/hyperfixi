@@ -29,6 +29,8 @@ export const he: Dictionary = {
     install: 'התקן',
     js: 'js',
     log: 'רשום',
+    ask: 'שאל',
+    answer: 'ענה',
     make: 'צור',
     measure: 'מדוד',
     morph: 'הפוך',

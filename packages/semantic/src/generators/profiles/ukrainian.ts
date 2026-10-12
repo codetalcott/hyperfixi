@@ -373,6 +373,8 @@ export const ukrainianProfile: LanguageProfile = {
       form: 'infinitive',
     },
     beep: { primary: 'звук', normalized: 'beep' },
+    ask: { primary: 'запитати', normalized: 'ask' },
+    answer: { primary: 'відповісти', normalized: 'answer' },
     break: { primary: 'перервати', normalized: 'break' },
     copy: { primary: 'копіювати', normalized: 'copy' },
     exit: { primary: 'вийти', normalized: 'exit' },

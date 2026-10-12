@@ -195,6 +195,8 @@ export const koreanProfile: LanguageProfile = {
     install: { primary: '설치', normalized: 'install' },
     measure: { primary: '측정', normalized: 'measure' },
     beep: { primary: '비프', normalized: 'beep' },
+    ask: { primary: '질문', normalized: 'ask' },
+    answer: { primary: '답변', normalized: 'answer' },
     break: { primary: '중단', normalized: 'break' },
     copy: { primary: '복사', normalized: 'copy' },
     exit: { primary: '나가기', normalized: 'exit' }, // avoids collision with end alt 종료

@@ -177,6 +177,8 @@ export const tagalogProfile: LanguageProfile = {
     install: { primary: 'ikabit', alternatives: ['mag-install'], normalized: 'install' },
     measure: { primary: 'sukatin', normalized: 'measure' },
     beep: { primary: 'tunog', normalized: 'beep' },
+    ask: { primary: 'tanungin', normalized: 'ask' },
+    answer: { primary: 'sagutin', normalized: 'answer' },
     break: { primary: 'putulin', normalized: 'break' },
     copy: { primary: 'kopyahin', normalized: 'copy' },
     exit: { primary: 'lumabas', normalized: 'exit' },

@@ -52,6 +52,9 @@ export type ActionType =
   | 'copy'
   | 'pick'
   | 'beep'
+  // Dialogs
+  | 'ask'
+  | 'answer'
   // Visibility
   | 'show'
   | 'hide'

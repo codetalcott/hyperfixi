@@ -40,6 +40,8 @@ export const zh: Dictionary = {
     return: '返回',
     make: '制作',
     log: '日志',
+    ask: '询问',
+    answer: '回答',
     throw: '抛出',
     catch: '捕获',
     measure: '测量',

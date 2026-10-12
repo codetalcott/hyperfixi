@@ -168,6 +168,8 @@ export const hebrewProfile: LanguageProfile = {
     install: { primary: 'התקן', normalized: 'install' },
     measure: { primary: 'מדוד', normalized: 'measure' },
     beep: { primary: 'ביפ', normalized: 'beep' },
+    ask: { primary: 'שאל', normalized: 'ask' },
+    answer: { primary: 'ענה', normalized: 'answer' },
     break: { primary: 'שבור', normalized: 'break' },
     copy: { primary: 'העתק', normalized: 'copy' },
     exit: { primary: 'צא', normalized: 'exit' },

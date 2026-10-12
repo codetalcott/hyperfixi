@@ -41,6 +41,8 @@ export const de: Dictionary = {
     return: 'zurückgeben',
     make: 'erstellen',
     log: 'protokollieren',
+    ask: 'frage',
+    answer: 'antworte',
     throw: 'werfen',
     catch: 'fangen',
     measure: 'messen',

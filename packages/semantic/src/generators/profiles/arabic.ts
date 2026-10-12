@@ -225,6 +225,8 @@ export const arabicProfile: LanguageProfile = {
     // would have to reach that comparison too before this pair can collapse.
     measure: { primary: 'قياس', alternatives: ['قِس', 'قس'], normalized: 'measure' },
     beep: { primary: 'صفّر', normalized: 'beep' },
+    ask: { primary: 'اسأل', normalized: 'ask' },
+    answer: { primary: 'أجب', normalized: 'answer' },
     break: { primary: 'توقف', normalized: 'break' },
     copy: { primary: 'انسخ', normalized: 'copy' },
     exit: { primary: 'اخرج', normalized: 'exit' },

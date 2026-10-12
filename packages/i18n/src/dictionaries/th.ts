@@ -27,6 +27,8 @@ export const thaiDictionary: Dictionary = {
     call: 'เรียก',
     return: 'คืนค่า',
     log: 'บันทึก',
+    ask: 'ถาม',
+    answer: 'ตอบ',
     trigger: 'ทริกเกอร์',
     send: 'ส่ง',
     go: 'ไป',

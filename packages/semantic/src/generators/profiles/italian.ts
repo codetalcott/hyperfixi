@@ -178,6 +178,8 @@ export const italianProfile: LanguageProfile = {
     install: { primary: 'installare', normalized: 'install' },
     measure: { primary: 'misurare', normalized: 'measure' },
     beep: { primary: 'beep', normalized: 'beep' },
+    ask: { primary: 'chiedi', normalized: 'ask' },
+    answer: { primary: 'rispondi', normalized: 'answer' },
     break: { primary: 'interrompere', normalized: 'break' },
     copy: { primary: 'copiare', normalized: 'copy' },
     exit: { primary: 'uscire', normalized: 'exit' },

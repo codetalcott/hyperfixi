@@ -45,6 +45,8 @@ export const en: Dictionary = {
     // Other commands
     make: 'make',
     log: 'log',
+    ask: 'ask',
+    answer: 'answer',
     throw: 'throw',
     catch: 'catch',
     measure: 'measure',

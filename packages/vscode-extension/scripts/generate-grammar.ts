@@ -52,7 +52,7 @@ const COMMAND_KEYWORDS = [
   'wait', 'send', 'trigger', 'call', 'return', 'throw', 'halt', 'exit', 'go',
   'focus', 'blur', 'log', 'append', 'prepend', 'increment', 'decrement',
   'take', 'settle', 'measure', 'transition', 'async', 'tell', 'js', 'make',
-  'clone', 'swap', 'morph', 'copy', 'pick', 'render', 'beep',
+  'clone', 'swap', 'morph', 'copy', 'pick', 'render', 'beep', 'ask', 'answer',
 ];
 
 /** Control flow keywords */

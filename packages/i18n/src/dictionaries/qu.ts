@@ -47,6 +47,8 @@ export const qu: Dictionary = {
     // Emitting qillqay for log made the parser read every transformed log as
     // copy (log-value/log-element/get-value lossy) — same realign as set above.
     log: 'qillqakuy',
+    ask: 'tapuy',
+    answer: 'kutichipuy',
     throw: 'wikchuy',
     catch: 'hapsiy',
     measure: 'tupuy',

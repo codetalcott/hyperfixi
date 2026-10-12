@@ -3,8 +3,8 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 24991,
-  "refused": 2238,
+  "pass": 25183,
+  "refused": 2046,
   "silent": 11,
   "entries": {
     "6f60177037": {
@@ -16,30 +16,6 @@
       "src": "on click add .foo to .item when it matches .nope then if the result is empty remove @hidden from #none",
       "family": "add",
       "refused": "qu"
-    },
-    "ddd8e60406": {
-      "src": "on click ask \"What is your name?\" then put it into #out",
-      "family": "askAnswer",
-      "refused": "en *",
-      "loud": "ask-answer: semantic has no schema and no dictionary word for `ask` / `answer`; adding them is an owner vocabulary decision (the M2 sheet)"
-    },
-    "39f0561a3a": {
-      "src": "on click ask \"Name?\" then put it into #out",
-      "family": "askAnswer",
-      "refused": "en *",
-      "loud": "ask-answer: semantic has no schema and no dictionary word for `ask` / `answer`; adding them is an owner vocabulary decision (the M2 sheet)"
-    },
-    "15f8c54697": {
-      "src": "on click answer \"Hello!\" then put \"done\" into #out",
-      "family": "askAnswer",
-      "refused": "en *",
-      "loud": "ask-answer: semantic has no schema and no dictionary word for `ask` / `answer`; adding them is an owner vocabulary decision (the M2 sheet)"
-    },
-    "3ca4288cf4": {
-      "src": "on click answer \"Save?\" with \"Yes\" or \"No\" then put it into #out",
-      "family": "askAnswer",
-      "refused": "en *",
-      "loud": "ask-answer: semantic has no schema and no dictionary word for `ask` / `answer`; adding them is an owner vocabulary decision (the M2 sheet)"
     },
     "f1bc20c608": {
       "src": "on click call global_function()",
@@ -978,24 +954,6 @@
       "refused": "en *",
       "loud": "beep: `beep!`, upstream's debugging command, has no schema: its form in each language is an owner vocabulary decision (the M2 sheet)"
     },
-    "ff19750b7a": {
-      "src": "ask \"Your name?\" then put it into #name",
-      "family": "ask",
-      "refused": "en *",
-      "loud": "ask-answer: semantic has no schema and no dictionary word for `ask` / `answer`; adding them is an owner vocabulary decision (the M2 sheet)"
-    },
-    "461a675696": {
-      "src": "answer \"Saved\"",
-      "family": "answer",
-      "refused": "en *",
-      "loud": "ask-answer: semantic has no schema and no dictionary word for `ask` / `answer`; adding them is an owner vocabulary decision (the M2 sheet)"
-    },
-    "9ba514eef4": {
-      "src": "answer \"Delete it?\" with \"yes\" or \"no\"",
-      "family": "answer",
-      "refused": "en *",
-      "loud": "ask-answer: semantic has no schema and no dictionary word for `ask` / `answer`; adding them is an owner vocabulary decision (the M2 sheet)"
-    },
     "451b518289": {
       "src": "scroll down by 200",
       "family": "scroll",
@@ -1099,12 +1057,6 @@
       "family": "beep!",
       "refused": "en *",
       "loud": "beep: `beep!`, upstream's debugging command, has no schema: its form in each language is an owner vocabulary decision (the M2 sheet)"
-    },
-    "36bd970993": {
-      "src": "answer \"Saved\" answer \"Delete it?\" with \"yes\" or \"no\"",
-      "family": "answer",
-      "refused": "en *",
-      "loud": "ask-answer: semantic has no schema and no dictionary word for `ask` / `answer`; adding them is an owner vocabulary decision (the M2 sheet)"
     },
     "6a6afed6dc": {
       "src": "on click toggle .active on keydown[key==\"Enter\"] submit()",

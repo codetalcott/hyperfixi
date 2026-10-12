@@ -357,6 +357,8 @@ export const russianProfile: LanguageProfile = {
       form: 'infinitive',
     },
     beep: { primary: 'звук', normalized: 'beep' },
+    ask: { primary: 'спросить', normalized: 'ask' },
+    answer: { primary: 'ответить', normalized: 'answer' },
     break: { primary: 'прервать', normalized: 'break' },
     copy: { primary: 'копировать', normalized: 'copy' },
     exit: { primary: 'выйти', normalized: 'exit' },

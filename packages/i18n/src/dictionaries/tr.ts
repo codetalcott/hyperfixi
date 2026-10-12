@@ -37,6 +37,8 @@ export const tr: Dictionary = {
     return: 'dön',
     make: 'yap',
     log: 'kaydet',
+    ask: 'sor',
+    answer: 'cevapla',
     throw: 'fırlat',
     catch: 'yakala',
     measure: 'ölç',

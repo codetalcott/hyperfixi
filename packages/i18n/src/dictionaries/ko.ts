@@ -33,6 +33,8 @@ export const ko: Dictionary = {
     return: '반환',
     make: '만들다',
     log: '로그',
+    ask: '질문',
+    answer: '답변',
     throw: '던지다',
     catch: '잡다',
     measure: '측정',

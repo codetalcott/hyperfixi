@@ -33,6 +33,8 @@ export const vi: Dictionary = {
     return: 'trả về',
     make: 'tạo',
     log: 'in ra',
+    ask: 'hỏi',
+    answer: 'trả lời',
     throw: 'ném',
     catch: 'bắt',
     measure: 'đo lường',
