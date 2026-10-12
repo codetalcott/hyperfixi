@@ -193,3 +193,68 @@ describe("bn's handler head: the locative written onto the event", () => {
     expect(values('কথাে').length).toBe(1);
   });
 });
+
+describe("tr's handler head: the locative written onto the event", () => {
+  it.each([
+    ['on click toggle .a', 'tıklamada .a i değiştir'],
+    ['on submit toggle .a', 'göndermede .a i değiştir'],
+    ['on change put "x" into #out', 'değişiklikte "x" i #out e koy'],
+    ['on click from #b toggle .a', '#b den tıklamada .a i değiştir'],
+    ['on click from window toggle .a', 'pencere den tıklamada .a i değiştir'],
+    // Code keeps its suffix apart (FUSED_FORMS.md Q2), in the on word's own form;
+    // so does an event the lexicon leaves in English.
+    ['on keyup toggle .a', 'keyup da .a i değiştir'],
+    ['on scroll toggle .a', 'scroll da .a i değiştir'],
+    ['on draggable:start toggle .a', 'draggable:start da .a i değiştir'],
+    ['on click or keyup toggle .a', 'tıklama veya keyup da .a i değiştir'],
+    ['on keyup or click toggle .a', 'keyup veya tıklamada .a i değiştir'],
+    ['on myEvent(detail) toggle .a', 'myEvent(detail) da .a i değiştir'],
+    ['on click debounced at 200ms toggle .a', 'tıklamada debounced at 200ms .a i değiştir'],
+    ['on click js console.log(1) end', 'tıklamada js console.log(1) son'],
+    ['on click put result into #out', 'tıklamada sonucu #out e koy'],
+    ['on click toggle .a end on keyup toggle .b end', 'tıklamada .a i değiştir\nson\nkeyup da .b i değiştir\nson'],
+  ])('%s', (source, expected) => {
+    expect(translate(source, 'en', 'tr')).toBe(expected);
+    expect(translate(expected, 'tr', 'en')).toBe(translate(source, 'en', 'en'));
+  });
+
+  it('still reads the two-marker heads, with a fronted source and in a chain', () => {
+    expect(translate('tıklama i üzerinde .a i değiştir', 'tr', 'en')).toBe('on click toggle .a');
+    expect(translate('tıklama üzerinde .a i değiştir', 'tr', 'en')).toBe('on click toggle .a');
+    expect(translate('tıklama da .a i değiştir', 'tr', 'en')).toBe('on click toggle .a');
+    expect(translate('#b den tıklama i üzerinde .a i değiştir', 'tr', 'en')).toBe(
+      'on click from #b toggle .a'
+    );
+    expect(translate('tıklamada .a i değiştir keyup da .b i değiştir', 'tr', 'en')).toBe(
+      'on click toggle .a\nend\non keyup toggle .b\nend'
+    );
+    expect(translate('tıklamada .a i değiştir göndermede .b i değiştir', 'tr', 'en')).toBe(
+      'on click toggle .a\nend\non submit toggle .b\nend'
+    );
+  });
+
+  it('splits only a known word, in any of the four forms', () => {
+    const values = (text: string) => tokenize(text, 'tr').tokens.map(t => `${t.value}:${t.kind}`);
+    expect(values('tıklamada')).toEqual(['tıklama:keyword', 'da:particle']);
+    expect(values('değişiklikte')).toEqual(['değişiklik:keyword', 'te:particle']);
+    expect(values('göndermede')).toEqual(['gönderme:keyword', 'de:particle']);
+    // A slip of harmony reads as the word too (`tık` takes `ta`); a name is a name.
+    expect(values('tıkta')).toEqual(['tık:keyword', 'ta:particle']);
+    expect(values('tıkda')).toEqual(['tık:keyword', 'da:particle']);
+    expect(values('sayfada')).toEqual(['sayfada:identifier']);
+    // An English name the reader passes through is not a word of the language.
+    expect(values('meta')).toEqual(['meta:identifier']);
+    expect(values('theta')).toEqual(['theta:identifier']);
+  });
+
+  it("writes tr's locative only onto a word of the language, by its spelling", () => {
+    const isWord = (w: string) => w === 'tıklama' || w === 'değişiklik' || w === 'sonuç';
+    expect(attachMarker(tryGetProfile('tr'), 'tıklama', 'da', isWord)).toBe('tıklamada');
+    expect(attachMarker(tryGetProfile('tr'), 'değişiklik', 'da', isWord)).toBe('değişiklikte');
+    expect(attachMarker(tryGetProfile('tr'), 'sonuç', 'da', isWord)).toBe('sonuçta');
+    expect(attachMarker(tryGetProfile('tr'), 'keyup', 'da', isWord)).toBeUndefined();
+    expect(attachMarker(tryGetProfile('tr'), '#out', 'da', isWord)).toBeUndefined();
+    expect(attachMarker(tryGetProfile('tr'), 'tıklama', 'i', isWord)).toBeUndefined();
+    expect(attachMarker(tryGetProfile('tr'), 'tıklama', 'da')).toBeUndefined();
+  });
+});

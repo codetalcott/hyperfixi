@@ -58,6 +58,11 @@ export const turkishProfile: LanguageProfile = {
   },
   // A query's scope before it (`#list içindeki <li/>`, `bendeki <p/>`; M2 N3).
   queryScopeFirst: { marker: 'içindeki', queryIn: 'içinde' },
+  // The locative written onto a Turkish word, in the form its harmony gives
+  // (`tıklamada`, `değişiklikte`; M2 N4). Code keeps its suffix apart
+  // (`keyup da`) until a reviewer picks a code word's harmony (FUSED_FORMS.md
+  // Q2); the other case suffixes stay apart on code for the same reason.
+  attachedMarkers: { markers: ['da', 'de', 'ta', 'te'] },
   possessive: {
     // Genitive suffix, spaced for tokenization like Turkish's other case
     // markers (i/e/de). i18n renders `#picker ın değer`; the parser matches
@@ -139,8 +144,10 @@ export const turkishProfile: LanguageProfile = {
     show: { primary: 'göster', normalized: 'show' },
     hide: { primary: 'gizle', normalized: 'hide' },
     transition: { primary: 'geçiş', normalized: 'transition' },
-    // Events
-    on: { primary: 'üzerinde', alternatives: ['zaman'], normalized: 'on' },
+    // Events. The handler's head is the locative on the event (`tıklamada`,
+    // M2 N4), as the eventHandler below documents; `üzerinde` (the i18n
+    // dictionary's word, the render before 4.5.0) and `zaman` still read.
+    on: { primary: 'da', alternatives: ['de', 'ta', 'te', 'üzerinde', 'zaman'], normalized: 'on' },
     trigger: { primary: 'tetikle', normalized: 'trigger' },
     send: { primary: 'gönder', normalized: 'send' },
     // DOM focus. `odaklanma` (the act of focusing) leads over the static state
@@ -302,5 +309,10 @@ export const turkishProfile: LanguageProfile = {
     // Note: Vowel harmony variants (da/de/ta/te) should be handled by vowel harmony expansion
     eventMarker: { primary: 'da', alternatives: ['de', 'ta', 'te'], position: 'after' },
     temporalMarkers: ['dığında', 'diğinde'], // temporal converb suffixes (when)
+    // The one-word head `tıklamada` matches the fused `<cmd>-event-tr-sov`
+    // patterns too, whose hand-built body reads less than the clause walk (a
+    // name in parentheses, a chain's next head); the pure head outranks them
+    // as ja's does (M2 N4, OPEN_ITEMS P60).
+    headOutranksFused: true,
   },
 };

@@ -4,8 +4,9 @@
  * `জমাতে` (`জমা` + `তে`); tr `tıklamada` (`tıklama` + `da`). ko's and ja's
  * extractors split a particle off any word; bn's and tr's read a word of their
  * script whole, so this pass splits one that is not a keyword itself but a
- * keyword with a suffix the language attaches. Only a known word splits: a
- * name that merely ends like a suffix stays a name.
+ * keyword with a suffix the language attaches. Only a known word of the
+ * language splits: a name that merely ends like a suffix stays a name (tr
+ * `meta`, `sayfada`).
  */
 import type { LanguageToken, TokenStream } from '../types';
 import { TokenStreamImpl } from './token-utils';
@@ -33,7 +34,9 @@ export function splitAttachedSuffixes(
         const stem = token.value.slice(0, -written.length);
         const read = tokenizeWord(stem);
         const word = read.length === 1 ? read[0]! : undefined;
-        if (word?.kind !== 'keyword') continue;
+        // A word of the language: a keyword with a translation. An English name
+        // the reader passes through is not one (tr `meta` is not `me` + `ta`).
+        if (word?.kind !== 'keyword' || word.normalized === undefined) continue;
         const particle = tokenizeWord(marker);
         if (particle.length !== 1) continue;
         const { start, end } = token.position;

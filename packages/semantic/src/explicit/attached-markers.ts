@@ -10,6 +10,7 @@ import type { LanguageProfile } from '../generators/profiles/types';
 import { getSchema } from '../generators/command-schemas';
 import type { ActionType } from '../types';
 import { bengaliLocative } from '../tokenizers/bengali-script';
+import { turkishLocative } from '../tokenizers/turkish-script';
 
 /**
  * Does `word` end in a letter of a script other than Latin, with any marks on
@@ -79,12 +80,16 @@ export function marksRole(
  * `word` with `marker` written onto it, or undefined where the language writes
  * the marker apart: it attaches no marker, `marker` is not one it attaches, or
  * `word` is a word of the language whose spelling the marker does not follow.
- * bn's locative takes the word's form (`ক্লিকে`, `জমাতে`: bengaliLocative).
+ * bn's locative takes the word's form (`ক্লিকে`, `জমাতে`: bengaliLocative). tr
+ * attaches its locative only onto a word of the language (`wordOfLanguage`:
+ * the caller's reader says which; code keeps the suffix apart, FUSED_FORMS.md
+ * Q2), in the form its harmony gives (`tıklamada`, `değişiklikte`).
  */
 export function attachMarker(
   profile: LanguageProfile | undefined,
   word: string,
-  marker: string
+  marker: string,
+  wordOfLanguage?: (word: string) => boolean
 ): string | undefined {
   const attached = profile?.attachedMarkers;
   if (!attached || !word || /\s$/.test(word) || !attached.markers.includes(marker)) {
@@ -92,6 +97,14 @@ export function attachMarker(
   }
   if (profile.code === 'bn' && endsInWord(word) && BN_LOCATIVE.has(marker)) {
     return bengaliLocative(word);
+  }
+  if (profile.code === 'tr') {
+    // The profile lists the locative alone. The last word takes it (`keyup veya
+    // tıklamada`: an or-legs phrase is one part).
+    const last = word.slice(word.lastIndexOf(' ') + 1);
+    if (!wordOfLanguage?.(last)) return undefined;
+    const suffix = turkishLocative(last);
+    return suffix === undefined ? undefined : word + suffix;
   }
   if (endsInWord(word) && attached.afterWords !== 'all' && !attached.afterWords?.includes(marker)) {
     return undefined;

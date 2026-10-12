@@ -223,7 +223,7 @@ describe('a VERB-FINAL block is claimed whole', () => {
     const rendered = render(reference, language);
     // The render's own head: ja and bn write it as one word (`クリックで`,
     // `ক্লিকে`, N4), and still read the spaced HANDLER_HEAD above.
-    const renderedHead = { ja: 'クリックで', bn: 'ক্লিকে' }[language] ?? HANDLER_HEAD[language];
+    const renderedHead = { ja: 'クリックで', bn: 'ক্লিকে', tr: 'tıklamada' }[language] ?? HANDLER_HEAD[language];
     const head = rendered.slice(renderedHead.length).trim();
     expect(head.startsWith(JS_VERB[language]), `${language} renders: ${rendered}`).toBe(true);
   });

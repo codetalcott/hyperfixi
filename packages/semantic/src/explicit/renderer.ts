@@ -1310,7 +1310,7 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       profile?.attachedMarkers &&
       !this.plainWords.has('attach') &&
       marksRole(profile, node.action, previous.role, text)
-        ? attachMarker(profile, last, text)
+        ? attachMarker(profile, last, text, w => this.wordOfLanguage(w, language))
         : undefined;
     if (attached === undefined || !this.splitsBack(attached, last!, language)) {
       parts.push(text);
@@ -1318,6 +1318,17 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     }
     parts[parts.length - 1] = attached;
     this.nativeWritten.add('attach');
+  }
+
+  /**
+   * Is `word` a word of the language to its reader (tr `tıklama`, read as
+   * `click`), not code or an English name it passes through (`keyup`)? tr
+   * writes its locative only onto such a word (attachMarker); that the joined
+   * form is one word to the reader, splitsBack holds.
+   */
+  private wordOfLanguage(word: string, language: string): boolean {
+    const token = tokenize(word, language).tokens[0];
+    return token?.kind === 'keyword' && token.normalized !== undefined;
   }
 
   /**
@@ -1352,7 +1363,9 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     const at = parts.indexOf(onWord.value, eventPart + 1);
     if (at <= eventPart) return;
     const word = parts[at - 1]!;
-    const attached = attachMarker(profile, word, onWord.value);
+    const attached = attachMarker(profile, word, onWord.value, w =>
+      this.wordOfLanguage(w, language)
+    );
     if (attached === undefined || !this.splitsBack(attached, word, language)) return;
     parts.splice(at - 1, 2, attached);
     this.nativeWritten.add('attach');

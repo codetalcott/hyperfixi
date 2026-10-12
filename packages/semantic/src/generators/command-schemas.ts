@@ -1546,10 +1546,11 @@ export const onSchema: CommandSchema = {
       expectedTypes: ['literal'],
       svoPosition: 1,
       sovPosition: 2,
-      // ja's head is `クリックで`, the event and the `on` word (M2 N4): the
-      // event's own marker `を` is read, as code written before 4.5.0 has it
-      // (`クリック を で`), and not written.
-      markerOptional: { ja: true },
+      // ja's head is `クリックで` and tr's `tıklamada`, the event and the `on`
+      // word (M2 N4): the event's own marker (`を`, `i`) is read, as code
+      // written before 4.5.0 has it (`クリック を で`, `tıklama i üzerinde`),
+      // and not written.
+      markerOptional: { ja: true, tr: true },
     },
     {
       role: 'source',

@@ -32,6 +32,7 @@
         "hx-değerler": "hx-vals",
         "hx-itele-url": "hx-push-url",
         "hx-üzerinde": "hx-on",
+        "hx-da": "hx-on",
         "hx-canlı": "hx-live",
         "hx-gösterge": "hx-indicator",
         "hx-içer": "hx-include",
