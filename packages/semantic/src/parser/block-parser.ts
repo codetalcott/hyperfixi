@@ -475,6 +475,11 @@ interface HandlerHeads {
   readonly patient: Set<string>;
   /** A fronted event source (`#btn から keyup を で …`) belongs to its handler. */
   readonly source: Set<string>;
+  /**
+   * The language's `end` forms, by their spelling: tr's `son` is also its `last`,
+   * which the tokenizer normalizes it to (afterCommand reads the block's end).
+   */
+  readonly ends: Set<string>;
   /** Words a chain writes once per handler: two of them gate the tokenize. */
   readonly anchors: readonly string[];
 }
@@ -557,6 +562,7 @@ function handlerHeads(language: string): HandlerHeads {
     afterClause,
     patient: markerSurfaceForms(profile?.roleMarkers?.patient),
     source: markerSurfaceForms(profile?.roleMarkers?.source),
+    ends: keywordForms(language, 'end'),
     anchors: [
       ...leading,
       ...circumfix.flatMap(([lead]) => [...lead]),
@@ -684,7 +690,7 @@ function afterCommand(tokens: readonly LanguageToken[], at: number, heads: Handl
   const ends = (tok: LanguageToken | undefined): boolean => {
     if (!tok || tok.kind !== 'keyword') return false;
     const norm = (tok.normalized ?? tok.value).toLowerCase();
-    return norm === 'end' || isAction(norm);
+    return norm === 'end' || isAction(norm) || tokenMatches(tok, heads.ends);
   };
   const before = tokens[at - 1];
   if (ends(before)) return true;

@@ -1,8 +1,8 @@
 {
   "description": "English-leak gate, corpus half (src/multilingual/english-leaks.ts): per corpus row, the findings of each language's render (render(parse(en), L)): an English grammar word, `event:<name>` (an English event the lexicon has a word for) or `case:me` / `case:it` (a nominative pronoun beside a marker; `-object`: as an unmarked object) or `spacing:<marker>` (a marker the language attaches, written apart). `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts after a fresh populate.",
   "renders": 3519,
-  "leaky": 410,
-  "findings": 887,
+  "leaky": 402,
+  "findings": 766,
   "kinds": {
     "word": {
       "renders": 191,
@@ -17,38 +17,38 @@
       "findings": 13
     },
     "spacing": {
-      "renders": 224,
-      "findings": 572
+      "renders": 216,
+      "findings": 451
     }
   },
   "entries": {
     "accordion-exclusive": {
-      "spacing:den spacing:e spacing:i spacing:i spacing:i": "tr"
+      "spacing:den spacing:e spacing:i spacing:i": "tr"
     },
     "accordion-toggle": {
-      "spacing:e spacing:i spacing:i spacing:i": "tr"
+      "spacing:e spacing:i spacing:i": "tr"
     },
     "add-class-basic": {
-      "spacing:i spacing:i": "tr"
+      "spacing:i": "tr"
     },
     "add-class-to-other": {
-      "spacing:e spacing:i spacing:i": "tr"
+      "spacing:e spacing:i": "tr"
     },
     "announce-screen-reader": {
       "of": "bn hi ja ko tl vi zh",
-      "spacing:e spacing:e spacing:i spacing:i spacing:i spacing:nin": "tr"
+      "spacing:da spacing:e spacing:e spacing:i spacing:i spacing:nin": "tr"
     },
     "append-content": {
-      "spacing:e spacing:i spacing:i": "tr"
+      "spacing:e spacing:i": "tr"
     },
     "beep-debug-expression": {
-      "spacing:e spacing:i spacing:i": "tr",
+      "spacing:e spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:に": "ja"
     },
     "behavior-draggable": {
       "case:me": "hi",
-      "case:me spacing:den spacing:den spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
+      "case:me spacing:da spacing:den spacing:den spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
       "case:me spacing:কে spacing:কে": "bn",
       "event repeat trigger trigger trigger until": "qu",
       "spacing:에서 spacing:에서": "ko",
@@ -56,14 +56,14 @@
     },
     "behavior-removable": {
       "case:me": "bn hi",
-      "case:me spacing:den spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
+      "case:me spacing:den spacing:e spacing:i spacing:i spacing:i": "tr",
       "spacing:에서": "ko",
       "spacing:から": "ja",
       "trigger trigger": "qu"
     },
     "behavior-resizable": {
       "event repeat trigger trigger trigger until": "qu",
-      "spacing:den spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
+      "spacing:da spacing:den spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
       "spacing:কে spacing:কে": "bn",
       "spacing:에서": "ko",
       "spacing:から": "ja"
@@ -71,7 +71,7 @@
     "behavior-sortable": {
       "event repeat trigger trigger trigger until": "qu",
       "null": "he",
-      "spacing:den spacing:den spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
+      "spacing:da spacing:den spacing:den spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
       "spacing:কে spacing:কে": "bn",
       "spacing:에서": "ko",
       "spacing:から": "ja"
@@ -92,220 +92,216 @@
     },
     "blur-element": {
       "case:me-object": "ar",
-      "spacing:i": "tr"
+      "spacing:da": "tr"
     },
     "book-archive-download-click": {
-      "spacing:i spacing:i": "tr"
+      "spacing:da spacing:i": "tr"
     },
     "book-counter-increment": {
-      "spacing:i spacing:i spacing:nin": "tr",
+      "spacing:i spacing:nin": "tr",
       "spacing:의": "ko",
       "spacing:の": "ja"
     },
     "breakpoint-command": {
-      "spacing:e spacing:i spacing:i": "tr"
+      "spacing:e spacing:i": "tr"
     },
     "call-function": {
-      "spacing:i spacing:i": "tr"
+      "spacing:i": "tr"
     },
     "caret-var-increment": {
-      "spacing:i spacing:i": "tr"
+      "spacing:i": "tr"
     },
     "caret-var-on-target": {
       "on": "ar bn de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
-      "on spacing:i spacing:i": "tr"
+      "on spacing:i": "tr"
     },
     "caret-var-write": {
-      "spacing:e spacing:i spacing:i": "tr"
+      "spacing:da spacing:e spacing:i": "tr"
     },
     "chained-access-possessive-dot": {
-      "spacing:e spacing:i spacing:i": "tr"
+      "spacing:e spacing:i": "tr"
     },
     "closest-ancestor": {
-      "spacing:e spacing:i spacing:i": "tr"
+      "spacing:e spacing:i": "tr"
     },
     "computed-value": {
       "of spacing:로 spacing:로 spacing:에서 the": "ko",
       "of spacing:から spacing:として spacing:として the": "ja",
       "of the": "bn hi tl vi zh",
-      "spacing:den spacing:e spacing:i spacing:i spacing:nin": "tr"
+      "spacing:den spacing:e spacing:i spacing:nin": "tr"
     },
     "copy-to-clipboard": {
-      "spacing:i spacing:i spacing:i spacing:i": "tr"
+      "spacing:i spacing:i spacing:i": "tr"
     },
     "decrement-counter": {
-      "spacing:i spacing:i spacing:nin": "tr"
+      "spacing:i spacing:nin": "tr"
     },
     "default-value": {
-      "spacing:e spacing:i spacing:i": "tr"
+      "spacing:da spacing:e spacing:i": "tr"
     },
     "document-ready": {
-      "spacing:i spacing:i": "tr"
+      "spacing:da spacing:i": "tr"
     },
     "dropdown-close-outside": {
-      "spacing:den spacing:den spacing:i spacing:i": "tr",
+      "spacing:den spacing:den spacing:i": "tr",
       "spacing:에서": "ko",
       "spacing:から": "ja"
     },
     "dropdown-toggle": {
-      "spacing:e spacing:i spacing:i": "tr"
+      "spacing:e spacing:i": "tr"
     },
     "event-debounce": {
       "at debounced": "ar bn de es fr he hi id it ja ms pl pt qu ru sw th uk vi zh",
-      "at debounced spacing:e spacing:i": "tr",
+      "at debounced spacing:e": "tr",
       "at debounced spacing:로": "ko",
       "debounced": "tl"
     },
     "event-from-elsewhere": {
-      "spacing:den spacing:i spacing:i": "tr",
+      "spacing:den spacing:i": "tr",
       "spacing:에서": "ko",
       "spacing:から": "ja"
     },
     "event-key-combo": {
-      "spacing:i spacing:i": "tr"
+      "spacing:da spacing:i": "tr"
     },
     "event-once": {
-      "spacing:i spacing:i spacing:i": "tr"
+      "spacing:i spacing:i": "tr"
     },
     "event-throttle": {
-      "at spacing:i spacing:i throttled": "tr",
+      "at spacing:da spacing:i throttled": "tr",
       "at throttled": "ar bn de es fr he hi id it ja ko ms pl pt qu ru sw th uk vi zh",
       "throttled": "tl"
     },
     "fade-out-remove": {
-      "spacing:e spacing:i spacing:i": "tr"
-    },
-    "fetch-basic": {
       "spacing:e spacing:i": "tr"
     },
+    "fetch-basic": {
+      "spacing:e": "tr"
+    },
     "fetch-do-not-throw": {
-      "spacing:i spacing:i": "tr",
+      "spacing:i": "tr",
       "spacing:로": "ko"
     },
     "fetch-error-handling": {
-      "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
+      "spacing:e spacing:e spacing:i spacing:i": "tr",
       "spacing:로": "ko"
     },
     "fetch-formdata": {
-      "spacing:i spacing:le": "tr"
+      "spacing:le": "tr"
     },
     "fetch-json": {
-      "spacing:e spacing:i spacing:i": "tr",
+      "spacing:e spacing:i": "tr",
       "spacing:로": "ko"
     },
     "fetch-loading-state": {
-      "spacing:e spacing:i spacing:i spacing:i": "tr"
+      "spacing:e spacing:i spacing:i": "tr"
     },
     "fetch-with-headers": {
-      "spacing:i spacing:i spacing:le": "tr",
+      "spacing:i spacing:le": "tr",
       "spacing:로": "ko"
     },
     "fetch-with-method": {
-      "spacing:i spacing:le": "tr"
+      "spacing:le": "tr"
     },
     "fetch-with-method-body": {
-      "spacing:i spacing:le": "tr"
+      "spacing:le": "tr"
     },
     "first-in-parent": {
-      "spacing:i spacing:i": "tr",
+      "spacing:i": "tr",
       "spacing:এ": "bn"
     },
     "focus-element": {
-      "spacing:i spacing:i": "tr"
+      "spacing:i": "tr"
     },
     "focus-trap": {
       "matches": "th",
       "matches spacing:এ spacing:এ": "bn",
-      "spacing:den spacing:i spacing:i": "tr",
+      "spacing:da spacing:den spacing:i": "tr",
       "spacing:에서": "ko",
       "spacing:から": "ja"
     },
     "form-disable-on-submit": {
-      "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr"
+      "spacing:e spacing:e spacing:i spacing:i": "tr"
     },
     "form-submit-prevent": {
-      "spacing:i spacing:i spacing:i": "tr",
+      "spacing:i spacing:i": "tr",
       "spacing:কে": "bn"
     },
     "get-attribute-possessive-dot": {
-      "spacing:e spacing:i spacing:i": "tr"
+      "spacing:e spacing:i": "tr"
     },
     "get-value": {
-      "spacing:i spacing:i": "tr"
+      "spacing:i": "tr"
     },
     "get-value-possessive-dot": {
-      "spacing:e spacing:i spacing:i": "tr",
+      "spacing:e spacing:i": "tr",
       "spacing:কে": "bn",
       "spacing:を": "ja"
     },
     "go-back": {
-      "spacing:i": "tr",
       "spacing:로": "ko"
     },
     "go-url": {
-      "spacing:e spacing:i url": "tr",
+      "spacing:e url": "tr",
       "url": "ar bn de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh"
     },
     "halt-propagation": {
-      "spacing:i spacing:i": "tr",
+      "spacing:i": "tr",
       "spacing:কে": "bn"
     },
     "hide-element": {
-      "spacing:i spacing:i": "tr"
+      "spacing:i": "tr"
     },
     "hide-with-transition": {
-      "spacing:i spacing:le": "tr"
+      "spacing:le": "tr"
     },
     "if-condition": {
-      "spacing:i spacing:i spacing:i": "tr"
-    },
-    "if-empty": {
-      "spacing:e spacing:i spacing:i spacing:i": "tr"
-    },
-    "if-exists": {
-      "spacing:i spacing:i spacing:i": "tr"
-    },
-    "if-matches": {
       "spacing:i spacing:i": "tr"
     },
-    "increment-by-amount": {
-      "spacing:i spacing:i spacing:nin": "tr"
-    },
-    "increment-counter": {
-      "spacing:i spacing:i spacing:nin": "tr"
-    },
-    "input-char-count": {
+    "if-empty": {
       "spacing:e spacing:i spacing:i": "tr"
     },
+    "if-exists": {
+      "spacing:i spacing:i": "tr"
+    },
+    "if-matches": {
+      "spacing:i": "tr"
+    },
+    "increment-by-amount": {
+      "spacing:i spacing:nin": "tr"
+    },
+    "increment-counter": {
+      "spacing:i spacing:nin": "tr"
+    },
+    "input-char-count": {
+      "spacing:e spacing:i": "tr"
+    },
     "input-clear": {
-      "spacing:e spacing:i spacing:i spacing:nin": "tr",
+      "spacing:e spacing:i spacing:nin": "tr",
       "spacing:কে": "bn",
       "spacing:를 spacing:에 spacing:의": "ko",
       "spacing:の spacing:を": "ja"
     },
     "input-mirror": {
-      "spacing:e spacing:i spacing:i": "tr",
+      "spacing:e spacing:i": "tr",
       "spacing:কে": "bn",
       "spacing:を": "ja"
     },
     "input-validation": {
-      "spacing:i spacing:i spacing:i": "tr"
+      "spacing:i spacing:i": "tr"
     },
     "install-behavior": {
       "spacing:i": "tr"
     },
     "its-value-possessive-dot": {
-      "spacing:e spacing:i spacing:i": "tr"
-    },
-    "js-inline": {
-      "spacing:i": "tr"
+      "spacing:e spacing:i": "tr"
     },
     "keydown-key-is-syntax": {
       "is": "ar bn de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
-      "is spacing:i": "tr"
+      "is spacing:da": "tr"
     },
     "last-in-collection": {
-      "spacing:e spacing:i": "tr",
+      "spacing:e": "tr",
       "spacing:এ": "bn"
     },
     "live-derived-value": {
@@ -314,250 +310,236 @@
     "live-multiple-deps": {
       "spacing:e spacing:i": "tr"
     },
-    "log-element": {
+    "log-value": {
       "spacing:i": "tr"
     },
-    "log-value": {
-      "spacing:i spacing:i": "tr"
-    },
     "make-element": {
-      "spacing:e spacing:i spacing:i": "tr"
+      "spacing:e spacing:i": "tr"
     },
     "make-toast-element": {
-      "case:it spacing:de spacing:i spacing:i spacing:i spacing:nin": "tr",
+      "case:it spacing:de spacing:i spacing:i spacing:nin": "tr",
       "spacing:কে": "bn",
       "spacing:를 spacing:에 spacing:의": "ko",
       "spacing:で spacing:の spacing:を": "ja"
     },
     "method-call-possessive-dot": {
-      "spacing:e spacing:i spacing:i": "tr"
+      "spacing:e spacing:i": "tr"
     },
     "modal-close-backdrop": {
       "matches": "bn th",
-      "spacing:i spacing:i": "tr"
+      "spacing:i": "tr"
     },
     "modal-close-button": {
-      "spacing:i spacing:i spacing:i": "tr"
+      "spacing:i spacing:i": "tr"
     },
     "modal-close-escape": {
-      "spacing:den spacing:i spacing:i spacing:i": "tr",
+      "spacing:da spacing:den spacing:i spacing:i": "tr",
       "spacing:에서": "ko",
       "spacing:から": "ja"
     },
     "modal-open": {
-      "spacing:i spacing:i spacing:i": "tr"
+      "spacing:i spacing:i": "tr"
     },
     "morph-fetch-result": {
-      "spacing:i spacing:i": "tr"
+      "spacing:i": "tr"
     },
     "morph-form-update": {
-      "spacing:i spacing:i": "tr"
+      "spacing:i": "tr"
     },
     "morph-with-template": {
-      "spacing:i spacing:i spacing:i spacing:le": "tr"
+      "spacing:i spacing:i spacing:le": "tr"
     },
     "multiple-events": {
-      "spacing:i spacing:i": "tr"
+      "spacing:da spacing:i": "tr"
     },
     "next-element": {
-      "spacing:e spacing:i spacing:i": "tr"
+      "spacing:e spacing:i": "tr"
     },
     "on-custom-event-receive": {
-      "spacing:i spacing:i": "tr"
+      "spacing:da spacing:i": "tr"
     },
     "optional-chaining-possessive": {
-      "spacing:i spacing:i": "tr"
+      "spacing:i": "tr"
     },
     "pick-text-range": {
       "of": "he",
-      "spacing:i spacing:nin": "tr",
+      "spacing:nin": "tr",
       "spacing:부터 spacing:의": "ko",
       "spacing:から spacing:の": "ja"
     },
     "previous-element": {
-      "spacing:den spacing:i spacing:i": "tr"
+      "spacing:den spacing:i": "tr"
     },
     "put-after": {
       "after": "bn hi",
       "case:me": "tl",
-      "spacing:i": "tr",
       "spacing:를": "ko",
       "spacing:を": "ja"
     },
     "put-before": {
       "before": "bn hi",
       "case:me": "tl",
-      "spacing:i": "tr",
       "spacing:를": "ko",
       "spacing:を": "ja"
     },
     "put-content-basic": {
-      "spacing:i spacing:i": "tr"
-    },
-    "reactive-array-push": {
-      "spacing:i spacing:i": "tr"
-    },
-    "remove-class-basic": {
-      "spacing:i spacing:i": "tr"
-    },
-    "remove-class-from-all": {
-      "spacing:den spacing:i spacing:i": "tr"
-    },
-    "remove-element": {
       "spacing:i": "tr"
     },
+    "reactive-array-push": {
+      "spacing:i": "tr"
+    },
+    "remove-class-basic": {
+      "spacing:i": "tr"
+    },
+    "remove-class-from-all": {
+      "spacing:den spacing:i": "tr"
+    },
     "render-template-with-data": {
-      "spacing:e spacing:i spacing:i spacing:le": "tr"
+      "spacing:e spacing:i spacing:le": "tr"
     },
     "repeat-for-each": {
-      "spacing:e spacing:i spacing:i": "tr",
+      "spacing:e spacing:i": "tr",
       "spacing:এ": "bn"
     },
     "repeat-forever": {
-      "spacing:i spacing:i": "tr"
+      "spacing:da spacing:i": "tr"
     },
     "repeat-times": {
-      "spacing:i spacing:i spacing:i": "tr",
+      "spacing:i spacing:i": "tr",
       "spacing:কে": "bn",
       "spacing:를": "ko",
       "spacing:を": "ja"
     },
     "repeat-until-event": {
-      "spacing:i spacing:i spacing:i spacing:nin": "tr",
+      "spacing:da spacing:i spacing:i spacing:nin": "tr",
       "spacing:কে": "bn",
       "spacing:를 spacing:을": "ko"
     },
     "repeat-while": {
-      "spacing:i spacing:i spacing:nin": "tr"
+      "spacing:i spacing:nin": "tr"
     },
     "send-event": {
-      "spacing:e spacing:i spacing:i": "tr"
+      "spacing:e spacing:i": "tr"
     },
     "send-event-to-form": {
-      "spacing:e spacing:i spacing:i": "tr"
+      "spacing:e spacing:i": "tr"
     },
     "send-with-detail": {
-      "spacing:e spacing:i spacing:i": "tr"
+      "spacing:e spacing:i": "tr"
     },
     "set-attribute": {
-      "spacing:e spacing:i spacing:i": "tr"
+      "spacing:e spacing:i": "tr"
     },
     "set-color-variable": {
-      "spacing:e spacing:i spacing:i spacing:nin": "tr"
+      "spacing:e spacing:i spacing:nin": "tr"
     },
     "set-inner-html-possessive-dot": {
-      "spacing:e spacing:i spacing:i": "tr"
+      "spacing:e spacing:i": "tr"
     },
     "set-opacity": {
-      "spacing:e spacing:i spacing:i": "tr"
+      "spacing:e spacing:i": "tr"
     },
     "set-style": {
-      "spacing:e spacing:i spacing:i": "tr"
+      "spacing:e spacing:i": "tr"
     },
     "set-text-basic": {
-      "spacing:e spacing:i spacing:i": "tr"
+      "spacing:e spacing:i": "tr"
     },
     "set-text-possessive-dot": {
-      "spacing:e spacing:i spacing:i": "tr"
+      "spacing:e spacing:i": "tr"
     },
     "set-transform": {
-      "spacing:e spacing:i spacing:i": "tr"
+      "spacing:e spacing:i": "tr"
     },
     "settle-animations": {
-      "spacing:i spacing:i spacing:i": "tr"
-    },
-    "show-element": {
       "spacing:i spacing:i": "tr"
     },
+    "show-element": {
+      "spacing:i": "tr"
+    },
     "show-with-transition": {
-      "spacing:i spacing:i spacing:le": "tr"
+      "spacing:i spacing:le": "tr"
     },
     "slide-toggle": {
-      "spacing:e spacing:i spacing:i": "tr"
+      "spacing:e spacing:i": "tr"
     },
     "socket-send": {
-      "spacing:e spacing:i spacing:i": "tr"
+      "spacing:e spacing:i": "tr"
     },
     "stagger-animation": {
-      "spacing:e spacing:i spacing:i spacing:i": "tr",
+      "spacing:da spacing:e spacing:i spacing:i": "tr",
       "spacing:এ": "bn"
     },
     "swap-content": {
-      "spacing:e spacing:i": "tr"
+      "spacing:e": "tr"
     },
     "swap-view-transition": {
-      "spacing:e spacing:i transition view": "tr",
+      "spacing:e transition view": "tr",
       "transition view": "ar bn de es he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
       "view": "fr"
     },
     "tabs-aria": {
-      "spacing:e spacing:i spacing:i spacing:i": "tr"
+      "spacing:e spacing:i spacing:i": "tr"
     },
     "tabs-basic": {
-      "spacing:den spacing:i spacing:i spacing:i": "tr"
-    },
-    "tabs-content": {
-      "spacing:den spacing:i spacing:i spacing:i spacing:i spacing:i": "tr"
-    },
-    "take-class-from-siblings": {
       "spacing:den spacing:i spacing:i": "tr"
     },
+    "tabs-content": {
+      "spacing:den spacing:i spacing:i spacing:i spacing:i": "tr"
+    },
+    "take-class-from-siblings": {
+      "spacing:den spacing:i": "tr"
+    },
     "tell-command": {
-      "spacing:e spacing:i": "tr"
+      "spacing:e": "tr"
     },
     "tell-other-element": {
-      "spacing:e spacing:i spacing:i spacing:i": "tr"
+      "spacing:e spacing:i spacing:i": "tr"
     },
     "template-literal-interpolation": {
-      "spacing:e spacing:i spacing:i": "tr"
+      "spacing:e spacing:i": "tr"
     },
     "template-literal-list-build": {
       "in": "he",
-      "spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr",
+      "spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
       "spacing:এ": "bn"
     },
     "toggle-aria-expanded": {
       "case:me": "it",
-      "spacing:e spacing:i spacing:i spacing:i": "tr"
+      "spacing:e spacing:i spacing:i": "tr"
     },
     "toggle-class-basic": {
-      "spacing:i spacing:i": "tr"
+      "spacing:i": "tr"
     },
     "toggle-class-on-other": {
-      "spacing:e spacing:i spacing:i": "tr"
+      "spacing:e spacing:i": "tr"
     },
     "toggle-class-temporary": {
-      "spacing:i spacing:i": "tr"
+      "spacing:i": "tr"
     },
     "toggle-visibility": {
-      "spacing:e spacing:i spacing:i": "tr"
+      "spacing:e spacing:i": "tr"
     },
     "transition-color": {
-      "spacing:e spacing:i spacing:i": "tr"
+      "spacing:e spacing:i": "tr"
     },
     "transition-opacity": {
-      "spacing:e spacing:i spacing:i": "tr"
+      "spacing:e spacing:i": "tr"
     },
     "transition-transform": {
-      "spacing:e spacing:i spacing:i": "tr"
+      "spacing:e spacing:i": "tr"
     },
     "trigger-event": {
-      "spacing:i spacing:i": "tr",
+      "spacing:da spacing:i": "tr",
       "trigger": "qu"
     },
     "two-way-binding": {
-      "spacing:den spacing:e spacing:i spacing:i": "tr",
+      "spacing:den spacing:e spacing:i": "tr",
       "spacing:তে": "bn",
       "spacing:에서": "ko",
       "spacing:から spacing:に": "ja"
     },
     "unless-condition": {
-      "spacing:i spacing:i": "tr"
-    },
-    "wait-for-event": {
-      "spacing:i": "tr"
-    },
-    "wait-then": {
       "spacing:i": "tr"
     },
     "when-multiple-changes": {
@@ -568,19 +550,19 @@
       "case:it spacing:i spacing:nin spacing:nin": "tr"
     },
     "window-keydown": {
-      "spacing:den spacing:i spacing:i": "tr",
+      "spacing:da spacing:den spacing:i": "tr",
       "spacing:에서": "ko",
       "spacing:から": "ja"
     },
     "window-resize": {
       "at debounced": "ar bn de es fr he hi id it ms pl pt qu ru sw th uk vi zh",
-      "at debounced spacing:den spacing:i spacing:i": "tr",
+      "at debounced spacing:da spacing:den spacing:i": "tr",
       "at debounced spacing:에서": "ko",
       "at debounced spacing:から": "ja",
       "debounced": "tl"
     },
     "window-scroll": {
-      "spacing:den spacing:den spacing:e spacing:i spacing:i spacing:i": "tr",
+      "spacing:da spacing:den spacing:den spacing:e spacing:i spacing:i": "tr",
       "spacing:에서": "ko",
       "spacing:から": "ja"
     }

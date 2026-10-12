@@ -250,6 +250,11 @@ export const HTMX_ATTR_VOCAB = {
     hx: {
       // loka-js fx-tetikleyici (noun); the profile's imperative `tetikle` is the alias.
       trigger: 'tetikleyici',
+      // The profile's `on` is the locative suffix `da` since M2 N4 (a handler's
+      // head is `tıklamada`): a suffix is the wrong register for an attribute
+      // name, so `hx-üzerinde` (the name shipped through 4.4.0) stays the
+      // primary and `hx-da` follows as the alias.
+      on: 'üzerinde',
       // loka-js fx-değiştirme ("replacing"); the profile's `takas` (barter) is
       // the alias. loka-js's second form `değişim` is NOT taken: it is the
       // dictionary's `change` event word, and hx-değişim="değişim" would be

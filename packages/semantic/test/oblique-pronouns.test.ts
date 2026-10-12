@@ -183,12 +183,12 @@ describe('renders write it in the case its marker takes, and me as an object', (
 
 describe('tr writes a pronoun fused with its marker', () => {
   const RENDERS: Array<[string, string]> = [
-    ['on click show me', 'tıklama i üzerinde beni göster'],
-    ['on click add .x to me', 'tıklama i üzerinde bana .x i ekle'],
-    ['on click remove .x from me', 'tıklama i üzerinde benden .x i kaldır'],
-    ['on click put it into #out', 'tıklama i üzerinde onu #out e koy'],
-    ['on click add .x to it', 'tıklama i üzerinde ona .x i ekle'],
-    ['on click take .x from it', 'tıklama i üzerinde ondan .x i tut'],
+    ['on click show me', 'tıklamada beni göster'],
+    ['on click add .x to me', 'tıklamada bana .x i ekle'],
+    ['on click remove .x from me', 'tıklamada benden .x i kaldır'],
+    ['on click put it into #out', 'tıklamada onu #out e koy'],
+    ['on click add .x to it', 'tıklamada ona .x i ekle'],
+    ['on click take .x from it', 'tıklamada ondan .x i tut'],
   ];
   it.each(RENDERS)('%s', (source, expected) => {
     expect(translate(source, 'en', 'tr')).toBe(expected);

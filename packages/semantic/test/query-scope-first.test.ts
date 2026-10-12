@@ -10,13 +10,13 @@ import { translate } from '../src/index';
 
 describe('the scope before the query', () => {
   it.each([
-    ['tr', 'on click hide <p/> in me', 'tıklama i üzerinde bendeki <p/> i gizle'],
+    ['tr', 'on click hide <p/> in me', 'tıklamada bendeki <p/> i gizle'],
     [
       'tr',
       'on click add .x to <li/> in #list',
-      'tıklama i üzerinde #list içindeki <li/> e .x i ekle',
+      'tıklamada #list içindeki <li/> e .x i ekle',
     ],
-    ['tr', 'on click get the first <p/> in me', 'tıklama i üzerinde bendeki ilk <p/> i al'],
+    ['tr', 'on click get the first <p/> in me', 'tıklamada bendeki ilk <p/> i al'],
     ['hi', 'on click hide <p/> in me', 'क्लिक पर मुझ में स्थित <p/> को छिपाएं'],
     ['bn', 'on click hide <p/> in #list', 'ক্লিকে #list এ থাকা <p/>কে লুকান'],
     ['ja', 'on click hide <p/> in me', 'クリックで 自分 の中の <p/>を 隠す'],

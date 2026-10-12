@@ -576,6 +576,30 @@ ending in an anusvara or a hasant keeps it apart. The reader still takes `ক্
 the head you would write for `on click`, or `ক্লিক করলে` / `ক্লিক হলে`? For code, `keyupতে`
 or `keyup-এ`?
 
+### A handler's head as one word: tr (M2 N4) ⚠️
+
+Renders wrote a handler's event with two markers (`tıklama i üzerinde .a i değiştir`: the
+event's accusative and the postposition). They now write the locative onto the event, in
+the form vowel harmony gives it (the profile's own `tıklama da`, joined):
+
+| English                        | written                                   | rule                                        |
+| ------------------------------ | ----------------------------------------- | ------------------------------------------- |
+| `on click toggle .a`           | `tıklamada .a i değiştir`                 | back vowel, voiced final: `da`              |
+| `on submit toggle .a`          | `göndermede .a i değiştir`                | front vowel: `de`                           |
+| `on change put "x" into #out`  | `değişiklikte "x" i #out e koy`           | voiceless final (`k`): `te`                 |
+| `on scroll toggle .a`          | `kaydırmada .a i değiştir`                |                                             |
+| `on click from #b toggle .a`   | `#b den tıklamada .a i değiştir`          |                                             |
+| `on keyup toggle .a`           | `keyup da .a i değiştir`                  | code keeps the suffix apart (Q2)            |
+| `on click or keyup toggle .a`  | `tıklama veya keyup da .a i değiştir`     | the last leg takes it                       |
+
+The locative is written only onto a Turkish word the reader knows; code (`keyup`,
+`draggable:start`, `myEvent(detail)`) takes `da` as a word apart until a reviewer picks a
+code word's harmony (`keyup'ta`? FUSED_FORMS.md Q2). The reader still takes `tıklama i
+üzerinde`, `tıklama üzerinde` and `tıklama da`. Notes for the reviewer: is `tıklamada` the
+head you would write for `on click`, or `tıklandığında` / `tıklayınca`? For code, `keyup da`,
+`keyup'ta`, or `keyup olayında`? `yükle de` for `on load` (the lexicon's `yükle` is the
+imperative; the noun would be `yüklemede`)?
+
 ### A query's scope before the query: bn, hi, tr, ja, ko (M2 N3) ⚠️
 
 A query with a scope (`<p/> in me`, `<li/> in #list`, `the first <p/> in me`) was written

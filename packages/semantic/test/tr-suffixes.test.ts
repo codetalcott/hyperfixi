@@ -37,10 +37,10 @@ describe('tr reads a suffix written onto code', () => {
 
 describe('tr fuses a suffix with its own words', () => {
   it.each([
-    ['on click put result into #out', 'tıklama i üzerinde sonucu #out e koy'],
-    ['on click send foo to the target', 'tıklama i üzerinde hedefe foo i gönder'],
-    ['on click remove .a from the target', 'tıklama i üzerinde hedeften .a i kaldır'],
-    ['on click put "x" into document', 'tıklama i üzerinde "x" i belgeye koy'],
+    ['on click put result into #out', 'tıklamada sonucu #out e koy'],
+    ['on click send foo to the target', 'tıklamada hedefe foo i gönder'],
+    ['on click remove .a from the target', 'tıklamada hedeften .a i kaldır'],
+    ['on click put "x" into document', 'tıklamada "x" i belgeye koy'],
   ])('%s', (source, expected) => {
     expect(translate(source, 'en', 'tr')).toBe(expected);
     expect(translate(expected, 'tr', 'en')).toBe(translate(source, 'en', 'en'));

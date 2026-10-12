@@ -3765,16 +3765,20 @@ describe('tr positional last — sonuncu (son doubles as the end keyword)', () =
     expect(a.has('halt')).toBe(true);
   });
 
-  it('[tr] the root cause stays locked: son in the condition kills the branch', () => {
-    // 'son' is matched by the end-recognizers by value — this is WHY the dict
-    // had to emit sonuncu for positional last.
+  it('[tr] son in the condition no longer kills the branch (the head takes the clause walk)', () => {
+    // 'son' matched by the end-recognizers by value is WHY the dict had to emit
+    // sonuncu for positional last. Since N4 (2026-10-11) tr's head pattern
+    // outranks the fused patterns, so this body takes the clause walk, which
+    // reads `son` as a value in a condition (end-word-value): the branch
+    // survives. `sonuncu` stays the positional word.
     const a = actions(
       parse(
         'keydown[key=="Tab"] de .modal den eğer hedef eşleşir son <button/> içinde .modal ilk <button/> içinde .modal i odak sonra durdur son',
         'tr'
       )
     );
-    expect(a.has('focus')).toBe(false);
+    expect(a.has('focus')).toBe(true);
+    expect(a.has('halt')).toBe(true);
   });
 
   it('[tr] trailing then-chains with body verbs still parse (end reading unchanged)', () => {
@@ -9583,7 +9587,9 @@ describe('repeat-until-event recovery (event:literal + loopType:literal="until-e
   // ja's row (`マウス押下 で 繰り返し イベント マウス解放 を まで …`, the 2026-08
   // transformer's verb-first order) left with N4: ja's head pattern outranks
   // the fused patterns, whose path alone carried this recovery, and the render
-  // since 2026-08-28 is `まで イベント mouseupを 繰り返し …`, which reads.
+  // since 2026-08-28 is `まで イベント mouseupを 繰り返し …`, which reads. tr's
+  // row (`farebas de tekrarla olay farebırak i kadar …`) left the same way;
+  // the render is `mousedown da kadar olay mouseup i tekrarla …`, which reads.
   for (const [lang, src] of [
     [
       'ko',
@@ -9598,12 +9604,8 @@ describe('repeat-until-event recovery (event:literal + loopType:literal="until-e
       'bei mausunten wiederholen bis ereignis mausoben dann erhöhen #counter dann warten 100ms ende',
     ],
     ['ar', 'عند فأرة أسفل كرر حتى حدث فأرة أعلى ثم زِد #counter ثم انتظر 100ms النهاية'],
-    // tr/hi/qu: FUSED mouse events (dict no longer emits the `_`-split compound),
+    // hi/qu: FUSED mouse events (dict no longer emits the `_`-split compound),
     // which also routes the handler onto the fused-action path so the recovery fires.
-    [
-      'tr',
-      'farebas de tekrarla olay farebırak i kadar ardından #counter i artır ardından bekle 100ms son',
-    ],
     [
       'hi',
       'माउसनीचे पर दोहराएं घटना माउसऊपर को तक फिर #counter को बढ़ाएं फिर प्रतीक्षा 100ms समाप्त',

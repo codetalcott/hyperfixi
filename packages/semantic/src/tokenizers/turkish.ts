@@ -16,6 +16,8 @@ import { TurkishMorphologicalNormalizer } from './morphology/turkish-normalizer'
 import { turkishProfile } from '../generators/profiles/turkish';
 import { fusedForms, splitFusedForms } from './fused-forms-split';
 import { spaceApostropheSuffixes } from './apostrophe-suffixes';
+import { splitAttachedSuffixes, type AttachedSuffix } from './attached-suffix-split';
+import { TR_LOCATIVES } from './turkish-script';
 import {
   StringLiteralExtractor,
   NumberExtractor,
@@ -206,17 +208,29 @@ export class TurkishTokenizer extends BaseTokenizer {
       .filter(w => /^\p{L}{1,3}$/u.test(w) && w !== 'ile'),
   ]);
 
+  /** The locative written onto a word (`tıklamada`, M2 N4), in each harmony form. */
+  private readonly attached: readonly AttachedSuffix[] = [...TR_LOCATIVES].map(written => ({
+    written,
+    marker: written,
+  }));
+
   /**
    * A pronoun fused with its marker (`bana`, `ben` + `e`) reads as the two: see
    * splitFusedForms. A suffix on code after an apostrophe (`#out'a`) reads as
-   * the marker apart: see spaceApostropheSuffixes.
+   * the marker apart: see spaceApostropheSuffixes. A known word with its
+   * locative written on (`tıklamada`, `değişiklikte`) reads as the word and
+   * the marker, in any of the four forms (the render writes the one harmony
+   * gives; the reader takes a slip as it takes `tıklama i üzerinde`): see
+   * splitAttachedSuffixes.
    */
   override tokenize(input: string): TokenStream {
-    return splitFusedForms(
+    const word = (w: string) => super.tokenize(w).tokens;
+    const stream = splitFusedForms(
       super.tokenize(spaceApostropheSuffixes(input, this.suffixes)),
       this.fused,
-      word => super.tokenize(word).tokens
+      word
     );
+    return splitAttachedSuffixes(stream, this.attached, word);
   }
 
   classifyToken(token: string): TokenKind {
