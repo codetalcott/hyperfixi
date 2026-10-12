@@ -7,6 +7,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.5.0] - 2026-10-11
+
+Pronouns, suffixes and handler heads read as their language. In 4.4.0 every translation wrote `me` and
+`it` in the nominative beside a marker (es `a yo`, de `zu ich`, tr `ben e`, ar `إلى أنا`), wrote every
+case particle as a word of its own (ko `#out 에`, ja `"x" を`), and wrote a Japanese, Bengali or Turkish
+handler head with two markers (`クリック を で`, `ক্লিক তে`, `tıklama i üzerinde`). Each of these is now
+the language's own form, and every reader still takes the old one. The forms are listed for native
+review in `packages/semantic/NATIVE_REVIEW_NEEDED.md`; none has been reviewed yet.
+
+### Added
+
+- **`@lokascript/testing-framework`: the English-leak gate counts pronoun case and marker spacing.**
+  `case:it` and an unmarked object pronoun (`case:me-object`, `case:it-object`) beside `case:me`; and
+  `spacing:<marker>`, a particle ko, ja, bn or tr attaches to its noun written as a word of its own.
+  Both shrink-only, both halves (corpus and command shapes), with per-language exit targets in
+  `LEAK_TARGETS`.
+- **`@lokascript/semantic`: `toggle … between`** in every language's own words (ja `の間で`, hi `के बीच`,
+  he `בין`), with the style form's element written in the language.
+- **`docs-internal/multilingual/FUSED_FORMS.md`**: the design for pronouns fused with their markers and
+  suffixes attached to words, with the owner's four questions and their answers.
+
+### Changed
+
+- **`@lokascript/semantic` writes a pronoun in the case its marker takes.** Free forms: es `en mí`,
+  pt `a mim`, it `a me`, tl `sa akin`, pl `do mnie`, ru `ко мне` / `во мне`, uk `до мене`, de `zu mir`
+  / `in mich` (direction) / `auf mir` (location), hi `मुझ में`; `it` after a marker (ru `к этому`, pl `do
+  tego`, de `dazu` / `darin` / `darauf`, fr `à lui`, hi `इस में`); `me` as a verb's object (de `zeige
+  mich`, ru `покажи меня`). Fused forms: tr `bana` / `beni` / `benden`, `ona` / `onu`; ar `إليّ` / `فيه`;
+  he `אליי` / `ממני`; bn `আমাকে` / `আমাতে`; hi `मुझे`; tl `dito`; pt `nele`. Object clitics on the verb:
+  es `mostrarme`, it `metterlo`, pt `colocá-lo`, ar `ضعه`; fr writes the object pronoun before the
+  infinitive (`le mettre`, `l'afficher`, `me cacher`). Every reader takes the nominative and the English
+  forms as before.
+- **`@lokascript/semantic` writes a case particle onto its word** in ko (`"x"을 #out에 넣다`, `나를`,
+  each particle in the form the syllable takes), ja (`#outに`, `.aを`) and bn (`#outএ`, `.xকে`), and tr
+  fuses a suffix with its own reference words (`sonucu`, `hedefe`, `belgeye`) while code keeps its
+  suffix apart (`#out e`) until a reviewer picks a code word's harmony. tr also reads a suffix on code
+  after an apostrophe (`#out'a`, `.active'i`).
+- **`@lokascript/semantic` writes a handler head as one word**: ja `クリックで` (was `クリック を で`),
+  bn `ক্লিকে` (the locative in the form the word takes: `জমাতে` after a vowel; was `ক্লিক তে`),
+  tr `tıklamada` (the locative in the form harmony gives: `göndermede`, `değişiklikte`; code keeps it apart, `keyup da`; was `tıklama i üzerinde`). The readers keep taking the two-marker heads.
+- **`@lokascript/semantic` writes a query's scope before the query** in bn, hi, tr, ja and ko (tr
+  `bendeki <p/>`, hi `मुझ में स्थित <p/>`, ja `自分 の中の <p/>`), where it wrote English's order.
+- **`@lokascript/semantic`: es and pt write the `focus` and `blur` commands as verbs** (`enfocarme`,
+  `focar-me`); the nouns were the events' and still read.
+- **`@lokascript/semantic`: ja's head pattern outranks its fused handler patterns**, so a ja handler's
+  body always takes the clause walk: a `js … end` block after `then` and `fetch … as T` round-trip
+  where the fused path dropped them. The 2026-08 transformer's verb-first `繰り返し イベント X を まで`
+  body no longer reads in ja (the render since 2026-08-28 does).
+
+- **`@lokascript/htmx-adapter`: the tr vocab gains `hx-da` as an alias of `hx-on`;** `hx-üzerinde` stays the name
+  (the profile's `on` word moved to the locative; a suffix is the wrong register for an attribute name).
+
+### Fixed
+
+- **`publish.yml`: a repair run skips a version npm is still processing** (`E409 previously staged`)
+  instead of failing the whole run.
+
 ## [4.4.0] - 2026-10-10
 
 Translations now read as their language. In 4.3.0, 19% of the corpus's translations and 24% of the
@@ -1547,6 +1604,7 @@ _Synchronized version release. See git history for details._
 - 2FA recommended for npm organization
 
 [Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v4.4.0...HEAD
+[4.5.0]: https://github.com/codetalcott/hyperfixi/compare/v4.4.0...v4.5.0
 [4.4.0]: https://github.com/codetalcott/hyperfixi/compare/v4.3.0...v4.4.0
 [4.3.0]: https://github.com/codetalcott/hyperfixi/compare/v4.2.0...v4.3.0
 [4.2.0]: https://github.com/codetalcott/hyperfixi/compare/v4.1.0...v4.2.0
