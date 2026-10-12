@@ -18,7 +18,7 @@ What the gates measure. Each claim carries its re-check command:
 | --------------------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | Corpus fidelity, 11 ratchet signals     | 1.000 in all 24 languages (baseline 2026-09-25)                     | `cd packages/testing-framework && npx tsx src/multilingual/cli.ts --full --bundle browser-priority --regression` (after `populate`) |
 | Value matrix (4,537 cells × 48 lanes)   | 6 failing, all ACCEPTED, 0 open (2026-10-07)                        | `npx tsx tools/regen-value-matrix-baseline.ts --dry-run` (testing-framework)                                                        |
-| Command shapes (1,135 scripts × 24)     | 24,637 pass, 2,584 refused, 19 silent; en 1,074 / 61 / 0 (10-10)    | `npx tsx tools/regen-command-shapes-baseline.ts --report` (testing-framework)                                                       |
+| Command shapes (1,135 scripts × 24)     | 25,183 pass, 2,046 refused, 11 silent; en 1,082 / 53 / 0 (10-12)    | `npx tsx tools/regen-command-shapes-baseline.ts --report` (testing-framework)                                                       |
 | English left in renders: words / events / `me` case | corpus 5.4% / 0.0% / 9.0% of renders; command shapes 10.8% / 0.0% / 16.3%. Words counted toward the target (kept English out), per language: corpus 0.7–4.6%, shapes 3.9–6.2%, met in 23/23 (10-10) | `npx tsx tools/regen-english-leaks-baseline.ts --report` (testing-framework; corpus after `populate`) |
 | Canonical validity (upstream parses it) | both allowlists empty (3174/3174 foreign, 138/138 en on 2026-09-23) | `npm run test:canonical --prefix packages/testing-framework`                                                                        |
 | English reference preserved             | 162/163 units (1 allowlisted: async-block, by design; 2026-10-06)   | same                                                                                                                                |
@@ -200,8 +200,6 @@ command-shape dry run shows each move.
 - **M1 calls taken:** fail-loud by default (F1 `translate()` throws, F2 the adapter refuses at run time;
   2026-10-06, shipped in 4.2.0). `swap innerHTML of …` and a naked `${}` URL keep core's meaning in
   translation, and the docs teach upstream's (2026-10-07).
-- **`ask` / `answer` vocabulary** (M1's LOUD family): neither has a schema or a word in any
-  dictionary, so both are refused. Adding them is a policy-5 vocabulary call.
 - **AOT** retired (owner, 2026-10-04): `packages/aot-compiler` and MCP `compile_hyperscript` were removed for 4.0 (it was parked from 2026-09-27).
 - **`hx-query`** (htmx 4's new verb, V4): core's htmx-compat layer retired in Phase C3, so this is
   vocabulary only now. Give it a localized name in the htmx adapter's vocabulary, or leave it English?

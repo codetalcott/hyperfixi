@@ -1,8 +1,8 @@
 {
   "description": "English-leak gate, command-shape half (src/multilingual/english-leaks.ts): per command-shape case, the findings of each language's render (translate(src, 'en', L)): an English grammar word, `event:<name>`, `case:<pronoun>` or `spacing:<marker>`. `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts.",
-  "renders": 24102,
-  "leaky": 3623,
-  "findings": 6847,
+  "renders": 24286,
+  "leaky": 3631,
+  "findings": 6865,
   "kinds": {
     "word": {
       "renders": 2524,
@@ -17,8 +17,8 @@
       "findings": 32
     },
     "spacing": {
-      "renders": 1216,
-      "findings": 2532
+      "renders": 1224,
+      "findings": 2550
     }
   },
   "entries": {
@@ -306,6 +306,9 @@
       "spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i": "tr",
       "spacing:로": "ko",
       "spacing:として": "ja"
+    },
+    "15f8c54697": {
+      "spacing:e spacing:i spacing:i": "tr"
     },
     "16cf73552a": {
       "spacing:e spacing:i": "tr",
@@ -697,6 +700,9 @@
     "3653262b4c": {
       "spacing:e spacing:e spacing:i spacing:i": "tr"
     },
+    "36bd970993": {
+      "spacing:i spacing:i spacing:le": "tr"
+    },
     "36e2294330": {
       "spacing:i": "tr"
     },
@@ -740,6 +746,9 @@
       "spacing:에서": "ko",
       "spacing:から": "ja"
     },
+    "39f0561a3a": {
+      "spacing:e spacing:i": "tr"
+    },
     "39fcc6226b": {
       "spacing:i": "tr"
     },
@@ -770,6 +779,9 @@
     },
     "3ca1a7a07f": {
       "spacing:কে": "bn"
+    },
+    "3ca4288cf4": {
+      "spacing:e spacing:i spacing:le": "tr"
     },
     "3d08c1eb9c": {
       "spacing:i transition view": "tr",
@@ -881,6 +893,9 @@
     "45c450cd16": {
       "null": "es fr he it pt ru tl uk vi zh",
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr"
+    },
+    "461a675696": {
+      "spacing:i": "tr"
     },
     "4624a9f39a": {
       "spacing:e spacing:i": "tr"
@@ -2121,6 +2136,9 @@
       "spacing:e spacing:i": "tr",
       "spacing:কে": "bn"
     },
+    "9ba514eef4": {
+      "spacing:i spacing:le": "tr"
+    },
     "9be849de9c": {
       "spacing:e spacing:i": "tr"
     },
@@ -2991,6 +3009,9 @@
     "ddd1db551f": {
       "spacing:i": "tr"
     },
+    "ddd8e60406": {
+      "spacing:e spacing:i": "tr"
+    },
     "de4311b9f1": {
       "spacing:e spacing:i": "tr"
     },
@@ -3373,6 +3394,9 @@
     "fef0cd8bed": {
       "spacing:e spacing:i": "tr"
     },
+    "ff19750b7a": {
+      "spacing:e spacing:i": "tr"
+    },
     "ff30aeb427": {
       "spacing:i spacing:i spacing:i transition view": "tr",
       "transition view": "ar bn de es he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
@@ -3393,7 +3417,6 @@
     "12ff2cf365": "vi",
     "13cff46824": "bn it th",
     "15c22f6ecd": "*",
-    "15f8c54697": "*",
     "162e3e0582": "*",
     "16fb80c097": "bn it ko th zh",
     "1aa9c955fa": "ko",
@@ -3420,18 +3443,14 @@
     "35274bd534": "*",
     "35f188d961": "*",
     "3614477c6c": "bn it th",
-    "36bd970993": "*",
     "38fd7baa12": "vi",
     "391f640b6b": "hi",
     "394a7bfb45": "*",
-    "39f0561a3a": "*",
     "3ba1aed452": "*",
-    "3ca4288cf4": "*",
     "3f9872bcd4": "bn it pl th",
     "4293df22ee": "vi",
     "446cb475ce": "*",
     "451b518289": "*",
-    "461a675696": "*",
     "461f84cebf": "bn ko",
     "47a37edc5b": "de",
     "49a761fabb": "bn it th",
@@ -3497,7 +3516,6 @@
     "93c8c96b46": "hi",
     "961a12b7b7": "*",
     "998cfdeacf": "*",
-    "9ba514eef4": "*",
     "9bb9b09088": "*",
     "9bd61daeaf": "*",
     "9beb7b2c68": "bn it th",
@@ -3545,7 +3563,6 @@
     "dc8881fc7d": "qu",
     "dd2ca23457": "bn de it th tr",
     "dd8bfb1190": "vi",
-    "ddd8e60406": "*",
     "deac58c100": "ms vi",
     "dee03cd129": "vi",
     "df1d461f99": "bn it th",
@@ -3566,7 +3583,6 @@
     "f1bc20c608": "de es fr id it pl pt qu sw tr vi",
     "f76ff620e1": "*",
     "fc1f6f6ab5": "qu",
-    "ff19750b7a": "*",
     "ffb70089e3": "*"
   }
 }

@@ -643,6 +643,41 @@ for the reviewer: is the bare `event` word natural before a name, or does your l
 an article or a case (ru genitive, tr `olayını`)? Should a known event take the word too, for
 one shape (`esperar evento transitionend`)?
 
+## `ask` and `answer` in the language's own verbs (M2, vocabulary sheet B8) ⚠️ (October 2026)
+
+Upstream's two dialog commands, refused in every language until now: `ask "Name?"` prompts and the
+reply is `it`; `answer "Saved"` alerts; `answer "Save?" with "Yes" or "No"` confirms, and `it` is the
+chosen value. The words are the plain verbs "ask" and "answer" (upstream's own names, one word for one
+word; `answer` is upstream's odd name for an alert). The choices take the `with` marker every profile
+already has (the `style` role: ja `で`, ko `로`, tr `le`), and the `or` is the word the value pass
+writes in any expression. Written from grammar references, not checked by a native speaker.
+
+| lang | `ask "Name?"` | `answer "Save?" with "Yes" or "No"` | to check |
+| ---- | ------------- | ----------------------------------- | -------- |
+| ar | `اسأل "Name?"` | `أجب "Save?" بـ "Yes" أو "No"` | `بـ` for the choices; `اسأل`/`أجب` imperatives |
+| bn | `"Name?"কে জিজ্ঞাসা` | `"Save?"কে "Yes" অথবা "No" দিয়ে উত্তর` | `জিজ্ঞাসা`/`উত্তর` nouns, as `টগল`; `কে` after a quoted message; `দিয়ে` for the choices |
+| de | `frage "Name?"` | `antworte "Save?" mit "Yes" oder "No"` | imperative, as `erhöhe`; `frage nach`? |
+| es | `preguntar "Name?"` | `responder "Save?" con "Yes" o "No"` |  |
+| fr | `demander "Name?"` | `répondre "Save?" avec "Yes" ou "No"` |  |
+| he | `שאל את "Name?"` | `ענה את "Save?" עם "Yes" או "No"` | `את` before a quoted message; `עם` for the choices |
+| hi | `"Name?" को पूछें` | `"Save?" को "Yes" या "No" से जवाब` | `पूछें` imperative, `जवाब` a noun (alternative `उत्तर`): `जवाब दें`? `से` for the choices |
+| id | `tanya "Name?"` | `jawab "Save?" dengan "Yes" atau "No"` |  |
+| it | `chiedi "Name?"` | `rispondi "Save?" con "Yes" o "No"` |  |
+| ja | `"Name?"を 尋ねる` | `"Save?"を "Yes" または "No"で 答える` | `尋ねる` (ask) and `答える` (answer) as dictionary forms, as `切り替え` is a noun: `尋ね`/`答え`? Is `で` right for the choices (`「Yes」か「No」で`)? |
+| ko | `"Name?"을 질문` | `"Save?"을 "Yes" 또는 "No"로 답변` | `질문`/`답변` as nouns, as `토글`/`로그` are; `로` for the choices |
+| ms | `tanya "Name?"` | `jawab "Save?" dengan "Yes" atau "No"` |  |
+| pl | `zapytaj "Name?"` | `odpowiedz "Save?" z "Yes" lub "No"` | `zapytaj`/`odpowiedz` imperatives; `z` for the choices |
+| pt | `perguntar "Name?"` | `responder "Save?" com "Yes" ou "No"` |  |
+| qu | `"Name?" ta tapuy` | `"Save?" ta "Yes" utaq "No" wan kutichipuy` | `kutichipuy` (the plain `kutichiy` is already qu `return` and a toggle surface); `ta` and `wan` |
+| ru | `спросить "Name?"` | `ответить "Save?" с "Yes" или "No"` | infinitives, as `увеличить`; `с` for the choices (`с вариантами`?) |
+| sw | `uliza "Name?"` | `jibu "Save?" na "Yes" au "No"` | `na` for the choices |
+| th | `ถาม "Name?"` | `ตอบ "Save?" ด้วย "Yes" หรือ "No"` |  |
+| tl | `tanungin "Name?"` | `sagutin "Save?" nang "Yes" o "No"` | `nang` for the choices (`gamit ang`?) |
+| tr | `"Name?" i sor` | `"Save?" i "Yes" veya "No" le cevapla` | `sor`/`cevapla` imperatives, as `kaydet`; `yanıtla`? the instrumental `le` for the choices (`"Yes" veya "No" ile`) |
+| uk | `запитати "Name?"` | `відповісти "Save?" з "Yes" або "No"` | same as ru |
+| vi | `hỏi "Name?"` | `trả lời "Save?" với "Yes" hoặc "No"` |  |
+| zh | `询问 把 "Name?"` | `回答 把 "Save?" 用 "Yes" 或 "No"` | `把` is the patient marker the profile writes for every object; `询问`/`回答` as two-character verbs |
+
 ## `toggle … between` (M2, vocabulary sheet A6) ⚠️ (October 2026)
 
 `toggle between .a and .b`, `toggle $x between 'a', 'b' and 'c'`. The `between` word is each dictionary's

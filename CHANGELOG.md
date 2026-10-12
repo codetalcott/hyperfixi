@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`@lokascript/semantic`: `ask` and `answer`** in every language's own word (es `preguntar` /
+  `responder`, ja `尋ねる` / `答える`, de `frage` / `antworte`): upstream's two dialog commands (`ask
+  "Name?"` prompts; `answer "Save?" with "Yes" or "No"` confirms, the choices after the language's
+  `with`). Both were refused in every language. Listed for native review in
+  `packages/semantic/NATIVE_REVIEW_NEEDED.md`.
+
 ## [4.5.0] - 2026-10-11
 
 Pronouns, suffixes and handler heads read as their language. In 4.4.0 every translation wrote `me` and

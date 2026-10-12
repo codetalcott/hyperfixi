@@ -24,7 +24,10 @@ forever` in the 15 languages that kept English's (V1, below), and A6 (2026-10-11
 .b` and the lists a variable or a style cycles through, `toggle $x between 1, 2 and 3`, in the language's
 `between` and the `and` the value pass writes: es `alternar entre .a y .b`, ja `.a そして .b の間で 切り替え`;
 a style's element keeps English's `of`, `*display of yo`, as A3 keeps an owner that is not an element).
-Nothing is open. The
+B8 (2026-10-12, the owner's call: `ask` / `answer` as the plain verbs, es `preguntar` / `responder`,
+ja `尋ねる` / `答える`; the choices after the profile's `with`, the `or` the value pass writes; qu
+`kutichipuy`, as `kutichiy` is qu's `return`). Open: B9, scroll's directions (decided 2026-10-12 with
+B8; the appendix has the words). The
 words of B3–B6, A5, A4, A9, B2 and B1 are in `packages/semantic/src/parser/utils/grammar-words.ts`, and
 A10's in `packages/semantic/src/element-scope.ts`, each held to the dictionaries by a test.
 
@@ -89,6 +92,7 @@ The engine reads each spelling on the right the same as the English on the left 
 | B4  | `on click elsewhere`, `from elsewhere` | an event outside the element                 | 46 / 63   | translate as "outside" (fr `ailleurs`, de `außerhalb`)                 |
 | B5  | `for x in … with index i`            | the loop's counter                             | 23 / 22   | translate                                                              |
 | B6  | `start view transition`              | begin a View Transition                        | 23 / 276  | translate `start`; keep `view transition`, the web API's name (policy 6 already keeps `using view transition`) |
+| B8  | `ask "Name?"`, `answer "Save?" with "Yes" or "No"` | upstream's dialog commands: a prompt (`it` is the reply), an alert, a confirm (`it` is the choice) | 0 / 192 lanes (refused, LOUD `ask-answer`) | translate as the plain verbs "ask" and "answer" (upstream's own names, one word for one word); the choices take the profile's `with`; **decided 2026-10-12, done (ask-answer PR)** |
 | B7  | he's missing words (N7), and bn/th/vi `document`/`window` | he has no word for `of`, `as`, `in`, `between`, `not`, `first`, `at`, `matches`, `closest`, `next`, `previous`, `empty`, `exists`, `or` | he: 35% of its corpus renders hold English, the others 15–22% | fill (appendix) |
 
 ## C. Keep English (recommended)
@@ -131,6 +135,34 @@ marks a word the language's dictionary already has. Several entries are two word
 | uk   | функція     | нарешті    | назад   | ззовні     | індекс   | почати   |
 | vi   | hàm         | cuối cùng  | lùi ?   | bên ngoài  | chỉ số   | bắt đầu  |
 | zh   | 函数        | 最终       | 后退    | 外部       | 索引     | 开始     |
+
+The dialog commands (B8, decided 2026-10-12) and scroll's directions (B9):
+
+| lang | B8 ask | B8 answer | B9 up | B9 down | B9 left | B9 right |
+| ---- | ------ | --------- | ----- | ------- | ------- | -------- |
+| ar | اسأل | أجب | أعلى | أسفل | يسار | يمين |
+| bn | জিজ্ঞাসা | উত্তর | উপরে | নিচে | বামে | ডানে |
+| de | frage | antworte | hoch | runter | links | rechts |
+| es | preguntar | responder | arriba | abajo | izquierda | derecha |
+| fr | demander | répondre | haut | bas | gauche | droite |
+| he | שאל | ענה | למעלה ? | למטה ? | שמאלה | ימינה |
+| hi | पूछें | जवाब | ऊपर | नीचे | बाएं | दाएं |
+| id | tanya | jawab | atas | bawah | kiri | kanan |
+| it | chiedi | rispondi | sopra ? | sotto ? | sinistra | destra |
+| ja | 尋ねる | 答える | 上 | 下 | 左 | 右 |
+| ko | 질문 | 답변 | 위쪽 | 아래쪽 | 왼쪽 | 오른쪽 |
+| ms | tanya | jawab | atas | bawah | kiri | kanan |
+| pl | zapytaj | odpowiedz | w górę ? | w dół ? | w lewo ? | w prawo ? |
+| pt | perguntar | responder | acima | abaixo | esquerda | direita |
+| qu | tapuy ? | kutichipuy ? | hanaq ? | uray ? | lluq'i ? | paña ? |
+| ru | спросить | ответить | вверх | вниз | влево | вправо |
+| sw | uliza | jibu | juu | chini | kushoto | kulia |
+| th | ถาม | ตอบ | ขึ้น | ลง | ซ้าย | ขวา |
+| tl | tanungin | sagutin | pataas | pababa | pakaliwa | pakanan |
+| tr | sor | cevapla | yukarı | aşağı | sola | sağa |
+| uk | запитати | відповісти | вгору | вниз | вліво | вправо |
+| vi | hỏi | trả lời | lên | xuống | trái | phải |
+| zh | 询问 | 回答 | 向上 | 向下 | 向左 | 向右 |
 
 Group A's missing words (A9, A10) and the lexicon gaps (B7):
 

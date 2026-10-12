@@ -62,6 +62,12 @@ describe('the English parse', () => {
     expect(node?.action).toBe('answer');
     expect(node?.roles.has('style')).toBe(false);
   });
+
+  it('a message is required: a bare `ask` is no command, and a translation says so', () => {
+    expect(() => parse('ask', 'en')).toThrow();
+    expect(() => parse('answer', 'en')).toThrow();
+    expect(() => translate('on click ask then log 1', 'en', 'es')).toThrow(/lose part/);
+  });
 });
 
 describe('the words are the dictionaries’', () => {
