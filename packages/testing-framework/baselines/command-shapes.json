@@ -3,8 +3,8 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 25350,
-  "refused": 1879,
+  "pass": 25725,
+  "refused": 1504,
   "silent": 11,
   "entries": {
     "6f60177037": {
@@ -83,11 +83,6 @@
       "family": "halt",
       "refused": "en *",
       "loud": "halt-modes: halt's `default` (also a command word) and `the event's bubbling|default`: the slot that keeps `call` out of `halt call f()` cannot tell `default` from a command without a halt-only reading (OPEN_ITEMS P56)"
-    },
-    "599215db33": {
-      "src": "on click 1 hide on click 2 show",
-      "family": "hide",
-      "refused": "*"
     },
     "a893804c5f": {
       "src": "on click if false end put \"foo\" into me.innerHTML",
@@ -375,11 +370,6 @@
       "family": "transition",
       "refused": "bn hi ja ko qu tr"
     },
-    "446cb475ce": {
-      "src": "on click 1 transition my *width to 100px on click 2 transition my *width to initial",
-      "family": "transition",
-      "refused": "*"
-    },
     "35274bd534": {
       "src": "on click transition the next <div/>'s *width from 0px to 100px",
       "family": "transition",
@@ -472,11 +462,6 @@
       "refused": "*",
       "loud": "pseudo-class-query: a query of a pseudo-class (`<:checked/>`): the tokenizers read `:checked` as a local variable; a tokenizer item, rare in pages"
     },
-    "3614477c6c": {
-      "src": "on click elsewhere remove me",
-      "family": "core/regressions",
-      "refused": "bn it th"
-    },
     "a0bcf49227": {
       "src": "on click from closest parent <div/> put \"Foo\" into me",
       "family": "core/regressions",
@@ -494,61 +479,11 @@
       "family": "core/regressions",
       "refused": "qu tr"
     },
-    "82b8bc8836": {
-      "src": "on click 1 set x to 10 on click 2 set @out to x",
-      "family": "core/scoping",
-      "refused": "*"
-    },
-    "4b9dd078a2": {
-      "src": "on click 1 set element x to 10 on click 2 set @out to x",
-      "family": "core/scoping",
-      "refused": "*"
-    },
-    "d6ac459628": {
-      "src": "on click 1 set :x to 10 on click 2 set @out to :x",
-      "family": "core/scoping",
-      "refused": "*"
-    },
-    "9bd61daeaf": {
-      "src": "on click 1 default element x to 0 on click 2 set element x to 10 on click 3 set @out to x",
-      "family": "core/scoping",
-      "refused": "*"
-    },
-    "961a12b7b7": {
-      "src": "on click 1 default global x to 0 on click 2 set global x to 10 on click 3 set @out to x",
-      "family": "core/scoping",
-      "refused": "*"
-    },
-    "6d61cf7bfb": {
-      "src": "behavior Behave(foo) on click 1 set foo to foo + 10 on click 2 set @out to foo",
-      "family": "core/scoping",
-      "refused": "*"
-    },
-    "b8c084be2a": {
-      "src": "install Behave(foo:10) on click 2 set element foo to 1 on click 4 set @out2 to foo",
-      "family": "core/scoping",
-      "refused": "*"
-    },
-    "4d988893a9": {
-      "src": "behavior Behave(foo) on click 1 set foo to foo + 10 on click 3 set @out to foo",
-      "family": "core/scoping",
-      "refused": "*"
-    },
     "240935231f": {
       "src": "behavior Behave(foo) on click 1 set foo to foo + 10 on click 3 set @out to foo behavior BehaveTwo(foo) on click 2 set e…",
       "family": "core/scoping",
       "refused": "en *",
       "loud": "rare-commands: commands rare in pages: `measure` of a property list, `pick characters 0 to 3 from …`, an `if` whose body is empty (`if false end`), a behavior holding a bare command, two behaviors with no `end` between"
-    },
-    "0fba0cde11": {
-      "src": "on click 1 set $x to 10 on click 2 set @out to $x",
-      "family": "core/scoping",
-      "refused": "*"
-    },
-    "4ad324c57b": {
-      "src": "on click 1 set foo to 20 then set @out to foo",
-      "family": "core/scoping",
-      "refused": "*"
     },
     "8a13ec8232": {
       "src": "on click set my [@data-foo] to \"blue\"",
@@ -703,11 +638,6 @@
       "refused": "en *",
       "loud": "rare-heads: handler heads rare in pages: a quoted event name (`on \"a-b\"`), a filter after parameters (`on foo(bar)[bar]`), `and on`, a source on each `or` leg, a parenthesized feature (`(on click …)`)"
     },
-    "7cf4fa3af7": {
-      "src": "on click elsewhere add .clicked",
-      "family": "on",
-      "refused": "bn it th"
-    },
     "a8613168a4": {
       "src": "on foo(bar)[bar] put \"triggered\" into my.innerHTML",
       "family": "on",
@@ -724,26 +654,6 @@
       "family": "on",
       "refused": "pt"
     },
-    "9beb7b2c68": {
-      "src": "on foo queue first wait for bar then call increment()",
-      "family": "on",
-      "refused": "bn it th"
-    },
-    "49a761fabb": {
-      "src": "on foo queue last wait for bar then call increment()",
-      "family": "on",
-      "refused": "bn it th"
-    },
-    "78bd8bf920": {
-      "src": "on foo queue all wait for bar then call increment()",
-      "family": "on",
-      "refused": "bn it th"
-    },
-    "ba54beb9d5": {
-      "src": "on click queue none put increment() into my.innerHTML then wait for a customEvent",
-      "family": "on",
-      "refused": "bn it th"
-    },
     "16fb80c097": {
       "src": "on click or foo call increment()",
       "family": "on",
@@ -752,17 +662,12 @@
     "dd2ca23457": {
       "src": "on click in #d1 put it into window.tmp",
       "family": "on",
-      "refused": "bn de it th tr"
-    },
-    "20024e932d": {
-      "src": "on click 1 put 1 + my.innerHTML as Int into my.innerHTML",
-      "family": "on",
-      "refused": "*"
+      "refused": "de it tr"
     },
     "3f9872bcd4": {
       "src": "on click 1 to 2 put 1 + my.innerHTML as Int into my.innerHTML",
       "family": "on",
-      "refused": "bn it pl th"
+      "refused": "pl"
     },
     "bd7175dd23": {
       "src": "on click 2 and on put 1 + my.innerHTML as Int into my.innerHTML",
@@ -770,50 +675,10 @@
       "refused": "en *",
       "loud": "rare-heads: handler heads rare in pages: a quoted event name (`on \"a-b\"`), a filter after parameters (`on foo(bar)[bar]`), `and on`, a source on each `or` leg, a parenthesized feature (`(on click …)`)"
     },
-    "2f027486b4": {
-      "src": "on click 1 put \"one\" into my.innerHTML on click 3 put \"three\" into my.innerHTML on click 2 put \"two\" into my.innerHTML",
-      "family": "on",
-      "refused": "*"
-    },
-    "13cff46824": {
-      "src": "on mutation of attributes put \"Mutated\" into me",
-      "family": "on",
-      "refused": "bn it th"
-    },
-    "62bab43e17": {
-      "src": "on mutation of @foo put \"Mutated\" into me",
-      "family": "on",
-      "refused": "bn it th"
-    },
-    "85f412f92a": {
-      "src": "on mutation of @bar put \"Mutated\" into me",
-      "family": "on",
-      "refused": "bn it th"
-    },
-    "7e4f56fe1b": {
-      "src": "on mutation of childList put \"Mutated\" into me then wait for hyperscript:mutation",
-      "family": "on",
-      "refused": "bn it th"
-    },
-    "611ee442a1": {
-      "src": "on mutation of childList put \"Mutated\" into me",
-      "family": "on",
-      "refused": "bn it th"
-    },
     "bb2c2ab053": {
       "src": "on mutation of characterData put \"Mutated\" into me",
       "family": "on",
-      "refused": "bn it qu th"
-    },
-    "df1d461f99": {
-      "src": "on mutation of @foo or @bar put \"Mutated\" into me",
-      "family": "on",
-      "refused": "bn it th"
-    },
-    "ae9fb9c316": {
-      "src": "on mutation of attributes from #d1 put \"Mutated\" into me",
-      "family": "on",
-      "refused": "bn it th"
+      "refused": "qu"
     },
     "3030e3cc43": {
       "src": "on click put \"foo\" into me then throw \"bar\" on exception(error) put error into me",
@@ -835,16 +700,6 @@
       "family": "on",
       "refused": "en *",
       "loud": "rare-heads: handler heads rare in pages: a quoted event name (`on \"a-b\"`), a filter after parameters (`on foo(bar)[bar]`), `and on`, a source on each `or` leg, a parenthesized feature (`(on click …)`)"
-    },
-    "7f192fcdec": {
-      "src": "on intersection(intersecting) having threshold 0.1 if intersecting put \"seen\" into me end",
-      "family": "on",
-      "refused": "bn it th"
-    },
-    "6b508f9f6a": {
-      "src": "on intersection(intersecting) having margin \"10px\" if intersecting put \"seen\" into me end",
-      "family": "on",
-      "refused": "bn it th"
     },
     "5fc5e421fe": {
       "src": "on click halt the event's bubbling",
