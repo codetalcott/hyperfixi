@@ -1,0 +1,10 @@
+import '../../semantic/src/index';
+import { tokenize } from '../../semantic/src/tokenizers/index';
+import { tryGetProfile } from '../../semantic/src/registry';
+import { expressionWordOf } from '../../semantic/src/parser/utils/expression-lexicon';
+import { readsAsValueList, readsAsOneExpression } from '../../semantic/src/parser/utils/value-extent';
+const [src, lang] = process.argv.slice(2);
+const ts: any = tokenize(src, lang);
+const all = ts.tokens;
+all.forEach((t: any, i: number) => console.log(i, t.value, t.kind, t.normalized, '→', expressionWordOf(lang, t, all[i - 1], all[i + 1], undefined)));
+console.log(readsAsOneExpression('@a and @b'), readsAsValueList('@a and @b'));

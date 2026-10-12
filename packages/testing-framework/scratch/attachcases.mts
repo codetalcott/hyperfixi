@@ -1,0 +1,3 @@
+import { translate } from '../../semantic/src/index';
+const shapes = ['on click put result into #out','on click put it into #out','on click get #a','on click hide me','on click put "x" into #out','on click send foo to #b','on click add .x to #b','on click repeat for x in <p/> log x end','on click put my value into #out','on click take .a from #b','on click set $x to 5','on click hide #m with *opacity','on click put the result into me', 'on click log result'];
+for (const s of shapes) for (const l of ['ja','ko','bn']) { let o; try { o = translate(s, 'en', l); } catch { o = 'REFUSED'; } console.log(l, '|', s, '|', o); }
