@@ -108,6 +108,10 @@ export const indonesianLexicon: LanguageLexicon = {
     styles: { primary: 'gaya_gaya' },
   },
   expressions: {
+    up: { primary: 'atas' },
+    down: { primary: 'bawah' },
+    left: { primary: 'kiri' },
+    right: { primary: 'kanan' },
     at: { primary: 'di' },
     back: { primary: 'mundur' },
     characters: { primary: 'karakter' },

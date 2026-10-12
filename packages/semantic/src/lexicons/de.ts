@@ -108,6 +108,10 @@ export const germanLexicon: LanguageLexicon = {
     styles: { primary: 'stile' },
   },
   expressions: {
+    up: { primary: 'hoch' },
+    down: { primary: 'runter' },
+    left: { primary: 'links' },
+    right: { primary: 'rechts' },
     at: { primary: 'bei' },
     back: { primary: 'zurück' },
     characters: { primary: 'Zeichen' },

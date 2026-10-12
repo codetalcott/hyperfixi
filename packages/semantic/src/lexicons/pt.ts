@@ -108,6 +108,10 @@ export const portugueseLexicon: LanguageLexicon = {
     styles: { primary: 'estilos' },
   },
   expressions: {
+    up: { primary: 'acima' },
+    down: { primary: 'abaixo' },
+    left: { primary: 'esquerda' },
+    right: { primary: 'direita' },
     at: { primary: 'em' },
     back: { primary: 'atrás' },
     characters: { primary: 'caracteres' },

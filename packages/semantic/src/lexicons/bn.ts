@@ -86,6 +86,10 @@ export const bengaliLexicon: LanguageLexicon = {
     value: { primary: 'মান' },
   },
   expressions: {
+    up: { primary: 'উপরে' },
+    down: { primary: 'নিচে' },
+    left: { primary: 'বামে' },
+    right: { primary: 'ডানে' },
     back: { primary: 'পিছনে' },
     characters: { primary: 'অক্ষর' },
     children: { primary: 'সন্তান' },

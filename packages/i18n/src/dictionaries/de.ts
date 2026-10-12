@@ -209,6 +209,10 @@ export const de: Dictionary = {
   },
 
   expressions: {
+    up: 'hoch',
+    down: 'runter',
+    left: 'links',
+    right: 'rechts',
     back: 'zurück',
     elsewhere: 'außerhalb',
     index: 'index',

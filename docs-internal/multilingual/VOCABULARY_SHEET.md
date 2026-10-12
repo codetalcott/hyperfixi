@@ -26,8 +26,10 @@ forever` in the 15 languages that kept English's (V1, below), and A6 (2026-10-11
 a style's element keeps English's `of`, `*display of yo`, as A3 keeps an owner that is not an element).
 B8 (2026-10-12, the owner's call: `ask` / `answer` as the plain verbs, es `preguntar` / `responder`,
 ja `尋ねる` / `答える`; the choices after the profile's `with`, the `or` the value pass writes; qu
-`kutichipuy`, as `kutichiy` is qu's `return`). Open: B9, scroll's directions (decided 2026-10-12 with
-B8; the appendix has the words). The
+`kutichipuy`, as `kutichiy` is qu's `return`). B9 (2026-10-12:
+scroll's four directions, `scroll #box down by 200px`, es `desplazamiento #box abajo por 200px`, ja `#boxを
+下 200px スクロール`; sw `kupanda` / `kushuka`, as `sogeza juu` is sw's mouseover; qu `lluqi` without the
+ejective mark). Nothing is open. The
 words of B3–B6, A5, A4, A9, B2 and B1 are in `packages/semantic/src/parser/utils/grammar-words.ts`, and
 A10's in `packages/semantic/src/element-scope.ts`, each held to the dictionaries by a test.
 
@@ -45,6 +47,7 @@ used instead. The native review checks these too.
 | B1 function | qu `rurana` (`ruray` is `make`) |
 | B7 he | `as` `כ`, the word he's `fetch … as` already wrote (`בתור` reads as `ב` + `תור`); `at end of` `ב סוף של` (`אצל` is "at someone's"); `in` `בתוך` and `document` `מסמך` read whole, as keywords (bare, the tokenizer reads `ב` + `תוך`, `מ` + `סמך`); `empty` `ריק` and `is` `הוא` are also the reader's `null` and `it`, and read as the copula's words beside it, as sw `tupu` and ar `هو` do; `next` `הבא` is also he's `fetch`, and position tells them apart |
 | A6 between | ja `の間で` (the dictionary's `間に` reads `間` as `while`); hi `के बीच`, spaced (the extractor splits `के_बीच` at `_`); he `בין` (the dictionary had none) |
+| B9 directions | sw `kupanda` / `kushuka` (`sogeza juu` is mouseover, one token); qu `lluqi` (the apostrophe of `lluq'i` is a quote to the reader) |
 | B2 finally | he `סופית` (`לבסוף` reads as `ל` + `ב` + `סוף`, to/on/end); ja `最終的に`, ko `결국`, th `ท้ายที่สุด`, vi `rốt cuộc` (`最後に`, `마지막으로`, `สุดท้าย`, `cuối cùng` are `last`); qu `qhipamanqa` (`puchukaypi` reads as `end`) |
 
 > For the owner, 2026-10-08. Each row is one decision. The words target in M2's exit
@@ -93,6 +96,7 @@ The engine reads each spelling on the right the same as the English on the left 
 | B5  | `for x in … with index i`            | the loop's counter                             | 23 / 22   | translate                                                              |
 | B6  | `start view transition`              | begin a View Transition                        | 23 / 276  | translate `start`; keep `view transition`, the web API's name (policy 6 already keeps `using view transition`) |
 | B8  | `ask "Name?"`, `answer "Save?" with "Yes" or "No"` | upstream's dialog commands: a prompt (`it` is the reply), an alert, a confirm (`it` is the choice) | 0 / 192 lanes (refused, LOUD `ask-answer`) | translate as the plain verbs "ask" and "answer" (upstream's own names, one word for one word); the choices take the profile's `with`; **decided 2026-10-12, done (ask-answer PR)** |
+| B9  | `scroll #box down by 200px` | upstream's relative scroll: the four directions | 0 / 168 lanes (refused, LOUD `scroll-by`) | translate the directions; `by` as `increment … by` writes it; **decided 2026-10-12, done (scroll-by PR)** |
 | B7  | he's missing words (N7), and bn/th/vi `document`/`window` | he has no word for `of`, `as`, `in`, `between`, `not`, `first`, `at`, `matches`, `closest`, `next`, `previous`, `empty`, `exists`, `or` | he: 35% of its corpus renders hold English, the others 15–22% | fill (appendix) |
 
 ## C. Keep English (recommended)
@@ -154,9 +158,9 @@ The dialog commands (B8, decided 2026-10-12) and scroll's directions (B9):
 | ms | tanya | jawab | atas | bawah | kiri | kanan |
 | pl | zapytaj | odpowiedz | w górę ? | w dół ? | w lewo ? | w prawo ? |
 | pt | perguntar | responder | acima | abaixo | esquerda | direita |
-| qu | tapuy ? | kutichipuy ? | hanaq ? | uray ? | lluq'i ? | paña ? |
+| qu | tapuy ? | kutichipuy ? | hanaq ? | uray ? | lluqi ? | paña ? |
 | ru | спросить | ответить | вверх | вниз | влево | вправо |
-| sw | uliza | jibu | juu | chini | kushoto | kulia |
+| sw | uliza | jibu | kupanda ? | kushuka ? | kushoto | kulia |
 | th | ถาม | ตอบ | ขึ้น | ลง | ซ้าย | ขวา |
 | tl | tanungin | sagutin | pataas | pababa | pakaliwa | pakanan |
 | tr | sor | cevapla | yukarı | aşağı | sola | sağa |

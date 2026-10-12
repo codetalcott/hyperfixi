@@ -191,6 +191,10 @@ export const es: Dictionary = {
   },
 
   expressions: {
+    up: 'arriba',
+    down: 'abajo',
+    left: 'izquierda',
+    right: 'derecha',
     back: 'atrás',
     elsewhere: 'afuera',
     index: 'índice',

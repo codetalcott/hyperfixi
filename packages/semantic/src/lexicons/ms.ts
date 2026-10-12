@@ -122,6 +122,10 @@ export const malayLexicon: LanguageLexicon = {
     value: { primary: 'nilai' },
   },
   expressions: {
+    up: { primary: 'atas' },
+    down: { primary: 'bawah' },
+    left: { primary: 'kiri' },
+    right: { primary: 'kanan' },
     at: { primary: 'di' },
     back: { primary: 'undur' },
     characters: { primary: 'aksara' },

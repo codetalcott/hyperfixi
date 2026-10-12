@@ -255,6 +255,24 @@ const SCROLL_POSITIONS = new Set(['top', 'middle', 'bottom', 'left', 'center', '
 /** The adverbs a `go`/`scroll` takes, and core's `modifiers.behavior` for each. */
 const SCROLL_ADVERBS = new Set(['smoothly', 'instantly']);
 
+/** The directions of `scroll [<el>] up|down|left|right by <n>` (the engine's `direction`). */
+const SCROLL_DIRECTIONS = new Set(['up', 'down', 'left', 'right']);
+
+/** The words that may follow a scroll's direction: the amount's marker (`by`, es `por`). */
+function scrollByMarkers(language: string): ReadonlySet<string> {
+  const quantity = getSchema('scroll')?.roles.find(r => r.role === 'quantity');
+  const own = quantity?.markerOverride?.[language];
+  const marker = tryGetProfile(language)?.roleMarkers?.quantity;
+  const words = ['by', own, marker?.primary, ...(marker?.alternatives ?? [])];
+  return new Set(words.filter((w): w is string => !!w).map(w => w.toLowerCase()));
+}
+
+/** Does the token read as a scroll amount: a number, a length (`200px`), a sigil name? */
+function isScrollAmount(tok: LanguageToken | undefined): boolean {
+  if (!tok) return false;
+  return tok.kind === 'literal' || /^[-\d.$:]/.test(tok.value);
+}
+
 /**
  * Does `value` read as `tok`? A selector compares its text, a reference its
  * normalized word (es `yo` is `me`), an expression its first word.
@@ -732,6 +750,26 @@ function normalizeCommandRoles(
       }
     }
 
+    // scroll's by-form on a handler's fused path, which reads the schema's main
+    // pattern with the destination's marker optional: a bare amount is the
+    // destination (`클릭 할 때 200px 스크롤`), and a chain's first command reads an
+    // element before an amount as the destination (`прокрутити мене 50 потім …`).
+    // Upstream's `scroll … by` has no destination: a numeric or length
+    // destination is the amount, and an element beside an amount is the patient
+    // (the element scrolled).
+    if (node.action === 'scroll') {
+      const roles = node.roles as Map<SemanticRole, SemanticValue>;
+      const dest = roles.get('destination');
+      const text = !dest ? '' : 'raw' in dest ? dest.raw : 'value' in dest ? String(dest.value) : '';
+      if (dest && !roles.has('quantity') && /^-?\d/.test(text.trim())) {
+        roles.delete('destination');
+        roles.set('quantity', dest);
+      } else if (dest && roles.has('quantity') && !roles.has('patient')) {
+        roles.delete('destination');
+        roles.set('patient', dest);
+      }
+    }
+
     // transition: a goal-less surface (`transition *max-height over 300ms` →
     // hi `*max-height को 300ms संक्रमण`) reaches the generated-simple pattern,
     // whose REQUIRED {goal} slot swallows the time literal — goal:literal
@@ -1001,7 +1039,7 @@ export class SemanticParserImpl implements ISemanticParser {
     // offset into the input holds).
     if (this.parseDepth === 0) {
       this.boundIdentifiers.clear();
-      input = this.readNativeElsewhere(blankComments(input), language);
+      input = this.readNativeDirection(this.readNativeElsewhere(blankComments(input), language), language);
     }
     this.parseDepth++;
     this.coverageFrames.push([]);
@@ -6698,9 +6736,21 @@ export class SemanticParserImpl implements ISemanticParser {
       last = j + 1;
     }
     const adverb = first < 0 ? arr.findIndex(t => SCROLL_ADVERBS.has(word(t))) : -1;
-    if (first < 0 && adverb < 0) return null;
-    const start = first >= 0 ? first : adverb;
-    const end = first >= 0 ? last : adverb;
+    // `scroll [#box] down by 200px`: a direction before the amount's marker, or
+    // before the amount where the language writes it bare (ja `下 200px`). A
+    // position reads `left of #x`; a direction never takes `of`.
+    const byWords = scrollByMarkers(language);
+    const direction =
+      first < 0 && adverb < 0
+        ? arr.findIndex(
+            (t, k) =>
+              SCROLL_DIRECTIONS.has(word(t)) &&
+              (byWords.has(word(arr[k + 1])) || isScrollAmount(arr[k + 1]))
+          )
+        : -1;
+    if (first < 0 && adverb < 0 && direction < 0) return null;
+    const start = first >= 0 ? first : adverb >= 0 ? adverb : direction;
+    const end = first >= 0 ? last : start;
     const head = input.slice(0, arr[start].position.start).trimEnd();
     const tail = input.slice(arr[end].position.end).trimStart();
     const at = head ? head.length + 1 : 0;
@@ -6717,8 +6767,11 @@ export class SemanticParserImpl implements ISemanticParser {
         }
       };
       collect(reparsed ?? undefined);
+      // A scroll-by has no destination: its amount anchors it.
       const destinationStart = (n: SemanticNode): number =>
-        n.roles.get('destination' as SemanticRole)?.position?.start ?? -1;
+        n.roles.get('destination' as SemanticRole)?.position?.start ??
+        n.roles.get('quantity' as SemanticRole)?.position?.start ??
+        -1;
       const lastBefore = (limit: number): SemanticNode | undefined =>
         commands
           .filter(n => destinationStart(n) >= 0 && destinationStart(n) <= limit)
@@ -6734,10 +6787,82 @@ export class SemanticParserImpl implements ISemanticParser {
         if (!target || !destination || !sameSurface(destination, after)) return null;
         const phrase = arr.slice(first, last).map(t => t.value.toLowerCase());
         (target as { scrollPosition?: string }).scrollPosition = phrase.join(' ');
-      } else {
+      } else if (adverb >= 0) {
         const target = lastBefore(arr[adverb].position.start - 1);
         if (!target) return null;
         (target as { scrollBehavior?: string }).scrollBehavior = word(arr[adverb]);
+      } else {
+        // The scroll whose amount is the next thing read after the direction's
+        // place (the text before it keeps its offsets in the re-parse).
+        // (A fused handler's command carries no positions: then the last
+        // scroll with an amount, the one the direction stood in.)
+        const quantityStart = (n: SemanticNode): number =>
+          n.roles.get('quantity' as SemanticRole)?.position?.start ?? -1;
+        const scrolls = commands.filter(n => n.action === 'scroll');
+        const withAmount = scrolls.some(n => n.roles.has('quantity' as SemanticRole))
+          ? scrolls.filter(n => n.roles.has('quantity' as SemanticRole))
+          : scrolls.filter(n => n.roles.has('destination' as SemanticRole));
+        const target = withAmount.some(n => quantityStart(n) >= 0)
+          ? withAmount
+              .filter(n => quantityStart(n) >= at - 1)
+              .reduce<SemanticNode | undefined>(
+                (best, n) => (!best || quantityStart(n) < quantityStart(best) ? n : best),
+                undefined
+              )
+          : withAmount[withAmount.length - 1];
+        if (!target) return null;
+        const targetRoles = target.roles as Map<SemanticRole, SemanticValue>;
+        const dest = targetRoles.get('destination');
+        // A handler's fused pattern has no bare amount slot (a bare trailing
+        // slot would take what follows): `прокрутити #box 200px` read the
+        // element as the destination and left the amount. Then the amount is
+        // the token after the direction (and its marker), read here, out of a
+        // re-parse without it, and the element is the patient.
+        const amountAt = byWords.has(word(arr[direction + 1])) ? direction + 2 : direction + 1;
+        const amount = arr[amountAt];
+        if (
+          dest &&
+          !targetRoles.has('quantity') &&
+          (dest.type === 'selector' || dest.type === 'reference') &&
+          isScrollAmount(amount)
+        ) {
+          const without = `${head} ${input.slice(amount.position.end).trimStart()}`.trim();
+          const again = this.parse(without, language);
+          const scrolls: SemanticNode[] = [];
+          const walk = (n: SemanticNode | undefined): void => {
+            if (!n) return;
+            if (n.kind === 'command' && n.action === 'scroll') scrolls.push(n);
+            for (const field of NODE_CHILD_FIELDS) {
+              const child = (n as NodeChildren)[field];
+              if (Array.isArray(child)) child.forEach(c => walk(c as SemanticNode));
+            }
+          };
+          walk(again ?? undefined);
+          const element = scrolls.filter(n => n.roles.has('destination' as SemanticRole)).pop();
+          if (!again || !element) return null;
+          const roles = element.roles as Map<SemanticRole, SemanticValue>;
+          const el = roles.get('destination')!;
+          roles.delete('destination');
+          roles.set('patient', el);
+          // As the English pattern types it: a number, a sigil name, else an expression.
+          roles.set(
+            'quantity',
+            /^-?\d+(\.\d+)?$/.test(amount.value)
+              ? createLiteral(Number(amount.value), 'number')
+              : /^[$:]/.test(amount.value)
+                ? ({ type: 'reference', value: amount.value } as SemanticValue)
+                : { type: 'expression', raw: amount.value }
+          );
+          (element as { scrollDirection?: string }).scrollDirection = word(arr[direction]);
+          return again;
+        }
+        (target as { scrollDirection?: string }).scrollDirection = word(arr[direction]);
+        // The by-form has no destination: one read (a variable amount a fused
+        // handler head took for the element, `scroll down by x`) is the amount.
+        if (dest && !targetRoles.has('quantity')) {
+          targetRoles.delete('destination');
+          targetRoles.set('quantity', dest);
+        }
       }
       return reparsed;
     } catch {
@@ -6774,6 +6899,41 @@ export class SemanticParserImpl implements ISemanticParser {
       const start = tokens[i]!.position.start;
       const end = tokens[i + form.length - 1]!.position.end;
       out = out.slice(0, start) + 'elsewhere' + out.slice(end);
+    }
+    return out;
+  }
+
+  /**
+   * A scroll's direction in the language's own word (M2 sheet B9, grammar-words.ts:
+   * es `abajo por 200px`, ja `下 200px`), read as English's: the word is written as
+   * `down` before any stage sees it, where it stands before the amount's marker or
+   * the amount itself (tryScrollModifiers reads it there). Nowhere else: es
+   * `tecla arriba` is keyup, and a variable spelled like a direction keeps its name.
+   */
+  private readNativeDirection(input: string, language: string): string {
+    const words = GRAMMAR_WORDS[language];
+    if (!words) return input;
+    const byWords = scrollByMarkers(language);
+    const lower = input.toLowerCase();
+    let tokens: LanguageToken[] | undefined;
+    let out = input;
+    const edits: Array<[number, number, string]> = [];
+    for (const key of ['up', 'down', 'left', 'right'] as const) {
+      const native = words[key];
+      if (!native || native === key) continue;
+      const form = tokenizeInternal(native, language).tokens.map(t => t.value.toLowerCase());
+      if (!form[0] || !lower.includes(form[0])) continue;
+      tokens ??= tokenizeInternal(input, language).tokens as LanguageToken[];
+      for (let i = 0; i + form.length <= tokens.length; i++) {
+        if (!form.every((w, j) => tokens![i + j]!.value.toLowerCase() === w)) continue;
+        const next = tokens[i + form.length];
+        if (!next || !(byWords.has(next.value.toLowerCase()) || isScrollAmount(next))) continue;
+        edits.push([tokens[i]!.position.start, tokens[i + form.length - 1]!.position.end, key]);
+      }
+    }
+    // From the end, so each replacement leaves the offsets before it.
+    for (const [start, end, key] of edits.sort((a, b) => b[0] - a[0])) {
+      out = out.slice(0, start) + key + out.slice(end);
     }
     return out;
   }

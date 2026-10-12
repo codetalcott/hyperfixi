@@ -199,6 +199,10 @@ export const fr: Dictionary = {
   },
 
   expressions: {
+    up: 'haut',
+    down: 'bas',
+    left: 'gauche',
+    right: 'droite',
     back: 'arrière',
     elsewhere: 'ailleurs',
     index: 'indice',

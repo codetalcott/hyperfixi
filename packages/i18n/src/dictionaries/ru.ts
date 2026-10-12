@@ -221,6 +221,10 @@ export const russianDictionary: Dictionary = {
   },
 
   expressions: {
+    up: 'вверх',
+    down: 'вниз',
+    left: 'влево',
+    right: 'вправо',
     back: 'назад',
     elsewhere: 'снаружи',
     index: 'индекс',

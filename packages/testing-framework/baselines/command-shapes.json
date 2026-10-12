@@ -3,8 +3,8 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 25183,
-  "refused": 2046,
+  "pass": 25350,
+  "refused": 1879,
   "silent": 11,
   "entries": {
     "6f60177037": {
@@ -269,40 +269,10 @@
       "refused": "en *",
       "loud": "collection-expressions: upstream 0.9.93's collection expressions (`… where it matches .a`, `mapped to`) are an expression form semantic's reader does not have: a parser-track item (OPEN_ITEMS P57)"
     },
-    "6d7856da91": {
-      "src": "on click scroll down by 300px",
-      "family": "scroll",
-      "refused": "en *",
-      "loud": "scroll-by: scroll's relative form (`scroll #box down by 200px`) names a direction, which no language's dictionary has: adding them is an owner vocabulary decision (the M2 sheet)"
-    },
-    "786ba16f59": {
-      "src": "on click scroll up by 100px",
-      "family": "scroll",
-      "refused": "en *",
-      "loud": "scroll-by: scroll's relative form (`scroll #box down by 200px`) names a direction, which no language's dictionary has: adding them is an owner vocabulary decision (the M2 sheet)"
-    },
-    "5a7e7e17d2": {
-      "src": "on click scroll by 200px",
-      "family": "scroll",
-      "refused": "en *",
-      "loud": "scroll-by: scroll's relative form (`scroll #box down by 200px`) names a direction, which no language's dictionary has: adding them is an owner vocabulary decision (the M2 sheet)"
-    },
-    "65aa7d4176": {
-      "src": "on click scroll #box down by 200px",
-      "family": "scroll",
-      "refused": "en *",
-      "loud": "scroll-by: scroll's relative form (`scroll #box down by 200px`) names a direction, which no language's dictionary has: adding them is an owner vocabulary decision (the M2 sheet)"
-    },
     "20161acab0": {
       "src": "on click scroll to #item in #box",
       "family": "scroll",
       "refused": "de it tr"
-    },
-    "5c5c4838dc": {
-      "src": "on click scroll #box right by 300px",
-      "family": "scroll",
-      "refused": "en *",
-      "loud": "scroll-by: scroll's relative form (`scroll #box down by 200px`) names a direction, which no language's dictionary has: adding them is an owner vocabulary decision (the M2 sheet)"
     },
     "aae16fda89": {
       "src": "on foo.bar add .foo-sent",
@@ -954,12 +924,6 @@
       "refused": "en *",
       "loud": "beep: `beep!`, upstream's debugging command, has no schema: its form in each language is an owner vocabulary decision (the M2 sheet)"
     },
-    "451b518289": {
-      "src": "scroll down by 200",
-      "family": "scroll",
-      "refused": "en *",
-      "loud": "scroll-by: scroll's relative form (`scroll #box down by 200px`) names a direction, which no language's dictionary has: adding them is an owner vocabulary decision (the M2 sheet)"
-    },
     "eeb30e2d38": {
       "src": "for item in <li/> add .done to item end",
       "family": "for",
@@ -993,8 +957,7 @@
     "4d698f4f27": {
       "src": "scroll to #section scroll to the top of me scroll down by 200",
       "family": "scroll",
-      "refused": "en *",
-      "loud": "scroll-by: scroll's relative form (`scroll #box down by 200px`) names a direction, which no language's dictionary has: adding them is an owner vocabulary decision (the M2 sheet)"
+      "refused": "ko"
     },
     "2c6143ba00": {
       "src": "wait 1s wait 500ms then remove .loading wait for htmx:afterSwap",

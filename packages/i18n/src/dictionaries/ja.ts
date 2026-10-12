@@ -200,6 +200,10 @@ export const ja: Dictionary = {
   },
 
   expressions: {
+    up: '上',
+    down: '下',
+    left: '左',
+    right: '右',
     back: 'バック',
     elsewhere: '外側',
     index: 'インデックス',

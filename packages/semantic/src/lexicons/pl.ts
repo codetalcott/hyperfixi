@@ -108,6 +108,10 @@ export const polishLexicon: LanguageLexicon = {
     styles: { primary: 'style' },
   },
   expressions: {
+    up: { primary: 'w górę' },
+    down: { primary: 'w dół' },
+    left: { primary: 'w lewo' },
+    right: { primary: 'w prawo' },
     at: { primary: 'przy' },
     back: { primary: 'wstecz' },
     characters: { primary: 'znaki' },

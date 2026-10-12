@@ -108,6 +108,10 @@ export const swahiliLexicon: LanguageLexicon = {
     styles: { primary: 'mitindo' },
   },
   expressions: {
+    up: { primary: 'kupanda' },
+    down: { primary: 'kushuka' },
+    left: { primary: 'kushoto' },
+    right: { primary: 'kulia' },
     at: { primary: 'katika' },
     back: { primary: 'kurudi' },
     characters: { primary: 'herufi' },

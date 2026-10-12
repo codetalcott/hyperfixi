@@ -108,6 +108,10 @@ export const italianLexicon: LanguageLexicon = {
     styles: { primary: 'stili' },
   },
   expressions: {
+    up: { primary: 'sopra' },
+    down: { primary: 'sotto' },
+    left: { primary: 'sinistra' },
+    right: { primary: 'destra' },
     at: { primary: 'a' },
     back: { primary: 'indietro' },
     characters: { primary: 'caratteri' },

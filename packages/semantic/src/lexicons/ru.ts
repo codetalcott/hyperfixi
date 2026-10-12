@@ -127,6 +127,10 @@ export const russianLexicon: LanguageLexicon = {
     text: { primary: 'текст' },
   },
   expressions: {
+    up: { primary: 'вверх' },
+    down: { primary: 'вниз' },
+    left: { primary: 'влево' },
+    right: { primary: 'вправо' },
     at: { primary: 'в' },
     back: { primary: 'назад' },
     characters: { primary: 'символы' },

@@ -214,6 +214,10 @@ export const malayDictionary: Dictionary = {
   },
 
   expressions: {
+    up: 'atas',
+    down: 'bawah',
+    left: 'kiri',
+    right: 'kanan',
     back: 'undur',
     elsewhere: 'luar',
     start: 'memulakan',

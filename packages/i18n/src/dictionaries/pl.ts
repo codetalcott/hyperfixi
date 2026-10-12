@@ -202,6 +202,10 @@ export const pl: Dictionary = {
   },
 
   expressions: {
+    up: 'w górę',
+    down: 'w dół',
+    left: 'w lewo',
+    right: 'w prawo',
     back: 'wstecz',
     elsewhere: 'zewnątrz',
     index: 'indeks',

@@ -220,6 +220,10 @@ export const ukrainianDictionary: Dictionary = {
   },
 
   expressions: {
+    up: 'вгору',
+    down: 'вниз',
+    left: 'вліво',
+    right: 'вправо',
     back: 'назад',
     elsewhere: 'ззовні',
     index: 'індекс',

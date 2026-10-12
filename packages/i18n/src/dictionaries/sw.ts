@@ -218,6 +218,10 @@ export const sw: Dictionary = {
   },
 
   expressions: {
+    up: 'kupanda',
+    down: 'kushuka',
+    left: 'kushoto',
+    right: 'kulia',
     back: 'kurudi',
     elsewhere: 'kwingineko',
     index: 'faharasa',

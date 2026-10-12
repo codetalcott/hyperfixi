@@ -85,6 +85,10 @@ export const thaiLexicon: LanguageLexicon = {
     value: { primary: 'ค่า' },
   },
   expressions: {
+    up: { primary: 'ขึ้น' },
+    down: { primary: 'ลง' },
+    left: { primary: 'ซ้าย' },
+    right: { primary: 'ขวา' },
     back: { primary: 'ย้อน' },
     characters: { primary: 'อักขระ' },
     children: { primary: 'ลูก' },

@@ -200,6 +200,10 @@ export const pt: Dictionary = {
   },
 
   expressions: {
+    up: 'acima',
+    down: 'abaixo',
+    left: 'esquerda',
+    right: 'direita',
     back: 'atrás',
     elsewhere: 'exterior',
     index: 'índice',

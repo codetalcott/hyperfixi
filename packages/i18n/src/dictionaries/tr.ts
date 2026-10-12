@@ -204,6 +204,10 @@ export const tr: Dictionary = {
   },
 
   expressions: {
+    up: 'yukarı',
+    down: 'aşağı',
+    left: 'sola',
+    right: 'sağa',
     back: 'geri',
     elsewhere: 'dışarı',
     index: 'indeks',

@@ -222,6 +222,10 @@ export const tagalogDictionary: Dictionary = {
   },
 
   expressions: {
+    up: 'pataas',
+    down: 'pababa',
+    left: 'pakaliwa',
+    right: 'pakanan',
     back: 'pabalik',
     elsewhere: 'labas',
     start: 'umpisahan',

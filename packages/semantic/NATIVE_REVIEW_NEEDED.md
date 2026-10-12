@@ -678,6 +678,41 @@ writes in any expression. Written from grammar references, not checked by a nati
 | vi | `hỏi "Name?"` | `trả lời "Save?" với "Yes" hoặc "No"` |  |
 | zh | `询问 把 "Name?"` | `回答 把 "Save?" 用 "Yes" 或 "No"` | `把` is the patient marker the profile writes for every object; `询问`/`回答` as two-character verbs |
 
+## `scroll … by` with a direction, in the language's own words (M2, vocabulary sheet B9) ⚠️ (October 2026)
+
+Upstream's relative scroll, `scroll [<el>] up|down|left|right by <n>`, refused in every language until
+now: no direction had a word. The direction is written in the language's word before the amount's
+phrase, and `by` as `increment … by` writes it (es `por`, de `um`; bare where the language writes an
+amount bare: ja `下 200px`, ru `вниз 200px`). sw `kupanda` / `kushuka` (to climb / to descend) stand in
+for `juu` / `chini`, which the tokenizer reads with `sogeza` as one word, mouseover. Written from
+grammar references, not checked by a native speaker.
+
+| lang | `scroll #box down by 200px` | `on click scroll up by 100px` | to check |
+| ---- | --------------------------- | ----------------------------- | -------- |
+| ar | `مرر #box أسفل 200px` | `على النقر مرر أعلى 100px` | `أعلى`/`أسفل` bare, as directions (`لأعلى`, `إلى الأعلى`?) |
+| bn | `#boxকে নিচে 200px স্ক্রোল` | `ক্লিকে উপরে 100px স্ক্রোল` | `উপরে`/`নিচে` (`উপরের দিকে`?) |
+| de | `scrollen #box runter um 200px` | `wenn klick scrollen hoch um 100px` | `hoch`/`runter` are spoken forms; `nach oben`/`nach unten`? `scrollen #box …` is the verb the dictionary has |
+| es | `desplazamiento #box abajo por 200px` | `al clic desplazamiento arriba por 100px` | `arriba`/`abajo` after the element; `hacia arriba`? `desplazamiento` is the dictionary's noun |
+| fr | `défilement #box bas par 200px` | `quand clic défilement haut par 100px` | `haut`/`bas` bare: `vers le haut`? `défilement` is the dictionary's noun |
+| he | `גלול את #box למטה 200px` | `ב לחיצה גלול למעלה 100px` | `למעלה`/`למטה` read whole, as the B7 words |
+| hi | `#box को नीचे 200px स्क्रॉल` | `क्लिक पर ऊपर 100px स्क्रॉल` | `ऊपर`/`नीचे` (`ऊपर की ओर`?) |
+| id | `gulir #box bawah 200px` | `ketika klik gulir atas 100px` | `atas`/`bawah` bare (`ke atas`?) |
+| it | `scorrere #box sotto 200px` | `su clic scorrere sopra 100px` | `sopra`/`sotto` (`su`/`giù` are a marker and …); `verso l'alto`? |
+| ja | `#boxを 下 200px スクロール` | `クリックで 上 100px スクロール` | `上`/`下` bare before the amount (`上に`?) |
+| ko | `#box을 아래쪽 200px 스크롤` | `클릭 할 때 위쪽 100px 스크롤` | `위쪽`/`아래쪽` (`아래` is `under`); `아래로`? |
+| ms | `tatal #box bawah 200px` | `apabila click tatal atas 100px` | `atas`/`bawah` bare (`ke atas`?) |
+| pl | `przewiń #box w dół 200px` | `gdy kliknięcie przewiń w górę 100px` | `w górę`/`w dół`: `w` is also pl's marker; the two words are read together |
+| pt | `rolagem #box abaixo por 200px` | `ao clique rolagem acima por 100px` | `acima`/`abaixo` (`para cima`?) |
+| qu | `#box ta uray 200px kunray` | `maykama ñitiy hanaq 100px kunray` | `hanaq`/`uray`/`lluqi`/`paña`: all uncertain |
+| ru | `прокрутить #box вниз 200px` | `при клик прокрутить вверх 100px` | `вверх`/`вниз` bare before the amount (`на 200px`?) |
+| sw | `sogeza #box kushuka 200px` | `unapo click sogeza kupanda 100px` | `kupanda`/`kushuka`, see above; `juu`/`chini` fuse with the verb |
+| th | `เลื่อน #box ลง 200px` | `เมื่อ คลิก เลื่อน ขึ้น 100px` | `ขึ้น`/`ลง` bare |
+| tl | `iscroll #box pababa 200px` | `kapag click iscroll pataas 100px` | `pataas`/`pababa` |
+| tr | `#box i aşağı 200px kaydırma` | `tıklamada yukarı 100px kaydırma` | `yukarı`/`aşağı` bare (`yukarıya`?) |
+| uk | `прокрутити #box вниз 200px` | `при клік прокрутити вгору 100px` | `вгору`/`вниз` bare (`на 200px`?) |
+| vi | `cuộn #box xuống 200px` | `khi nhấp cuộn lên 100px` | `lên`/`xuống` bare |
+| zh | `滚动 把 #box 向下 200px` | `一 点击 就 滚动 向上 100px` | `向上`/`向下` before the amount |
+
 ## `toggle … between` (M2, vocabulary sheet A6) ⚠️ (October 2026)
 
 `toggle between .a and .b`, `toggle $x between 'a', 'b' and 'c'`. The `between` word is each dictionary's

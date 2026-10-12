@@ -171,6 +171,10 @@ export const thaiDictionary: Dictionary = {
   },
 
   expressions: {
+    up: 'ขึ้น',
+    down: 'ลง',
+    left: 'ซ้าย',
+    right: 'ขวา',
     back: 'ย้อน',
     elsewhere: 'ภายนอก',
     start: 'เริ่ม',
