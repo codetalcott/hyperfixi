@@ -17,6 +17,13 @@
 #   - no summary at all               -> FAIL (the run hung/crashed before
 #                                        finishing; never report this green)
 #
+# Each run also gets its own TMPDIR, removed on exit. Vitest 5.0.2 copies every
+# transformed module into `$TMPDIR/<nanoid>/` for the forks pool and never
+# deletes the root instance's copy (5.0.3 does, on a clean close; neither can
+# when `timeout` kills the run), so the system temp dir gained one directory
+# per run: 14 GB in four days on the Mac mini. Tests' own `mkdtemp` fixtures
+# land here too and go with it.
+#
 # Env:
 #   VITEST_TIMEOUT  seconds before the run is killed (default 120)
 #   VITEST_QUIET    "1" to suppress streaming output (used by test:check)
@@ -25,8 +32,12 @@
 set -uo pipefail
 
 TIMEOUT="${VITEST_TIMEOUT:-120}"
-LOG="$(mktemp -t vitest-run.XXXXXX)"
-trap 'rm -f "$LOG"' EXIT
+RUN_TMP="$(mktemp -d "${TMPDIR:-/tmp}/vitest-run.XXXXXX")"
+LOG="$RUN_TMP/log"
+trap 'rm -rf "$RUN_TMP"' EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+export TMPDIR="$RUN_TMP"
 
 if [ "${VITEST_QUIET:-0}" = "1" ]; then
   timeout "$TIMEOUT" vitest run "$@" >"$LOG" 2>&1
