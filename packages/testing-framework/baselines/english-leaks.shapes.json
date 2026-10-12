@@ -1,12 +1,12 @@
 {
   "description": "English-leak gate, command-shape half (src/multilingual/english-leaks.ts): per command-shape case, the findings of each language's render (translate(src, 'en', L)): an English grammar word, `event:<name>`, `case:<pronoun>` or `spacing:<marker>`. `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts.",
-  "renders": 24821,
-  "leaky": 3764,
-  "findings": 7154,
+  "renders": 24844,
+  "leaky": 3787,
+  "findings": 7202,
   "kinds": {
     "word": {
-      "renders": 2642,
-      "findings": 4507
+      "renders": 2665,
+      "findings": 4551
     },
     "event": {
       "renders": 0,
@@ -17,8 +17,8 @@
       "findings": 34
     },
     "spacing": {
-      "renders": 1242,
-      "findings": 2613
+      "renders": 1244,
+      "findings": 2617
     }
   },
   "entries": {
@@ -693,6 +693,12 @@
     },
     "3423ecf5af": {
       "of": "*"
+    },
+    "348175b219": {
+      "into": "fr it",
+      "into me": "ar de es he hi id ja ko ms pl pt qu ru sw th tl uk vi zh",
+      "into me spacing:e spacing:i spacing:nin": "tr",
+      "into me spacing:কে": "bn"
     },
     "352263a923": {
       "spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i": "tr"
@@ -3489,7 +3495,6 @@
     "3030e3cc43": "ko pl",
     "32502101bd": "vi",
     "32bbb02918": "pl",
-    "348175b219": "*",
     "35274bd534": "*",
     "35f188d961": "*",
     "38fd7baa12": "vi",

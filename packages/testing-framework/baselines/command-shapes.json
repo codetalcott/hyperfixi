@@ -3,8 +3,8 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 25725,
-  "refused": 1504,
+  "pass": 25886,
+  "refused": 1343,
   "silent": 11,
   "entries": {
     "6f60177037": {
@@ -407,60 +407,18 @@
       "src": "bind $selectedCount to the length of <:checked/> in the next <tbody/> when $selectedCount changes put it into me",
       "family": "core/reactive-queries",
       "refused": "en *",
-      "loud": "pseudo-class-query: a query of a pseudo-class (`<:checked/>`): the tokenizers read `:checked` as a local variable; a tokenizer item, rare in pages"
-    },
-    "9c2d74510e": {
-      "src": "when (the length of <:checked/> in #container) changes put it into me",
-      "family": "core/reactive-queries",
-      "refused": "*",
-      "loud": "pseudo-class-query: a query of a pseudo-class (`<:checked/>`): the tokenizers read `:checked` as a local variable; a tokenizer item, rare in pages"
+      "loud": "scoped-query-phrase: a query's scope inside a phrase: `the length of <q/> in #box` as put's value (`in` is also put's own marker), and a positional scope (`<q/> in the next <tbody/>`): the English reader ends the value at `in` (OPEN_ITEMS P62)"
     },
     "348175b219": {
       "src": "live put the length of <:checked/> in #box into me end",
       "family": "core/reactive-queries",
       "refused": "en *",
-      "loud": "pseudo-class-query: a query of a pseudo-class (`<:checked/>`): the tokenizers read `:checked` as a local variable; a tokenizer item, rare in pages"
-    },
-    "b854e91693": {
-      "src": "when (the length of <:checked/> in #scope) changes put it into me then increment $scopeRuns",
-      "family": "core/reactive-queries",
-      "refused": "*",
-      "loud": "pseudo-class-query: a query of a pseudo-class (`<:checked/>`): the tokenizers read `:checked` as a local variable; a tokenizer item, rare in pages"
-    },
-    "7d534a111c": {
-      "src": "when (the length of <:checked/> in #dynamic-scope) changes put it into me",
-      "family": "core/reactive-queries",
-      "refused": "*",
-      "loud": "pseudo-class-query: a query of a pseudo-class (`<:checked/>`): the tokenizers read `:checked` as a local variable; a tokenizer item, rare in pages"
-    },
-    "32f8f63295": {
-      "src": "when (the length of <:checked/> in #remove-scope) changes put it into me",
-      "family": "core/reactive-queries",
-      "refused": "*",
-      "loud": "pseudo-class-query: a query of a pseudo-class (`<:checked/>`): the tokenizers read `:checked` as a local variable; a tokenizer item, rare in pages"
+      "loud": "scoped-query-phrase: a query's scope inside a phrase: `the length of <q/> in #box` as put's value (`in` is also put's own marker), and a positional scope (`<q/> in the next <tbody/>`): the English reader ends the value at `in` (OPEN_ITEMS P62)"
     },
     "73325ff027": {
       "src": "when (the length of <.picked/> in #list-scope) changes set result to it put the textContent of last <.picked/> in #list…",
       "family": "core/reactive-queries",
       "refused": "bn zh"
-    },
-    "e0fca05a2f": {
-      "src": "when (the length of <:checked/> in #multi-scope) changes put it into me",
-      "family": "core/reactive-queries",
-      "refused": "*",
-      "loud": "pseudo-class-query: a query of a pseudo-class (`<:checked/>`): the tokenizers read `:checked` as a local variable; a tokenizer item, rare in pages"
-    },
-    "8fe4616a43": {
-      "src": "when (the length of <:checked/> in #dedup-scope) changes put it into me then increment $dedupRuns",
-      "family": "core/reactive-queries",
-      "refused": "*",
-      "loud": "pseudo-class-query: a query of a pseudo-class (`<:checked/>`): the tokenizers read `:checked` as a local variable; a tokenizer item, rare in pages"
-    },
-    "1a2a9cbb2e": {
-      "src": "when (the length of <:checked/> in #cleanup-scope) changes put it into me then increment $cleanupRuns",
-      "family": "core/reactive-queries",
-      "refused": "*",
-      "loud": "pseudo-class-query: a query of a pseudo-class (`<:checked/>`): the tokenizers read `:checked` as a local variable; a tokenizer item, rare in pages"
     },
     "a0bcf49227": {
       "src": "on click from closest parent <div/> put \"Foo\" into me",
