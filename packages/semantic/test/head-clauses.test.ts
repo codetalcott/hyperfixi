@@ -72,9 +72,9 @@ describe('what is no head clause', () => {
     expect(headOf('al clic 3 repetir mientras x < 3 incrementar x fin', 'es')).toBeUndefined();
   });
 
-  it('a command the reader does not read (`ask` has no schema yet)', () => {
+  it('a clause the reader does not read (halt’s `default` mode, P56)', () => {
     // No word of upstream's `on` opens it, so it is never the head's.
-    expect(() => translate('on click ask "Name?" put it into me', 'en', 'en')).toThrow(/ask/);
+    expect(() => translate('on click halt default put 1 into me', 'en', 'en')).toThrow(/default/);
   });
 
   it('a number that opens the body: a count is `1` or `1 to 2`', () => {

@@ -5,8 +5,8 @@ import { strict as assert } from 'node:assert';
 import { translateHtml, formatRefusalReport } from '../dist/index.js';
 import hyperscriptI18nPlugin from '../dist/eleventy.js';
 
-// `ask` has no schema until the owner decides its vocabulary: the parse drops it.
-const LOSSY = "on click ask 'Name?' then put it into me";
+// `halt default` (P56, halt's modes) has no reader yet: the mode is dropped.
+const LOSSY = 'on click halt default then put 1 into me';
 const html = `<button _="${LOSSY}">x</button>`;
 
 test('translateHtml keeps the attribute and warns with what it would drop', () => {
@@ -21,17 +21,17 @@ test('translateHtml keeps the attribute and warns with what it would drop', () =
     console.warn = original;
   }
   assert.equal(warnings.length, 1);
-  assert.match(warnings[0], /refused, it would lose ask 'Name\?'/);
+  assert.match(warnings[0], /refused, it would lose default/);
 });
 
 test('onRefused: a callback receives the report; error throws', () => {
   const reports = [];
   translateHtml(html, 'ja', { onRefused: r => reports.push(r) });
   assert.equal(reports.length, 1);
-  assert.deepEqual(reports[0].lost, ["ask 'Name?'"]);
+  assert.deepEqual(reports[0].lost, ['default']);
   assert.equal(reports[0].to, 'ja');
   assert.match(formatRefusalReport(reports[0]), /en -> ja refused/);
-  assert.throws(() => translateHtml(html, 'ja', { onRefused: 'error' }), /would lose ask 'Name\?'/);
+  assert.throws(() => translateHtml(html, 'ja', { onRefused: 'error' }), /would lose default/);
 });
 
 test('lenient: false still throws the refusal', () => {
@@ -47,7 +47,7 @@ test('the Eleventy filters report a refusal', async () => {
     { addFilter: (name, fn) => (filters[name] = fn) },
     { parseCheck: 'off', onRefused: 'error' }
   );
-  assert.throws(() => filters.translateHs(LOSSY, 'es'), /would lose ask 'Name\?'/);
-  assert.throws(() => filters.translateHsAll(LOSSY, ['es']), /would lose ask 'Name\?'/);
+  assert.throws(() => filters.translateHs(LOSSY, 'es'), /would lose default/);
+  assert.throws(() => filters.translateHsAll(LOSSY, ['es']), /would lose default/);
   assert.equal(filters.translateHs('on click toggle .a', 'en'), 'on click toggle .a');
 });

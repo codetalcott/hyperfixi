@@ -228,8 +228,8 @@ describe('translate_hyperscript', () => {
   // drops; the partial text never comes back as `translated` (M1 fail-loud).
   it('refuses a translation that would drop part of the script', async () => {
     const result = await handlePatternTool('translate_hyperscript', {
-      // `ask` has no schema yet (an owner vocabulary decision): it is dropped.
-      code: 'on click ask "Name?" then put it into me',
+      // `halt default` (P56, halt's modes) has no reader yet: the mode is dropped.
+      code: 'on click halt default then put 1 into me',
       fromLanguage: 'en',
       toLanguage: 'ja',
     });
@@ -237,7 +237,7 @@ describe('translate_hyperscript', () => {
     expect(result.isError).toBe(true);
     const parsed = JSON.parse(result.content[0].text);
     expect(parsed.refused).toBe(true);
-    expect(parsed.lost).toContain('ask "Name?"');
+    expect(parsed.lost).toContain('default');
     expect(parsed.translated).toBeUndefined();
     expect(typeof parsed.partial).toBe('string');
   });
