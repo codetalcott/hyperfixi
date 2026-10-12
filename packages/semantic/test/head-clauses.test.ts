@@ -8,7 +8,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import '../src/languages/_all';
-import { parse, translate } from '../src/index';
+import { parse, translate, getSupportedLanguages } from '../src/index';
 import { findTranslationLoss } from '../src/explicit/lossy';
 
 const roundTrip = (code: string, language: string): string =>
@@ -32,7 +32,9 @@ describe("the head clause upstream's `on` reads", () => {
     expect(translate(code, 'en', 'en')).toBe(code);
   });
 
-  it.each(['es', 'ja', 'zh', 'ar', 'ko', 'tr', 'de', 'qu'])(
+  // bn, it and th: a head pattern that ends in an action slot, which takes the
+  // clause and rewinds; the clause is read there too.
+  it.each(['es', 'ja', 'zh', 'ar', 'ko', 'tr', 'de', 'qu', 'bn', 'it', 'th'])(
     'every language writes it (%s)',
     language => {
       for (const code of [
@@ -66,10 +68,43 @@ describe("the head clause upstream's `on` reads", () => {
   });
 });
 
+// Upstream's count (`on click 1`, the first click only), as its test pages and
+// the scoping tests write it: refused in all 23 languages before (the command-
+// shape gate's families `on`, `core/scoping`, `hide`, `transition`).
+const COUNTS = [
+  'on click 1 hide on click 2 show',
+  'on click 1 set x to 10 on click 2 set @out to x',
+  'on click 1 default global x to 0 on click 2 set global x to 10 on click 3 set @out to x',
+  'on click 1 put 1 + my.innerHTML as Int into my.innerHTML',
+  'on click 1 put "one" into me on click 3 put "three" into me on click 2 put "two" into me',
+  'on click 1 transition my *width to 100px on click 2 transition my *width to initial',
+  'behavior Behave(foo) on click 1 set foo to foo + 10 on click 2 set @out to foo end',
+  'on click 2 put 3 into me',
+  'on keydown 2 log 1 then log 2',
+];
+
+describe('a bare count, in every language', () => {
+  it.each(getSupportedLanguages().filter(l => l !== 'en'))('%s', language => {
+    for (const code of COUNTS) expect(roundTrip(code, language)).toBe(translate(code, 'en', 'en'));
+  });
+
+  it('is read where no command begins at the number', () => {
+    expect(headOf('al clic 3 repetir mientras x < 3 incrementar x fin', 'es')).toBe('3');
+    expect(headOf('クリックで 1 xを 10に 設定', 'ja')).toBe('1');
+    // A number that is the body's first value is the body's (`3を`).
+    expect(headOf('クリックで 3を 自分に 置く', 'ja')).toBeUndefined();
+  });
+});
+
 describe('what is no head clause', () => {
-  it('a bare count outside English: a body there can open with a number', () => {
-    expect(() => roundTrip('on click 1 put 1 into me', 'ja')).toThrow(/lose/);
-    expect(headOf('al clic 3 repetir mientras x < 3 incrementar x fin', 'es')).toBeUndefined();
+  it('a count the reader does not take: refused, never dropped', () => {
+    // pl's `to` is its `it`, and a run holding the language's own word is unread.
+    expect(() => translate('on click 1 to 2 put 1 into me', 'en', 'pl')).toThrow(/lose/);
+    // Before a block head in ko, bn, hi: the head's run never finds the `if`.
+    expect(() => translate('on click 1 if x is 1 log 2 end', 'en', 'ko')).toThrow(/lose/);
+    // A generated pattern takes the number as its first slot (ja repeat's form, tr fetch's source).
+    expect(() => translate('on click 1 repeat 3 times log 1 end', 'en', 'ja')).toThrow(/lose/);
+    expect(() => translate('on click 1 fetch /test then put it into me', 'en', 'tr')).toThrow(/lose/);
   });
 
   it('a clause the reader does not read (halt’s `default` mode, P56)', () => {
