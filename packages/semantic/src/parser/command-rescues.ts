@@ -858,6 +858,11 @@ export function stripDoNotThrowModifier(
       if (k === 'selector' || k === 'literal' || k === 'reference' || k === 'conjunction') {
         break;
       }
+      // Nor a command boundary or a pronoun: pl `do` is also `into`, and `umieść
+      // "foo" do mnie wtedy rzuć "bar"` (put "foo" into me then throw "bar") lost
+      // `do mnie wtedy rzuć` here.
+      const norm = tj.normalized?.toLowerCase();
+      if (norm === 'then' || norm === 'me' || norm === 'it' || norm === 'you') break;
     }
     if (throwIdx === -1) continue;
     const start = allTokens[i].position.start;
