@@ -188,8 +188,8 @@ command-shape dry run shows each move.
   `ParserState` (`parser-state.ts`) the moved functions take first; `SemanticParserImpl` keeps its
   public surface. `clause-walk.ts` (1,617) is the one module over ~1,500: its members call each
   other. Optional: name `parseInternal`'s stages as functions.
-- (e) Decide the semantic/framework `PatternMatcher` fork (4,247 vs 1,630 lines on 2026-10-06; Phase 3
-  of the old `multilingual/plan.md`, archived 2026-10-06).
+- (e) The semantic/framework `PatternMatcher` fork. **Decided 2026-10-13:** one matcher, built from semantic's,
+  and the domain family cut down and rebuilt on it, after the semantic work: [`DOMAINS_RETHINK.md`](DOMAINS_RETHINK.md).
 
 **Exit metrics** (stamp them when the arc starts):
 
