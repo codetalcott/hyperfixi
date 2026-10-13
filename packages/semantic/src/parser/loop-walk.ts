@@ -133,9 +133,16 @@ export function takeBottomUntil(
 ): SemanticNode | null {
   const tok = stream.peek();
   if (!tok || (tok.kind !== 'keyword' && tok.kind !== 'particle')) return null;
-  // The word, or a particle marking the role (ja `まで`).
+  // The word, a particle marking the role (ja `まで`), or the profile's own
+  // `until` where its particle reads as another role (ko `까지`, also `to`).
   const word = (tok.normalized ?? tok.value).toLowerCase();
-  if (word !== 'until' && tok.metadata?.role !== 'until') return null;
+  if (
+    word !== 'until' &&
+    tok.metadata?.role !== 'until' &&
+    tryGetProfile(language)?.keywords?.until?.primary !== tok.value
+  ) {
+    return null;
+  }
   if ((before[before.length - 1] as { action?: string } | undefined)?.action === 'toggle') {
     return null;
   }
