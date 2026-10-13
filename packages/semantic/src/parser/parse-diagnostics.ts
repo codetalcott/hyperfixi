@@ -57,8 +57,8 @@ export function describeUnconsumedInput(
   return `pattern ${match.pattern.id} left ${dropped} token(s) unconsumed: "${shown}"`;
 }
 
-/** The node fields a tree walk descends into (the roles normalization and the diagnostics hoist). */
-export const NORMALIZE_CHILD_FIELDS = [
+/** The node fields a tree walk descends into. */
+export const NODE_CHILD_FIELDS = [
   'body',
   'statements',
   'thenBranch',
@@ -68,6 +68,7 @@ export const NORMALIZE_CHILD_FIELDS = [
   'catchBody',
   'finallyBody',
 ] as const;
+export type NodeChildren = Partial<Record<(typeof NODE_CHILD_FIELDS)[number], unknown>>;
 
 /**
  * Hoist `unconsumed-input` and `verbatim-clause` diagnostics from every
@@ -91,7 +92,7 @@ export function hoistUnconsumedDiagnostics(top: SemanticNode): SemanticNode {
       }
     }
     const rec = node as unknown as Record<string, unknown>;
-    for (const field of NORMALIZE_CHILD_FIELDS) {
+    for (const field of NODE_CHILD_FIELDS) {
       const child = rec[field];
       if (Array.isArray(child)) for (const c of child) visit(c as SemanticNode);
     }
