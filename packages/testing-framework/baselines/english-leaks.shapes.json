@@ -1,12 +1,12 @@
 {
   "description": "English-leak gate, command-shape half (src/multilingual/english-leaks.ts): per command-shape case, the findings of each language's render (translate(src, 'en', L)): an English grammar word, `event:<name>`, `case:<pronoun>` or `spacing:<marker>`. `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts.",
-  "renders": 25329,
-  "leaky": 3902,
-  "findings": 7347,
+  "renders": 25334,
+  "leaky": 3885,
+  "findings": 7329,
   "kinds": {
     "word": {
-      "renders": 2746,
-      "findings": 4590
+      "renders": 2728,
+      "findings": 4572
     },
     "event": {
       "renders": 0,
@@ -336,8 +336,7 @@
       "spacing:を": "ja"
     },
     "16fb80c097": {
-      "or": "ar de es fr he hi id ja ms pl pt qu ru sw tl uk vi",
-      "or spacing:da spacing:i": "tr"
+      "spacing:da spacing:i": "tr"
     },
     "17039d15e3": {
       "spacing:e spacing:e spacing:i spacing:i": "tr",
@@ -3560,7 +3559,6 @@
     "12ff2cf365": "vi",
     "15c22f6ecd": "*",
     "162e3e0582": "th vi",
-    "16fb80c097": "bn it ko th zh",
     "1aa9c955fa": "ko",
     "1ba900c09e": "ja",
     "1c37112e5a": "*",
