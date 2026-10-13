@@ -3,8 +3,8 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 26482,
-  "refused": 758,
+  "pass": 26491,
+  "refused": 749,
   "silent": 0,
   "entries": {
     "6f60177037": {
@@ -16,21 +16,6 @@
       "src": "on click add .foo to .item when it matches .nope then if the result is empty remove @hidden from #none",
       "family": "add",
       "refused": "qu"
-    },
-    "b9502de444": {
-      "src": "on click fetch /test as Object then get result as JSONString then put it into my.innerHTML",
-      "family": "fetch",
-      "refused": "bn hi ko"
-    },
-    "7835c70e58": {
-      "src": "on click fetch /test as an Object then get result as JSONString then put it into my.innerHTML",
-      "family": "fetch",
-      "refused": "bn hi ko"
-    },
-    "bd56aad55e": {
-      "src": "on click fetch /test as Number then put it into my.innerHTML",
-      "family": "fetch",
-      "refused": "bn hi ko"
     },
     "1ba900c09e": {
       "src": "on click fetch /test {method:\"POST\"} then put it into my.innerHTML",
