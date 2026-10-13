@@ -1,24 +1,24 @@
 {
   "description": "English-leak gate, command-shape half (src/multilingual/english-leaks.ts): per command-shape case, the findings of each language's render (translate(src, 'en', L)): an English grammar word, `event:<name>`, `case:<pronoun>` or `spacing:<marker>`. `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts.",
-  "renders": 24844,
-  "leaky": 3787,
-  "findings": 7202,
+  "renders": 25035,
+  "leaky": 3832,
+  "findings": 7290,
   "kinds": {
     "word": {
-      "renders": 2665,
-      "findings": 4551
+      "renders": 2696,
+      "findings": 4604
     },
     "event": {
       "renders": 0,
       "findings": 0
     },
     "case": {
-      "renders": 34,
-      "findings": 34
+      "renders": 36,
+      "findings": 36
     },
     "spacing": {
-      "renders": 1244,
-      "findings": 2617
+      "renders": 1255,
+      "findings": 2650
     }
   },
   "entries": {
@@ -210,7 +210,6 @@
       "spacing:e spacing:e spacing:i spacing:i": "tr"
     },
     "0ff2f70080": {
-      "in": "ar es pl ru th",
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:কে": "bn"
     },
@@ -447,7 +446,6 @@
       "spacing:e spacing:i": "tr"
     },
     "2159462e64": {
-      "in": "ar es pl ru th",
       "spacing:e spacing:i spacing:i": "tr",
       "spacing:কে": "bn"
     },
@@ -506,8 +504,8 @@
       "dom spacing:i": "tr"
     },
     "280d64d892": {
-      "as spacing:로": "ko",
       "spacing:e spacing:i": "tr",
+      "spacing:로 spacing:로": "ko",
       "spacing:として": "ja"
     },
     "2817d62efa": {
@@ -786,6 +784,9 @@
       "spacing:i": "tr"
     },
     "3b67c3d1a7": {
+      "spacing:i": "tr"
+    },
+    "3ba1aed452": {
       "spacing:i": "tr"
     },
     "3c320d76e8": {
@@ -1155,8 +1156,8 @@
       "spacing:da spacing:i": "tr"
     },
     "5761791c05": {
-      "as spacing:로": "ko",
       "spacing:e spacing:i": "tr",
+      "spacing:로 spacing:로": "ko",
       "spacing:として": "ja"
     },
     "5763f61aac": {
@@ -1223,6 +1224,9 @@
     },
     "5c5c4838dc": {
       "spacing:i": "tr"
+    },
+    "5c62479568": {
+      "spacing:e spacing:i spacing:nin": "tr"
     },
     "5c7f44c1f1": {
       "spacing:e spacing:i": "tr"
@@ -1587,8 +1591,8 @@
       "spacing:i": "tr"
     },
     "7371a42494": {
-      "as spacing:로": "ko",
       "spacing:e spacing:i": "tr",
+      "spacing:로 spacing:로": "ko",
       "spacing:として": "ja"
     },
     "7376bdb9d2": {
@@ -1608,6 +1612,9 @@
     },
     "74ea5f1e38": {
       "spacing:da spacing:i": "tr"
+    },
+    "757da52773": {
+      "spacing:den spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i": "tr"
     },
     "75c59205a6": {
       "spacing:e spacing:i": "tr"
@@ -1984,6 +1991,9 @@
     "8a0a1e5f13": {
       "spacing:i": "tr"
     },
+    "8a13ec8232": {
+      "spacing:e spacing:i": "tr"
+    },
     "8b7ea8a21f": {
       "spacing:e spacing:i": "tr"
     },
@@ -2190,6 +2200,10 @@
     "9ba514eef4": {
       "spacing:i spacing:le": "tr"
     },
+    "9bb9b09088": {
+      "on spacing:i to": "tr",
+      "on to": "ar bn de es fr he hi id it ja ko ms pt qu ru sw th tl uk vi zh"
+    },
     "9bd61daeaf": {
       "spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i": "tr"
     },
@@ -2364,6 +2378,11 @@
     },
     "a95285c5d7": {
       "spacing:e spacing:i": "tr"
+    },
+    "a9677f770b": {
+      "spacing:i spacing:le": "tr",
+      "spacing:로 spacing:을": "ko",
+      "spacing:で spacing:で spacing:を": "ja"
     },
     "a9857390c7": {
       "at debounced": "ar bn de es fr he hi id it ja ko ms pl pt qu ru sw th uk vi zh",
@@ -2775,6 +2794,10 @@
     "c7f012aba7": {
       "spacing:i": "tr"
     },
+    "c839f2f99f": {
+      "on": "ar bn de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
+      "on spacing:i": "tr"
+    },
     "c8992c103b": {
       "spacing:de spacing:nin": "tr",
       "spacing:এ spacing:এ": "bn",
@@ -2857,6 +2880,9 @@
       "as spacing:로": "ko",
       "spacing:i": "tr",
       "spacing:として": "ja"
+    },
+    "ce4872a43b": {
+      "spacing:e spacing:i spacing:i": "tr"
     },
     "ce71a3f0af": {
       "spacing:e spacing:i": "tr"
@@ -2951,9 +2977,10 @@
       "spacing:i": "tr"
     },
     "d7b35fefe6": {
-      "case:me": "it",
+      "case:me": "de it",
       "case:me in": "hi",
       "case:me in spacing:কে": "bn",
+      "case:me spacing:e spacing:i spacing:i spacing:in": "tr",
       "in": "ar es fr he id ja ko ms pl pt qu ru sw th tl uk zh"
     },
     "d7b40fb144": {
@@ -3307,8 +3334,8 @@
       "trigger": "qu"
     },
     "eff1f1e59f": {
-      "as spacing:로": "ko",
       "spacing:e spacing:i": "tr",
+      "spacing:로 spacing:로": "ko",
       "spacing:として": "ja"
     },
     "f1554089dd": {
@@ -3488,7 +3515,6 @@
     "239cba8b61": "pt",
     "23f2b7dd1b": "bn hi",
     "240935231f": "*",
-    "280d64d892": "qu",
     "2c6143ba00": "ko",
     "2d9422b3af": "vi",
     "2f7af96b02": "id ms vi",
@@ -3500,7 +3526,6 @@
     "38fd7baa12": "vi",
     "391f640b6b": "hi",
     "394a7bfb45": "*",
-    "3ba1aed452": "*",
     "3f9872bcd4": "pl",
     "4293df22ee": "vi",
     "461f84cebf": "bn ko",
@@ -3512,10 +3537,8 @@
     "4fa7c5a9f9": "ar de fr he ja tr",
     "540540cc5a": "bn es it ko pl ru th tl uk",
     "55c3d28c9e": "*",
-    "5761791c05": "qu",
     "5763f61aac": "vi",
     "580655e71a": "it pl ru uk",
-    "5c62479568": "*",
     "5fc5e421fe": "*",
     "61bc69c358": "*",
     "62d0c2127b": "*",
@@ -3528,10 +3551,8 @@
     "6f60177037": "qu",
     "6f6d57c10a": "bn",
     "73325ff027": "bn zh",
-    "7371a42494": "qu",
     "73c2ff9c12": "vi",
-    "757da52773": "*",
-    "7835c70e58": "bn hi ko qu",
+    "7835c70e58": "bn hi ko",
     "7896ec4b23": "tr",
     "798cb5bb41": "vi",
     "7ab4a541ee": "ar de es fr he id it ms pl pt ru sw th tl tr uk vi zh",
@@ -3541,13 +3562,12 @@
     "85d0684e94": "*",
     "8712ddea5b": "bn hi ja qu tr",
     "897b7048f1": "vi",
-    "8a13ec8232": "*",
     "8e7118ac3b": "ko",
     "91ef0c1608": "hi",
     "92546b4cad": "ko",
     "93c8c96b46": "hi",
     "998cfdeacf": "*",
-    "9bb9b09088": "*",
+    "9bb9b09088": "pl",
     "9fb29051f2": "hi",
     "a0bcf49227": "*",
     "a3b6981b27": "*",
@@ -3556,7 +3576,6 @@
     "a7ccab261d": "*",
     "a8613168a4": "*",
     "a893804c5f": "*",
-    "a9677f770b": "*",
     "ae5ed6eb80": "*",
     "ae7e10324c": "de",
     "af53446a0a": "*",
@@ -3565,7 +3584,7 @@
     "b2ec75a2bf": "*",
     "b5bb616a88": "ko",
     "b6d4332c89": "bn hi ja ko qu tr",
-    "b9502de444": "bn hi ko qu",
+    "b9502de444": "bn hi ko",
     "bb2c2ab053": "qu",
     "bbf040ee1a": "vi",
     "bcf30473e0": "vi",
@@ -3576,12 +3595,9 @@
     "c44765f7b0": "*",
     "c48b233ac7": "pt sw",
     "c55282fb85": "*",
-    "c839f2f99f": "*",
     "c8992c103b": "vi",
     "ca8adcde99": "*",
-    "ce4872a43b": "*",
     "d438ab49b4": "bn th vi",
-    "d7b35fefe6": "de tr",
     "da38860cb8": "hi",
     "db3346f209": "ko",
     "db7fef03e9": "vi",
@@ -3602,7 +3618,6 @@
     "ee008e0a98": "ko pl",
     "eeb30e2d38": "bn hi sw",
     "ef499d89c4": "ko",
-    "eff1f1e59f": "qu",
     "f1554089dd": "pt",
     "f1bc20c608": "de es fr id it pl pt qu sw tr vi",
     "f76ff620e1": "*",

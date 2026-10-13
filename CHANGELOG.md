@@ -32,6 +32,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   as a query in every language, English too. Every tokenizer read `<` and then a local variable
   `:checked`, so a translation was refused. In the command-shape gate, 161 lanes that were refused now
   pass.
+- **`@lokascript/semantic`: value spellings from upstream's own tests** read in every language,
+  English too: an escaped class name (`.group-\[:nth-of-type\(3\)_\&\]:block`), a query of several
+  selectors (`<#d1, #d2/>`), a unit after parentheses (`(startWidth)px`), `[@data-foo]` and an
+  attribute after a pronoun (`set it @disabled to true`, written `its @disabled`), a dotted property
+  before `of` (`set parentNode.innerHTML of #d1 to "foo"`), and `set {bar: 2, baz: 3} on obj`. Each was
+  refused. `get` no longer has a destination slot, which no reader used and which took Italian's `in`:
+  `get #p1 in me` read back as `get #p1 on me` in Italian, and `get result as JSONString` was refused
+  in Quechua. In the command-shape gate, 202 lanes are better, 3 of them silent before.
+- **Test runs no longer fill the temp directory**: `scripts/vitest-run.sh` gives each run its own
+  `TMPDIR` and removes it. Vitest 5.0.2 leaves a copy of every transformed module in `$TMPDIR` per run.
 
 ## [4.5.0] - 2026-10-11
 

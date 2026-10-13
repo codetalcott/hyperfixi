@@ -77,18 +77,25 @@ describe('English’s `as` still reads', () => {
 });
 
 // Where the language's word reads as something else, the verified render
-// writes English's: ko `로` is also a marker (get's `결과 로 JSONString` read
-// as `get JSONString on result`), and th `เป็น` is also `is`, which is what it
-// reads before a type name core does not have built in.
+// writes English's: th `เป็น` is also `is`, which is what it reads before a
+// type name core does not have built in.
 describe('a native `as` the reader would misread is written as English’s', () => {
-  it.each([
-    ['ko', 'on click get result as JSONString'],
-    ['ko', 'on click get #f as Values'],
-    ['th', 'on click put x as MyType into me'],
-  ])('%s: %s', (language, source) => {
+  it.each([['th', 'on click put x as MyType into me']])('%s: %s', (language, source) => {
     const rendered = render(parse(source, 'en')!, language);
     expect(words(rendered)).toContain('as');
     expect(translate(rendered, language, 'en')).toBe(translate(source, 'en', 'en'));
+  });
+});
+
+// ko `로` is also a marker, and `get`'s destination slot (which no reader used)
+// read `결과 로 JSONString` as `get JSONString on result`, so the render wrote
+// English's `as` there. With the slot gone, `로` reads back as the conversion.
+describe('ko `로` after a get reads back as the conversion', () => {
+  it.each(['on click get result as JSONString', 'on click get #f as Values'])('%s', source => {
+    const rendered = render(parse(source, 'en')!, 'ko');
+    expect(words(rendered)).toContain(CONVERSION_AS.ko);
+    expect(words(rendered)).not.toContain('as');
+    expect(translate(rendered, 'ko', 'en')).toBe(translate(source, 'en', 'en'));
   });
 });
 

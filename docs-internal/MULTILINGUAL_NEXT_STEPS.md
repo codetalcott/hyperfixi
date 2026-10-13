@@ -150,11 +150,11 @@ below → M3. Every PR records `semantic-parser.ts`'s line count.
 work. 1,626 are LOUD families (shapes semantic does not model), 911 are shapes it models.
 
 **Work, in order.** (1) The 19 silent pairs: ms/pl `… is undefined` (8), pl/sw `closest … to …` (3),
-it `get … in me` (3), qu/vi `if no <span/> in #box where …` (2), qu possessive chains (2), id `when my
+it `get … in me` (3; done 2026-10-12: `get`'s destination role, which no reader used, took Italian's `in`), qu/vi `if no <span/> in #box where …` (2), qu possessive chains (2), id `when my
 @data-x changes` (1); each fixed, or its reason written in `SILENT_FAMILIES`. (2) Refusals by reach:
 handler-head counts (`on click 1`; done 2026-10-12: 375 lanes, with every head clause bn, it and th
 dropped, `on click elsewhere` among them; residue P61), `wait for <custom event>` (P52, done), pseudo-class
-queries (`<:checked/>`; done 2026-10-12: 161 lanes; the two cases left are P62's), then `fetch … as JSON` in qu, `transition` with two properties
+queries (`<:checked/>`; done 2026-10-12: 161 lanes; the two cases left are P62's), rare values (escaped class names, comma queries, `(w)px`, `[@a]`, `it @a`, a dotted path before `of`, `set {…} on obj`; done 2026-10-12: 202 lanes, with qu's `fetch … as JSON`), then `transition` with two properties
 in SOV, and the rest by the regen tool's family table. A refused pair that starts to render can come out silent: the
 command-shape dry run shows each move.
 

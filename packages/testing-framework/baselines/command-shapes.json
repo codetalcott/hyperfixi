@@ -3,9 +3,9 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 25886,
-  "refused": 1343,
-  "silent": 11,
+  "pass": 26088,
+  "refused": 1144,
+  "silent": 8,
   "entries": {
     "6f60177037": {
       "src": "on click add .foo to .item when it matches .yes then if the result is empty show #none else hide #none",
@@ -22,25 +22,15 @@
       "family": "call",
       "refused": "de es fr id it pl pt qu sw tr vi"
     },
-    "5761791c05": {
-      "src": "on click fetch /test as json then get result as JSONString then put it into my.innerHTML",
-      "family": "fetch",
-      "refused": "qu"
-    },
-    "7371a42494": {
-      "src": "on click fetch /test as JSON then get result as JSONString then put it into my.innerHTML",
-      "family": "fetch",
-      "refused": "qu"
-    },
     "b9502de444": {
       "src": "on click fetch /test as Object then get result as JSONString then put it into my.innerHTML",
       "family": "fetch",
-      "refused": "bn hi ko qu"
+      "refused": "bn hi ko"
     },
     "7835c70e58": {
       "src": "on click fetch /test as an Object then get result as JSONString then put it into my.innerHTML",
       "family": "fetch",
-      "refused": "bn hi ko qu"
+      "refused": "bn hi ko"
     },
     "bd56aad55e": {
       "src": "on click fetch /test as Number then put it into my.innerHTML",
@@ -56,16 +46,6 @@
       "src": "on click fetch \"/test\" {headers: {\"X-CustomHeader\": \"foo\"}} then put it into my.innerHTML end",
       "family": "fetch",
       "refused": "ja"
-    },
-    "eff1f1e59f": {
-      "src": "on click fetch `/test?bar=${1}` as JSON then get result as JSONString then put it into my.innerHTML",
-      "family": "fetch",
-      "refused": "qu"
-    },
-    "280d64d892": {
-      "src": "on click fetch \"/test\" as JSON then get result as JSONString then put it into my.innerHTML",
-      "family": "fetch",
-      "refused": "qu"
     },
     "4ac868eb40": {
       "src": "on click set $u to \"/test\" then fetch $u as JSON then get result as JSONString then put it into my.innerHTML",
@@ -280,12 +260,6 @@
       "refused": "en *",
       "loud": "colon-event-arguments: a colon-qualified event name with arguments (`send foo:bar(x:42)`), rare in pages"
     },
-    "5c62479568": {
-      "src": "on click set parentNode.innerHTML of #d1 to \"foo\"",
-      "family": "set",
-      "refused": "en *",
-      "loud": "rare-values: value spellings rare in pages: an escaped class name (`.group-\\[…\\]`), a comma list in a query (`<#d1, #d2/>`), an attribute after a bare or bracketed reference (`it @a`, `my [@a]`), a dotted path before `of`, a unit after parentheses (`(w)px`), `set {…} on <obj>`"
-    },
     "580655e71a": {
       "src": "on click set innerHTML of #d1.parentNode to \"foo\"",
       "family": "set",
@@ -295,18 +269,6 @@
       "src": "on click set .divs.innerHTML to \"foo\"",
       "family": "set",
       "refused": "it pl ru uk"
-    },
-    "c839f2f99f": {
-      "src": "on click set {bar: 2, baz: 3} on obj",
-      "family": "set",
-      "refused": "en *",
-      "loud": "rare-values: value spellings rare in pages: an escaped class name (`.group-\\[…\\]`), a comma list in a query (`<#d1, #d2/>`), an attribute after a bare or bracketed reference (`it @a`, `my [@a]`), a dotted path before `of`, a unit after parentheses (`(w)px`), `set {…} on <obj>`"
-    },
-    "a9677f770b": {
-      "src": "on click show <#d1, #d2/> with display: inline-block",
-      "family": "show",
-      "refused": "en *",
-      "loud": "rare-values: value spellings rare in pages: an escaped class name (`.group-\\[…\\]`), a comma list in a query (`<#d1, #d2/>`), an attribute after a bare or bracketed reference (`it @a`, `my [@a]`), a dotted path before `of`, a unit after parentheses (`(w)px`), `set {…} on <obj>`"
     },
     "216845203a": {
       "src": "on click get 'found' show <span/> in me when the result is 'found'",
@@ -347,18 +309,6 @@
       "src": "on click toggle my *visibility",
       "family": "toggle",
       "refused": "ar de fr he ja tr"
-    },
-    "3ba1aed452": {
-      "src": "on click toggle .group-\\[:nth-of-type\\(3\\)_\\&\\]:block",
-      "family": "toggle",
-      "refused": "en *",
-      "loud": "rare-values: value spellings rare in pages: an escaped class name (`.group-\\[…\\]`), a comma list in a query (`<#d1, #d2/>`), an attribute after a bare or bracketed reference (`it @a`, `my [@a]`), a dotted path before `of`, a unit after parentheses (`(w)px`), `set {…} on <obj>`"
-    },
-    "757da52773": {
-      "src": "on click set startWidth to 0 set endWidth to 100 transition *width from (startWidth)px to (endWidth)px",
-      "family": "transition",
-      "refused": "en *",
-      "loud": "rare-values: value spellings rare in pages: an escaped class name (`.group-\\[…\\]`), a comma list in a query (`<#d1, #d2/>`), an attribute after a bare or bracketed reference (`it @a`, `my [@a]`), a dotted path before `of`, a unit after parentheses (`(w)px`), `set {…} on <obj>`"
     },
     "be37dedb54": {
       "src": "on click transition *width from 0px to 100px *height from 0px to 100px",
@@ -426,12 +376,6 @@
       "refused": "en *",
       "loud": "closest-forms: `closest @attr` (an ancestor's attribute) and `closest parent <q/>`: the forms of `closest` besides a query, rare in pages"
     },
-    "ce4872a43b": {
-      "src": "on click get the <button/> in me then set it @disabled to true",
-      "family": "core/regressions",
-      "refused": "en *",
-      "loud": "rare-values: value spellings rare in pages: an escaped class name (`.group-\\[…\\]`), a comma list in a query (`<#d1, #d2/>`), an attribute after a bare or bracketed reference (`it @a`, `my [@a]`), a dotted path before `of`, a unit after parentheses (`(w)px`), `set {…} on <obj>`"
-    },
     "b19c6cad07": {
       "src": "on click put select2() into me",
       "family": "core/regressions",
@@ -442,12 +386,6 @@
       "family": "core/scoping",
       "refused": "en *",
       "loud": "rare-commands: commands rare in pages: `measure` of a property list, `pick characters 0 to 3 from …`, an `if` whose body is empty (`if false end`), a behavior holding a bare command, two behaviors with no `end` between"
-    },
-    "8a13ec8232": {
-      "src": "on click set my [@data-foo] to \"blue\"",
-      "family": "expressions/attributeRef",
-      "refused": "en *",
-      "loud": "rare-values: value spellings rare in pages: an escaped class name (`.group-\\[…\\]`), a comma list in a query (`<#d1, #d2/>`), an attribute after a bare or bracketed reference (`it @a`, `my [@a]`), a dotted path before `of`, a unit after parentheses (`(w)px`), `set {…} on <obj>`"
     },
     "db3346f209": {
       "src": "on hyperscript:beep(value) set my @data-value to the value on click get beep! \"foo\"",
@@ -511,7 +449,7 @@
     "9bb9b09088": {
       "src": "on click set ^data on closest .store to 'hello'",
       "family": "expressions/dom-scope",
-      "refused": "en *",
+      "refused": "pl",
       "loud": "caret-on-target: `^name on <element>` is new in upstream 0.9.93 and rare; plain `^name` is carried"
     },
     "85d0684e94": {
@@ -526,36 +464,17 @@
       "refused": "en *",
       "loud": "caret-on-target: `^name on <element>` is new in upstream 0.9.93 and rare; plain `^name` is carried"
     },
-    "d7b35fefe6": {
-      "src": "on click get #p1 in me then put its id into @result",
-      "family": "expressions/in",
-      "refused": "de tr",
-      "silent": "it",
-      "why": "it-locative: it `in me` (a query scope) reads back as `on me`"
-    },
     "c44765f7b0": {
       "src": "on click get #{\"p1\"} in me then put its id into @result",
       "family": "expressions/in",
       "refused": "en *",
       "loud": "templated-selector: a templated selector (`#{…}`, `.{\"…\"}`, `<${…}/>`) is rare, and its fix is in the tokenizer"
     },
-    "2159462e64": {
-      "src": "on click get the first .p1 in me then put its id into @result",
-      "family": "expressions/in",
-      "silent": "it",
-      "why": "it-locative: it `in me` (a query scope) reads back as `on me`"
-    },
     "7ab4a541ee": {
       "src": "on click get the first .{\"p1\"} in me then put its id into @result",
       "family": "expressions/in",
       "refused": "en *",
       "loud": "templated-selector: a templated selector (`#{…}`, `.{\"…\"}`, `<${…}/>`) is rare, and its fix is in the tokenizer"
-    },
-    "0ff2f70080": {
-      "src": "on click get the first <p/> in me then put its id into @result",
-      "family": "expressions/in",
-      "silent": "it",
-      "why": "it-locative: it `in me` (a query scope) reads back as `on me`"
     },
     "15c22f6ecd": {
       "src": "on click get the first <${\"p\"}/> in me then put its id into @result",

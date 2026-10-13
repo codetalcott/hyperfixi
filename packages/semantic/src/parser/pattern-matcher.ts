@@ -808,10 +808,14 @@ export class PatternMatcher {
     );
   }
 
-  /** Is this slot a `put` or `set` value, or what a `get` reads, where `{…}` is an object? */
+  /**
+   * Is this slot a `put` or `set` value, what a `get` reads, or what a `set`
+   * writes (`set {bar: 2} on obj`), where `{…}` is an object?
+   */
   private isObjectValueSlot(patternToken: PatternToken & { type: 'role' }): boolean {
     const command = this.currentRoleCommand;
     if (patternToken.role === 'source') return command === 'get';
+    if (patternToken.role === 'destination' && command === 'set') return true;
     return patternToken.role === 'patient' && (command === 'put' || command === 'set');
   }
 
@@ -1213,6 +1217,16 @@ export class PatternMatcher {
     if (
       this.isClassNameSlot(patternToken) &&
       this.commandMarkers().has(token.value.toLowerCase())
+    ) {
+      return patternToken.optional || false;
+    }
+    // `set`'s scope marker, `on` in every language, is never a value: it's
+    // fused `impostare in {destination} {patient}` read `impostare in {bar: 2}
+    // on obj` with `on` as the value, and dropped the target.
+    if (
+      this.currentRoleCommand === 'set' &&
+      token.value.toLowerCase() === 'on' &&
+      this.patternTokenWouldMatch(nextPatternToken, token)
     ) {
       return patternToken.optional || false;
     }
@@ -2693,6 +2707,18 @@ export class PatternMatcher {
     const start = tokens.position();
     const mark = tokens.mark();
     tokens.advance();
+    // A dotted path as the property (`parentNode.innerHTML of #d1`): the links
+    // touching the word. Only the word is a property name to translate.
+    let tail = '';
+    if (property.kind !== 'selector') {
+      for (let link = tokens.peek(), before: LanguageToken = property; link; link = tokens.peek()) {
+        if (link.kind !== 'selector' || !/^\.[A-Za-z_]\w*$/.test(link.value)) break;
+        if (before.position.end !== link.position.start) break;
+        tail += link.value;
+        before = link;
+        tokens.advance();
+      }
+    }
 
     const marker = tokens.peek();
     if (!marker || !this.isOfPossessiveMarker(marker)) {
@@ -2735,7 +2761,7 @@ export class PatternMatcher {
       for (let n = 0; n < positional.consumed; n++) tokens.advance();
       return createPropertyPath(
         { type: 'expression', raw: positional.parts.map(p => p.text).join(' ') },
-        this.toEnglishProperty(property.value),
+        this.toEnglishProperty(property.value) + tail,
         'possessive'
       );
     }
@@ -2777,7 +2803,7 @@ export class PatternMatcher {
     // which reads it owner-first and correctly.
     return createPropertyPath(
       createSelector(owner.value),
-      this.toEnglishProperty(property.value),
+      this.toEnglishProperty(property.value) + tail,
       'possessive'
     );
   }

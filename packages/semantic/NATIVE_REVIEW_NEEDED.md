@@ -663,6 +663,25 @@ Question for the reviewer: is a bare number after the event readable as "the Nth
 does it read as a value? An ordinal (`primer`, `ersten`, `1回目`) is a new form, and waits for this
 answer.
 
+## `set {…} on <target>`: the target after English's `on` (M2 reliability row 8) ⚠️ (October 2026)
+
+Upstream's `set {bar: 2, baz: 3} on obj` sets each property of the object on `obj`. It was refused in
+every language; it now reads back, written with the same English `on` that `set @a to 1 on #b` (the
+attribute's scope) has always written in every language. No new word:
+
+| lang | `set {a: 1} on obj`         | `set @a to 1 on #b`        |
+| ---- | --------------------------- | -------------------------- |
+| es   | `establecer {a: 1} on obj`  | `establecer @a a 1 on #b`  |
+| de   | `festlegen auf {a: 1} on obj` | `setze @a auf 1 on #b`   |
+| ja   | `{a: 1}を on obj 設定`      | `@aを 1に on #b 設定`      |
+| ko   | `{a: 1}를 on obj 설정`      | `@a를 1에 on #b 설정`      |
+| tr   | `{a: 1} i on obj ayarla`    | `@a i 1 e on #b ayarla`    |
+| ru   | `установить в {a: 1} on obj` | `установить в @a 1 on #b` |
+
+Questions for the reviewer: which word would you write for this `on` (the target the properties go
+onto)? And de: the object form takes de's default destination marker (`festlegen auf {a: 1}`) where
+`set @a to 1` writes none (`setze @a`); which reads right?
+
 ## `ask` and `answer` in the language's own verbs (M2, vocabulary sheet B8) ⚠️ (October 2026)
 
 Upstream's two dialog commands, refused in every language until now: `ask "Name?"` prompts and the

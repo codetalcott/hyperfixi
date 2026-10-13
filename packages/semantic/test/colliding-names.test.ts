@@ -237,7 +237,7 @@ const FIXED: Record<Position, Record<string, readonly string[]>> = {
 // which the template above leaves out; both are read here).
 const FIXED_84: Record<Position | 'if-then', Record<string, readonly string[]>> = {
   put: { ac: ['tr'], al: ['tr'], ir: ['es', 'pt'], si: ['sw'], va: ['fr'], ve: ['es'] },
-  set: { ac: ['tr'], al: ['tr'], ir: ['es', 'pt'], va: ['fr'], ve: ['es'] },
+  set: { ac: ['tr'], ir: ['es', 'pt'], va: ['fr'], ve: ['es'] },
   if: {},
   'if-then': {
     al: ['tr'],
@@ -323,6 +323,16 @@ describe.each(Object.keys(TEMPLATES_84) as (Position | 'if-then')[])('%s (PR 84)
       render(parse(source, 'en')!, 'en')
     );
   });
+});
+
+// tr `x i al` alone is `get x`, and since get lost its destination slot (which
+// no reader used) that reading outranks `set x to al` in `x i al e ayarla`. The
+// verified render writes the variable `(al)` there, and reads it back.
+it('tr `al` as a set value is written `(al)`', () => {
+  const source = 'on click set x to al then put x into #out';
+  const foreign = render(parse(source, 'en')!, 'tr');
+  expect(foreign).toContain('(al)');
+  expect(render(parse(foreign, 'tr')!, 'en')).toBe('on click set x to (al) then put x into #out');
 });
 
 // What the readings above must leave alone.

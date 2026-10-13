@@ -290,13 +290,12 @@ export function generatePatternVariants(
       ...full,
       roles: full.roles
         .filter(r => !v.omit?.includes(r.role))
-        .map(r =>
-          r.role === v.role
-            ? { ...r, required: true }
-            : r.role === v.widen?.role
-              ? { ...r, expectedTypes: [...v.widen.types] }
-              : r
-        ),
+        .map(r => {
+          const required = r.role === v.role ? { ...r, required: true } : r;
+          return r.role === v.widen?.role
+            ? { ...required, expectedTypes: [...v.widen.types] }
+            : required;
+        }),
     };
     const variant = generatePattern(variantSchema, profile, config);
     patterns.push({
