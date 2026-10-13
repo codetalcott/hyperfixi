@@ -21,7 +21,6 @@ import type {
   TokenStream,
   PatternMatchResult,
   Diagnostic,
-  WaitAlternative,
   BlockCommandSemanticNode,
 } from '../types';
 import {
@@ -49,12 +48,10 @@ import {
   endWordIsValue,
   endWordPlace,
   joinExpressionTokens,
-  loneKeywordKind,
 } from './utils/expression-lexicon';
 import { blankComments } from './utils/comments';
 import { isOrWordToken } from './utils/or-words';
-import { NOT_THROW_BY_LANG } from './utils/not-throw';
-import { GRAMMAR_WORDS, grammarWordForms } from './utils/grammar-words';
+import { GRAMMAR_WORDS } from './utils/grammar-words';
 import { ROLE_MARKER_CONCEPTS } from './utils/marker-resolution';
 import { patternMatcher } from './pattern-matcher';
 import { CONDITION_PREDICATES, copulaHoldsCondition } from './value-reading';
@@ -71,9 +68,10 @@ import {
   isUnlessKeyword,
 } from './clause-keywords';
 import { consumeJsBlock, consumeVerbFinalJsBlock } from './js-block';
+import type { ParseFn } from './parse-fn';
 import {
   MAX_UNCONSUMED_SPAN_CHARS,
-  NORMALIZE_CHILD_FIELDS,
+  NODE_CHILD_FIELDS,
   describeUnconsumedInput,
   hoistUnconsumedDiagnostics,
   parseDiagnostic,
@@ -104,6 +102,11 @@ import { rewritePseudoCommand } from './pseudo-command';
 import { findEventModifierPhrase } from './event-modifier-lift';
 import { render as renderExplicitFn } from '../explicit/verified-render';
 import { parseExplicit as parseExplicitFn } from '../explicit/parser';
+import { KNOWN_EVENTS, WAITABLE_EVENT_WORDS, matchEventParamPhrase } from './event-words';
+import { readNativeDirection, readNativeElsewhere, stripDoNotThrowModifier, tryDoNotThrow, tryLoopIndex, tryScrollModifiers, tryTellTo, tryWaitAlternatives } from './command-rescues';
+
+// Read from here by the renderer and tests.
+export { WAITABLE_EVENT_WORDS };
 
 /**
  * Block-introducing command actions: their tokens are a condition/clause plus a
@@ -265,77 +268,7 @@ const POSITIONAL_VALUE_KEYWORDS = new Set([
   'closest',
 ]);
 
-/** Reference words: never an event parameter's name. */
-const REFERENCE_WORDS = new Set(['me', 'my', 'i', 'it', 'its', 'you', 'your', 'result']);
 
-/**
- * The position words of `go`/`scroll` (`go to the top of #d1`), as core's
- * parser reads them. `nearest` is core's own; upstream has no such word.
- */
-const SCROLL_POSITIONS = new Set(['top', 'middle', 'bottom', 'left', 'center', 'right', 'nearest']);
-
-/** The adverbs a `go`/`scroll` takes, and core's `modifiers.behavior` for each. */
-const SCROLL_ADVERBS = new Set(['smoothly', 'instantly']);
-
-/** The directions of `scroll [<el>] up|down|left|right by <n>` (the engine's `direction`). */
-const SCROLL_DIRECTIONS = new Set(['up', 'down', 'left', 'right']);
-
-/** The words that may follow a scroll's direction: the amount's marker (`by`, es `por`). */
-function scrollByMarkers(language: string): ReadonlySet<string> {
-  const quantity = getSchema('scroll')?.roles.find(r => r.role === 'quantity');
-  const own = quantity?.markerOverride?.[language];
-  const marker = tryGetProfile(language)?.roleMarkers?.quantity;
-  const words = ['by', own, marker?.primary, ...(marker?.alternatives ?? [])];
-  return new Set(words.filter((w): w is string => !!w).map(w => w.toLowerCase()));
-}
-
-/** Does the token read as a scroll amount: a number, a length (`200px`), a sigil name? */
-function isScrollAmount(tok: LanguageToken | undefined): boolean {
-  if (!tok) return false;
-  return tok.kind === 'literal' || /^[-\d.$:]/.test(tok.value);
-}
-
-/**
- * Does `value` read as `tok`? A selector compares its text, a reference its
- * normalized word (es `yo` is `me`), an expression its first word.
- */
-function sameSurface(value: SemanticValue, tok: LanguageToken | undefined): boolean {
-  if (!tok) return false;
-  const text = tok.value.toLowerCase();
-  switch (value.type) {
-    case 'selector':
-      return value.value.toLowerCase() === text;
-    case 'reference':
-      return value.value === (tok.normalized ?? tok.value).toLowerCase() || value.value === text;
-    case 'expression':
-      return value.raw.toLowerCase().split(/\s+/)[0] === text;
-    default:
-      return String('value' in value ? value.value : '').toLowerCase() === text;
-  }
-}
-
-/** The node fields a tree walk descends into. */
-const NODE_CHILD_FIELDS = [
-  'body',
-  'statements',
-  'thenBranch',
-  'elseBranch',
-  'eventHandlers',
-  'initBlock',
-  'catchBody',
-  'finallyBody',
-] as const;
-type NodeChildren = Partial<Record<(typeof NODE_CHILD_FIELDS)[number], unknown>>;
-
-/** A `wait for`'s `from` value: a reference word, a selector, or an expression. */
-function waitSourceValue(tok: LanguageToken): SemanticValue {
-  const norm = (tok.normalized ?? tok.value).toLowerCase();
-  if (norm === 'document' || norm === 'window' || norm === 'me' || norm === 'body') {
-    return createReference(norm);
-  }
-  if (tok.kind === 'selector') return createSelector(tok.value);
-  return { type: 'expression', raw: tok.value };
-}
 
 const COMMAND_WORDS = new Map<string, ReadonlySet<string>>();
 
@@ -352,87 +285,6 @@ function commandWordsFor(language: string): ReadonlySet<string> {
   }
   return words;
 }
-
-/**
- * Known WAITABLE event names — the gate for treating a `wait` argument as an
- * event wait rather than a time wait. `wait for transitionend` (en head) and
- * the marker-less translations (`esperar transitionend`) both put the event
- * name where a duration would sit; a bare identifier is otherwise ambiguous
- * with a time-variable wait (`wait delay`), so the relabel/reclaim fires ONLY
- * on names in this set. Event names are untranslated loanwords in every corpus
- * language (the RESPONSE_TYPE_WORDS precedent), so a value-set gate is
- * language-invariant. Superset of the handler-side KNOWN_EVENTS plus the
- * transition/animation/pointer/touch/drag families that waits actually target.
- */
-export const WAITABLE_EVENT_WORDS = new Set([
-  // handler-side KNOWN_EVENTS
-  'click',
-  'dblclick',
-  'input',
-  'change',
-  'submit',
-  'keydown',
-  'keyup',
-  'keypress',
-  'mouseover',
-  'mouseout',
-  'mousedown',
-  'mouseup',
-  'focus',
-  'blur',
-  'load',
-  'scroll',
-  'resize',
-  'contextmenu',
-  // transition / animation
-  'transitionend',
-  'transitionstart',
-  'transitionrun',
-  'transitioncancel',
-  'animationend',
-  'animationstart',
-  'animationiteration',
-  'animationcancel',
-  // pointer / touch / mouse movement
-  'pointerdown',
-  'pointerup',
-  'pointermove',
-  'pointerenter',
-  'pointerleave',
-  'pointercancel',
-  'pointerover',
-  'pointerout',
-  'touchstart',
-  'touchend',
-  'touchmove',
-  'touchcancel',
-  'mousemove',
-  'mouseenter',
-  'mouseleave',
-  'wheel',
-  // drag & drop
-  'dragstart',
-  'dragend',
-  'dragover',
-  'dragenter',
-  'dragleave',
-  'drop',
-  'drag',
-  // lifecycle / misc
-  'loadend',
-  'loadstart',
-  'error',
-  'abort',
-  'close',
-  'open',
-  'message',
-  'popstate',
-  'hashchange',
-  'storage',
-  'online',
-  'offline',
-  'visibilitychange',
-]);
 
 // =============================================================================
 // Parse Error with Diagnostics (Phase 3.4)
@@ -896,7 +748,7 @@ function normalizeCommandRoles(
   }
 
   const rec = node as unknown as Record<string, unknown>;
-  for (const field of NORMALIZE_CHILD_FIELDS) {
+  for (const field of NODE_CHILD_FIELDS) {
     const child = rec[field];
     if (Array.isArray(child)) {
       for (const c of child) normalizeCommandRoles(c as SemanticNode, boundIdentifiers, language);
@@ -944,7 +796,7 @@ export function fillSchemaDefaults(node: SemanticNode): SemanticNode {
   }
 
   const rec = node as unknown as Record<string, unknown>;
-  for (const field of NORMALIZE_CHILD_FIELDS) {
+  for (const field of NODE_CHILD_FIELDS) {
     const child = rec[field];
     if (Array.isArray(child)) {
       for (const c of child) fillSchemaDefaults(c as SemanticNode);
@@ -970,7 +822,7 @@ export class SemanticParserImpl implements ISemanticParser {
     // offset into the input holds).
     if (this.parseDepth === 0) {
       this.boundIdentifiers.clear();
-      input = this.readNativeDirection(this.readNativeElsewhere(blankComments(input), language), language);
+      input = readNativeDirection(readNativeElsewhere(blankComments(input), language), language);
     }
     this.parseDepth++;
     this.coverageFrames.push([]);
@@ -1003,14 +855,13 @@ export class SemanticParserImpl implements ISemanticParser {
         // consumes its span or returns null, so the chain converges.
         if (node.kind === 'event-handler') {
           let cur = { node: node as EventHandlerSemanticNode, input };
-          const parseBack = (text: string, lang: string): SemanticNode => this.parse(text, lang);
           const em = cur.node.eventModifiers;
           if (em && (em.once || em.debounce !== undefined || em.throttle !== undefined)) {
             for (let round = 0; round < 4; round++) {
               const next =
-                reclaimDanglingFromTail(cur.node, cur.input, language, parseBack) ??
+                reclaimDanglingFromTail(cur.node, cur.input, language, this.parseBack) ??
                 reclaimEventCompoundTail(cur.node, cur.input, language) ??
-                reclaimResponseTypeTail(cur.node, cur.input, language, parseBack) ??
+                reclaimResponseTypeTail(cur.node, cur.input, language, this.parseBack) ??
                 reclaimCapturedDestinationTail(cur.node, cur.input, language);
               if (!next) break;
               cur = next;
@@ -1041,6 +892,9 @@ export class SemanticParserImpl implements ISemanticParser {
 
   /** Re-entrancy depth of {@link parse} — see boundIdentifiers scoping. */
   private parseDepth = 0;
+
+  /** {@link parse}, for the moved-out functions that re-parse part of their input. */
+  private readonly parseBack: ParseFn = (text, lang) => this.parse(text, lang);
 
   /**
    * Input-coverage frames (Arc C), one per active {@link parse} /
@@ -1335,7 +1189,7 @@ export class SemanticParserImpl implements ISemanticParser {
     // is a no-op on en's action set. Gated to a literal `do` followed within two
     // tokens by a `throw`-normalized verb, so a real `throw` (no leaked `do`) and a
     // pl/pt `do`-marker not adjacent to a throw verb are byte-identical.
-    const dntStrip = this.stripDoNotThrowModifier(asyncInput, language);
+    const dntStrip = stripDoNotThrowModifier(asyncInput, language);
     const parseInput = dntStrip.remainingInput ?? asyncInput;
 
     // Diagnostics accumulator (Phase 3.4)
@@ -1470,7 +1324,7 @@ export class SemanticParserImpl implements ISemanticParser {
         if (
           arr[s]?.normalized === 'source' &&
           arr[s + 2]?.normalized === 'on' &&
-          SemanticParserImpl.KNOWN_EVENTS.has(evNorm)
+          KNOWN_EVENTS.has(evNorm)
         ) {
           const reduced = (
             parseInput.slice(0, arr[s].position.start).trimEnd() +
@@ -1497,7 +1351,7 @@ export class SemanticParserImpl implements ISemanticParser {
 
     // `fetch … do not throw`: see tryDoNotThrow.
     {
-      const flagged = this.tryDoNotThrow(tokens.tokens as LanguageToken[], parseInput, language);
+      const flagged = tryDoNotThrow(tokens.tokens as LanguageToken[], parseInput, language, this.parseBack);
       if (flagged) {
         const result =
           modifiers && flagged.kind === 'event-handler'
@@ -1509,7 +1363,7 @@ export class SemanticParserImpl implements ISemanticParser {
 
     // `tell <target> to …`: see tryTellTo.
     {
-      const told = this.tryTellTo(tokens.tokens as LanguageToken[], parseInput, language);
+      const told = tryTellTo(tokens.tokens as LanguageToken[], parseInput, language, this.parseBack);
       if (told) {
         const result =
           modifiers && told.kind === 'event-handler'
@@ -1521,10 +1375,11 @@ export class SemanticParserImpl implements ISemanticParser {
 
     // A `go`/`scroll` position or adverb: see tryScrollModifiers.
     {
-      const placed = this.tryScrollModifiers(
+      const placed = tryScrollModifiers(
         tokens.tokens as LanguageToken[],
         parseInput,
-        language
+        language,
+        this.parseBack
       );
       if (placed) {
         const result =
@@ -1537,7 +1392,7 @@ export class SemanticParserImpl implements ISemanticParser {
 
     // A loop's index variable (`index i`, core's `with index`): see tryLoopIndex.
     {
-      const indexed = this.tryLoopIndex(tokens.tokens as LanguageToken[], parseInput, language);
+      const indexed = tryLoopIndex(tokens.tokens as LanguageToken[], parseInput, language, this.parseBack);
       if (indexed) {
         const result =
           modifiers && indexed.kind === 'event-handler'
@@ -1550,10 +1405,11 @@ export class SemanticParserImpl implements ISemanticParser {
     // A `wait for` run with more than its first event (params, `or`
     // alternatives, a `from` source): see tryWaitAlternatives.
     {
-      const waited = this.tryWaitAlternatives(
+      const waited = tryWaitAlternatives(
         tokens.tokens as LanguageToken[],
         parseInput,
-        language
+        language,
+        this.parseBack
       );
       if (waited) {
         const result =
@@ -1589,9 +1445,9 @@ export class SemanticParserImpl implements ISemanticParser {
         if (this.isBodyCommandWord(t, commands)) break;
         if (arr[i + 1].value !== '(') continue;
         const norm = (t.normalized ?? t.value).toLowerCase();
-        const known = SemanticParserImpl.KNOWN_EVENTS.has(norm) || WAITABLE_EVENT_WORDS.has(norm);
+        const known = KNOWN_EVENTS.has(norm) || WAITABLE_EVENT_WORDS.has(norm);
         if (!known && t.kind !== 'identifier') continue;
-        const phrase = this.matchEventParamPhrase(arr, i + 1);
+        const phrase = matchEventParamPhrase(arr, i + 1);
         if (phrase.len === 0) continue;
         const close = arr[i + phrase.len];
         const reduced = (
@@ -1681,7 +1537,7 @@ export class SemanticParserImpl implements ISemanticParser {
         if (!isOrWordToken(t, language)) continue;
         const evTok = arr[i + 1];
         const evNorm = (evTok.normalized ?? evTok.value).toLowerCase();
-        if (!SemanticParserImpl.KNOWN_EVENTS.has(evNorm)) break;
+        if (!KNOWN_EVENTS.has(evNorm)) break;
         // Optional trailing `[filter]` selector token (`keypress[key=="Enter"]`
         // tokenizes as `keypress` + `[key=="Enter"]`).
         let lastIdx = i + 1;
@@ -1795,7 +1651,7 @@ export class SemanticParserImpl implements ISemanticParser {
         const evVal = (ev?.raw ?? ev?.value ?? '').toString().toLowerCase();
         const langEvents = eventNameTranslations[language];
         const evIsKnownEvent =
-          SemanticParserImpl.KNOWN_EVENTS.has(evVal) ||
+          KNOWN_EVENTS.has(evVal) ||
           (!!langEvents && Object.keys(langEvents).some(n => n.toLowerCase() === evVal));
         if (evVal && !evIsKnownEvent) {
           const sov = this.trySOVEventExtraction(parseInput, language, sortedPatterns);
@@ -1961,7 +1817,7 @@ export class SemanticParserImpl implements ISemanticParser {
           return withDiagnostics(result, diagnostics);
         }
       } else if (
-        SemanticParserImpl.KNOWN_EVENTS.has(commandMatch.pattern.command) &&
+        KNOWN_EVENTS.has(commandMatch.pattern.command) &&
         this.hasSOVEventMarkerHead(parseInput, language)
       ) {
         // SOV command-homonym event head (ko `window-scroll`): the handler's event
@@ -2425,7 +2281,7 @@ export class SemanticParserImpl implements ISemanticParser {
           eventValue = { type: 'literal', value: english, dataType: 'string' };
         } else if (
           eventValue.type === 'expression' &&
-          SemanticParserImpl.KNOWN_EVENTS.has(word.toLowerCase())
+          KNOWN_EVENTS.has(word.toLowerCase())
         ) {
           eventValue = { type: 'literal', value: word.toLowerCase(), dataType: 'string' };
         }
@@ -6411,27 +6267,6 @@ export class SemanticParserImpl implements ISemanticParser {
     return isKeyword;
   }
 
-  private static readonly KNOWN_EVENTS = new Set([
-    'click',
-    'dblclick',
-    'input',
-    'change',
-    'submit',
-    'keydown',
-    'keyup',
-    'keypress',
-    'mouseover',
-    'mouseout',
-    'mousedown',
-    'mouseup',
-    'focus',
-    'blur',
-    'load',
-    'scroll',
-    'resize',
-    'contextmenu',
-  ]);
-
   /**
    * SOV event marker particles per language (postpositions that mark the event role).
    * Korean has no event marker particle -- the event keyword stands alone.
@@ -6512,16 +6347,16 @@ export class SemanticParserImpl implements ISemanticParser {
       const normalized = token.normalized?.toLowerCase();
       const isEvent =
         (!!normalized &&
-          (SemanticParserImpl.KNOWN_EVENTS.has(normalized) ||
+          (KNOWN_EVENTS.has(normalized) ||
             WAITABLE_EVENT_WORDS.has(normalized))) ||
-        SemanticParserImpl.KNOWN_EVENTS.has(value) ||
+        KNOWN_EVENTS.has(value) ||
         WAITABLE_EVENT_WORDS.has(value) ||
         nativeEventNames.has(value);
       if (!isEvent) continue;
 
       // A param phrase (`pointerdown(clientY)`) sits between the event keyword
       // and its marker — skip it, mirroring trySOVEventExtraction.
-      const paramLen = this.matchEventParamPhrase(tokens, i + 1).len;
+      const paramLen = matchEventParamPhrase(tokens, i + 1).len;
       const next = tokens[i + 1 + paramLen];
       if (
         next &&
@@ -6570,743 +6405,6 @@ export class SemanticParserImpl implements ISemanticParser {
   };
 
   /**
-   * A `wait for` run with more than its first event: `wait for pointermove(
-   * clientX, clientY) or pointerup(clientX, clientY) from document`, `wait for
-   * keyup or 1s`. No wait pattern captures past the first event, so the params,
-   * the alternatives and the `from` source were dropped in every language: a
-   * translated drag behavior waited on the element instead of the document,
-   * with its coordinates unbound. Excise the run's extras, re-parse, and hang
-   * them on the wait node the re-parse built (`waitAlternatives`, `waitSource`).
-   * One run per call: the re-parse is a `parse`, so it takes the next.
-   *
-   * The run: an event word, its param phrase, then `<or> <event|duration>`
-   * legs, and a source phrase after them (`from X`, or `X から` where the marker
-   * follows its noun). It must be a wait's
-   * argument: the wait verb just before it (verb-first) or just after it
-   * (verb-final). A run with nothing past its first event is left alone.
-   */
-  /**
-   * A `go`/`scroll` position (`go to the top of #d1`, `scroll to bottom of me`)
-   * and a trailing `smoothly`/`instantly`. No go or scroll pattern reads
-   * either: the position word took the destination's slot and the element was
-   * dropped (`go top`, and `scroll to top`, which throws), and the adverb was
-   * dropped, in English and so in every translation. So the phrase is excised
-   * BEFORE any pattern sees it and the rest re-parsed, as tryDoNotThrow does.
-   * A position attaches to the go/scroll whose destination starts last at or
-   * before where the phrase stood (the text before it keeps its offsets, or
-   * moves left when the re-parse strips a modifier), and only when that
-   * destination is the word that followed `of`: `go to #a then put the top of
-   * #d1 into x` keeps its `put`. An adverb attaches to the go/scroll whose
-   * destination starts last before it. Both are English in every language, as
-   * the renderer writes them. One phrase per call: the re-parse takes the next.
-   */
-  private tryScrollModifiers(
-    arr: readonly LanguageToken[],
-    input: string,
-    language: string
-  ): SemanticNode | null {
-    const word = (t: LanguageToken | undefined): string => t?.value.toLowerCase() ?? '';
-    let first = -1;
-    let last = -1;
-    for (let k = 0; k < arr.length && first < 0; k++) {
-      let j = word(arr[k]) === 'the' ? k + 1 : k;
-      if (!SCROLL_POSITIONS.has(word(arr[j]))) continue;
-      if (SCROLL_POSITIONS.has(word(arr[j + 1]))) j++;
-      if (word(arr[j + 1]) !== 'of' || !arr[j + 2]) continue;
-      first = k;
-      last = j + 1;
-    }
-    const adverb = first < 0 ? arr.findIndex(t => SCROLL_ADVERBS.has(word(t))) : -1;
-    // `scroll [#box] down by 200px`: a direction before the amount's marker, or
-    // before the amount where the language writes it bare (ja `下 200px`). A
-    // position reads `left of #x`; a direction never takes `of`.
-    const byWords = scrollByMarkers(language);
-    const direction =
-      first < 0 && adverb < 0
-        ? arr.findIndex(
-            (t, k) =>
-              SCROLL_DIRECTIONS.has(word(t)) &&
-              (byWords.has(word(arr[k + 1])) || isScrollAmount(arr[k + 1]))
-          )
-        : -1;
-    if (first < 0 && adverb < 0 && direction < 0) return null;
-    const start = first >= 0 ? first : adverb >= 0 ? adverb : direction;
-    const end = first >= 0 ? last : start;
-    const head = input.slice(0, arr[start].position.start).trimEnd();
-    const tail = input.slice(arr[end].position.end).trimStart();
-    const at = head ? head.length + 1 : 0;
-    try {
-      const reparsed = this.parse(head ? `${head} ${tail}` : tail, language);
-      const commands: SemanticNode[] = [];
-      const collect = (n: SemanticNode | undefined): void => {
-        if (!n) return;
-        if (n.kind === 'command' && (n.action === 'go' || n.action === 'scroll')) commands.push(n);
-        const children = n as NodeChildren;
-        for (const field of NODE_CHILD_FIELDS) {
-          const child = children[field];
-          if (Array.isArray(child)) child.forEach(c => collect(c as SemanticNode));
-        }
-      };
-      collect(reparsed ?? undefined);
-      // A scroll-by has no destination: its amount anchors it.
-      const destinationStart = (n: SemanticNode): number =>
-        n.roles.get('destination' as SemanticRole)?.position?.start ??
-        n.roles.get('quantity' as SemanticRole)?.position?.start ??
-        -1;
-      const lastBefore = (limit: number): SemanticNode | undefined =>
-        commands
-          .filter(n => destinationStart(n) >= 0 && destinationStart(n) <= limit)
-          .reduce<SemanticNode | undefined>(
-            (best, n) => (!best || destinationStart(n) > destinationStart(best) ? n : best),
-            undefined
-          );
-      if (!reparsed) return null;
-      if (first >= 0) {
-        const target = lastBefore(at);
-        const destination = target?.roles.get('destination' as SemanticRole);
-        const after = arr[last + 1];
-        if (!target || !destination || !sameSurface(destination, after)) return null;
-        const phrase = arr.slice(first, last).map(t => t.value.toLowerCase());
-        (target as { scrollPosition?: string }).scrollPosition = phrase.join(' ');
-      } else if (adverb >= 0) {
-        const target = lastBefore(arr[adverb].position.start - 1);
-        if (!target) return null;
-        (target as { scrollBehavior?: string }).scrollBehavior = word(arr[adverb]);
-      } else {
-        // The scroll whose amount is the next thing read after the direction's
-        // place (the text before it keeps its offsets in the re-parse).
-        // (A fused handler's command carries no positions: then the last
-        // scroll with an amount, the one the direction stood in.)
-        const quantityStart = (n: SemanticNode): number =>
-          n.roles.get('quantity' as SemanticRole)?.position?.start ?? -1;
-        const scrolls = commands.filter(n => n.action === 'scroll');
-        const withAmount = scrolls.some(n => n.roles.has('quantity' as SemanticRole))
-          ? scrolls.filter(n => n.roles.has('quantity' as SemanticRole))
-          : scrolls.filter(n => n.roles.has('destination' as SemanticRole));
-        const target = withAmount.some(n => quantityStart(n) >= 0)
-          ? withAmount
-              .filter(n => quantityStart(n) >= at - 1)
-              .reduce<SemanticNode | undefined>(
-                (best, n) => (!best || quantityStart(n) < quantityStart(best) ? n : best),
-                undefined
-              )
-          : withAmount[withAmount.length - 1];
-        if (!target) return null;
-        const targetRoles = target.roles as Map<SemanticRole, SemanticValue>;
-        const dest = targetRoles.get('destination');
-        // A handler's fused pattern has no bare amount slot (a bare trailing
-        // slot would take what follows): `прокрутити #box 200px` read the
-        // element as the destination and left the amount. Then the amount is
-        // the token after the direction (and its marker), read here, out of a
-        // re-parse without it, and the element is the patient.
-        const amountAt = byWords.has(word(arr[direction + 1])) ? direction + 2 : direction + 1;
-        const amount = arr[amountAt];
-        if (
-          dest &&
-          !targetRoles.has('quantity') &&
-          (dest.type === 'selector' || dest.type === 'reference') &&
-          isScrollAmount(amount)
-        ) {
-          const without = `${head} ${input.slice(amount.position.end).trimStart()}`.trim();
-          const again = this.parse(without, language);
-          const scrolls: SemanticNode[] = [];
-          const walk = (n: SemanticNode | undefined): void => {
-            if (!n) return;
-            if (n.kind === 'command' && n.action === 'scroll') scrolls.push(n);
-            for (const field of NODE_CHILD_FIELDS) {
-              const child = (n as NodeChildren)[field];
-              if (Array.isArray(child)) child.forEach(c => walk(c as SemanticNode));
-            }
-          };
-          walk(again ?? undefined);
-          const element = scrolls.filter(n => n.roles.has('destination' as SemanticRole)).pop();
-          if (!again || !element) return null;
-          const roles = element.roles as Map<SemanticRole, SemanticValue>;
-          const el = roles.get('destination')!;
-          roles.delete('destination');
-          roles.set('patient', el);
-          // As the English pattern types it: a number, a sigil name, else an expression.
-          roles.set(
-            'quantity',
-            /^-?\d+(\.\d+)?$/.test(amount.value)
-              ? createLiteral(Number(amount.value), 'number')
-              : /^[$:]/.test(amount.value)
-                ? ({ type: 'reference', value: amount.value } as SemanticValue)
-                : { type: 'expression', raw: amount.value }
-          );
-          (element as { scrollDirection?: string }).scrollDirection = word(arr[direction]);
-          return again;
-        }
-        (target as { scrollDirection?: string }).scrollDirection = word(arr[direction]);
-        // The by-form has no destination: one read (a variable amount a fused
-        // handler head took for the element, `scroll down by x`) is the amount.
-        if (dest && !targetRoles.has('quantity')) {
-          targetRoles.delete('destination');
-          targetRoles.set('quantity', dest);
-        }
-      }
-      return reparsed;
-    } catch {
-      return null;
-    }
-  }
-
-  /**
-   * `from elsewhere` in the language's own word (M2 sheet B4, grammar-words.ts:
-   * es `de afuera`, ja `外側 から`), read as English's: the word is written as
-   * `elsewhere` before any stage sees it, where it sits against the language's
-   * `from` marker, on the side the marker takes (before it, or after it in a
-   * postpositional language). Every stage already reads English's word in every
-   * language: the handler's `from`, the SOV event strip, a floated phrase's
-   * reclaim.
-   */
-  private readNativeElsewhere(input: string, language: string): string {
-    const native = GRAMMAR_WORDS[language]?.elsewhere;
-    const marker = tryGetProfile(language)?.roleMarkers?.source;
-    if (!native || !marker) return input;
-    const form = tokenizeInternal(native, language).tokens.map(t => t.value.toLowerCase());
-    // By the word's first token, as a render spaces the tokens.
-    if (!form[0] || !input.toLowerCase().includes(form[0])) return input;
-    const markers = new Set([marker.primary, ...(marker.alternatives ?? [])].map(m => m.toLowerCase()));
-    const tokens = tokenizeInternal(input, language).tokens as LanguageToken[];
-    const isMarker = (t: LanguageToken | undefined) => !!t && markers.has(t.value.toLowerCase());
-    let out = input;
-    // From the end, so each replacement leaves the offsets before it.
-    for (let i = tokens.length - form.length; i >= 0; i--) {
-      if (!form.every((w, j) => tokens[i + j]!.value.toLowerCase() === w)) continue;
-      const placed =
-        marker.position === 'after' ? isMarker(tokens[i + form.length]) : isMarker(tokens[i - 1]);
-      if (!placed) continue;
-      const start = tokens[i]!.position.start;
-      const end = tokens[i + form.length - 1]!.position.end;
-      out = out.slice(0, start) + 'elsewhere' + out.slice(end);
-    }
-    return out;
-  }
-
-  /**
-   * A scroll's direction in the language's own word (M2 sheet B9, grammar-words.ts:
-   * es `abajo por 200px`, ja `下 200px`), read as English's: the word is written as
-   * `down` before any stage sees it, where it stands before the amount's marker or
-   * the amount itself (tryScrollModifiers reads it there). Nowhere else: es
-   * `tecla arriba` is keyup, and a variable spelled like a direction keeps its name.
-   */
-  private readNativeDirection(input: string, language: string): string {
-    const words = GRAMMAR_WORDS[language];
-    if (!words) return input;
-    const byWords = scrollByMarkers(language);
-    const lower = input.toLowerCase();
-    let tokens: LanguageToken[] | undefined;
-    let out = input;
-    const edits: Array<[number, number, string]> = [];
-    for (const key of ['up', 'down', 'left', 'right'] as const) {
-      const native = words[key];
-      if (!native || native === key) continue;
-      const form = tokenizeInternal(native, language).tokens.map(t => t.value.toLowerCase());
-      if (!form[0] || !lower.includes(form[0])) continue;
-      tokens ??= tokenizeInternal(input, language).tokens as LanguageToken[];
-      for (let i = 0; i + form.length <= tokens.length; i++) {
-        if (!form.every((w, j) => tokens![i + j]!.value.toLowerCase() === w)) continue;
-        const next = tokens[i + form.length];
-        if (!next || !(byWords.has(next.value.toLowerCase()) || isScrollAmount(next))) continue;
-        edits.push([tokens[i]!.position.start, tokens[i + form.length - 1]!.position.end, key]);
-      }
-    }
-    // From the end, so each replacement leaves the offsets before it.
-    for (const [start, end, key] of edits.sort((a, b) => b[0] - a[0])) {
-      out = out.slice(0, start) + key + out.slice(end);
-    }
-    return out;
-  }
-
-  /**
-   * `fetch … do not throw` (or `don't throw`). No fetch pattern reads the phrase, so it dropped,
-   * in English and so in every translation: a translated fetch then threw on a
-   * 404 its author told it to tolerate. Worse, other languages' patterns read
-   * its words: pl's `do` is its own "to" (a destination `not`), and ja took
-   * `do` for a response type. So the phrase is excised BEFORE any pattern sees
-   * it, the rest re-parsed, and the flag set on the fetch it followed: the one
-   * whose source starts last before the phrase (the text before the phrase keeps
-   * its offsets in the re-parse). By position, not by counting fetch verbs: he
-   * `הבא` and id `muat` do not normalize to `fetch`, though their patterns read
-   * them as it. Each language writes its own words for it (not-throw.ts),
-   * after the whole command, and English's phrase is read in every language.
-   * One phrase per call: the re-parse takes the next.
-   */
-  private tryDoNotThrow(
-    arr: readonly LanguageToken[],
-    input: string,
-    language: string
-  ): SemanticNode | null {
-    const word = (t: LanguageToken | undefined) => t?.value.toLowerCase();
-    const native = language === 'en' ? [] : (NOT_THROW_BY_LANG[language] ?? []);
-    // `do not throw`, or upstream's contraction `don't throw` (`don`, `'`, `t`),
-    // or the language's own words (not-throw.ts).
-    const phraseEnd = (k: number): number => {
-      if (word(arr[k]) === 'do' && word(arr[k + 1]) === 'not' && word(arr[k + 2]) === 'throw') {
-        return k + 2;
-      }
-      if (native.length && native.every((w, j) => word(arr[k + j]) === w.toLowerCase())) {
-        return k + native.length - 1;
-      }
-      const contracted =
-        word(arr[k]) === 'don' &&
-        word(arr[k + 1]) === "'" &&
-        word(arr[k + 2]) === 't' &&
-        arr[k]!.position.end === arr[k + 1]!.position.start &&
-        arr[k + 1]!.position.end === arr[k + 2]!.position.start;
-      return contracted && word(arr[k + 3]) === 'throw' ? k + 3 : -1;
-    };
-    const at = arr.findIndex((_t, k) => phraseEnd(k) >= 0);
-    if (at < 0) return null;
-    const end = phraseEnd(at);
-    const phraseStart = arr[at].position.start;
-    const reduced = (
-      input.slice(0, arr[at].position.start).trimEnd() +
-      ' ' +
-      input.slice(arr[end].position.end).trimStart()
-    ).trim();
-    try {
-      const reparsed = this.parse(reduced, language);
-      const fetches: SemanticNode[] = [];
-      const collect = (n: SemanticNode | undefined): void => {
-        if (!n) return;
-        if (n.kind === 'command' && n.action === 'fetch') fetches.push(n);
-        const children = n as NodeChildren;
-        for (const field of NODE_CHILD_FIELDS) {
-          const child = children[field];
-          if (Array.isArray(child)) child.forEach(c => collect(c as SemanticNode));
-        }
-      };
-      collect(reparsed ?? undefined);
-      const sourceStart = (n: SemanticNode) =>
-        n.roles.get('source' as SemanticRole)?.position?.start ?? -1;
-      const target = fetches
-        .filter(n => sourceStart(n) >= 0 && sourceStart(n) < phraseStart)
-        .reduce<SemanticNode | undefined>(
-          (best, n) => (!best || sourceStart(n) > sourceStart(best) ? n : best),
-          undefined
-        );
-      if (!reparsed || !target) return null;
-      (target as { doNotThrow?: boolean }).doNotThrow = true;
-      return reparsed;
-    } catch {
-      return null;
-    }
-  }
-
-  /**
-   * `tell <target> to <command>`, core's form (upstream rejects the `to`). No
-   * tell pattern reads the `to`, so it dropped in silence, in English and so in
-   * every translation. And pl reads `to` as its own word ("it"). So, as with
-   * tryDoNotThrow, the word is excised BEFORE any pattern sees it and the rest
-   * re-parsed, when it follows a tell: the one whose target starts last before
-   * it, with only that tell's own words in between. The `to` is READ and not
-   * written: the node is the one `tell <target> <command>` gives, and the
-   * renderer writes that form, the one upstream and @hyperfixi/engine accept
-   * (2026-10-01; it rendered as written before). One `to` per call: the
-   * re-parse takes the next.
-   */
-  private tryTellTo(
-    arr: readonly LanguageToken[],
-    input: string,
-    language: string
-  ): SemanticNode | null {
-    // English keywords carry no normalized form; the surface is the word.
-    const isTell = (t: LanguageToken): boolean =>
-      (t.normalized ?? t.value).toLowerCase() === 'tell';
-    const firstTell = arr.findIndex(isTell);
-    if (firstTell < 0) return null;
-    // The marker between the target and a clause-final verb (ja `に`, tr `e`).
-    const marker = tryGetProfile(language)?.roleMarkers?.destination;
-    const markerForms = new Set(
-      [marker?.primary, ...(marker?.alternatives ?? [])].filter((w): w is string => !!w)
-    );
-    for (let at = firstTell + 1; at < arr.length; at++) {
-      if (arr[at].value.toLowerCase() !== 'to') continue;
-      const wordStart = arr[at].position.start;
-      const reduced = (
-        input.slice(0, wordStart).trimEnd() +
-        ' ' +
-        input.slice(arr[at].position.end).trimStart()
-      ).trim();
-      try {
-        const reparsed = this.parse(reduced, language);
-        if (!reparsed) continue;
-        const commands: SemanticNode[] = [];
-        const collect = (n: SemanticNode | undefined): void => {
-          if (!n) return;
-          if (n.kind === 'command') commands.push(n);
-          const children = n as NodeChildren;
-          for (const field of NODE_CHILD_FIELDS) {
-            const child = children[field];
-            if (Array.isArray(child)) child.forEach(c => collect(c as SemanticNode));
-          }
-        };
-        collect(reparsed);
-        const targetStart = (n: SemanticNode) =>
-          n.roles.get('destination' as SemanticRole)?.position?.start ?? -1;
-        const told = commands
-          .filter(n => n.action === 'tell' && targetStart(n) >= 0 && targetStart(n) < wordStart)
-          .reduce<SemanticNode | undefined>(
-            (best, n) => (!best || targetStart(n) > targetStart(best) ? n : best),
-            undefined
-          );
-        if (!told) continue;
-        // Only the tell's own words between its target and the `to`: its verb
-        // and marker where the verb ends the clause (`#modal に 伝える to`),
-        // nothing where it leads (`tell #modal to`). A `to` further on is some
-        // other command's, and excising it can drop that command from the
-        // re-parse (`tell #modal set my.x to 1`), so the words are read from
-        // the input, not from the re-parse. The text before the `to` keeps its
-        // offsets there.
-        const targetEnd = told.roles.get('destination' as SemanticRole)?.position?.end ?? -1;
-        if (targetEnd < 0) continue;
-        const gap = arr.filter(t => t.position.start >= targetEnd && t.position.start < wordStart);
-        if (!gap.every(t => isTell(t) || markerForms.has(t.value))) continue;
-        return reparsed;
-      } catch {
-        continue;
-      }
-    }
-    return null;
-  }
-
-  /**
-   * A loop's index variable: upstream's `index i` after the loop head (`repeat
-   * for x in xs index i`, `repeat 3 times index i`; both engines), or core's
-   * `with index`, which binds `index` (upstream rejects it). Nothing read
-   * either, so both dropped, in English and so in every translation, and the
-   * body's `i` was unbound. As with tryTellTo, the phrase is excised before any
-   * pattern sees it, the rest re-parsed, and the variable set on the loop it
-   * follows: the one whose head's last value ends last before it, when only
-   * that loop's own words sit in between (`3 times を repeat index i`). Each
-   * language writes its own word for `index` (grammar-words.ts, M2 sheet B5)
-   * after the loop head, and English's is read in every language; `with index`
-   * is read and written back as `index index`, the same binding in the form
-   * both engines accept (2026-10-01). One phrase per call: the re-parse takes
-   * the next.
-   */
-  private tryLoopIndex(
-    arr: readonly LanguageToken[],
-    input: string,
-    language: string
-  ): SemanticNode | null {
-    const word = (t: LanguageToken | undefined) => t?.value.toLowerCase();
-    // The loop's own words: the literals its patterns write, where a
-    // localized `times` lives too (ms `kali`, th `ครั้ง`: plain identifiers,
-    // not keywords), and their alternatives (ja `繰り返す`). The literals in
-    // optional groups are `from` markers no render writes in that gap.
-    const loopWords = new Set<string>();
-    for (const pattern of getPatternsForLanguage(language)) {
-      if (pattern.command !== 'repeat' && pattern.command !== 'for') continue;
-      for (const t of pattern.template.tokens) {
-        if (t.type !== 'literal') continue;
-        for (const w of [t.value, ...(t.alternatives ?? [])]) loopWords.add(w.toLowerCase());
-      }
-    }
-    // By surface: the pattern writes the word, and a particle's normalized
-    // form is a role, not the word (qu `3 times ta repeat`).
-    const isLoopWord = (t: LanguageToken): boolean => loopWords.has(t.value.toLowerCase());
-    // `with` in English or in the language's own word (its `with` marker, sw
-    // `na`, es `con`): a hand-written translation writes it, and sw's `na` is
-    // also its `and`, which read `na index` into the loop's source.
-    const withWord = tryGetProfile(language)?.roleMarkers?.style?.primary?.toLowerCase();
-    const isWith = (t: LanguageToken | undefined): boolean =>
-      word(t) === 'with' || (!!withWord && word(t) === withWord);
-    // `index` in English or in the language's own word (grammar-words.ts),
-    // as the tokens it is written in: how many it takes at `at`, or 0.
-    const indexForms = grammarWordForms(language, 'index', w =>
-      tokenizeInternal(w, language).tokens.map(t => t.value)
-    );
-    const indexWordAt = (at: number): number =>
-      indexForms.find(form => form.every((w, j) => word(arr[at + j]) === w))?.length ?? 0;
-    for (let at = 0; at + 1 < arr.length; at++) {
-      const withIndex = isWith(arr[at]) && word(arr[at + 1]) === 'index';
-      // Upstream's other spelling, `indexed by i`: the same binding.
-      const indexedBy = word(arr[at]) === 'indexed' && word(arr[at + 1]) === 'by' && !!arr[at + 2];
-      const indexWord = indexWordAt(at);
-      const named = (indexWord > 0 && !!arr[at + indexWord]) || indexedBy;
-      if (!withIndex && !named) continue;
-      const nameTok = arr[indexedBy ? at + 2 : withIndex ? at + 1 : at + indexWord]!;
-      // English's `index` before a marker, in a language with its own word, is
-      // a variable named `index`: a verb-final body that opens on one writes
-      // its marker next (ja `index を x に 置く`), which read as the loop's
-      // `index を` and lost the put. After the language's own word a marker's
-      // spelling can be the name (tr `indeks i`).
-      const english = indexWord > 0 && word(arr[at]) === 'index';
-      if (english && nameTok.kind === 'particle' && indexForms.length > 1) continue;
-      const phraseStart = arr[at].position.start;
-      const reduced = (
-        input.slice(0, phraseStart).trimEnd() +
-        ' ' +
-        input.slice(nameTok.position.end).trimStart()
-      ).trim();
-      try {
-        const reparsed = this.parse(reduced, language);
-        if (!reparsed) continue;
-        const loops: SemanticNode[] = [];
-        const collect = (n: SemanticNode | undefined): void => {
-          if (!n) return;
-          if (n.kind === 'loop') loops.push(n);
-          const children = n as NodeChildren;
-          for (const field of NODE_CHILD_FIELDS) {
-            const child = children[field];
-            if (Array.isArray(child)) child.forEach(c => collect(c as SemanticNode));
-          }
-        };
-        collect(reparsed);
-        // Where a loop's head ends: its last value before the phrase.
-        const headEnd = (n: SemanticNode): number =>
-          Math.max(
-            -1,
-            ...[...n.roles.values()]
-              .map(v => v.position?.end ?? -1)
-              .filter(end => end <= phraseStart)
-          );
-        const loop = loops
-          .filter(n => headEnd(n) >= 0)
-          .reduce<SemanticNode | undefined>(
-            (best, n) => (!best || headEnd(n) > headEnd(best) ? n : best),
-            undefined
-          );
-        if (!loop) continue;
-        // Only the loop's own words between its head's last value and the
-        // phrase, read from the input (the text before the phrase keeps its
-        // offsets in the re-parse): a body's `index i` is a variable.
-        const gap = arr.filter(
-          t => t.position.start >= headEnd(loop) && t.position.start < phraseStart
-        );
-        // The word right after a number count is the loop's own `times`,
-        // written in the language's own spelling no pattern knows (es `3
-        // veces`, ja `3 回`): buildLoopNode reads the number as the count
-        // whatever follows it (PR 118).
-        const count = loop.roles.get('quantity');
-        const countEnd =
-          count?.type === 'literal' && typeof count.value === 'number'
-            ? count.position?.end
-            : undefined;
-        const timesWord =
-          countEnd === undefined ? undefined : arr.find(t => t.position.start >= countEnd);
-        if (!gap.every(t => t === timesWord || isLoopWord(t))) continue;
-        (loop as { indexVariable?: string }).indexVariable = withIndex ? 'index' : nameTok.value;
-        return reparsed;
-      } catch {
-        continue;
-      }
-    }
-    return null;
-  }
-
-  private tryWaitAlternatives(
-    arr: readonly LanguageToken[],
-    input: string,
-    language: string
-  ): SemanticNode | null {
-    // English keywords carry no normalized form; the surface is the word.
-    const isWait = (t: LanguageToken | undefined): boolean =>
-      !!t && (t.normalized ?? t.value).toLowerCase() === 'wait';
-    if (!arr.some(t => isWait(t))) return null;
-    const norm = (t: LanguageToken): string => (t.normalized ?? t.value).toLowerCase();
-    /** The English event a token names: its keyword, or a native the head reads (es `ratónmover`). */
-    const eventOf = (t: LanguageToken | undefined): string | undefined => {
-      if (!t) return undefined;
-      const known = (e: string) =>
-        SemanticParserImpl.KNOWN_EVENTS.has(e) || WAITABLE_EVENT_WORDS.has(e);
-      // An identifier's normalized form is a stem, not an English word: tr and
-      // tl strip `-in` from `focusin`, which is not `focus`.
-      const word = t.kind === 'identifier' ? t.value.toLowerCase() : norm(t);
-      if (known(word)) return word;
-      const english = eventNameTranslations[language]?.[t.value];
-      if (english) return english;
-      const native = normalizeEventName(t.value, language);
-      return known(native) ? native : undefined;
-    };
-    const isDuration = (t: LanguageToken | undefined): boolean =>
-      !!t && /^\d+(?:\.\d+)?(?:ms|s)$/.test(t.value);
-    const marker = tryGetProfile(language)?.roleMarkers?.source;
-    const markerForms = new Set(
-      [marker?.primary, ...(marker?.alternatives ?? [])].filter(Boolean).map(w => w!.toLowerCase())
-    );
-    const isSourceMarker = (t: LanguageToken | undefined): boolean =>
-      !!t && ((t.normalized ?? '') === 'source' || markerForms.has(t.value.toLowerCase()));
-    const prepositional = marker?.position !== 'after';
-    // The wait verb next to the run, on the side the language puts it. Verb
-    // first, within two tokens before it (`wait keyup`, `wait for keyup`): only
-    // the wait's own words sit there. Verb-final, directly after it or across
-    // one particle (`keyup 待つ`, tr `keyup i bekle`): the words after a HEAD
-    // run are the next command's, and qu `maykama llave uray(key) llave uray
-    // suyay` (`on keydown(key) wait for keydown`) has the body's event there.
-    // Looking on both sides let a head's run take the body's verb.
-    const verbFinal = tryGetProfile(language)?.wordOrder === 'SOV';
-    /** The wait verb next to the run `[start, end)`. */
-    /** The language's `event` word before a wait's event (`esperar evento foo`, P52). */
-    const eventWordAt = (k: number): boolean => !!arr[k] && norm(arr[k]) === 'event';
-    const nearWait = (start: number, end: number): boolean =>
-      verbFinal
-        ? isWait(arr[end]) || (arr[end]?.kind === 'particle' && isWait(arr[end + 1]))
-        : isWait(arr[start - 1]) ||
-          isWait(arr[start - 2]) ||
-          // `等待 把 事件 foo`: the event word, and zh/he's object marker, between.
-          (eventWordAt(start - 1) && arr[start - 2]?.kind === 'particle' && isWait(arr[start - 3]));
-
-    /** A source phrase starts at `k`: `from X`, or `X から` where the marker follows. */
-    const sourceAt = (k: number): boolean =>
-      prepositional
-        ? isSourceMarker(arr[k]) && !!arr[k + 1]
-        : !!arr[k] && isSourceMarker(arr[k + 1]);
-    /**
-     * A token spelled as a name: an identifier, or a keyword that is no
-     * structure word or verb (an event name is one: `unload`).
-     */
-    const isPlainName = (t: LanguageToken | undefined): boolean =>
-      !!t &&
-      (t.kind === 'identifier' ||
-        (t.kind === 'keyword' && (loneKeywordKind(t) ?? 'event') === 'event')) &&
-      /^[\p{L}_$][\p{L}\p{M}\p{N}_$:-]*$/u.test(t.value);
-    /** A source phrase starts at `k`, or after an `or` run that starts there. */
-    const sourceAfterLegs = (k: number): boolean => {
-      while (isOrWordToken(arr[k] ?? { value: '' }, language) && arr[k + 1]) k += 2;
-      return sourceAt(k);
-    };
-    /**
-     * The event the token at `i` names. Upstream reads every leg of `wait for`
-     * that is not a number as an event's name, so a name directly after
-     * English's `wait for` is one, and so is any name with a source after its
-     * legs, since a time wait has none. English dropped what followed every
-     * other name (`wait for myEvent from #b`, `wait for unload from #b`), so
-     * every translation did (P50).
-     */
-    const eventAt = (i: number): string | undefined => {
-      const known = eventOf(arr[i]);
-      if (known) return known;
-      if (!isPlainName(arr[i])) return undefined;
-      const afterFor = arr[i - 1]?.value.toLowerCase() === 'for' && isWait(arr[i - 2]);
-      // A name after the language's `event` word is one (`esperar evento foo`,
-      // `イベント foo 待つ`: the renderer writes it before a name no table
-      // knows, P52); verb-first the wait verb stands before the word.
-      const afterEventWord =
-        eventWordAt(i - 1) &&
-        (verbFinal ||
-          isWait(arr[i - 2]) ||
-          (arr[i - 2]?.kind === 'particle' && isWait(arr[i - 3])));
-      return afterFor || afterEventWord || sourceAfterLegs(i + 1) ? arr[i].value : undefined;
-    };
-
-    for (let i = 0; i < arr.length; i++) {
-      const eventName = eventAt(i);
-      if (!eventName) continue;
-      const alternatives: WaitAlternative[] = [];
-      const eventEnd = i + 1; // exclusive
-      const first = this.matchEventParamPhrase(arr, eventEnd);
-      alternatives.push(
-        first.names.length > 0 ? { event: eventName, params: first.names } : { event: eventName }
-      );
-      let k = eventEnd + first.len;
-      while (isOrWordToken(arr[k] ?? { value: '' }, language)) {
-        const next = arr[k + 1];
-        // A leg of an event wait that is a name is an event, as upstream reads it.
-        const legEvent = eventOf(next) ?? (isPlainName(next) ? next!.value : undefined);
-        if (legEvent) {
-          const legEnd = k + 2;
-          const phrase = this.matchEventParamPhrase(arr, legEnd);
-          alternatives.push(
-            phrase.names.length > 0
-              ? { event: legEvent, params: phrase.names }
-              : { event: legEvent }
-          );
-          k = legEnd + phrase.len;
-        } else if (isDuration(next)) {
-          alternatives.push({ duration: next!.value });
-          k += 2;
-        } else break;
-      }
-      const runEnd = k; // exclusive: the legs end here
-      // The source phrase follows the run in every language: `from X` where the
-      // marker is a preposition, `X から` where it follows its noun. Never
-      // before the event: an SOV loop head renders ITS source there (ja
-      // `… 繰り返し document から pointermove 待つ`), and the wait must not take it.
-      let sourceSpan: [number, number] | undefined;
-      let sourceToken: LanguageToken | undefined;
-      if (prepositional && isSourceMarker(arr[k]) && arr[k + 1]) {
-        sourceSpan = [k, k + 1];
-        sourceToken = arr[k + 1];
-      } else if (!prepositional && arr[k] && isSourceMarker(arr[k + 1])) {
-        sourceSpan = [k, k + 1];
-        sourceToken = arr[k];
-      }
-      const hasExtras = alternatives.length > 1 || first.names.length > 0 || !!sourceSpan;
-      if (!hasExtras) continue;
-      const argEnd = sourceSpan ? sourceSpan[1] + 1 : runEnd;
-      if (!nearWait(i, argEnd)) continue;
-
-      // Keep the first event's name; cut its params, the legs, and the source.
-      const cuts: Array<[number, number]> = [];
-      if (runEnd > eventEnd)
-        cuts.push([arr[eventEnd - 1].position.end, arr[runEnd - 1].position.end]);
-      if (sourceSpan)
-        cuts.push([arr[sourceSpan[0]].position.start, arr[sourceSpan[1]].position.end]);
-      cuts.sort((a, b) => a[0] - b[0]);
-      let reduced = '';
-      let at = 0;
-      for (const [from, to] of cuts) {
-        reduced += input.slice(at, from) + ' ';
-        at = to;
-      }
-      reduced = (reduced + input.slice(at)).replace(/\s+/g, ' ').trim();
-
-      // Which wait with this event is ours: count the ones before it.
-      const event = alternatives[0] as { event: string };
-      const wanted = event.event.toLowerCase();
-      let before = 0;
-      for (let j = 0; j < i; j++) {
-        if (eventAt(j)?.toLowerCase() === wanted && nearWait(j, j + 1)) before++;
-      }
-      try {
-        const reparsed = this.parse(reduced, language);
-        const waits: SemanticNode[] = [];
-        const collect = (n: SemanticNode | undefined): void => {
-          if (!n) return;
-          // A name no event list knows reads as a time wait once its source is
-          // cut (`esperar myEvent`): its duration is the event.
-          const eventValue =
-            n.roles?.get('event' as SemanticRole) ?? n.roles?.get('duration' as SemanticRole);
-          const name =
-            eventValue?.type === 'expression'
-              ? eventValue.raw
-              : eventValue && 'value' in eventValue
-                ? String(eventValue.value)
-                : undefined;
-          if (n.kind === 'command' && n.action === 'wait' && name?.toLowerCase() === wanted) {
-            waits.push(n);
-          }
-          const children = n as NodeChildren;
-          for (const field of NODE_CHILD_FIELDS) {
-            const child = children[field];
-            if (Array.isArray(child)) child.forEach(c => collect(c as SemanticNode));
-          }
-        };
-        collect(reparsed ?? undefined);
-        const target = waits[before];
-        if (!reparsed || !target) continue;
-        const targetRoles = target.roles as Map<SemanticRole, SemanticValue>;
-        if (!targetRoles.has('event')) {
-          targetRoles.delete('duration');
-          targetRoles.set('event', { type: 'literal', value: event.event, dataType: 'string' });
-        }
-        (target as { waitAlternatives?: WaitAlternative[] }).waitAlternatives = alternatives;
-        if (sourceToken) {
-          (target as { waitSource?: SemanticValue }).waitSource = waitSourceValue(sourceToken);
-        }
-        return reparsed;
-      } catch {
-        // not this run: keep looking
-      }
-    }
-    return null;
-  }
-
-  /**
    * A command word that begins a handler's BODY, ending the head: a keyword whose
    * normalized form is a command this language parses. A command that is also an
    * event name (`on focus or blur`) is the head's event, not a body verb.
@@ -7316,55 +6414,9 @@ export class SemanticParserImpl implements ISemanticParser {
     return (
       tok.kind === 'keyword' &&
       commands.has(norm) &&
-      !SemanticParserImpl.KNOWN_EVENTS.has(norm) &&
+      !KNOWN_EVENTS.has(norm) &&
       !WAITABLE_EVENT_WORDS.has(norm)
     );
-  }
-
-  /**
-   * Length (in tokens) and declared names of an event PARAM PHRASE starting at
-   * startIdx: `( ident [, ident]* )`. The tokenizers split
-   * `pointerdown(clientY)` into 4+ tokens (`pointerdown ( clientY )`), so the
-   * SOV event-marker check — which expects the marker DIRECTLY after the event
-   * keyword — never fired on a parameterized event: the custom-event second
-   * pass then anchored the `)` as the event (event:literal=")") and the leaked
-   * keyword-led head run was discarded by flushSkipped, killing the first body
-   * command (behavior-sortable `set item to …`, the session-5 sharpened
-   * diagnosis). Returns len 0 when startIdx isn't an opening paren or the
-   * phrase is malformed (no close-paren, or a non-identifier between).
-   */
-  private matchEventParamPhrase(
-    allTokens: readonly LanguageToken[],
-    startIdx: number
-  ): { len: number; names: string[] } {
-    if (allTokens[startIdx]?.value !== '(') return { len: 0, names: [] };
-    const names: string[] = [];
-    for (let j = startIdx + 1; j < allTokens.length; j++) {
-      const v = allTokens[j].value;
-      // Parameters touch their event (`click(evt)`, as every rendering writes
-      // them). A group apart from it, before a case marker, is that marker's
-      // value: qu writes the patient right after the event, so `click (o) ta
-      // #out man churay` (put (o) into #out) took `(o)` for the parameters and
-      // put nothing. (SOV event markers follow parameters too: bn `ক্লিক(evt)
-      // তে`, tr `tıklama(evt) i üzerinde`.)
-      if (v === ')') {
-        const event = allTokens[startIdx - 1];
-        const apart = event?.position?.end !== allTokens[startIdx]?.position?.start;
-        return apart && allTokens[j + 1]?.kind === 'particle'
-          ? { len: 0, names: [] }
-          : { len: j - startIdx + 1, names };
-      }
-      if (v === ',') continue;
-      // Any identifier-shaped word: a name like `detail` or `target` is also a
-      // keyword, and tokenizes as one. Never a reference (`me`, `it`): that is a
-      // call's argument (a verb-final `js` block's `(me)` right after the event).
-      const kind = allTokens[j].kind;
-      if ((kind !== 'identifier' && kind !== 'keyword') || !/^[A-Za-z_$][\w$]*$/.test(v)) break;
-      const norm = (allTokens[j].normalized ?? v).toLowerCase();
-      if (kind === 'keyword' && REFERENCE_WORDS.has(norm)) break;
-      names.push(v);
-    }
-    return { len: 0, names: [] };
   }
 
   /**
@@ -7428,13 +6480,13 @@ export class SemanticParserImpl implements ISemanticParser {
     const evtVal = evtToken.value.toLowerCase();
     const evtNorm = evtToken.normalized?.toLowerCase();
     const isKnownEvent =
-      (!!evtNorm && SemanticParserImpl.KNOWN_EVENTS.has(evtNorm)) ||
-      SemanticParserImpl.KNOWN_EVENTS.has(evtVal) ||
+      (!!evtNorm && KNOWN_EVENTS.has(evtNorm)) ||
+      KNOWN_EVENTS.has(evtVal) ||
       nativeEventNames.has(evtVal);
     if (!isKnownEvent) return null;
 
     const eventName =
-      evtNorm && SemanticParserImpl.KNOWN_EVENTS.has(evtNorm)
+      evtNorm && KNOWN_EVENTS.has(evtNorm)
         ? evtNorm
         : (langEvents?.[evtVal] ?? evtVal);
 
@@ -7498,13 +6550,13 @@ export class SemanticParserImpl implements ISemanticParser {
       const evtVal = evtToken.value.toLowerCase();
       const evtNorm = evtToken.normalized?.toLowerCase();
       const isKnownEvent =
-        (!!evtNorm && SemanticParserImpl.KNOWN_EVENTS.has(evtNorm)) ||
-        SemanticParserImpl.KNOWN_EVENTS.has(evtVal) ||
+        (!!evtNorm && KNOWN_EVENTS.has(evtNorm)) ||
+        KNOWN_EVENTS.has(evtVal) ||
         nativeEventNames.has(evtVal);
       if (!isKnownEvent) continue;
 
       const eventName =
-        evtNorm && SemanticParserImpl.KNOWN_EVENTS.has(evtNorm)
+        evtNorm && KNOWN_EVENTS.has(evtNorm)
           ? evtNorm
           : (langEvents?.[evtVal] ?? evtVal);
 
@@ -7599,12 +6651,12 @@ export class SemanticParserImpl implements ISemanticParser {
       const normalizedLower = token.normalized?.toLowerCase();
       const isEventByNormalized =
         normalizedLower &&
-        (SemanticParserImpl.KNOWN_EVENTS.has(normalizedLower) ||
+        (KNOWN_EVENTS.has(normalizedLower) ||
           WAITABLE_EVENT_WORDS.has(normalizedLower));
       const isEventByNative =
         nativeEventNames.has(tokenValue) || nativeEventNames.has(bareEventValue);
       const isEventByBare =
-        SemanticParserImpl.KNOWN_EVENTS.has(bareEventValue) ||
+        KNOWN_EVENTS.has(bareEventValue) ||
         WAITABLE_EVENT_WORDS.has(bareEventValue);
 
       if (isEventByNormalized || isEventByNative || isEventByBare) {
@@ -7631,7 +6683,7 @@ export class SemanticParserImpl implements ISemanticParser {
         // param phrase between the event keyword and the marker — consume it
         // so the marker check still anchors (and the params don't leak into
         // the body as a keyword-led run that flushSkipped discards).
-        const paramPhrase = this.matchEventParamPhrase(allTokens, i + 1);
+        const paramPhrase = matchEventParamPhrase(allTokens, i + 1);
 
         if (eventMarkers.size > 0) {
           // Languages with event markers (JA, TR): require marker after event keyword
@@ -8530,50 +7582,6 @@ export class SemanticParserImpl implements ISemanticParser {
       .trim();
     if (stripped.length === 0) return { remainingInput: null };
     return { remainingInput: stripped };
-  }
-
-  /**
-   * Strip the `do [not] throw` fetch-error modifier (see the call site for why).
-   * Anchored on the leaked English `do` literal — present in every SOV translation
-   * of the phrase — followed within two tokens by a `throw`-normalized verb (a
-   * negation may sit between: ja `ではない`, ko `아니`, hi `नहीं`, tr `değil`, bn
-   * `না`, en `not`). Removes the `do … throw` span from the source string. Returns
-   * `{ remainingInput: null }` when no such span exists, so the caller leaves the
-   * input untouched.
-   */
-  private stripDoNotThrowModifier(
-    input: string,
-    language: string
-  ): {
-    remainingInput: string | null;
-  } {
-    const allTokens = tokenizeInternal(input, language).tokens;
-    for (let i = 0; i < allTokens.length - 1; i++) {
-      if (allTokens[i].value.toLowerCase() !== 'do') continue;
-      // Scan a small window for the throw verb. The negation between `do` and
-      // `throw` may be one token (en `not`, tr `değil`) or several (ja `ではない`
-      // shatters into `で`/`は`/`ない` particles), so a 2-token window misses ja.
-      // Stop at a value / conjunction — only negation filler may separate them.
-      let throwIdx = -1;
-      for (let j = i + 1; j <= i + 5 && j < allTokens.length; j++) {
-        const tj = allTokens[j];
-        if (tj.normalized?.toLowerCase() === 'throw') {
-          throwIdx = j;
-          break;
-        }
-        const k = tj.kind as string;
-        if (k === 'selector' || k === 'literal' || k === 'reference' || k === 'conjunction') {
-          break;
-        }
-      }
-      if (throwIdx === -1) continue;
-      const start = allTokens[i].position.start;
-      const end = allTokens[throwIdx].position.end;
-      const stripped = (input.slice(0, start) + input.slice(end)).replace(/\s{2,}/g, ' ').trim();
-      if (stripped.length === 0) return { remainingInput: null };
-      return { remainingInput: stripped };
-    }
-    return { remainingInput: null };
   }
 
   /**
