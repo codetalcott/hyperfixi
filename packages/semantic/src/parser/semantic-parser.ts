@@ -11,7 +11,6 @@ import type {
   CompoundSemanticNode,
   ConditionalSemanticNode,
   EventHandlerSemanticNode,
-  LoopVariant,
   SemanticParser as ISemanticParser,
   SemanticValue,
   SemanticRole,
@@ -28,11 +27,8 @@ import {
   createEventHandler,
   createCompoundNode,
   createConditionalNode,
-  createLoopNode,
-  createLiteral,
   BLOCK_COMMAND_ACTIONS,
   isBlockCommand,
-  withPosition,
 } from '../types';
 import {
   tokenize as tokenizeInternal,
@@ -52,8 +48,6 @@ import { GRAMMAR_WORDS } from './utils/grammar-words';
 import { ROLE_MARKER_CONCEPTS } from './utils/marker-resolution';
 import { patternMatcher } from './pattern-matcher';
 import { CONDITION_PREDICATES, copulaHoldsCondition } from './value-reading';
-import { tokenValue } from './token-value';
-import { NATIVE_COUNT_WORDS } from '../patterns/count-words';
 import {
   isBlockEndToken,
   isElseKeyword,
@@ -98,9 +92,36 @@ import { findEventModifierPhrase } from './event-modifier-lift';
 import { render as renderExplicitFn } from '../explicit/verified-render';
 import { parseExplicit as parseExplicitFn } from '../explicit/parser';
 import { KNOWN_EVENTS, WAITABLE_EVENT_WORDS, matchEventParamPhrase } from './event-words';
-import { readNativeDirection, readNativeElsewhere, stripDoNotThrowModifier, tryDoNotThrow, tryLoopIndex, tryScrollModifiers, tryTellTo, tryWaitAlternatives } from './command-rescues';
+import {
+  readNativeDirection,
+  readNativeElsewhere,
+  stripDoNotThrowModifier,
+  tryDoNotThrow,
+  tryLoopIndex,
+  tryScrollModifiers,
+  tryTellTo,
+  tryWaitAlternatives,
+} from './command-rescues';
 import { joinTokenText, tokensToSemanticValue } from './value-from-tokens';
-import { tryAttachNewWindow, tryAttachTrailingDuration, tryAttachTrailingExpressionRole, tryAttachTrailingRole, tryAttachTrailingStyle } from './trailing-roles';
+import {
+  tryAttachNewWindow,
+  tryAttachTrailingDuration,
+  tryAttachTrailingExpressionRole,
+  tryAttachTrailingRole,
+  tryAttachTrailingStyle,
+} from './trailing-roles';
+import {
+  LOOP_CLOSE,
+  LOOP_FORMS,
+  bareRepeatHead,
+  buildLoopNode,
+  foldFrontedWhileIntoRepeat,
+  isBottomTest,
+  isLoopClose,
+  loopHeadReadsBody,
+  takeRepeatCount,
+  type WalkEntry,
+} from './loop-heads';
 
 // Read from here by the renderer and tests.
 export { WAITABLE_EVENT_WORDS };
@@ -118,25 +139,10 @@ const BLOCK_BODY_ACTIONS = new Set(['if', 'unless', 'while', 'repeat', 'for']);
  * into a {@link LoopSemanticNode}, and `tell`'s and `start view transition`'s,
  * which keep theirs as a {@link BlockCommandSemanticNode}. `while` is not one: a standalone
  * `while` node is the SOV fronted while-phrase that
- * {@link SemanticParserImpl.foldFrontedWhileIntoRepeat} merges into its `repeat`,
+ * {@link foldFrontedWhileIntoRepeat} merges into its `repeat`,
  * never a loop of its own.
  */
 const BLOCK_HEAD_ACTIONS = new Set(['repeat', 'for', ...BLOCK_COMMAND_ACTIONS]);
-
-/**
- * Where the clause walker consumed a loop's closing `end`. It lives only in the
- * walker's own list: {@link foldLoopBlocks} turns each head … marker span into a
- * loop node before anything else sees the list.
- */
-interface LoopCloseMarker {
-  readonly kind: 'loop-close';
-}
-const LOOP_CLOSE: LoopCloseMarker = { kind: 'loop-close' };
-type WalkEntry = SemanticNode | LoopCloseMarker;
-
-function isLoopClose(entry: WalkEntry): entry is LoopCloseMarker {
-  return entry === LOOP_CLOSE;
-}
 
 /**
  * A block head the walker emitted flat: a `repeat`/`for` command with no body,
@@ -164,20 +170,6 @@ function sameSemanticValue(a: SemanticValue, b: SemanticValue): boolean {
     return JSON.stringify(rest);
   };
   return a.type === b.type && surface(a) === surface(b);
-}
-
-/** The name a for-loop binds, from its `patient` role (`for item in …` → `item`). */
-function loopVariableName(value: SemanticValue): string | undefined {
-  switch (value.type) {
-    case 'expression':
-      return value.raw;
-    case 'literal':
-      return String(value.value);
-    case 'reference':
-      return value.value;
-    default:
-      return undefined;
-  }
 }
 
 /**
@@ -286,16 +278,6 @@ export class SemanticParseError extends Error {
  * loop lost its condition, while its `while` twin was swapped in.
  */
 const HEAD_ONLY_REPEAT = /^repeat-.*-(times|for-in|while-head|until-head|until-condition-head)$/;
-
-/** The forms a loop's `loopType` names: each a variant `buildLoopNode` reads. */
-const LOOP_FORMS: ReadonlySet<string> = new Set([
-  'forever',
-  'times',
-  'for',
-  'while',
-  'until',
-  'until-event',
-]);
 
 /** Command verbs that also open a clause (`when it matches .x`, `take … for #t`). */
 const CLAUSE_OPENERS: ReadonlySet<string> = new Set(['when', 'for']);
@@ -3778,7 +3760,7 @@ export class SemanticParserImpl implements ISemanticParser {
       );
     }
 
-    this.foldFrontedWhileIntoRepeat(clauses, language);
+    foldFrontedWhileIntoRepeat(clauses, language);
 
     // Drop phantom BARE `for` clauses: a lone for-homonym token (bn `জন্য` is
     // both the for-keyword and the benefactive postposition) parses as a `for`
@@ -3870,13 +3852,13 @@ export class SemanticParserImpl implements ISemanticParser {
     };
     const close = (closed: boolean): void => {
       const frame = open.pop();
-      if (frame) append(this.buildLoopNode(frame.head, frame.body, closed, frame.bottom));
+      if (frame) append(buildLoopNode(frame.head, frame.body, closed, frame.bottom));
     };
     entries.forEach((entry, i) => {
       const frame = open[open.length - 1];
       if (isLoopClose(entry)) close(true);
       else if (isOpenLoopHead(entry)) open.push({ head: entry, body: [] });
-      else if (this.isBottomTest(entry, frame, entries[i + 1])) frame!.bottom = entry;
+      else if (isBottomTest(entry, frame, entries[i + 1])) frame!.bottom = entry;
       else if (this.bottomTestTokens.has(entry)) {
         // An `until` that ends no loop: its words are unread, as they were.
         const language = entry.metadata?.sourceLanguage ?? 'en';
@@ -3885,101 +3867,6 @@ export class SemanticParserImpl implements ISemanticParser {
     });
     while (open.length > 0) close(false);
     return out;
-  }
-
-  /**
-   * A loop node from a flat head and its body. The head's roles carry over
-   * unchanged, so every role and value walker scores the loop exactly as it
-   * scored the flat head.
-   *
-   * A head with no body stays flat, and a flat head's body is every command
-   * after it. A loop its own `end` closed (`closed`) is empty, and a command
-   * after that `end` is not its body: `repeat 3 times end then increment n`
-   * put the increment in the loop, three times over, in English and every
-   * language, and dropped it from a bare sequence (PR 126).
-   */
-  private buildLoopNode(
-    head: CommandSemanticNode,
-    body: SemanticNode[],
-    closed = false,
-    bottom?: CommandSemanticNode
-  ): SemanticNode {
-    if (bottom) {
-      // `repeat <body> until|while <condition> end`: the test follows the body.
-      const variant = (bottom.action as string) === 'until' ? 'until' : 'while';
-      const condition = bottom.roles.get('condition');
-      return createLoopNode(
-        'repeat',
-        variant,
-        {
-          loopType: { type: 'literal', value: variant },
-          ...(condition ? { condition } : {}),
-        },
-        body,
-        { ...(head.metadata ? { metadata: head.metadata } : {}), bottomTested: true }
-      );
-    }
-    if (body.length === 0 && !closed) return head;
-    if (BLOCK_COMMAND_ACTIONS.has(head.action)) {
-      const block = { ...head, body } as BlockCommandSemanticNode;
-      return block;
-    }
-    const loopType = head.roles.get('loopType');
-    // A number where the loop's form goes is its count: a pattern whose count
-    // slot comes second took the count for the form, and the word after it —
-    // the language's own `times`, which the render never writes (es `repetir
-    // 3 veces`, fr `répéter 3 fois`) — for the count or nothing. The loop read
-    // `forever`, a silent infinite loop, or counted to a variable named `fois`
-    // (PR 118).
-    if (loopType?.type === 'literal' && typeof loopType.value === 'number') {
-      const roles = new Map(head.roles);
-      roles.set('quantity', loopType);
-      roles.set('loopType', { type: 'literal', value: 'times' });
-      return this.buildLoopNode({ ...head, roles }, body, closed);
-    }
-    const form = loopType?.type === 'literal' ? String(loopType.value) : undefined;
-    // `until event X` is an `until` loop; its `loopType` role keeps the exact form.
-    const variant: LoopVariant =
-      head.action === 'for' || form === 'for'
-        ? 'for'
-        : form === 'times' || form === 'while' || form === 'forever'
-          ? form
-          : form === 'until' || form === 'until-event'
-            ? 'until'
-            : head.roles.has('quantity')
-              ? 'times'
-              : 'forever';
-    let binding = variant === 'for' ? head.roles.get('patient') : undefined;
-    // `repeat in <collection>` binds `it` (repeat-en-in): a binding the loop
-    // writes (`repeat for it in …`), not an implicit role a render leaves out.
-    if (binding && (binding as { implicit?: boolean }).implicit) {
-      binding = { type: 'reference', value: 'it' };
-      const roles = new Map(head.roles);
-      roles.set('patient', binding);
-      return this.buildLoopNode({ ...head, roles }, body, closed);
-    }
-    const loopVariable = binding ? loopVariableName(binding) : undefined;
-    // A while or until loop's one operand is its condition. The generated SOV
-    // repeat pattern names its operand slot `quantity`, and a fronted
-    // while-phrase (ko `동안 #counter.innerText < 10 를 … 반복`) fills it whole
-    // now that a value run can start with a property path. buildLoop reads the
-    // condition alone, so a loop left with a `quantity` would have none.
-    const roles = new Map(head.roles);
-    const operand = roles.get('quantity');
-    if ((variant === 'while' || variant === 'until') && operand && !roles.has('condition')) {
-      roles.set('condition', operand);
-      roles.delete('quantity');
-    }
-    return createLoopNode(
-      head.action === 'for' ? 'for' : 'repeat',
-      variant,
-      Object.fromEntries(roles),
-      body,
-      {
-        ...(loopVariable ? { loopVariable } : {}),
-        ...(head.metadata ? { metadata: head.metadata } : {}),
-      }
-    );
   }
 
   /**
@@ -4083,163 +3970,6 @@ export class SemanticParserImpl implements ISemanticParser {
   }
 
   /**
-   * Merge a fronted `while {condition}` clause into the adjacent `repeat` head.
-   *
-   * The SOV reorder fronts a repeat-while's while-phrase BEFORE the event phrase
-   * (hi `जब तक #counter.innerText < 10 को क्लिक पर दोहराएं …`, ko `동안 … 반복 …`),
-   * so the body splits into a standalone `while{condition}` node followed by a
-   * bare `repeat` — while the en reference (cluster D, #567) canonicalizes the
-   * same head as ONE `repeat{loopType:"while", condition}` node. The split costs
-   * both recall (repeat.condition/loopType missing) and precision (the standalone
-   * `while` is spurious vs the en reference). Re-associate them, mirroring the
-   * trailing-`unless` guard recovery in parseClause.
-   *
-   * Conservative: fires only when a flat `while` COMMAND node carrying a
-   * condition is immediately followed by a flat `repeat` command that has no
-   * condition of its own and no attached body. A ko/ja/tr `repeat` that grabbed a
-   * junk numeric loopType from the fronted condition's comparison tail
-   * (`loopType:10` from `< 10 를`) is overwritten — the fronted while-phrase IS
-   * the loop head, so `loopType` is `"while"` by construction. Loop nodes with
-   * bodies (`kind: 'loop'`) and conditionals never enter the fold.
-   */
-  private foldFrontedWhileIntoRepeat(clauses: WalkEntry[], language: string): void {
-    for (let i = 0; i + 1 < clauses.length; i++) {
-      const whileNode = clauses[i] as CommandSemanticNode & { body?: unknown };
-      const repeatNode = clauses[i + 1] as CommandSemanticNode & { body?: unknown };
-      if (whileNode.kind !== 'command' || whileNode.action !== 'while') continue;
-      if (repeatNode.kind !== 'command' || repeatNode.action !== 'repeat') continue;
-      const condition = whileNode.roles.get('condition');
-      if (!condition) continue;
-      if (repeatNode.roles.has('condition')) continue;
-      if (Array.isArray(whileNode.body) || Array.isArray(repeatNode.body)) continue;
-
-      const roles = new Map(repeatNode.roles);
-      roles.set('condition', condition);
-      roles.set('loopType', { type: 'literal', value: 'while', dataType: 'string' });
-      clauses.splice(i, 2, {
-        ...repeatNode,
-        roles,
-        metadata: {
-          ...repeatNode.metadata,
-          sourceLanguage: language,
-          patternId: `repeat-${language}-fronted-while-fold`,
-          confidence: Math.max(
-            repeatNode.metadata?.confidence ?? 0,
-            whileNode.metadata?.confidence ?? 0
-          ),
-        },
-      });
-    }
-  }
-
-  /**
-   * The count beside a repeat verb no loop pattern matched: a number after the
-   * verb (consumed with the marker before it and one word after it), or before
-   * it (taken off the end of `skipped` with the same). The stream stands just
-   * past the verb.
-   *
-   * The counted patterns of he, hi, qu and zh write a marker by the count and
-   * the English `times` after it (he `חזור את {quantity} times`, hi
-   * `{quantity} times को repeat`). A writer's own word (he `פעמים`, zh `次`, hi
-   * `बार`, qu `kuti`) matches no pattern, so the walk emitted a bare `repeat`
-   * and dropped the count: a silent infinite loop (PR 119). A number beside
-   * the verb, past at most the marker and one word, is the count, as a number
-   * where the loop's form goes is (PR 118).
-   */
-  private takeRepeatCount(
-    stream: TokenStreamImpl,
-    skipped: LanguageToken[],
-    language: string
-  ): LanguageToken | undefined {
-    if (tryGetProfile(language)?.wordOrder === 'SOV') {
-      const at = SemanticParserImpl.countBeforeVerb(skipped, language);
-      if (at < 0) return undefined;
-      const count = skipped[at];
-      skipped.length = at;
-      return count;
-    }
-    // After it: [marker] <number> [word] (he `חזור את 3 פעמים`), or any count
-    // before the language's own word (zh `重复 n 次`).
-    const mark = stream.mark();
-    if (stream.peek()?.kind === 'particle') stream.advance();
-    const count = stream.peek();
-    if (count && SemanticParserImpl.countsBefore(count, stream.peek(1), language)) {
-      stream.advance();
-      stream.advance();
-      return count;
-    }
-    if (!SemanticParserImpl.isCountToken(count)) {
-      stream.reset(mark);
-      return undefined;
-    }
-    stream.advance();
-    if (stream.peek()?.kind === 'identifier') stream.advance();
-    return count;
-  }
-
-  /** A number, as PR 118 reads one where the loop's form goes. */
-  private static isCountToken(t: LanguageToken | null | undefined): t is LanguageToken {
-    const value = t?.kind === 'literal' ? tokenValue(t) : null;
-    return value?.type === 'literal' && typeof value.value === 'number';
-  }
-
-  /**
-   * Is `count` a loop's count because the language's own word for `times`
-   * follows it (ja `n 回`, zh `n 次`)? Then it need be no number: a variable
-   * counts too, where the counted heads need a marker the writer may leave out
-   * (PR 127).
-   */
-  private static countsBefore(
-    count: LanguageToken | null | undefined,
-    word: LanguageToken | null | undefined,
-    language: string
-  ): boolean {
-    if (!count || !word || !NATIVE_COUNT_WORDS[language]?.includes(word.value)) return false;
-    return count.kind === 'identifier' || SemanticParserImpl.isCountToken(count);
-  }
-
-  /**
-   * Where a count stands at the end of a run an SOV loop verb follows:
-   * `<number> [word] [marker]` (hi `3 बार को दोहराएं`), or any count before the
-   * language's own word (ja `n 回 繰り返す`). Its index, or -1.
-   */
-  private static countBeforeVerb(run: readonly LanguageToken[], language: string): number {
-    const isCount = SemanticParserImpl.isCountToken;
-    let end = run.length;
-    if (run[end - 1]?.kind === 'particle') end--;
-    if (SemanticParserImpl.countsBefore(run[end - 2], run[end - 1], language)) return end - 2;
-    if (run[end - 1]?.kind === 'identifier' && isCount(run[end - 2])) end--;
-    return isCount(run[end - 1]) ? end - 1 : -1;
-  }
-
-  /**
-   * Whether a repeat match anchored at the verb read the loop's body as its
-   * head. An SOV loop head ends with its verb, so a match that starts there
-   * reads on into the body. With a count before the verb, the verb ended the
-   * head, whatever matched after it: hi `3 बार को दोहराएं 1 को रखें #out में`
-   * (put 1 into #out) counted to 1, and `3 बार को दोहराएं मैं में hello पर
-   * भेजें` (send hello to me) read `repeat for me in hello`. Without one, the
-   * verb-first fallback (qu `kutipay {loopType}`) took the body's first value
-   * for the form unless it is one: qu `kutipay 1s suyay` read `repeat 1s`,
-   * and the wait was gone; a code-switched `kutipay forever` or a number is the
-   * head's. Such a match gives the verb back as a bare head (PR 120).
-   */
-  private loopHeadReadsBody(
-    match: PatternMatchResult,
-    skipped: readonly LanguageToken[],
-    language: string
-  ): boolean {
-    if (tryGetProfile(language)?.wordOrder !== 'SOV') return false;
-    if (SemanticParserImpl.countBeforeVerb(skipped, language) >= 0) return true;
-    const form = match.captured.get('loopType' as SemanticRole);
-    return (
-      form?.type === 'literal' &&
-      typeof form.value !== 'number' &&
-      !LOOP_FORMS.has(String(form.value))
-    );
-  }
-
-  /**
    * A bare `repeat` before its body (`repeat set x to x + 1 until x is 3 end`,
    * upstream's bottom-tested loop): the loop pattern took the body's first
    * command for the loop's form, and its words for the count (`repeat set x`
@@ -4312,46 +4042,6 @@ export class SemanticParserImpl implements ISemanticParser {
     );
     this.bottomTestTokens.set(node, words);
     return node;
-  }
-
-  /**
-   * Is `entry` the bottom test of the loop open in `frame`: a `while`/`until`
-   * after the body of a `repeat` with no test of its own, right before that
-   * loop's `end` (or the end of the input)? An SOV while-phrase comes before
-   * its `repeat` (foldFrontedWhileIntoRepeat), never before an `end`.
-   */
-  private isBottomTest(
-    entry: WalkEntry,
-    frame: { head: CommandSemanticNode; body: SemanticNode[]; bottom?: SemanticNode } | undefined,
-    next: WalkEntry | undefined
-  ): entry is CommandSemanticNode {
-    if (isLoopClose(entry) || entry.kind !== 'command') return false;
-    if ((entry.action as string) !== 'until' && entry.action !== 'while') return false;
-    if (!frame || frame.bottom || frame.body.length === 0 || frame.head.action !== 'repeat') {
-      return false;
-    }
-    const form = frame.head.roles.get('loopType');
-    if (form && !(form.type === 'literal' && form.value === 'forever')) return false;
-    if (frame.head.roles.has('quantity')) return false;
-    return next === undefined || isLoopClose(next);
-  }
-
-  /** A loop head for a repeat verb no loop pattern matched: counted, or bare (`forever`). */
-  private bareRepeatHead(count: LanguageToken | undefined, language: string): SemanticNode {
-    const quantity = count ? tokenValue(count) : null;
-    return createCommandNode(
-      'repeat' as ActionType,
-      count && quantity
-        ? {
-            loopType: createLiteral('times'),
-            quantity: withPosition(quantity, {
-              start: count.position.start,
-              end: count.position.end,
-            }),
-          }
-        : {},
-      { sourceLanguage: language, confidence: 0.6 }
-    );
   }
 
   /**
@@ -4533,7 +4223,7 @@ export class SemanticParserImpl implements ISemanticParser {
         startIsRepeatKw &&
         commandMatch &&
         ((commandMatch.pattern.command as string) !== 'repeat' ||
-          this.loopHeadReadsBody(commandMatch, skipped, language) ||
+          loopHeadReadsBody(commandMatch, skipped, language) ||
           this.repeatOpensOnItsBody(
             commandMatch,
             clauseStream.tokens.slice(startPos + 1),
@@ -4543,9 +4233,9 @@ export class SemanticParserImpl implements ISemanticParser {
       ) {
         clauseStream.reset(startMark);
         clauseStream.advance(); // consume only the repeat keyword (and a count by it)
-        const count = this.takeRepeatCount(clauseStream, skipped, language);
+        const count = takeRepeatCount(clauseStream, skipped, language);
         flushSkipped();
-        commands.push(this.bareRepeatHead(count, language));
+        commands.push(bareRepeatHead(count, language));
         directHits++;
         continue;
       }
@@ -4653,10 +4343,10 @@ export class SemanticParserImpl implements ISemanticParser {
         if (tok && (tok.normalized?.toLowerCase() === 'repeat' || englishRepeat)) {
           const verb = clauseStream.mark();
           clauseStream.advance();
-          const count = this.takeRepeatCount(clauseStream, skipped, language);
+          const count = takeRepeatCount(clauseStream, skipped, language);
           if (count || !englishRepeat) {
             flushSkipped();
-            commands.push(this.bareRepeatHead(count, language));
+            commands.push(bareRepeatHead(count, language));
             directHits++;
             continue;
           }
