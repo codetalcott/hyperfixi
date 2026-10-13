@@ -9,6 +9,7 @@
 
 import type { LanguagePattern } from '../types';
 import { handcrafted } from './handcrafted';
+import { APPEND_DESTINATION_TYPES, PUT_VALUE_TYPES } from '../generators/role-types';
 
 export function getAppendPatternsEn(): LanguagePattern[] {
   return [
@@ -21,9 +22,9 @@ export function getAppendPatternsEn(): LanguagePattern[] {
         format: 'append {patient} to {destination}',
         tokens: [
           { type: 'literal', value: 'append' },
-          { type: 'role', role: 'patient', expectedTypes: ['literal', 'selector', 'expression'] },
+          { type: 'role', role: 'patient', expectedTypes: PUT_VALUE_TYPES },
           { type: 'literal', value: 'to' },
-          { type: 'role', role: 'destination', expectedTypes: ['selector', 'reference'] },
+          { type: 'role', role: 'destination', expectedTypes: APPEND_DESTINATION_TYPES },
         ],
       },
       extraction: {

@@ -28,18 +28,15 @@
  * until PR 131.
  */
 
-import type { ExpectedType, LanguagePattern, PatternToken } from '../types';
+import type { LanguagePattern, PatternToken } from '../types';
 import { NATIVE_COUNT_WORDS } from './count-words';
-import { EVENT_NAME_TYPES, FOR_SOURCE_TYPES, FOR_VARIABLE_TYPES } from '../generators/role-types';
-
-/**
- * What a count can be. A variable with its sigil (`$n`, `:n`), `it` and
- * `event's detail` read as references, and the `of` form a translation writes
- * for `#a's textContent` (es `textContent de #a`) as a property path. The head
- * took neither: the loop was dropped with the command after it, or read
- * `forever` (PR 125).
- */
-const COUNT_TYPES: ExpectedType[] = ['literal', 'expression', 'reference', 'property-path'];
+import {
+  COUNT_TYPES,
+  ELEMENT_TARGET_TYPES,
+  EVENT_NAME_TYPES,
+  FOR_SOURCE_TYPES,
+  FOR_VARIABLE_TYPES,
+} from '../generators/role-types';
 
 /**
  * The count word: the one the render writes, and the language's other words
@@ -507,7 +504,7 @@ function repeatUntilHeadVerbFirst(
     optional: true,
     tokens: [
       { type: 'literal', value: spec.fromWord },
-      { type: 'role', role: 'source', expectedTypes: ['selector', 'reference', 'expression'] },
+      { type: 'role', role: 'source', expectedTypes: ELEMENT_TARGET_TYPES },
     ],
   });
   return {
@@ -595,7 +592,7 @@ function repeatUntilHeadSOV(
             {
               type: 'role',
               role: 'source',
-              expectedTypes: ['selector', 'reference', 'expression'],
+              expectedTypes: ELEMENT_TARGET_TYPES,
             },
             { type: 'literal', value: spec.fromWord },
           ],
@@ -637,7 +634,7 @@ function repeatUntilHeadSOVVerbFinal(
         {
           type: 'role',
           role: 'source',
-          expectedTypes: ['selector', 'reference', 'expression'],
+          expectedTypes: ELEMENT_TARGET_TYPES,
         },
         { type: 'literal', value: spec.fromWord },
         repeatVerb(language),
@@ -670,7 +667,7 @@ const repeatUntilHeadQuMidClause: LanguagePattern = {
       { type: 'literal', value: 'event' },
       { type: 'role', role: 'event', expectedTypes: EVENT_NAME_TYPES },
       { type: 'literal', value: 'ta' },
-      { type: 'role', role: 'source', expectedTypes: ['selector', 'reference', 'expression'] },
+      { type: 'role', role: 'source', expectedTypes: ELEMENT_TARGET_TYPES },
       { type: 'literal', value: 'manta' },
       { type: 'literal', value: 'repeat' },
     ],
@@ -716,7 +713,7 @@ const repeatUntilHeadQu: LanguagePattern = {
       { type: 'literal', value: 'event' },
       { type: 'role', role: 'event', expectedTypes: EVENT_NAME_TYPES },
       { type: 'literal', value: 'ta' },
-      { type: 'role', role: 'source', expectedTypes: ['selector', 'reference', 'expression'] },
+      { type: 'role', role: 'source', expectedTypes: ELEMENT_TARGET_TYPES },
       { type: 'literal', value: 'manta' },
       { type: 'literal', value: 'repeat' },
     ],
@@ -911,7 +908,7 @@ const repeatUntilHeadQuCanonical: LanguagePattern = {
         type: 'group',
         optional: true,
         tokens: [
-          { type: 'role', role: 'source', expectedTypes: ['selector', 'reference', 'expression'] },
+          { type: 'role', role: 'source', expectedTypes: ELEMENT_TARGET_TYPES },
           { type: 'literal', value: 'manta' },
         ],
       },

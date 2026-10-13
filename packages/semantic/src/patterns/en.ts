@@ -46,7 +46,9 @@ import { getWaitPatternsEn } from './wait';
 import { getViewTransitionPatterns } from './view-transition';
 import {
   CONDITION_TYPES,
+  COUNT_TYPES,
   DURATION_TYPES,
+  ELEMENT_TARGET_TYPES,
   EVENT_NAME_TYPES,
   FOR_SOURCE_TYPES,
   FOR_VARIABLE_TYPES,
@@ -72,7 +74,7 @@ const repeatUntilEventFromEnglish: LanguagePattern = {
       { type: 'literal', value: 'event' },
       { type: 'role', role: 'event', expectedTypes: EVENT_NAME_TYPES },
       { type: 'literal', value: 'from' },
-      { type: 'role', role: 'source', expectedTypes: ['selector', 'reference', 'expression'] },
+      { type: 'role', role: 'source', expectedTypes: ELEMENT_TARGET_TYPES },
     ],
   },
   extraction: {
@@ -127,7 +129,7 @@ const repeatTimesEnglish: LanguagePattern = {
       // A variable with its sigil (`$n`, `:n`), `it` and `event's detail`
       // read as references, which the head did not take: the whole loop was
       // dropped, and every translation lost it too (PR 125).
-      { type: 'role', role: 'quantity', expectedTypes: ['literal', 'expression', 'reference'] },
+      { type: 'role', role: 'quantity', expectedTypes: COUNT_TYPES },
       { type: 'literal', value: 'times' },
     ],
   },
