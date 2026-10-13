@@ -60,6 +60,7 @@ import {
 import { buildCommand, tryParsePseudoCommand } from './clause-heads';
 import { parseBodyWithClauses, tryParseUnlessGuard } from './clause-walk';
 import {
+  loopHeadLength,
   tryCompoundCommandParsing,
   tryMidStreamEventExtraction,
   trySOVEventExtraction,
@@ -619,6 +620,7 @@ export function parseInternal(state: ParserState, input: string, language: strin
   // matchBest re-consumes the winning match, leaving the stream past the event;
   // the bare-event guard below needs to rewind here to peek/re-run from the start.
   const eventStart = tokens.mark();
+  const eventStartIndex = tokens.position();
   const eventMatch = patternMatcher.matchBest(tokens, eventPatterns);
 
   if (eventMatch) {
@@ -696,6 +698,30 @@ export function parseInternal(state: ParserState, input: string, language: strin
             patternMatcher.matchBest(tokens, eventPatterns);
           }
         }
+      }
+    }
+
+    // A custom name that opens a loop's head is the loop's variable
+    // (loopHeadLength: bn `item এ items জন্য …`, hi `item में items हेतु …`, sw
+    // `kwa item ndani items …`), and the loop is the statement.
+    if (!preferCommandStage) {
+      const ev = eventMatch.captured.get('event') as
+        { type?: string; raw?: string; value?: string } | undefined;
+      const name = String(ev?.raw ?? ev?.value ?? '').toLowerCase();
+      if (
+        name &&
+        !KNOWN_EVENTS.has(name) &&
+        loopHeadLength(tokens.tokens.slice(eventStartIndex), language, sortedPatterns) > 0
+      ) {
+        tokens.reset(eventStart);
+        preferCommandStage = true;
+        diagnostics.push(
+          parseDiagnostic(
+            `event "${name}" is a loop's variable; command stage preferred`,
+            'info',
+            'stage-loop-head-guard'
+          )
+        );
       }
     }
 

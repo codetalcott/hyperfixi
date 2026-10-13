@@ -1,8 +1,8 @@
 {
   "description": "English-leak gate, command-shape half (src/multilingual/english-leaks.ts): per command-shape case, the findings of each language's render (translate(src, 'en', L)): an English grammar word, `event:<name>`, `case:<pronoun>` or `spacing:<marker>`. `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts.",
-  "renders": 25388,
-  "leaky": 3898,
-  "findings": 7354,
+  "renders": 25399,
+  "leaky": 3902,
+  "findings": 7358,
   "kinds": {
     "word": {
       "renders": 2735,
@@ -17,8 +17,8 @@
       "findings": 39
     },
     "spacing": {
-      "renders": 1284,
-      "findings": 2733
+      "renders": 1288,
+      "findings": 2737
     }
   },
   "entries": {
@@ -938,6 +938,9 @@
     "461a675696": {
       "spacing:i": "tr"
     },
+    "461f84cebf": {
+      "spacing:এ": "bn"
+    },
     "4624a9f39a": {
       "spacing:e spacing:i": "tr"
     },
@@ -1041,7 +1044,8 @@
       "spacing:e spacing:e spacing:i spacing:i": "tr"
     },
     "4c2f167281": {
-      "spacing:i": "tr"
+      "spacing:i": "tr",
+      "spacing:এ": "bn"
     },
     "4ce5e6a0df": {
       "spacing:e spacing:i spacing:i spacing:i": "tr",
@@ -2715,7 +2719,8 @@
     },
     "be1d3cc50d": {
       "in": "he",
-      "spacing:i": "tr"
+      "spacing:i": "tr",
+      "spacing:এ": "bn"
     },
     "be37dedb54": {
       "from to": "ar de es fr he id it ms pt ru sw th tl uk vi zh"
@@ -3379,7 +3384,8 @@
     },
     "eeb30e2d38": {
       "in": "he",
-      "spacing:e spacing:i": "tr"
+      "spacing:e spacing:i": "tr",
+      "spacing:এ": "bn"
     },
     "ef026a66b9": {
       "spacing:i": "tr"
@@ -3578,9 +3584,7 @@
     "391f640b6b": "hi",
     "394a7bfb45": "*",
     "3f9872bcd4": "pl",
-    "461f84cebf": "bn ko",
     "47a37edc5b": "de",
-    "4c2f167281": "bn ko",
     "4d698f4f27": "ko",
     "55c3d28c9e": "bn ko qu th vi",
     "5fc5e421fe": "*",
@@ -3621,7 +3625,6 @@
     "b6d4332c89": "bn hi ja ko qu tr",
     "bb2c2ab053": "qu",
     "bd7175dd23": "*",
-    "be1d3cc50d": "bn hi ko sw",
     "be37dedb54": "bn hi ja ko pl qu tr",
     "c44765f7b0": "*",
     "c48b233ac7": "pt sw",
@@ -3640,7 +3643,6 @@
     "e9e92774e7": "ko",
     "edd578621b": "id vi",
     "ee008e0a98": "ko pl",
-    "eeb30e2d38": "bn hi sw",
     "ef499d89c4": "ko",
     "f1554089dd": "pt",
     "f76ff620e1": "bn qu",
