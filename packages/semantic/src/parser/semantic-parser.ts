@@ -102,7 +102,7 @@ import {
   tryTellTo,
   tryWaitAlternatives,
 } from './command-rescues';
-import { joinTokenText, tokensToSemanticValue } from './value-from-tokens';
+import { joinTokenText } from './value-from-tokens';
 import {
   tryAttachNewWindow,
   tryAttachTrailingDuration,
@@ -122,6 +122,27 @@ import {
   takeRepeatCount,
   type WalkEntry,
 } from './loop-heads';
+import {
+  buildVerbLookup,
+  consumeForPostposition,
+  isBodyCommandWord,
+  parseSOVClauseByVerbAnchoring,
+  sovCommandStartsAt,
+  tokensBeginCommand,
+} from './sov-clause';
+import {
+  SOV_EVENT_MARKERS,
+  SOV_EVENT_MARKER_PHRASES,
+  SOV_SOURCE_MARKERS,
+  applyModifiers,
+  extractOrConjunctionEvents,
+  extractStandaloneModifiers,
+  hasSOVEventMarkerHead,
+  isEnEventKeyword,
+  isStrippableSourceRef,
+  matchEventMarkerPhrase,
+  stripAsyncModifier,
+} from './event-heads';
 
 // Read from here by the renderer and tests.
 export { WAITABLE_EVENT_WORDS };
@@ -739,6 +760,9 @@ export function fillSchemaDefaults(node: SemanticNode): SemanticNode {
 }
 
 export class SemanticParserImpl implements ISemanticParser {
+  /** Each SOV language's event marker particles (public: callers read it here). */
+  static readonly SOV_EVENT_MARKERS = SOV_EVENT_MARKERS;
+
   /** Source text the current token stream's positions index into. */
   private positionSource: string | undefined;
 
@@ -1096,7 +1120,7 @@ export class SemanticParserImpl implements ISemanticParser {
     if (programNode) return programNode;
 
     // Extract standalone event modifiers (once, debounced, throttled) from input
-    const { modifiers, remainingInput } = this.extractStandaloneModifiers(input, language);
+    const { modifiers, remainingInput } = extractStandaloneModifiers(input, language);
     const modInput = remainingInput || input;
 
     // Strip a transparent `async` command prefix (`async fetch … then …`). `async`
@@ -1109,7 +1133,7 @@ export class SemanticParserImpl implements ISemanticParser {
     // identical with or without it (async is not yet surfaced as a node; preserving
     // its execution semantics across languages is Track 5 Tier 2). Gated to the
     // async keyword token, so non-async inputs are byte-identical.
-    const asyncStrip = this.stripAsyncModifier(modInput, language);
+    const asyncStrip = stripAsyncModifier(modInput, language);
     const asyncInput = asyncStrip.remainingInput ?? modInput;
 
     // Strip the `do [not] throw` fetch-error modifier (en `fetch … as JSON do not
@@ -1211,7 +1235,7 @@ export class SemanticParserImpl implements ISemanticParser {
               const reparsed = this.parse(reordered, language);
               if (reparsed && reparsed.kind === 'event-handler') {
                 const result = modifiers
-                  ? this.applyModifiers(reparsed as EventHandlerSemanticNode, modifiers)
+                  ? applyModifiers(reparsed as EventHandlerSemanticNode, modifiers)
                   : reparsed;
                 return withDiagnostics(result, diagnostics);
               }
@@ -1269,7 +1293,7 @@ export class SemanticParserImpl implements ISemanticParser {
               const reparsed = this.parse(reduced, language);
               if (reparsed && reparsed.kind === 'event-handler') {
                 const result = modifiers
-                  ? this.applyModifiers(reparsed as EventHandlerSemanticNode, modifiers)
+                  ? applyModifiers(reparsed as EventHandlerSemanticNode, modifiers)
                   : reparsed;
                 return withDiagnostics(result, diagnostics);
               }
@@ -1288,7 +1312,7 @@ export class SemanticParserImpl implements ISemanticParser {
       if (flagged) {
         const result =
           modifiers && flagged.kind === 'event-handler'
-            ? this.applyModifiers(flagged as EventHandlerSemanticNode, modifiers)
+            ? applyModifiers(flagged as EventHandlerSemanticNode, modifiers)
             : flagged;
         return withDiagnostics(result, diagnostics);
       }
@@ -1300,7 +1324,7 @@ export class SemanticParserImpl implements ISemanticParser {
       if (told) {
         const result =
           modifiers && told.kind === 'event-handler'
-            ? this.applyModifiers(told as EventHandlerSemanticNode, modifiers)
+            ? applyModifiers(told as EventHandlerSemanticNode, modifiers)
             : told;
         return withDiagnostics(result, diagnostics);
       }
@@ -1317,7 +1341,7 @@ export class SemanticParserImpl implements ISemanticParser {
       if (placed) {
         const result =
           modifiers && placed.kind === 'event-handler'
-            ? this.applyModifiers(placed as EventHandlerSemanticNode, modifiers)
+            ? applyModifiers(placed as EventHandlerSemanticNode, modifiers)
             : placed;
         return withDiagnostics(result, diagnostics);
       }
@@ -1329,7 +1353,7 @@ export class SemanticParserImpl implements ISemanticParser {
       if (indexed) {
         const result =
           modifiers && indexed.kind === 'event-handler'
-            ? this.applyModifiers(indexed as EventHandlerSemanticNode, modifiers)
+            ? applyModifiers(indexed as EventHandlerSemanticNode, modifiers)
             : indexed;
         return withDiagnostics(result, diagnostics);
       }
@@ -1347,7 +1371,7 @@ export class SemanticParserImpl implements ISemanticParser {
       if (waited) {
         const result =
           modifiers && waited.kind === 'event-handler'
-            ? this.applyModifiers(waited as EventHandlerSemanticNode, modifiers)
+            ? applyModifiers(waited as EventHandlerSemanticNode, modifiers)
             : waited;
         return withDiagnostics(result, diagnostics);
       }
@@ -1375,7 +1399,7 @@ export class SemanticParserImpl implements ISemanticParser {
       const commands = commandWordsFor(language);
       for (let i = 0; i + 1 < arr.length; i++) {
         const t = arr[i];
-        if (this.isBodyCommandWord(t, commands)) break;
+        if (isBodyCommandWord(t, commands)) break;
         if (arr[i + 1].value !== '(') continue;
         const norm = (t.normalized ?? t.value).toLowerCase();
         const known = KNOWN_EVENTS.has(norm) || WAITABLE_EVENT_WORDS.has(norm);
@@ -1427,7 +1451,7 @@ export class SemanticParserImpl implements ISemanticParser {
           if (reparsed?.kind === 'event-handler' && spelled) {
             (reparsed as { parameterNames?: string[] }).parameterNames = phrase.names;
             const result = modifiers
-              ? this.applyModifiers(reparsed as EventHandlerSemanticNode, modifiers)
+              ? applyModifiers(reparsed as EventHandlerSemanticNode, modifiers)
               : reparsed;
             return withDiagnostics(result, diagnostics);
           }
@@ -1463,7 +1487,7 @@ export class SemanticParserImpl implements ISemanticParser {
         // Lifting it into the head gave the handler an event its author never
         // bound. A verb-final (SOV) body still reaches here: its verb comes
         // after its arguments.
-        if (this.isBodyCommandWord(t, commands)) break;
+        if (isBodyCommandWord(t, commands)) break;
         // Language-scoped: `o` is the or-word in es/it/tl and the BY-marker in
         // pl, so a language-blind surface match reads `zwiększ #score o 10` as a
         // conjunction.
@@ -1495,7 +1519,7 @@ export class SemanticParserImpl implements ISemanticParser {
                 { type: 'literal', value: lastIdx > i + 1 ? evNorm + filterTok.value : evNorm },
               ];
               const result = modifiers
-                ? this.applyModifiers(reparsed as EventHandlerSemanticNode, modifiers)
+                ? applyModifiers(reparsed as EventHandlerSemanticNode, modifiers)
                 : reparsed;
               return withDiagnostics(result, diagnostics);
             }
@@ -1537,7 +1561,7 @@ export class SemanticParserImpl implements ISemanticParser {
               // (A dangling `from <source>` tail — the window-resize shape —
               // is reclaimed by the stage-2 hook in parse() once this result
               // surfaces at the top level carrying the lifted modifiers.)
-              const result = this.applyModifiers(reparsed as EventHandlerSemanticNode, {
+              const result = applyModifiers(reparsed as EventHandlerSemanticNode, {
                 ...(modifiers ?? {}),
                 ...lift.modifiers,
               });
@@ -1597,7 +1621,7 @@ export class SemanticParserImpl implements ISemanticParser {
               )
             );
             const guarded = modifiers
-              ? this.applyModifiers(sov as EventHandlerSemanticNode, modifiers)
+              ? applyModifiers(sov as EventHandlerSemanticNode, modifiers)
               : sov;
             return withDiagnostics(guarded, diagnostics);
           }
@@ -1637,7 +1661,7 @@ export class SemanticParserImpl implements ISemanticParser {
 
       if (!preferCommandStage) {
         const handler = this.buildEventHandler(eventMatch, tokens, language);
-        const result = modifiers ? this.applyModifiers(handler, modifiers) : handler;
+        const result = modifiers ? applyModifiers(handler, modifiers) : handler;
         return withDiagnostics(result, diagnostics);
       }
       // else: fall through to Stage 1.5 / Stage 2 (command), the stream rewound to
@@ -1668,7 +1692,7 @@ export class SemanticParserImpl implements ISemanticParser {
         parseDiagnostic('trailing event extraction succeeded', 'info', 'stage-trailing-event')
       );
       const result = modifiers
-        ? this.applyModifiers(trailingResult as EventHandlerSemanticNode, modifiers)
+        ? applyModifiers(trailingResult as EventHandlerSemanticNode, modifiers)
         : trailingResult;
       return withDiagnostics(result, diagnostics);
     }
@@ -1723,7 +1747,7 @@ export class SemanticParserImpl implements ISemanticParser {
             )
           );
           const result = modifiers
-            ? this.applyModifiers(sovLoop as EventHandlerSemanticNode, modifiers)
+            ? applyModifiers(sovLoop as EventHandlerSemanticNode, modifiers)
             : sovLoop;
           return withDiagnostics(result, diagnostics);
         }
@@ -1745,13 +1769,13 @@ export class SemanticParserImpl implements ISemanticParser {
             )
           );
           const result = modifiers
-            ? this.applyModifiers(midLoop as EventHandlerSemanticNode, modifiers)
+            ? applyModifiers(midLoop as EventHandlerSemanticNode, modifiers)
             : midLoop;
           return withDiagnostics(result, diagnostics);
         }
       } else if (
         KNOWN_EVENTS.has(commandMatch.pattern.command) &&
-        this.hasSOVEventMarkerHead(parseInput, language)
+        hasSOVEventMarkerHead(parseInput, language)
       ) {
         // SOV command-homonym event head (ko `window-scroll`): the handler's event
         // word is also a real command (`스크롤` = scroll event AND scroll command).
@@ -1775,7 +1799,7 @@ export class SemanticParserImpl implements ISemanticParser {
             )
           );
           const result = modifiers
-            ? this.applyModifiers(sovHomonym as EventHandlerSemanticNode, modifiers)
+            ? applyModifiers(sovHomonym as EventHandlerSemanticNode, modifiers)
             : sovHomonym;
           return withDiagnostics(result, diagnostics);
         }
@@ -1802,7 +1826,7 @@ export class SemanticParserImpl implements ISemanticParser {
             )
           );
           const result = modifiers
-            ? this.applyModifiers(midCmd as EventHandlerSemanticNode, modifiers)
+            ? applyModifiers(midCmd as EventHandlerSemanticNode, modifiers)
             : midCmd;
           return withDiagnostics(result, diagnostics);
         }
@@ -1830,7 +1854,7 @@ export class SemanticParserImpl implements ISemanticParser {
             )
           );
           const result = modifiers
-            ? this.applyModifiers(sovTrailing as EventHandlerSemanticNode, modifiers)
+            ? applyModifiers(sovTrailing as EventHandlerSemanticNode, modifiers)
             : sovTrailing;
           return withDiagnostics(result, diagnostics);
         }
@@ -1979,7 +2003,7 @@ export class SemanticParserImpl implements ISemanticParser {
           )
         );
         const result = modifiers
-          ? this.applyModifiers(midNoCmd as EventHandlerSemanticNode, modifiers)
+          ? applyModifiers(midNoCmd as EventHandlerSemanticNode, modifiers)
           : midNoCmd;
         return withDiagnostics(result, diagnostics);
       }
@@ -1990,7 +2014,7 @@ export class SemanticParserImpl implements ISemanticParser {
     if (sovResult) {
       diagnostics.push(parseDiagnostic('SOV event extraction succeeded', 'info', 'stage-sov'));
       const result = modifiers
-        ? this.applyModifiers(sovResult as EventHandlerSemanticNode, modifiers)
+        ? applyModifiers(sovResult as EventHandlerSemanticNode, modifiers)
         : sovResult;
       return withDiagnostics(result, diagnostics);
     }
@@ -2310,7 +2334,7 @@ export class SemanticParserImpl implements ISemanticParser {
       eventSpan !== undefined &&
       lastConsumed !== undefined &&
       lastConsumed.position.end > eventSpan.end;
-    const additionalEvents = pastEvent ? [] : this.extractOrConjunctionEvents(tokens, language);
+    const additionalEvents = pastEvent ? [] : extractOrConjunctionEvents(tokens, language);
     let resolvedEventValue = eventValue;
     if (additionalEvents.length > 0 && eventValue.type === 'literal') {
       const allEvents = [
@@ -3050,7 +3074,7 @@ export class SemanticParserImpl implements ISemanticParser {
             // precedent below, same particle). জন্য tokenizes as a PARTICLE
             // (no `normalized`), so also match the profile's for-keyword
             // surface form.
-            this.consumeForPostposition(tokens, language);
+            consumeForPostposition(tokens, language);
           }
         }
 
@@ -3155,7 +3179,7 @@ export class SemanticParserImpl implements ISemanticParser {
               // জন্য` — the transformer renders the wait-for keyword AFTER the
               // event in postpositional languages). Left in place it anchors a
               // phantom bare `for` command in the remaining body tokens.
-              this.consumeForPostposition(tokens, language);
+              consumeForPostposition(tokens, language);
             }
           }
         }
@@ -3365,7 +3389,7 @@ export class SemanticParserImpl implements ISemanticParser {
     if (!opens) return undefined;
     let end = start + 1;
     while (end < all.length && end - start <= HEAD_CLAUSE_WORDS) {
-      if (this.tokensBeginCommand(all.slice(end), commandPatterns, language)) break;
+      if (tokensBeginCommand(all.slice(end), commandPatterns, language)) break;
       end++;
     }
     if (end >= all.length || end - start > HEAD_CLAUSE_WORDS) return undefined;
@@ -3377,7 +3401,7 @@ export class SemanticParserImpl implements ISemanticParser {
     const words = run.map(t => t.value).join(' ');
     if (/^\d/.test(first.value)) {
       if (!/^\d+(?: to \d+)?$/.test(words)) return undefined;
-      if (this.tokensBeginCommand(all.slice(start), commandPatterns, language)) return undefined;
+      if (tokensBeginCommand(all.slice(start), commandPatterns, language)) return undefined;
     }
     const holder = { kind: 'command', action: 'on' } as unknown as SemanticNode;
     if (!this.keepVerbatimClause(holder, run, all[start - 1], language)) return undefined;
@@ -3988,7 +4012,7 @@ export class SemanticParserImpl implements ISemanticParser {
       form?.type === 'literal' &&
       typeof form.value !== 'number' &&
       !LOOP_FORMS.has(String(form.value)) &&
-      this.tokensBeginCommand([...after], commandPatterns, language)
+      tokensBeginCommand([...after], commandPatterns, language)
     );
   }
 
@@ -4096,7 +4120,7 @@ export class SemanticParserImpl implements ISemanticParser {
     let presetCondition: LanguageToken[] | null = null;
     if (trailingGuard && bodyTokens.length >= 3) {
       const profile = tryGetProfile(language);
-      const verbLookup = profile ? SemanticParserImpl.buildVerbLookup(profile) : null;
+      const verbLookup = profile ? buildVerbLookup(profile) : null;
       if (verbLookup) {
         for (let i = 1; i < bodyTokens.length - 1; i++) {
           const t = bodyTokens[i];
@@ -4183,7 +4207,7 @@ export class SemanticParserImpl implements ISemanticParser {
       // (`from`/`into`/`or`/`until`). Keep only well-formed recoveries: a real
       // command schema with at least one captured role.
       let recoveredFromRun = false;
-      for (const node of this.parseSOVClauseByVerbAnchoring(run, language)) {
+      for (const node of parseSOVClauseByVerbAnchoring(run, language)) {
         const action = (node as { action?: string }).action;
         const roles = (node as { roles?: unknown }).roles;
         if (action && getSchema(action as ActionType) && roles instanceof Map && roles.size > 0) {
@@ -4369,7 +4393,7 @@ export class SemanticParserImpl implements ISemanticParser {
       // Under a trailing `unless`, keep only real commands, as flushSkipped
       // does: a condition-only clause (ja `それ 一致する .bar ない限り`) anchored
       // on its operator and added a phantom `matches` command after the guard.
-      const sovCommands = this.parseSOVClauseByVerbAnchoring(bodyTokens, language).filter(
+      const sovCommands = parseSOVClauseByVerbAnchoring(bodyTokens, language).filter(
         n => !trailingGuard || !!getSchema((n as { action?: string }).action as ActionType)
       );
       if (sovCommands.length > 0) {
@@ -4434,340 +4458,6 @@ export class SemanticParserImpl implements ISemanticParser {
   // ==========================================================================
 
   /**
-   * Build a lookup from native verb keywords to action names for a language profile.
-   */
-  private static buildVerbLookup(profile: {
-    keywords: Record<string, { primary: string; alternatives?: string[]; normalized?: string }>;
-  }): Map<string, string> {
-    const lookup = new Map<string, string>();
-    for (const [action, kw] of Object.entries(profile.keywords)) {
-      // Skip non-command keywords (on, if, else, etc.). `for` is deliberately
-      // NOT skipped: the SOV grammar transforms put the for-loop keyword
-      // clause-FINAL (`item の中 $items を ために` / `item içinde $items i için`)
-      // — an order no generated pattern covers — so the verb-anchoring fallback
-      // is exactly where it must anchor. This path only runs when nothing else
-      // in the clause matched, so a `for` in an otherwise-parseable clause is
-      // untouched.
-      if (['on', 'if', 'else', 'when', 'where', 'while', 'end', 'then', 'and'].includes(action)) {
-        continue;
-      }
-      lookup.set(kw.primary.toLowerCase(), action);
-      if (kw.alternatives) {
-        for (const alt of kw.alternatives) {
-          lookup.set(alt.toLowerCase(), action);
-        }
-      }
-    }
-    return lookup;
-  }
-
-  /**
-   * Build a lookup from role marker strings to role names.
-   */
-  private static buildMarkerToRoleLookup(profile: {
-    roleMarkers: Record<string, { primary: string; alternatives?: string[] }>;
-  }): Map<string, string> {
-    const lookup = new Map<string, string>();
-    for (const [role, marker] of Object.entries(profile.roleMarkers)) {
-      if (!marker) continue;
-      // The `event` role reuses a value role's particle in most SOV profiles
-      // (ja event を = patient を, bn event তে = destination তে, tr event i =
-      // patient i, ko event 을 = patient 을). This lookup only feeds BODY-clause
-      // role extraction (parseSOVClauseByVerbAnchoring), where the event phrase
-      // has already been stripped — so letting `event` clobber a value role's
-      // marker mis-labels the fronted value as `event` and the role is dropped
-      // downstream (ja/tr append-content "append requires content", bn silent
-      // no-op; ko survived only because its corpus form uses the 를 ALTERNATIVE,
-      // which never clobbered). Event markers may only fill gaps (qu `pi` keeps
-      // its entry — no collision — preserving the not-a-verb shield).
-      const overwrite = role !== 'event';
-      if (overwrite || !lookup.has(marker.primary)) {
-        lookup.set(marker.primary, role);
-      }
-      if (marker.alternatives) {
-        for (const alt of marker.alternatives) {
-          // Avoid overwriting more specific roles with generic ones
-          if (!lookup.has(alt)) {
-            lookup.set(alt, role);
-          }
-        }
-      }
-    }
-    return lookup;
-  }
-
-  /**
-   * Parse an SOV clause by finding command verbs and extracting roles from surrounding tokens.
-   *
-   * The grammar transformer often produces "verb-in-middle" order for two-role commands:
-   *   "[role1] [marker1] [verb] [role2] [marker2]"
-   *
-   * This method:
-   * 1. Scans for recognized command verbs in the token stream
-   * 2. For each verb, extracts pre-verb and post-verb tokens as roles
-   * 3. Uses marker tokens to determine which semantic role each value belongs to
-   */
-  private parseSOVClauseByVerbAnchoring(
-    clauseTokens: LanguageToken[],
-    language: string
-  ): SemanticNode[] {
-    const profile = tryGetProfile(language);
-    if (!profile || profile.wordOrder !== 'SOV') return [];
-
-    const verbLookup = SemanticParserImpl.buildVerbLookup(profile);
-    const markerToRole = SemanticParserImpl.buildMarkerToRoleLookup(profile);
-    const commands: SemanticNode[] = [];
-
-    let pos = 0;
-
-    while (pos < clauseTokens.length) {
-      // Find the next verb token
-      let verbIdx = -1;
-      let verbAction = '';
-
-      for (let i = pos; i < clauseTokens.length; i++) {
-        const token = clauseTokens[i];
-        // A known postpositional ROLE MARKER (を/に/를/에/i/কে/…) is NEVER a command
-        // verb, even when its surface form doubles as a verb keyword alternative:
-        // ja's `に` is both the `set`-value destination marker AND an `into`
-        // alternative, so anchoring the trailing `それ に` of `set $users to it`
-        // emitted a phantom `into` command (R0-precision). Gate on markerToRole,
-        // NOT on `kind==='particle'`: a clause-final loop keyword like tr `için` /
-        // bn `জন্য` (`for`) also tokenizes as a particle but is NOT a role marker,
-        // and the verb-anchoring fallback must still find it as the `for` verb (else
-        // template-literal-list-build drops its loop). See buildVerbLookup's `for` note.
-        if (markerToRole.has(token.value)) continue;
-        const byValue = verbLookup.get(token.value.toLowerCase());
-        const byNormalized = token.normalized
-          ? verbLookup.get(token.normalized.toLowerCase())
-          : undefined;
-        const action = byValue || byNormalized;
-
-        if (action) {
-          verbIdx = i;
-          verbAction = action;
-          break;
-        }
-      }
-
-      if (verbIdx === -1) break; // No more verbs found
-
-      // Tokens before verb = pre-verb arguments
-      const preVerbTokens = clauseTokens.slice(pos, verbIdx);
-
-      // Find end of this command: next verb, then-keyword, or end of tokens
-      let endIdx = clauseTokens.length;
-      for (let i = verbIdx + 1; i < clauseTokens.length; i++) {
-        const t = clauseTokens[i];
-        // Stop at then-keywords
-        if (t.kind === 'conjunction' || isThenKeyword(t.value, language)) {
-          endIdx = i;
-          break;
-        }
-        // Stop at the next verb (start of new command) — but only if preceded by a marker
-        // This prevents stopping at "value" tokens that happen to match a verb name.
-        // A known role marker is not a verb (see the verb-find guard above): without
-        // this exclusion `に` (set's value marker, also an `into` alt) ends the `set`
-        // clause one token early, stranding its `it` patient. A non-marker loop
-        // keyword (tr `için` / bn `জন্য`) still legitimately stops the clause.
-        if (i > verbIdx + 1 && !markerToRole.has(t.value)) {
-          const nextAction =
-            verbLookup.get(t.value.toLowerCase()) ||
-            (t.normalized ? verbLookup.get(t.normalized.toLowerCase()) : undefined);
-          if (nextAction) {
-            endIdx = i;
-            break;
-          }
-        }
-      }
-
-      // Tokens after verb = post-verb arguments
-      const postVerbTokens = clauseTokens.slice(verbIdx + 1, endIdx);
-
-      // Extract roles from pre-verb and post-verb tokens using markers
-      const roles = this.extractRolesFromMarkedTokens(
-        preVerbTokens,
-        postVerbTokens,
-        markerToRole,
-        verbAction,
-        language
-      );
-
-      commands.push(
-        createCommandNode(verbAction as ActionType, roles, {
-          sourceLanguage: language,
-          confidence: 0.7,
-        })
-      );
-
-      pos = endIdx;
-      // Skip conjunction/then-keyword if present
-      if (pos < clauseTokens.length) {
-        const t = clauseTokens[pos];
-        if (t.kind === 'conjunction' || isThenKeyword(t.value, language)) {
-          pos++;
-        }
-      }
-    }
-
-    return commands;
-  }
-
-  /**
-   * Extract semantic roles from pre-verb and post-verb token groups using marker analysis.
-   *
-   * Recognizes patterns like:
-   *   pre-verb:  [expr] [を]   → patient (obj marker)
-   *   post-verb: [expr] [に]   → destination (to marker)
-   *   pre-verb:  [expr] [から] → source (from marker)
-   */
-  private extractRolesFromMarkedTokens(
-    preVerbTokens: LanguageToken[],
-    postVerbTokens: LanguageToken[],
-    markerToRole: Map<string, string>,
-    action: string,
-    language: string
-  ): Record<string, SemanticValue> {
-    const roles: Record<string, SemanticValue> = {};
-
-    // A block terminator the SOV reorder absorbed into a role phrase (bn
-    // repeat-while renders wait's object phrase as `200ms শেষ কে` — the
-    // terminator belongs after the verb) is structural residue, never part
-    // of a value: joined in it glues (`200msশেষ`), alone it fabricates a
-    // phantom trailing role. Recognized like isBlockEndToken (curated
-    // isEndKeyword surface OR keyword normalized `end`), but the positional
-    // lookahead applies to BOTH modes: a value group is exactly where a
-    // positional-`last` phrase lives (bn `শেষ <li/>`, tr `son .item`), so any
-    // terminator-shaped token followed by a selector keeps its positional
-    // reading.
-    const isStrayTerminator = (t: LanguageToken, next: LanguageToken | undefined): boolean => {
-      const curatedEnd = isEndKeyword(t.value, language);
-      const normalizedEnd = t.kind === 'keyword' && (t.normalized ?? '').toLowerCase() === 'end';
-      if (!curatedEnd && !normalizedEnd) return false;
-      // A terminator the clause walker matched to a tracked block opener is
-      // ALWAYS structural (never positional `last`), even before a selector —
-      // see the annotation in parseBodyWithClauses.
-      if (t.metadata?.closesTrackedBlock === true) return true;
-      // A CURATED end word is never the positional `last`: the curated sets
-      // are audited for exactly that collision (tr emits `sonuncu` for last,
-      // `son` stays the terminator; qu last is `qhipa`, not `tukuy`; ar آخر is
-      // deliberately absent BECAUSE it is positional). Without this, a loop's
-      // own `son` directly before the next command's selector was read as
-      // `last <sel>` and prefixed that command's role value (tr
-      // behavior-sortable remove.patient="last .{dragClass}").
-      if (curatedEnd) return true;
-      // Dual-use words reached via the normalized fallback (bn শেষ = end AND
-      // positional last) keep their positional reading before a selector.
-      return !(next && next.kind === 'selector');
-    };
-
-    // Process a group of tokens: collect value tokens until a marker is found
-    const processGroup = (tokens: LanguageToken[]) => {
-      let valueTokens: LanguageToken[] = [];
-
-      for (let i = 0; i < tokens.length; i++) {
-        const token = tokens[i];
-        if (isStrayTerminator(token, tokens[i + 1])) continue;
-        const role = markerToRole.get(token.value);
-        if (role && token.kind === 'particle' && valueTokens.length > 0) {
-          // This is a marker — assign the preceding value tokens to this role
-          const value = tokensToSemanticValue(valueTokens, language);
-          if (value) {
-            // Map the role name, avoiding overwrites of existing roles
-            const roleKey = this.mapRoleForCommand(role, action, roles);
-            if (roleKey) {
-              roles[roleKey] = value;
-            }
-          }
-          valueTokens = [];
-        } else {
-          valueTokens.push(token);
-        }
-      }
-
-      // Remaining tokens without a following marker
-      if (valueTokens.length > 0) {
-        // A lone TIME-shaped trailing token (`300ms`, `2s`) is a DURATION, not
-        // a patient/destination: the SOV render leaves it bare after the goal
-        // phrase (`遷移 0 に 300ms` = `transition … to 0 over 300ms` — the
-        // `over` marker never survives translation), and the value-slot
-        // fallback below either mistyped it or dropped it (the in-branch
-        // sibling of the fused-path trailing-DURATION reclaim). Schema-gated
-        // to an action that declares a still-empty `duration` role.
-        const soleTime =
-          valueTokens.length === 1 &&
-          /^\d+(\.\d+)?(ms|s)$/i.test(valueTokens[0].value) &&
-          !roles.duration &&
-          getSchema(action as ActionType)?.roles.some(r => r.role === 'duration');
-        if (soleTime) {
-          roles.duration = {
-            type: 'literal',
-            value: valueTokens[0].value,
-            dataType: 'string',
-          } as SemanticValue;
-        } else {
-          const value = tokensToSemanticValue(valueTokens, language);
-          if (value) {
-            // Unmarked trailing tokens: assign based on what's missing
-            if (!roles.patient) {
-              roles.patient = value;
-            } else if (!roles.destination) {
-              roles.destination = value;
-            }
-          }
-        }
-      }
-    };
-
-    processGroup(preVerbTokens);
-    processGroup(postVerbTokens);
-
-    return roles;
-  }
-
-  /**
-   * Map a marker-derived role name to the appropriate semantic role for a command,
-   * handling cases where marker roles overlap (e.g., both patient and destination
-   * use similar particles in some languages).
-   */
-  private mapRoleForCommand(
-    markerRole: string,
-    action: string,
-    existingRoles: Record<string, SemanticValue>
-  ): string | null {
-    // `set`'s surface order is DESTINATION-first (`set <dest> to <value>`), so
-    // the SOV reorder marks the DESTINATION with the patient particle (`$x を
-    // beep! 私の値 に 設定`) and the VALUE with the destination particle —
-    // systematically, not just on slot collision. The collision-only swap
-    // below left every fallback-parsed set with flipped roles vs the en
-    // reference (beep-debug-expression across the SOV cohort, R1 Family D).
-    // set only: `put <value> into <dest>` is VALUE-first, so put's patient
-    // particle really does mark the patient.
-    if (action === 'set') {
-      if (markerRole === 'patient') markerRole = 'destination';
-      else if (markerRole === 'destination') markerRole = 'patient';
-    }
-    // Direct mapping — if the role isn't taken yet, use it
-    if (!existingRoles[markerRole]) {
-      return markerRole;
-    }
-
-    // If the marker role is already taken, try to assign to a related role
-    // For "set" and "put": patient marker (を/i) is the destination, dest marker (に/e) is the patient value
-    if (markerRole === 'patient' && !existingRoles.destination) {
-      return 'destination';
-    }
-    if (markerRole === 'destination' && !existingRoles.patient) {
-      return 'patient';
-    }
-    if (markerRole === 'source' && !existingRoles.source) {
-      return 'source';
-    }
-
-    return null; // Can't assign
-  }
-
-  /**
    * Parse body commands with support for grammar-transformed patterns.
    * Used after a grammar-transformed pattern with continuation marker.
    *
@@ -4817,7 +4507,7 @@ export class SemanticParserImpl implements ISemanticParser {
     };
     const flushClause = () => {
       if (!clauseHadMatch && skippedClauseTokens.length > 0) {
-        const recovered = this.parseSOVClauseByVerbAnchoring(skippedClauseTokens, language);
+        const recovered = parseSOVClauseByVerbAnchoring(skippedClauseTokens, language);
         commands.push(...recovered);
         if (recovered.length === 0 && !keepAsClause()) {
           this.recordDroppedTokens(skippedClauseTokens, language, 'fused body walk');
@@ -5132,202 +4822,6 @@ export class SemanticParserImpl implements ISemanticParser {
    */
 
   /**
-   * Whether the ENGLISH tokenizer classifies `word` as a keyword — which is
-   * exactly how English decides a handler event is a `literal` rather than an
-   * `expression` (see buildEventHandler). Memoized: this runs once per handler
-   * built, and the answer is a property of the word alone.
-   */
-  private static readonly enEventKeywordCache = new Map<string, boolean>();
-
-  private static isEnEventKeyword(word: unknown): boolean {
-    if (typeof word !== 'string') return false;
-    const key = word.toLowerCase();
-    const cached = SemanticParserImpl.enEventKeywordCache.get(key);
-    if (cached !== undefined) return cached;
-    let isKeyword = false;
-    try {
-      const tokens = tokenizeInternal(key, 'en').tokens;
-      isKeyword = tokens.length === 1 && tokens[0]?.kind === 'keyword';
-    } catch {
-      isKeyword = false;
-    }
-    SemanticParserImpl.enEventKeywordCache.set(key, isKeyword);
-    return isKeyword;
-  }
-
-  /**
-   * SOV event marker particles per language (postpositions that mark the event role).
-   * Korean has no event marker particle -- the event keyword stands alone.
-   */
-  static readonly SOV_EVENT_MARKERS: Record<string, Set<string>> = {
-    ja: new Set(['で']),
-    ko: new Set(), // ko's marker is the two-token 할 때 phrase — see SOV_EVENT_MARKER_PHRASES
-    tr: new Set(['de', 'da', 'te', 'ta']),
-    bn: new Set(['এ']),
-    qu: new Set(['pi']),
-    // hi's event-on marker (`क्लिक पर` = "on click"). hi was the only priority SOV
-    // language WITHOUT a Stage-3 SOV event-extraction fallback, so an event handler
-    // whose generated pattern doesn't cover the emitted role order — notably the
-    // patient-first 2-role shape `{patient} को {event} पर {verb} {destination} में`
-    // (append-content) — used to survive only via the bare-event mis-anchor (the
-    // fronted patient grabbed as a degenerate "event"). With the event-anchor guard
-    // rejecting that, this fallback recovers the real `<known-event> पर` trigger and
-    // re-parses the body. Stage 3 runs only when Stages 1–2 fail, and the known-event
-    // gate + body re-parse keep it additive (NULL → parse, never overriding a match).
-    hi: new Set(['पर']),
-  };
-
-  /**
-   * OPTIONAL multi-token event-marker phrases consumed after the event token.
-   * The ko i18n profile emits 할 때 after the event role; it tokenizes as TWO
-   * tokens (할 identifier + 때 keyword), invisible to the single-token marker
-   * check above. Unlike SOV_EVENT_MARKERS these never gate event detection —
-   * ko events still anchor bare (pre-marker emissions, hand-written input) —
-   * the phrase is just consumed when present so it doesn't leak into the body,
-   * and it CONFIRMS a custom (identifier) event the way ja's で does.
-   */
-  static readonly SOV_EVENT_MARKER_PHRASES: Record<string, string[][]> = {
-    ko: [['할', '때'], ['할때']],
-  };
-
-  /** Length (in tokens) of an event-marker phrase starting at startIdx, or 0. */
-  private matchEventMarkerPhrase(
-    allTokens: readonly LanguageToken[],
-    startIdx: number,
-    language: string
-  ): number {
-    const phrases = SemanticParserImpl.SOV_EVENT_MARKER_PHRASES[language];
-    if (!phrases) return 0;
-    for (const phrase of phrases) {
-      if (phrase.every((w, j) => allTokens[startIdx + j]?.value === w)) return phrase.length;
-    }
-    return 0;
-  }
-
-  /**
-   * Does the input carry an SOV event-handler head — a known-event token
-   * immediately followed by this language's single-token event marker (ja で,
-   * tr de/da/te/ta, …) or multi-token marker phrase (ko 할 때)?
-   *
-   * Used to distinguish a genuine standalone command from an event handler whose
-   * verb is a command-homonym event word (scroll/resize/focus/…). With no
-   * single-token event marker (ko), the Stage-1 fused event pattern can't anchor
-   * once a `from <source>` clause (`창 에서`) splits the head, so Stage 2 matches the
-   * homonym as its literal command and returns before the SOV extraction stage. This
-   * structural cue (`<event> <marker>`) gates the Stage-2 preference for SOV
-   * extraction, so a real bare command (`스크롤 #panel` — no marker) is untouched.
-   * Returns false for languages with no SOV event-marker config.
-   */
-  private hasSOVEventMarkerHead(input: string, language: string): boolean {
-    const eventMarkers = SemanticParserImpl.SOV_EVENT_MARKERS[language];
-    if (eventMarkers === undefined) return false;
-
-    const { tokens } = tokenizeInternal(input, language);
-    const langEvents = eventNameTranslations[language];
-    const nativeEventNames = new Set<string>();
-    if (langEvents) {
-      for (const native of Object.keys(langEvents)) nativeEventNames.add(native.toLowerCase());
-    }
-
-    for (let i = 0; i < tokens.length; i++) {
-      const token = tokens[i];
-      const value = token.value.toLowerCase();
-      const normalized = token.normalized?.toLowerCase();
-      const isEvent =
-        (!!normalized &&
-          (KNOWN_EVENTS.has(normalized) ||
-            WAITABLE_EVENT_WORDS.has(normalized))) ||
-        KNOWN_EVENTS.has(value) ||
-        WAITABLE_EVENT_WORDS.has(value) ||
-        nativeEventNames.has(value);
-      if (!isEvent) continue;
-
-      // A param phrase (`pointerdown(clientY)`) sits between the event keyword
-      // and its marker — skip it, mirroring trySOVEventExtraction.
-      const paramLen = matchEventParamPhrase(tokens, i + 1).len;
-      const next = tokens[i + 1 + paramLen];
-      if (
-        next &&
-        (next.kind === 'particle' || next.kind === 'keyword') &&
-        eventMarkers.has(next.value)
-      ) {
-        return true;
-      }
-      if (this.matchEventMarkerPhrase(tokens, i + 1 + paramLen, language) > 0) return true;
-    }
-    return false;
-  }
-
-  /**
-   * SOV source markers ("from" equivalents) and window tokens per language.
-   * Used to strip "from window/elsewhere" event modifiers.
-   */
-  private static readonly SOV_SOURCE_MARKERS: Record<
-    string,
-    { markers: Set<string>; windowTokens: Set<string> }
-  > = {
-    ja: {
-      markers: new Set(['から']),
-      windowTokens: new Set(['ウィンドウ', 'ドキュメント', 'window', 'document']),
-    },
-    ko: {
-      markers: new Set(['에서']),
-      windowTokens: new Set(['창', '윈도우', '문서', 'window', 'document']),
-    },
-    tr: {
-      markers: new Set(['den', 'dan', 'ten', 'tan']),
-      windowTokens: new Set(['pencere', 'belge', 'window', 'document']),
-    },
-    bn: {
-      markers: new Set(['থেকে', 'মধ্যে']),
-      windowTokens: new Set(['উইন্ডো', 'ডকুমেন্ট', 'window', 'document']),
-    },
-    qu: {
-      markers: new Set(['manta']),
-      windowTokens: new Set(['k_iri', 'ventana', 'window', 'document']),
-    },
-    hi: {
-      markers: new Set(['से']),
-      windowTokens: new Set(['विंडो', 'दस्तावेज़', 'window', 'document']),
-    },
-  };
-
-  /**
-   * A command word that begins a handler's BODY, ending the head: a keyword whose
-   * normalized form is a command this language parses. A command that is also an
-   * event name (`on focus or blur`) is the head's event, not a body verb.
-   */
-  private isBodyCommandWord(tok: LanguageToken, commands: ReadonlySet<string>): boolean {
-    const norm = (tok.normalized ?? tok.value).toLowerCase();
-    return (
-      tok.kind === 'keyword' &&
-      commands.has(norm) &&
-      !KNOWN_EVENTS.has(norm) &&
-      !WAITABLE_EVENT_WORDS.has(norm)
-    );
-  }
-
-  /**
-   * Whether a token is a strippable event-source REFERENCE — a pronoun (`私`/
-   * `나`/`ben`/`আমি`/`मैं`/`noqa`, all normalized `me`/`i`/`it`) or a window/
-   * document token. The en reference drops the handler's `from me` phrase
-   * entirely (event role only), so stripping the rendered pair matches it.
-   * Deliberately NOT identifiers (`triggerEl から` stays in the body, where the
-   * value-led skipped-run recovery reclaims it — behavior-removable relies on
-   * that).
-   */
-  private isStrippableSourceRef(
-    tok: LanguageToken | undefined,
-    windowTokens: Set<string>
-  ): boolean {
-    if (!tok) return false;
-    const norm = tok.normalized?.toLowerCase();
-    if (tok.kind === 'keyword' && (norm === 'me' || norm === 'i' || norm === 'it')) return true;
-    const v = tok.value.toLowerCase();
-    return windowTokens.has(v) || (!!norm && windowTokens.has(norm));
-  }
-
-  /**
    * Try to extract a trailing event clause that wraps a block/command body.
    *
    * SVO/VSO grammar transforms emit the event clause at the very end:
@@ -5486,7 +4980,7 @@ export class SemanticParserImpl implements ISemanticParser {
     language: string,
     patterns: LanguagePattern[]
   ): SemanticNode | null {
-    const eventMarkers = SemanticParserImpl.SOV_EVENT_MARKERS[language];
+    const eventMarkers = SOV_EVENT_MARKERS[language];
     if (!eventMarkers) return null;
 
     const tokens = tokenizeInternal(input, language);
@@ -5506,7 +5000,7 @@ export class SemanticParserImpl implements ISemanticParser {
     }
 
     // Source markers for "from window/elsewhere" stripping per language
-    const sourceMarkers = SemanticParserImpl.SOV_SOURCE_MARKERS[language];
+    const sourceMarkers = SOV_SOURCE_MARKERS[language];
 
     // Scan for event keyword + optional event marker particle pattern
     let eventIndex = -1;
@@ -5608,7 +5102,7 @@ export class SemanticParserImpl implements ISemanticParser {
           tokensToRemove =
             1 +
             paramPhrase.len +
-            this.matchEventMarkerPhrase(allTokens, i + 1 + paramPhrase.len, language);
+            matchEventMarkerPhrase(allTokens, i + 1 + paramPhrase.len, language);
           parameterNames = paramPhrase.names;
           break;
         }
@@ -5665,7 +5159,7 @@ export class SemanticParserImpl implements ISemanticParser {
         } else {
           // Korean: the 할 때 marker phrase confirms a custom event the way
           // ja's で does (`… success 할 때 넣다 …`)…
-          const phraseLen = this.matchEventMarkerPhrase(allTokens, i + 1, language);
+          const phraseLen = matchEventMarkerPhrase(allTokens, i + 1, language);
           if (phraseLen > 0) {
             eventIndex = i;
             eventName = token.value;
@@ -5715,7 +5209,7 @@ export class SemanticParserImpl implements ISemanticParser {
           sourceMarkers.markers.has(afterToken.value)
         ) {
           removeIndices.add(afterEventEnd);
-        } else if (this.isStrippableSourceRef(afterToken, sourceMarkers.windowTokens)) {
+        } else if (isStrippableSourceRef(afterToken, sourceMarkers.windowTokens)) {
           // Rendered `from me` pair right after event+marker (ja `私 から`,
           // ko `나 에서`, tr `ben den`, bn `আমি থেকে`, hi `मैं से`). Left in
           // place it heads the body as a KEYWORD-led run that flushSkipped
@@ -5742,7 +5236,7 @@ export class SemanticParserImpl implements ISemanticParser {
         if (
           (frontMarker.kind === 'particle' || frontMarker.kind === 'keyword') &&
           sourceMarkers.markers.has(frontMarker.value) &&
-          this.isStrippableSourceRef(allTokens[eventIndex - 2], sourceMarkers.windowTokens)
+          isStrippableSourceRef(allTokens[eventIndex - 2], sourceMarkers.windowTokens)
         ) {
           removeIndices.add(eventIndex - 2);
           removeIndices.add(eventIndex - 1);
@@ -5798,7 +5292,7 @@ export class SemanticParserImpl implements ISemanticParser {
       // this extraction is a separate construction site and had the same
       // unconditional-literal bug (ko eventsource-basic / socket-basic, whose
       // `message` head is an identifier in English and so an EXPRESSION there).
-      SemanticParserImpl.isEnEventKeyword(eventName)
+      isEnEventKeyword(eventName)
         ? { type: 'literal', value: eventName }
         : { type: 'expression', raw: eventName },
       body,
@@ -5806,29 +5300,6 @@ export class SemanticParserImpl implements ISemanticParser {
       metadata,
       parameterNames
     );
-  }
-
-  /**
-   * Check if a token is a 'then' keyword in the given language.
-   */
-  /**
-   * Consume the next token when it is the language's rendered `for` word (bn
-   * `জন্য`, tr `için`) trailing a just-reclaimed phrase (a wait-for event, a
-   * transition duration). The word doubles as the for-loop keyword, so left in
-   * the stream it anchors a phantom bare `for` command in the remaining body
-   * tokens. Homonym particles carry no `normalized`, so the profile's surface
-   * forms are matched too.
-   */
-  private consumeForPostposition(tokens: TokenStream, language: string): void {
-    const post = tokens.peek();
-    if (!post) return;
-    const postNorm = (post.normalized ?? '').toLowerCase();
-    const forKw = tryGetProfile(language)?.keywords?.for;
-    const isForWord =
-      postNorm === 'for' ||
-      post.value === forKw?.primary ||
-      (forKw?.alternatives ?? []).includes(post.value);
-    if (isForWord) tokens.advance();
   }
 
   /**
@@ -6060,7 +5531,7 @@ export class SemanticParserImpl implements ISemanticParser {
     // For SOV, also recognise a verb-medial command head (matchBest can't — A2a).
     const sovProfile = tryGetProfile(language);
     const sovVerbLookup =
-      sovProfile?.wordOrder === 'SOV' ? SemanticParserImpl.buildVerbLookup(sovProfile) : null;
+      sovProfile?.wordOrder === 'SOV' ? buildVerbLookup(sovProfile) : null;
     let i = 0;
     let bodyDepth = 0;
     const condTokens: LanguageToken[] = [];
@@ -6138,8 +5609,8 @@ export class SemanticParserImpl implements ISemanticParser {
           !SemanticParserImpl.CONDITION_OPERATORS.has(cur) &&
           !gluedDotMember &&
           (!prevIsCopula || curIsSovCommandVerb) &&
-          (this.tokensBeginCommand(blockTokens.slice(i), commandPatterns, language) ||
-            this.sovCommandStartsAt(blockTokens.slice(i), sovVerbLookup))
+          (tokensBeginCommand(blockTokens.slice(i), commandPatterns, language) ||
+            sovCommandStartsAt(blockTokens.slice(i), sovVerbLookup))
         ) {
           break; // this token starts the then-branch
         }
@@ -6196,60 +5667,6 @@ export class SemanticParserImpl implements ISemanticParser {
     });
   }
 
-  /** Whether a command pattern matches at the head of the given token slice. */
-  private tokensBeginCommand(
-    toks: LanguageToken[],
-    commandPatterns: LanguagePattern[],
-    language: string
-  ): boolean {
-    if (toks.length === 0) return false;
-    const stream = new TokenStreamImpl(toks, language);
-    return patternMatcher.matchBest(stream, commandPatterns) !== null;
-  }
-
-  /**
-   * Whether the token slice begins an SOV *verb-medial* command
-   * (`{value} {marker} … {verb} …`, e.g. `triggerEl を 設定 私 に` = `set triggerEl
-   * to me`). matchBest can't recognise these — it anchors on a selector/typed
-   * role — so the conditional split's {@link tokensBeginCommand} misses a
-   * verb-medial then-branch head and folds it into the condition (the A2a
-   * behavior-`init` `set` drop: the then-branch parser handles `set` fine once it
-   * *receives* it; only the boundary detection was blind to it).
-   *
-   * Mirrors the recognition {@link parseSOVClauseByVerbAnchoring} relies on: one
-   * or more `{value}{particle-marker}` role pairs followed by a command verb
-   * keyword. Conservative by construction — a bare-verb command (no leading role)
-   * already matches via matchBest, and a condition predicate (`X is empty`,
-   * `X exists`) carries copulas/operators rather than a `{value}{marker}{verb}`
-   * head, so it can't spuriously trip this.
-   */
-  private sovCommandStartsAt(
-    toks: LanguageToken[],
-    verbLookup: Map<string, string> | null
-  ): boolean {
-    if (!verbLookup) return false;
-    const isVerb = (t: LanguageToken): boolean =>
-      verbLookup.has(t.value.toLowerCase()) ||
-      (!!t.normalized && verbLookup.has(t.normalized.toLowerCase()));
-    const isValue = (t: LanguageToken): boolean =>
-      t.kind === 'identifier' ||
-      t.kind === 'selector' ||
-      t.kind === 'literal' ||
-      (t.kind as string) === 'reference';
-    let i = 0;
-    let pairs = 0;
-    while (i + 1 < toks.length) {
-      const val = toks[i];
-      const mark = toks[i + 1];
-      if (!isValue(val) || mark.kind !== 'particle') break;
-      pairs += 1;
-      i += 2;
-      const next = toks[i];
-      if (pairs >= 1 && next && isVerb(next)) return true;
-    }
-    return false;
-  }
-
   /**
    * Parse a conditional branch's tokens into a flat list of statements. Reuses
    * `parseBodyWithClauses` (so then-chains, juxtaposed commands, and nested
@@ -6268,259 +5685,6 @@ export class SemanticParserImpl implements ISemanticParser {
       return (parsed[0] as CompoundSemanticNode).statements;
     }
     return parsed;
-  }
-
-  /**
-   * Standalone event modifier keywords (loanwords used across languages).
-   * Pattern: `[modifier] [preposition?] [duration?] [rest...]`
-   */
-  private static readonly STANDALONE_MODIFIERS: Record<string, 'once' | 'debounce' | 'throttle'> = {
-    once: 'once',
-    debounced: 'debounce',
-    debounce: 'debounce',
-    throttled: 'throttle',
-    throttle: 'throttle',
-  };
-
-  /**
-   * "Or" conjunction keywords across languages for multiple events.
-   * Maps lowercase keyword → true. Used to detect "click or keydown" patterns.
-   */
-  /**
-   * Extract standalone event modifiers from the beginning of input.
-   * Returns the modifiers (if any) and the remaining input string.
-   */
-  private extractStandaloneModifiers(
-    input: string,
-    _language: string
-  ): {
-    modifiers: {
-      once?: boolean;
-      onceAsFirst?: boolean;
-      every?: boolean;
-      debounce?: number;
-      throttle?: number;
-    } | null;
-    remainingInput: string | null;
-  } {
-    const tokens = tokenizeInternal(input, _language);
-    const allTokens = tokens.tokens;
-
-    if (allTokens.length === 0) return { modifiers: null, remainingInput: null };
-
-    const firstToken = allTokens[0];
-    const firstLower = firstToken.value.toLowerCase();
-
-    // `once` written as `first`: en `on first click …`, and every other
-    // language's leading `first` (as its leading `once`), in English or in its
-    // own word, which its tokenizer reads as `first` (es `primero`, M2 sheet
-    // A7). Semantic had no reading for either: en dropped the whole head (`on
-    // first click add …` rendered `add …`). A leading `first` before a selector
-    // is a positional query instead (hand-written ja `first <li/> を 隠す`, hide
-    // first <li/>).
-    const word = (i: number) => allTokens[i]?.value.toLowerCase();
-    const notQuery = (i: number) => !!allTokens[i] && allTokens[i].kind !== 'selector';
-    const leadsWithFirst = (firstToken.normalized ?? firstLower).toLowerCase() === 'first';
-    if (firstLower === 'on' && word(1) === 'first' && allTokens.length > 2) {
-      return {
-        modifiers: { once: true, onceAsFirst: true },
-        remainingInput:
-          input.slice(0, allTokens[1].position.start) + input.slice(allTokens[2].position.start),
-      };
-    }
-    if (leadsWithFirst && notQuery(1)) {
-      return {
-        modifiers: { once: true, onceAsFirst: true },
-        remainingInput: input.slice(allTokens[1].position.start),
-      };
-    }
-    // `on every click …`, and every other language's leading `every`, read as
-    // `first` is: semantic had no reading, and the head was lost.
-    if (firstLower === 'on' && word(1) === 'every' && allTokens.length > 2) {
-      return {
-        modifiers: { every: true },
-        remainingInput:
-          input.slice(0, allTokens[1].position.start) + input.slice(allTokens[2].position.start),
-      };
-    }
-    if (firstLower === 'every' && notQuery(1) && allTokens.length > 2) {
-      return {
-        modifiers: { every: true },
-        remainingInput: input.slice(allTokens[1].position.start),
-      };
-    }
-
-    const modType = SemanticParserImpl.STANDALONE_MODIFIERS[firstLower];
-
-    if (!modType) return { modifiers: null, remainingInput: null };
-
-    const modifiers: {
-      once?: boolean;
-      onceAsFirst?: boolean;
-      every?: boolean;
-      debounce?: number;
-      throttle?: number;
-    } = {};
-    let tokensToSkip = 1; // At least the modifier keyword
-
-    if (modType === 'once') {
-      modifiers.once = true;
-    } else {
-      // debounce/throttle: look for optional preposition + duration
-      let nextIdx = 1;
-
-      // Skip preposition tokens (sa, عند, at, etc.)
-      if (nextIdx < allTokens.length) {
-        const nextToken = allTokens[nextIdx];
-        // Skip keyword/particle tokens that are prepositions (not selectors, literals, etc.).
-        // The SOV renders keep the en preposition untranslated (`debounced at
-        // 300ms …`), where `at` tokenizes as a bare IDENTIFIER — left in place
-        // it strands `at 300ms` junk at the clause head and the fused parse
-        // loses its trailing reclaims (event-debounce responseType). Skip one
-        // identifier only when a duration-shaped literal directly follows.
-        const after = allTokens[nextIdx + 1];
-        const identifierPreposition =
-          nextToken.kind === 'identifier' &&
-          after?.kind === 'literal' &&
-          /^\d+(ms|s|m)?$/.test(after.value);
-        if (
-          nextToken.kind === 'keyword' ||
-          nextToken.kind === 'particle' ||
-          identifierPreposition
-        ) {
-          nextIdx++;
-          tokensToSkip++;
-        }
-      }
-
-      // Look for duration (number with unit like "100ms", "300ms")
-      if (nextIdx < allTokens.length) {
-        const durToken = allTokens[nextIdx];
-        if (durToken.kind === 'literal') {
-          const match = durToken.value.match(/^(\d+)(ms|s|m)?$/);
-          if (match) {
-            let ms = parseInt(match[1], 10);
-            const unit = match[2] || 'ms';
-            if (unit === 's') ms *= 1000;
-            else if (unit === 'm') ms *= 60000;
-            modifiers[modType] = ms;
-            tokensToSkip = nextIdx + 1;
-          }
-        }
-      }
-
-      // If no duration found, use default
-      if (!modifiers[modType]) {
-        modifiers[modType] = modType === 'debounce' ? 300 : 100;
-      }
-    }
-
-    // Reconstruct remaining input from the tokens after the modifier
-    const remainingTokens = allTokens.slice(tokensToSkip);
-    if (remainingTokens.length === 0) return { modifiers: null, remainingInput: null };
-
-    // Use position data to extract the remaining input string
-    const startPos = remainingTokens[0].position.start;
-    const remainingInput = input.slice(startPos);
-
-    return { modifiers, remainingInput };
-  }
-
-  /**
-   * Remove a transparent `async` command-modifier keyword from the input so the
-   * following command (not `async`) is parsed as the action. The async keyword is
-   * found anywhere in the stream (the grammar transformer relocates it by word
-   * order — leading in VSO, after the event in SVO, verb-final in SOV) and matched
-   * against the language profile's `async` form (primary + alternatives) plus the
-   * English literal the transformer passes through for profiles without a native
-   * form. Returns `remainingInput: null` when there's no async keyword, so the
-   * normal path is byte-identical.
-   */
-  private stripAsyncModifier(input: string, language: string): { remainingInput: string | null } {
-    const kw = tryGetProfile(language)?.keywords?.async;
-    const forms = new Set<string>(['async']);
-    if (kw?.primary) forms.add(kw.primary.toLowerCase());
-    kw?.alternatives?.forEach(a => forms.add(a.toLowerCase()));
-
-    const allTokens = tokenizeInternal(input, language).tokens;
-    const idx = allTokens.findIndex(t => forms.has(t.value.toLowerCase()));
-    if (idx === -1) return { remainingInput: null };
-
-    const tok = allTokens[idx];
-    const stripped = (input.slice(0, tok.position.start) + input.slice(tok.position.end))
-      .replace(/\s{2,}/g, ' ')
-      .trim();
-    if (stripped.length === 0) return { remainingInput: null };
-    return { remainingInput: stripped };
-  }
-
-  /**
-   * Apply standalone modifiers to an event handler node.
-   */
-  private applyModifiers(
-    node: EventHandlerSemanticNode,
-    modifiers: {
-      once?: boolean;
-      onceAsFirst?: boolean;
-      every?: boolean;
-      debounce?: number;
-      throttle?: number;
-    }
-  ): EventHandlerSemanticNode {
-    return {
-      ...node,
-      eventModifiers: {
-        ...node.eventModifiers,
-        ...modifiers,
-      },
-    };
-  }
-
-  /**
-   * Extract "or" conjunction events from the token stream.
-   * If the next tokens follow the pattern "or EVENT [or EVENT ...]",
-   * consume them and return the additional event values.
-   *
-   * The token stream is advanced past any consumed "or EVENT" tokens.
-   */
-  private extractOrConjunctionEvents(
-    tokens: Pick<ReturnType<typeof tokenizeInternal>, 'peek' | 'advance' | 'mark' | 'reset'>,
-    _language: string
-  ): SemanticValue[] {
-    const additionalEvents: SemanticValue[] = [];
-
-    while (true) {
-      const mark = tokens.mark();
-      const orToken = tokens.peek();
-      if (!orToken) break;
-
-      if (!isOrWordToken(orToken, _language)) {
-        tokens.reset(mark);
-        break;
-      }
-
-      // Consume the "or" token
-      tokens.advance();
-
-      // Next token should be the event name
-      const eventToken = tokens.peek();
-      if (!eventToken) {
-        // "or" at end of input — revert
-        tokens.reset(mark);
-        break;
-      }
-
-      // A native event name normalizes to the English one (`clic` → `click`);
-      // a custom one keeps its case, which the DOM matches exactly: lowercased,
-      // a translated `on click or myEvent` listened for `myevent`.
-      const eventName = eventToken.normalized || eventToken.value;
-
-      // Accept it as an event (could be native or English event name)
-      tokens.advance();
-      additionalEvents.push({ type: 'literal', value: eventName });
-    }
-
-    return additionalEvents;
   }
 }
 
@@ -6712,10 +5876,10 @@ export function parseAutoDetect(
  */
 export function getSOVEventMarkers(): Record<string, readonly string[]> {
   const merged: Record<string, string[]> = {};
-  for (const [lang, set] of Object.entries(SemanticParserImpl.SOV_EVENT_MARKERS)) {
+  for (const [lang, set] of Object.entries(SOV_EVENT_MARKERS)) {
     merged[lang] = [...set];
   }
-  for (const [lang, phrases] of Object.entries(SemanticParserImpl.SOV_EVENT_MARKER_PHRASES)) {
+  for (const [lang, phrases] of Object.entries(SOV_EVENT_MARKER_PHRASES)) {
     merged[lang] = [...(merged[lang] ?? []), ...phrases.map(p => p.join(' '))];
   }
   return merged;
