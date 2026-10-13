@@ -915,7 +915,10 @@ jobs:
     # command-shape shards ~90s each, the value matrix's shards, the English-leak
     # scan), and the job reached 14m33s on #1425. #1426 was cancelled 0.1s after
     # its last test passed, as were two dependabot runs at 15m.
-    timeout-minutes: 25
+    # 40 (2026-10-12): testing-framework's step ran 21m16s of 25 on #1480, and
+    # #1481 was cancelled at 25 with its value-matrix shards 2-14% slower (the
+    # slowest, value-matrix.if, 417s). Actions minutes are free here.
+    timeout-minutes: 40
 
     steps:
       - name: Checkout
