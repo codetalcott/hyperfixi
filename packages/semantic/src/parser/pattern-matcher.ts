@@ -34,6 +34,7 @@ import {
   joinExpressionTokens,
   matchPositionalRun,
   matchQueryScope,
+  isLocativeMarker,
   matchScopeFirstQuery,
   translatePropertyName,
   translateConnective,
@@ -2566,7 +2567,7 @@ export class PatternMatcher {
     // follows its destination with no marker between (it `impostare in
     // #t.innerText ( … ) * 2`), a path's arguments and the value look the same.
     if (
-      this.tryMatchOfPossessiveExpression(tokens) ||
+      this.tryMatchOfPossessiveExpression(tokens, undefined, true) ||
       this.tryMatchPossessiveSelectorExpression(tokens) ||
       this.tryMatchPropertyAccessExpression(tokens, true) ||
       this.tryMatchSelectorPropertyExpression(tokens)
@@ -2685,7 +2686,9 @@ export class PatternMatcher {
    */
   private tryMatchOfPossessiveExpression(
     tokens: TokenStream,
-    nextPatternToken?: PatternToken
+    nextPatternToken?: PatternToken,
+    /** An operand inside an operator run, which has no pattern to say what follows. */
+    operand = false
   ): SemanticValue | null {
     const property = tokens.peek();
     if (!property) return null;
@@ -2801,6 +2804,52 @@ export class PatternMatcher {
     // `*background-color ของ #theme` (i18n, property-first) still folds here, while
     // `#themeの*background-color` falls through to the selector-possessive matcher,
     // which reads it owner-first and correctly.
+    // A query owner's scope (`the length of <:checked/> in #box`): the owner is
+    // the scoped query, a phrase, as a positional owner is (P62). Without this
+    // the value ended at the query, and `in` was put's marker. Not an operand
+    // inside an operator run: with no pattern to say what follows, nothing told
+    // the command's marker from a scope (`2 is in textContent of .w into #out`
+    // took `into #out` as one).
+    if (/^[<.]/.test(owner.value) && !operand) {
+      const ownerAt = tokens.position() - 1;
+      const scoped = matchQueryScope(tokens.tokens, tokens.position(), this.currentProfile, t =>
+        t === undefined ? false : this.patternTokenWouldMatch(nextPatternToken, t)
+      );
+      // A positional scope (`… of <p/> in the next <tbody/>`) is no query scope
+      // matchQueryScope reads; read it as the positional run it is. Without it
+      // English came back silently as `put <p/>'s length into next <tbody/> in me`.
+      const owes = (t: LanguageToken | undefined): boolean =>
+        t === undefined ? false : this.patternTokenWouldMatch(nextPatternToken, t);
+      const marker = tokens.peek() ?? undefined;
+      // English writes `the` before the positional (`in the next <tbody/>`).
+      const article = tokens.tokens[tokens.position() + 1]?.value.toLowerCase() === 'the' ? 1 : 0;
+      const positional =
+        !scoped && marker && isLocativeMarker(this.currentProfile, marker)
+          ? matchPositionalRun(
+              tokens.tokens,
+              tokens.position() + 1 + article,
+              this.currentProfile,
+              owes
+            )
+          : null;
+      const consumed = scoped
+        ? scoped.scope.consumed
+        : positional
+          ? article + positional.consumed
+          : undefined;
+      const after =
+        consumed !== undefined ? tokens.tokens[tokens.position() + 1 + consumed] : undefined;
+      if (consumed !== undefined && (scoped || !owes(marker) || owes(after))) {
+        const end = tokens.position() + 1 + consumed;
+        const raw = joinExpressionTokens(tokens.tokens.slice(ownerAt, end), this.currentProfile);
+        while (tokens.position() < end) tokens.advance();
+        return createPropertyPath(
+          { type: 'expression', raw } as SemanticValue,
+          this.toEnglishProperty(property.value) + tail,
+          'possessive'
+        );
+      }
+    }
     return createPropertyPath(
       createSelector(owner.value),
       this.toEnglishProperty(property.value) + tail,

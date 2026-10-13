@@ -3,9 +3,9 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 26242,
-  "refused": 992,
-  "silent": 6,
+  "pass": 26305,
+  "refused": 930,
+  "silent": 5,
   "entries": {
     "6f60177037": {
       "src": "on click add .foo to .item when it matches .yes then if the result is empty show #none else hide #none",
@@ -319,12 +319,6 @@
       "family": "transition",
       "refused": "bn hi ja ko qu tr"
     },
-    "35274bd534": {
-      "src": "on click transition the next <div/>'s *width from 0px to 100px",
-      "family": "transition",
-      "refused": "*",
-      "loud": "possessive-after-query: a possessive after a positional query (`the next <div/>'s textContent`), rare in pages; the `of` form (`the textContent of the next <div/>`) is carried"
-    },
     "ef499d89c4": {
       "src": "on click trigger foo(x:42) end on foo(x) put x into my.innerHTML",
       "family": "trigger",
@@ -355,14 +349,12 @@
     "6637424a5a": {
       "src": "bind $selectedCount to the length of <:checked/> in the next <tbody/> when $selectedCount changes put it into me",
       "family": "core/reactive-queries",
-      "refused": "en *",
-      "loud": "scoped-query-phrase: a query's scope inside a phrase: `the length of <q/> in #box` as put's value (`in` is also put's own marker), and a positional scope (`<q/> in the next <tbody/>`): the English reader ends the value at `in` (OPEN_ITEMS P62)"
+      "refused": "bn hi it ja ko tl vi zh"
     },
     "348175b219": {
       "src": "live put the length of <:checked/> in #box into me end",
       "family": "core/reactive-queries",
-      "refused": "en *",
-      "loud": "scoped-query-phrase: a query's scope inside a phrase: `the length of <q/> in #box` as put's value (`in` is also put's own marker), and a positional scope (`<q/> in the next <tbody/>`): the English reader ends the value at `in` (OPEN_ITEMS P62)"
+      "refused": "bn hi ja ko tl vi zh"
     },
     "73325ff027": {
       "src": "when (the length of <.picked/> in #list-scope) changes set result to it put the textContent of last <.picked/> in #list…",
@@ -466,12 +458,6 @@
       "refused": "en *",
       "loud": "templated-selector: a templated selector (`#{…}`, `.{\"…\"}`, `<${…}/>`) is rare, and its fix is in the tokenizer"
     },
-    "08702e835c": {
-      "src": "on click put 'updated' into the next <div/>'s textContent",
-      "family": "expressions/relativePositionalExpression",
-      "refused": "bn hi ja ko qu tr",
-      "loud": "possessive-after-query: a possessive after a positional query (`the next <div/>'s textContent`), rare in pages; the `of` form (`the textContent of the next <div/>`) is carried"
-    },
     "66878bf2ed": {
       "src": "behavior Behave init set element's foo to 1 set element's bar to {} end on click increment element's foo set element's …",
       "family": "behavior",
@@ -569,12 +555,6 @@
     },
     "76130fbf7d": {
       "src": "when $data's inner's val changes put it into me",
-      "family": "reactive-properties",
-      "silent": "qu",
-      "why": "possessive-split: a possessive reads back split or reworded: qu `$data 's inner' s val`, id `my` → `me punya`"
-    },
-    "36e2294330": {
-      "src": "live put $config's label into me",
       "family": "reactive-properties",
       "silent": "qu",
       "why": "possessive-split: a possessive reads back split or reworded: qu `$data 's inner' s val`, id `my` → `me punya`"

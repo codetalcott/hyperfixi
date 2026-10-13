@@ -234,7 +234,13 @@ export function invariantValues(text: string): Map<string, number> {
   while (i < text.length) {
     const c = text[i] as string;
     const next = text[i + 1] ?? '';
-    if (c === "'" && /[\p{L}\p{M}\p{N}_)\]}"`]/u.test(text[i - 1] ?? '') && LETTER.test(next)) {
+    // A possessive after a query's `/>` too (`<p/>'s length`), not a quote.
+    const afterQuery = text[i - 1] === '>' && text[i - 2] === '/';
+    if (
+      c === "'" &&
+      (afterQuery || /[\p{L}\p{M}\p{N}_)\]}"`]/u.test(text[i - 1] ?? '')) &&
+      LETTER.test(next)
+    ) {
       i++;
       continue;
     }

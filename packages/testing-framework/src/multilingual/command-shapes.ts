@@ -609,14 +609,6 @@ export const LOUD: readonly LoudFamily[] = [
     matches: source => /\bhalt\s+(default\b|the event's\s+(bubbling|default)\b)/.test(source),
   },
   {
-    name: 'scoped-query-phrase',
-    reason:
-      "a query's scope inside a phrase: `the length of <q/> in #box` as put's value (`in` is " +
-      "also put's own marker), and a positional scope (`<q/> in the next <tbody/>`): the " +
-      'English reader ends the value at `in` (OPEN_ITEMS P62)',
-    matches: source => /\bof <[^<>]*\/> in (?:the (?:next|previous)\b|\S+ into\b)/.test(source),
-  },
-  {
     name: 'closest-forms',
     reason:
       "`closest @attr` (an ancestor's attribute) and `closest parent <q/>`: the forms of " +
@@ -631,13 +623,6 @@ export const LOUD: readonly LoudFamily[] = [
             (String(node.css ?? '').startsWith('[') &&
               (node.to as { type?: unknown } | undefined)?.type === 'implicitMeTarget'))
       ),
-  },
-  {
-    name: 'possessive-after-query',
-    reason:
-      "a possessive after a positional query (`the next <div/>'s textContent`), rare in pages; " +
-      'the `of` form (`the textContent of the next <div/>`) is carried',
-    matches: (source, types) => types.has('relativePositionalExpression') && /\/>'s\b/.test(source),
   },
   {
     name: 'colon-event-arguments',
@@ -701,7 +686,7 @@ export const SILENT_FAMILIES: readonly SilentFamily[] = [
     reason:
       "a possessive reads back split or reworded: qu `$data 's inner' s val`, id `my` → " +
       '`me punya`',
-    ids: ['76130fbf7d', '36e2294330', 'b839394853'],
+    ids: ['76130fbf7d', 'b839394853'],
   },
 ];
 

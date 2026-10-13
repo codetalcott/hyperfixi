@@ -336,7 +336,10 @@ export function toEnglishLocative(
  * language, and de/it (`in`) and tr (a suffix of its `e`) read it as their
  * destination marker. A marker the pattern owes is still the pattern's.
  */
-function isLocativeMarker(profile: LanguageProfile | undefined, marker: LanguageToken): boolean {
+export function isLocativeMarker(
+  profile: LanguageProfile | undefined,
+  marker: LanguageToken
+): boolean {
   if (marker.value.toLowerCase() === 'in') return true;
   const langSurfaces = locativeSurfaces(profile);
   if (langSurfaces?.has(marker.value.toLowerCase())) return true;
@@ -461,7 +464,12 @@ export function matchQueryScope(
   const scope = matchScopeAt(tokens, at + 1);
   if (!scope) return null;
   const after = tokens[at + 1 + scope.consumed];
-  if (isMarkerOwedByPattern?.(marker) === true && isMarkerOwedByPattern(after) !== true) {
+  // A collection's filter after the scope continues the value (`put <span/> in
+  // #box where it matches .a into me`, P57/P62): the marker comes after it.
+  const filter =
+    !!after &&
+    expressionWordOf(profile?.code ?? 'en', after, tokens[at + scope.consumed], tokens[at + 2 + scope.consumed], undefined).toLowerCase() === 'where';
+  if (isMarkerOwedByPattern?.(marker) === true && isMarkerOwedByPattern(after) !== true && !filter) {
     return null;
   }
   return { marker, scope };
@@ -1731,7 +1739,9 @@ export function joinExpressionTokens(
       previous.position?.end !== undefined &&
       token.position?.start !== undefined &&
       previous.position.end === token.position.start;
-    const glue = adjacent && (text.startsWith('.') || text.startsWith('!') || text === ',');
+    // So does a possessive the tokenizer kept whole after a query (qu `<div/>'s`).
+    const glue =
+      adjacent && (text.startsWith('.') || text.startsWith('!') || text === ',' || text === "'s");
     out += (glue ? '' : ' ') + text;
     previous = token;
   };
