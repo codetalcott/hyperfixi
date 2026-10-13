@@ -3,8 +3,8 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 26430,
-  "refused": 810,
+  "pass": 26437,
+  "refused": 803,
   "silent": 0,
   "entries": {
     "6f60177037": {
@@ -435,11 +435,6 @@
       "src": "on foo put increment() into my.innerHTML on bar put increment() into my.innerHTML",
       "family": "on",
       "refused": "pt"
-    },
-    "16fb80c097": {
-      "src": "on click or foo call increment()",
-      "family": "on",
-      "refused": "bn it ja ko th tr zh"
     },
     "dd2ca23457": {
       "src": "on click in #d1 put it into window.tmp",

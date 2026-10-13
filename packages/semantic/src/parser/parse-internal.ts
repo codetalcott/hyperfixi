@@ -520,7 +520,21 @@ export function parseInternal(state: ParserState, input: string, language: strin
       if (!isOrWordToken(t, language)) continue;
       const evTok = arr[i + 1];
       const evNorm = (evTok.normalized ?? evTok.value).toLowerCase();
-      if (!KNOWN_EVENTS.has(evNorm)) break;
+      // A custom event (`on click or foo`) too, when the head's own event stands
+      // right before the or-word: a known one, or a bare name opening the input,
+      // where a verb-final head starts (ja `foo または barで …` read back as
+      // `on bar log foo or 1`, silently). Never an operand (`$a or $b`), and only
+      // adopted below when what is left still parses as a handler.
+      const prev = arr[i - 1];
+      const isName = (t: LanguageToken | undefined): boolean =>
+        t !== undefined && t.kind === 'identifier' && /^[\p{L}_][\p{L}\p{N}_:-]*$/u.test(t.value);
+      const customLeg =
+        isName(evTok) &&
+        prev !== undefined &&
+        (KNOWN_EVENTS.has((prev.normalized ?? prev.value).toLowerCase()) ||
+          (i === 1 && isName(prev)));
+      if (!KNOWN_EVENTS.has(evNorm) && !customLeg) break;
+      const legName = customLeg && !KNOWN_EVENTS.has(evNorm) ? evTok.value : evNorm;
       // Optional trailing `[filter]` selector token (`keypress[key=="Enter"]`
       // tokenizes as `keypress` + `[key=="Enter"]`).
       let lastIdx = i + 1;
@@ -542,7 +556,7 @@ export function parseInternal(state: ParserState, input: string, language: strin
             // The filter stays glued to its leg, as the main event's does
             // (`keydown[key=="Escape"]`): it was excised with the leg and lost.
             (reparsed as { additionalEvents?: SemanticValue[] }).additionalEvents = [
-              { type: 'literal', value: lastIdx > i + 1 ? evNorm + filterTok.value : evNorm },
+              { type: 'literal', value: lastIdx > i + 1 ? legName + filterTok.value : legName },
             ];
             const result = modifiers
               ? applyModifiers(reparsed as EventHandlerSemanticNode, modifiers)

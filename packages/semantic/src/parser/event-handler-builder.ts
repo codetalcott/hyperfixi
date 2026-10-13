@@ -209,8 +209,12 @@ export function buildEventHandler(
     }
   }
 
-  // Extract "or" conjunction events (e.g., "click or keydown")
-  // Combines into event value string for AST builder compatibility.
+  // Extract "or" conjunction events (e.g., "click or keydown"), kept as the
+  // handler's `additionalEvents`, as parseInternal's or-lift keeps a known one.
+  // They were joined into the event string (`click or foo`) when the event was a
+  // literal and DROPPED when it was not (`on foo or bar` read as `on foo`), and the
+  // renderer, which writes `additionalEvents` in each language's or-word, wrote the
+  // joined string's English `or`.
   // Only directly after the event: a fused pattern can stop inside what
   // follows it (ms `apabila click jika r atau q`, whose `if-event-ms-vso`
   // takes one token of the condition), and the condition's `atau q` became
@@ -223,14 +227,9 @@ export function buildEventHandler(
     lastConsumed !== undefined &&
     lastConsumed.position.end > eventSpan.end;
   const additionalEvents = pastEvent ? [] : extractOrConjunctionEvents(tokens, language);
-  let resolvedEventValue = eventValue;
-  if (additionalEvents.length > 0 && eventValue.type === 'literal') {
-    const allEvents = [
-      String(eventValue.value),
-      ...additionalEvents.map(e => String('value' in e ? e.value : '')),
-    ];
-    resolvedEventValue = { type: 'literal', value: allEvents.join(' or ') };
-  }
+  const resolvedEventValue = eventValue;
+  const withAdditionalEvents = <T extends EventHandlerSemanticNode>(handler: T): T =>
+    additionalEvents.length > 0 ? { ...handler, additionalEvents } : handler;
 
   let body: SemanticNode[];
   let headClause: string | undefined;
@@ -329,11 +328,13 @@ export function buildEventHandler(
           (folded[0] as CompoundSemanticNode).statements.some(s => s.kind === 'conditional'));
       if (foldedConditional) {
         while (!tokens.isAtEnd()) tokens.advance(); // body fully consumed by the fold
-        return createEventHandler(resolvedEventValue, folded, eventModifiers, {
-          sourceLanguage: language,
-          patternId: match.pattern.id,
-          confidence: match.confidence,
-        });
+        return withAdditionalEvents(
+          createEventHandler(resolvedEventValue, folded, eventModifiers, {
+            sourceLanguage: language,
+            patternId: match.pattern.id,
+            confidence: match.confidence,
+          })
+        );
       }
       // Fold discarded — its coverage records describe a parse that never
       // happened; the flat path below does its own accounting.
@@ -1247,10 +1248,12 @@ export function buildEventHandler(
   const foldedBody =
     body.length > 1 ? [createCompoundNode(body, 'then', { sourceLanguage: language })] : body;
 
-  const handler = createEventHandler(resolvedEventValue, foldedBody, eventModifiers, {
-    sourceLanguage: language,
-    patternId: match.pattern.id,
-    confidence: match.confidence,
-  });
+  const handler = withAdditionalEvents(
+    createEventHandler(resolvedEventValue, foldedBody, eventModifiers, {
+      sourceLanguage: language,
+      patternId: match.pattern.id,
+      confidence: match.confidence,
+    })
+  );
   return headClause ? { ...handler, headClause } : handler;
 }
