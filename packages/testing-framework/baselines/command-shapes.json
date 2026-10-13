@@ -3,8 +3,8 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 26401,
-  "refused": 839,
+  "pass": 26419,
+  "refused": 821,
   "silent": 0,
   "entries": {
     "6f60177037": {
@@ -64,16 +64,6 @@
       "family": "if",
       "refused": "en *",
       "loud": "rare-commands: commands rare in pages: `measure` of a property list, `pick characters 0 to 3 from …`, an `if` whose body is empty (`if false end`), a behavior holding a bare command, two behaviors with no `end` between"
-    },
-    "540540cc5a": {
-      "src": "on click set t to true then js(t) window.testSuccess = t end",
-      "family": "js",
-      "refused": "bn es it ko pl ru th tl uk"
-    },
-    "1d2b7f9432": {
-      "src": "on click set a to 1 then js(a) return a + 1 end then put it into my.innerHTML",
-      "family": "js",
-      "refused": "bn es it ko pl ru th tl uk"
     },
     "23f2b7dd1b": {
       "src": "on click js return Promise.reject(\"boom\") end catch e put e into my.innerHTML",

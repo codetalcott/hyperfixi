@@ -1122,6 +1122,23 @@ export function parseBodyWithGrammarPatterns(
     // juxtaposed `<cmd> if` mid-clause is untouched. tryParseConditionalBlock
     // folds `if` only and returns null without consuming when the head isn't a
     // usable conditional, so a non-`if` clause is byte-identical to before.
+    // A `js(…) … end` block at a clause start is raw JavaScript, read whole, as
+    // parseBodyWithClauses reads it. Without it a fused handler's tail ran the
+    // generated `js` pattern, which took `(t)` as the value and left the body to the
+    // command patterns: es `al clic registrar 1 entonces js (t) window.x = t fin` read
+    // `window.x = t` as a `set` (bn/es/it/ko/pl/ru/th/tl/uk). Returns null without
+    // consuming when no block starts here.
+    if (current && !clauseHadMatch && skippedClauseTokens.length === 0) {
+      const jsNode =
+        consumeJsBlock(tokens, language, state.positionSource) ??
+        consumeVerbFinalJsBlock(tokens, language, state.positionSource);
+      if (jsNode) {
+        commands.push(jsNode);
+        clauseHadMatch = true;
+        continue;
+      }
+    }
+
     if (
       current &&
       !clauseHadMatch &&
