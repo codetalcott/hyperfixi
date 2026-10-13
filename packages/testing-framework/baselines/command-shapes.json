@@ -3,8 +3,8 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 26437,
-  "refused": 803,
+  "pass": 26462,
+  "refused": 778,
   "silent": 0,
   "entries": {
     "6f60177037": {
@@ -98,41 +98,6 @@
       "family": "put",
       "refused": "qu tr"
     },
-    "2d9422b3af": {
-      "src": "on click put \"<button id=\\\"b1\\\" _=\\\"on click put 42 into me\\\">40</button>\" at the end of me",
-      "family": "put",
-      "refused": "vi"
-    },
-    "db7fef03e9": {
-      "src": "on click repeat for x in [1, 2, 3] put x at end of me end",
-      "family": "repeat",
-      "refused": "vi"
-    },
-    "38fd7baa12": {
-      "src": "on click repeat for x in null put x at end of me end",
-      "family": "repeat",
-      "refused": "vi"
-    },
-    "05f81357fb": {
-      "src": "on click repeat for x in [1, 2, 3] log me put x at end of me wait 1ms end",
-      "family": "repeat",
-      "refused": "vi"
-    },
-    "12ff2cf365": {
-      "src": "on click for x in [1, 2, 3] put x at end of me end",
-      "family": "repeat",
-      "refused": "vi"
-    },
-    "bcf30473e0": {
-      "src": "on click for x in null put x at end of me end",
-      "family": "repeat",
-      "refused": "vi"
-    },
-    "32502101bd": {
-      "src": "on click for x in [1, 2, 3] put x at end of me wait 1ms end",
-      "family": "repeat",
-      "refused": "vi"
-    },
     "ae7e10324c": {
       "src": "def repeatForeverWithReturn() set retVal to 0 repeat forever set retVal to retVal + 1 if retVal == 5 then return retVal…",
       "family": "repeat",
@@ -141,17 +106,7 @@
     "deac58c100": {
       "src": "on click repeat in [1, 2, 3] put it at end of me end",
       "family": "repeat",
-      "refused": "ms vi"
-    },
-    "5763f61aac": {
-      "src": "on click repeat for x in [\"a\", \"ab\", \"abc\"] index i put x + i at end of me end",
-      "family": "repeat",
-      "refused": "vi"
-    },
-    "73c2ff9c12": {
-      "src": "on click repeat for x in [\"a\", \"ab\", \"abc\"] indexed by i put x + i at end of me end",
-      "family": "repeat",
-      "refused": "vi"
+      "refused": "ms"
     },
     "eaa5a2fba1": {
       "src": "def getArray() set window.called to (window.called or 0) + 1 return [1, 2, 3] end",
@@ -162,31 +117,6 @@
       "src": "def sprayInto(elt) for x in [1, 2, 3] for y in [1, 2, 3] put x * y at end of elt end end end",
       "family": "repeat",
       "refused": "pt sw"
-    },
-    "4da1d2fe85": {
-      "src": "on click repeat 3 times put \"a\" at end of me end",
-      "family": "repeat",
-      "refused": "vi"
-    },
-    "897b7048f1": {
-      "src": "on click repeat 3 + 3 times put \"a\" at end of me end",
-      "family": "repeat",
-      "refused": "vi"
-    },
-    "09f435f419": {
-      "src": "on click repeat 2 times for x in ['A', 'B', 'C', 'D'] if (x != 'D') then put 'success ' + x + '. ' at end of me continu…",
-      "family": "repeat",
-      "refused": "vi"
-    },
-    "dd8bfb1190": {
-      "src": "on click repeat 2 times for x in ['A', 'B', 'C', 'D'] if x is 'C' break end put x at end of me end end",
-      "family": "repeat",
-      "refused": "vi"
-    },
-    "798cb5bb41": {
-      "src": "on click set x to {foo:1, bar:2, baz:3} for prop in x put x[prop] at end of me end",
-      "family": "repeat",
-      "refused": "vi"
     },
     "e51cb64feb": {
       "src": "on click set x to 0 repeat set x to x + 1 until x is 3 end put x into me",
@@ -202,26 +132,6 @@
       "src": "on click set x to 0 repeat set x to x + 1 until true end put x into me",
       "family": "repeat",
       "refused": "de fr ko"
-    },
-    "dee03cd129": {
-      "src": "on click repeat for x in [1, 2, 3, 4, 5] if x is 3 continue end put x at end of me end",
-      "family": "repeat",
-      "refused": "vi"
-    },
-    "c8992c103b": {
-      "src": "on click repeat for x in [1, 2, 3, 4, 5] if x is 4 break end put x at end of me end",
-      "family": "repeat",
-      "refused": "vi"
-    },
-    "4293df22ee": {
-      "src": "on click repeat for x in doesNotExist put x at end of me end then put \"done\" into me",
-      "family": "repeat",
-      "refused": "vi"
-    },
-    "af53446a0a": {
-      "src": "on click set :items to [{name:'a', val:5}, {name:'b', val:15}, {name:'c', val:25}] repeat for x in :items where x.val >…",
-      "family": "repeat",
-      "refused": "vi"
     },
     "20161acab0": {
       "src": "on click scroll to #item in #box",
@@ -500,11 +410,6 @@
       "family": "show",
       "refused": "hi"
     },
-    "bbf040ee1a": {
-      "src": "put \"x\" at end of me",
-      "family": "put",
-      "refused": "vi"
-    },
     "da38860cb8": {
       "src": "close",
       "family": "close",
@@ -547,11 +452,6 @@
       "src": "on scroll if me.scrollTop + me.clientHeight >= me.scrollHeight - 100 fetch /api/more then append result to #list end",
       "family": "reference/patterns",
       "refused": "tr"
-    },
-    "8712ddea5b": {
-      "src": "put \"Hello\" into #message put response at end of #results",
-      "family": "put",
-      "refused": "bn hi ja qu tr"
     },
     "b5bb616a88": {
       "src": "open #myDialog open #details",

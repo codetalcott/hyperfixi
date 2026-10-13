@@ -76,7 +76,7 @@ import {
 } from './value-reading';
 import type { LanguageProfile } from '../generators/profiles/types';
 import { tryGetProfile } from '../registry';
-import { isAtEndConnective, isAtEndNounBeforeOf } from '../patterns/put';
+import { isAtEndConnective, isAtEndNounBeforeOf, isAtEndPositionNoun } from '../patterns/put';
 import { isCuratedEndKeyword } from './end-keywords';
 import { foldNakedNamedArgsRaw } from './naked-args-fold';
 import { tokenValue } from './token-value';
@@ -714,6 +714,25 @@ export class PatternMatcher {
         this.currentProfile?.code ?? '',
         tokens.tokens[startIdx]?.value ?? '',
         tokens.tokens[startIdx + 1]?.value
+      )
+    ) {
+      tokens.reset(mark);
+      if (before) captured.set(patternToken.role, before);
+      else captured.delete(patternToken.role);
+      return false;
+    }
+    // An SOV `at` word is the event marker too (ja `で`, tr `de`, bn `এ`, hi `पर`,
+    // qu `pi`), so `response で 終わり の #results を 置く` (put response at end of
+    // #results) read as a handler on `response`. A name before the `at end of`
+    // phrase is put's patient, never an event.
+    if (
+      patternToken.role === 'event' &&
+      captured.get(patternToken.role) !== before &&
+      isAtEndPositionNoun(
+        this.currentProfile?.code ?? '',
+        tokens.tokens[tokens.position() + 1]?.value ?? '',
+        tokens.tokens[tokens.position()]?.value,
+        tokens.tokens[tokens.position() + 2]?.value
       )
     ) {
       tokens.reset(mark);

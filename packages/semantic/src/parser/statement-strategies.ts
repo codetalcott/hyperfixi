@@ -12,6 +12,7 @@ import { tokenize as tokenizeInternal, TokenStreamImpl } from '../tokenizers';
 import { isElseKeyword, isIfKeyword, isThenKeyword } from './clause-keywords';
 import { type ParserState } from './parser-state';
 import { eventNameTranslations } from '../patterns/event-handler';
+import { isAtEndPositionNoun } from '../patterns/put';
 import { KNOWN_EVENTS, WAITABLE_EVENT_WORDS, matchEventParamPhrase } from './event-words';
 import {
   SOV_EVENT_MARKERS,
@@ -502,7 +503,15 @@ export function trySOVEventExtraction(
         if (
           markerToken &&
           (markerToken.kind === 'particle' || markerToken.kind === 'keyword') &&
-          eventMarkers.has(markerToken.value)
+          eventMarkers.has(markerToken.value) &&
+          // The marker is put's `at` word when the `end` noun and `of` word
+          // follow (`response で 終わり の #results を 置く`): a patient, not an event.
+          !isAtEndPositionNoun(
+            language,
+            allTokens[i + markerOffset + 1]?.value ?? '',
+            markerToken.value,
+            allTokens[i + markerOffset + 2]?.value
+          )
         ) {
           eventIndex = i;
           eventName = token.value;
