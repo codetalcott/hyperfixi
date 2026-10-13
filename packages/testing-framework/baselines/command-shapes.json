@@ -3,8 +3,8 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 26462,
-  "refused": 778,
+  "pass": 26482,
+  "refused": 758,
   "silent": 0,
   "entries": {
     "6f60177037": {
@@ -108,11 +108,6 @@
       "family": "repeat",
       "refused": "ms"
     },
-    "eaa5a2fba1": {
-      "src": "def getArray() set window.called to (window.called or 0) + 1 return [1, 2, 3] end",
-      "family": "repeat",
-      "refused": "it pl ru uk"
-    },
     "c48b233ac7": {
       "src": "def sprayInto(elt) for x in [1, 2, 3] for y in [1, 2, 3] put x * y at end of elt end end end",
       "family": "repeat",
@@ -148,16 +143,6 @@
       "family": "send",
       "refused": "en *",
       "loud": "colon-event-arguments: a colon-qualified event name with arguments (`send foo:bar(x:42)`), rare in pages"
-    },
-    "580655e71a": {
-      "src": "on click set innerHTML of #d1.parentNode to \"foo\"",
-      "family": "set",
-      "refused": "it pl ru uk"
-    },
-    "094982a419": {
-      "src": "on click set .divs.innerHTML to \"foo\"",
-      "family": "set",
-      "refused": "it pl ru uk"
     },
     "216845203a": {
       "src": "on click get 'found' show <span/> in me when the result is 'found'",
@@ -308,11 +293,6 @@
       "family": "expressions/in",
       "refused": "en *",
       "loud": "templated-selector: a templated selector (`#{…}`, `.{\"…\"}`, `<${…}/>`) is rare, and its fix is in the tokenizer"
-    },
-    "66878bf2ed": {
-      "src": "behavior Behave init set element's foo to 1 set element's bar to {} end on click increment element's foo set element's …",
-      "family": "behavior",
-      "refused": "it pl ru uk"
     },
     "d438ab49b4": {
       "src": "bind .dark and #dark-toggle's checked",
@@ -529,11 +509,6 @@
       "family": "beep!",
       "refused": "en *",
       "loud": "beep: `beep!`, upstream's debugging command, has no schema: its form in each language is an owner vocabulary decision (the M2 sheet)"
-    },
-    "6a6afed6dc": {
-      "src": "on click toggle .active on keydown[key==\"Enter\"] submit()",
-      "family": "on",
-      "refused": "ar de fr he"
     }
   }
 }

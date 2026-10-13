@@ -1761,9 +1761,16 @@ export function joinExpressionTokens(
       previous.position?.end !== undefined &&
       token.position?.start !== undefined &&
       previous.position.end === token.position.start;
-    // So does a possessive the tokenizer kept whole after a query (qu `<div/>'s`).
+    // So does a possessive the tokenizer kept whole after a query (qu `<div/>'s`),
+    // and an index against its name (`bar["count"]`): spaced, it is a list where
+    // a value follows with no marker (it `impostare in element's bar ["count"] …`).
     const glue =
-      adjacent && (text.startsWith('.') || text.startsWith('!') || text === ',' || text === "'s");
+      adjacent &&
+      (text.startsWith('.') ||
+        text.startsWith('!') ||
+        text.startsWith('[') ||
+        text === ',' ||
+        text === "'s");
     out += (glue ? '' : ' ') + text;
     previous = token;
   };
