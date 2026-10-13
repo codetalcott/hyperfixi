@@ -123,6 +123,7 @@ export const EXPRESSION_WORDS: ReadonlySet<string> = new Set([
   'the',
   'true',
   'undefined',
+  'where',
   'you',
   'your',
   // The references a value may name after a possessive (`event's detail`,
@@ -305,6 +306,18 @@ function endsEqualTo(all: readonly LanguageToken[], i: number, language: string)
 }
 
 /**
+ * Does the token at `i` end a `mapped to` (`items mapped to its textContent`)?
+ * That `to` is the collection operator's (P57), not a marker. A value that
+ * begins at `mapped` is a variable named so (`set mapped to 5`): no run through
+ * its `to` reads as one expression, and the value ends before it
+ * (longestWholeRun). Read as written: every language writes the phrase in
+ * English, and pl reads its `to` as `it`.
+ */
+function endsMappedTo(all: readonly LanguageToken[], i: number): boolean {
+  return all[i]?.value.toLowerCase() === 'to' && all[i - 1]?.value.toLowerCase() === 'mapped';
+}
+
+/**
  * Is the token the word `a`? The `a` of a type check (`is a Number`, `is not a
  * String`) is the operator's, not a marker: es, it and pt spell `to` `a` and
  * tr has a dative `a`, so after a value longer than one token (`obj's v`, `v
@@ -360,12 +373,14 @@ export function isValueBoundary(token: LanguageToken, ctx: ExtentContext): boole
  * Does the value stop at the token at `i`: a boundary, or a marker of the
  * command? Not at the `in` after a copula, the operator (C15, PR 69), nor at a
  * particle after `of`, its owner (C15, PR 74), nor at the `to` of `equal to`
- * (C15, PR 94), nor at the word `a`, a type check's (C15, PR 102).
+ * (C15, PR 94), nor at the word `a`, a type check's (C15, PR 102), nor at the
+ * `to` of `mapped to` (P57).
  */
 function stopsAt(all: readonly LanguageToken[], i: number, ctx: ExtentContext): boolean {
   const language = ctx.profile?.code ?? 'en';
   if (isCopulaIn(language, all, i) || isParticleAfterOf(all, i)) return false;
   if (endsEqualTo(all, i, language) || isWordA(all[i]!)) return false;
+  if (endsMappedTo(all, i)) return false;
   const token = all[i]!;
   return isValueBoundary(token, ctx) || ctx.commandMarkers.has(token.value.toLowerCase());
 }
@@ -416,10 +431,13 @@ export function continuesValue(
   // word (bn `দৈর্ঘ্য` → `length`), and readsAsOneExpression rejects what it
   // leaves untranslated. qu and uk keep an apostrophe in a word, so `foo's` in
   // `obj's foo's bar` is one token. A name the reader fused, `(si)`, is one too
-  // (registry.tokenize): `length of (si)`.
+  // (registry.tokenize): `length of (si)`. So is an element-scoped variable,
+  // `:checkboxes` (`checked of :checkboxes`, P57).
   return (
     token.kind === 'identifier' &&
-    /^(?:[\p{L}_$][\p{L}\p{M}\p{N}_$]*('s)?|\([\p{L}_$][\p{L}\p{M}\p{N}_$]*\))$/u.test(token.value)
+    /^(?::?[\p{L}_$][\p{L}\p{M}\p{N}_$]*('s)?|\([\p{L}_$][\p{L}\p{M}\p{N}_$]*\))$/u.test(
+      token.value
+    )
   );
 }
 
@@ -435,7 +453,13 @@ export function valueTailEnds(
 ): number[] {
   if (!all[from] || stopsAt(all, from, ctx)) return [];
   let end = from;
-  while (end < all.length && !stopsAt(all, end, ctx) && continuesValue(all, end, ctx)) end++;
+  while (
+    end < all.length &&
+    !stopsAt(all, end, ctx) &&
+    (continuesValue(all, end, ctx) || endsMappedTo(all, end))
+  ) {
+    end++;
+  }
   const ends: number[] = [];
   for (let k = end; k > from; k--) ends.push(k);
   return ends;

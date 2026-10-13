@@ -609,15 +609,6 @@ export const LOUD: readonly LoudFamily[] = [
     matches: source => /\bhalt\s+(default\b|the event's\s+(bubbling|default)\b)/.test(source),
   },
   {
-    name: 'collection-expressions',
-    reason:
-      "upstream 0.9.93's collection expressions (`… where it matches .a`, `mapped to`) are an " +
-      "expression form semantic's reader does not have: a parser-track item (OPEN_ITEMS P57)",
-    // Not `if no <q/> in … where …`, which English reads (its foreign lanes are
-    // the value-words family).
-    matches: (source, types) => types.has('collectionExpression') && !/\bif\s+no\s+</.test(source),
-  },
-  {
     name: 'scoped-query-phrase',
     reason:
       "a query's scope inside a phrase: `the length of <q/> in #box` as put's value (`in` is " +
@@ -702,8 +693,8 @@ export const SILENT_FAMILIES: readonly SilentFamily[] = [
     name: 'value-words',
     reason:
       "a language's word inside a value reads back as another English word: pl `to` → " +
-      '`it` (its `it` word, after `closest`), qu `where` → `target`, vi `where` split at `_`',
-    ids: ['d74a86f3a0', 'da24c9d768', 'b948ed872b'],
+      '`it` (its `it` word, after `closest`)',
+    ids: ['d74a86f3a0', 'da24c9d768'],
   },
   {
     name: 'possessive-split',

@@ -86,6 +86,18 @@ export class VietnameseKeywordExtractor implements ContextAwareExtractor {
 
     if (!word) return null;
 
+    // A keyword written with `_` (`ở_đâu`, the profile's `where`), whole when
+    // the joined word is one, as the render writes it. Split, a collection's
+    // filter (`items ở_đâu nó khớp .a`) read as three words (P57).
+    while (input[pos] === '_' && isVietnameseLetter(input[pos + 1] ?? '')) {
+      let end = pos + 1;
+      let tail = '';
+      while (end < input.length && isVietnameseIdentifierChar(input[end])) tail += input[end++];
+      if (!this.context.lookupKeyword(`${word}_${tail}`.toLowerCase())) break;
+      word = `${word}_${tail}`;
+      pos = end;
+    }
+
     const lower = word.toLowerCase();
 
     // Check if it's a preposition

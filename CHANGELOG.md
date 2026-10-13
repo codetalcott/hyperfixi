@@ -40,6 +40,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   refused. `get` no longer has a destination slot, which no reader used and which took Italian's `in`:
   `get #p1 in me` read back as `get #p1 on me` in Italian, and `get result as JSONString` was refused
   in Quechua. In the command-shape gate, 202 lanes are better, 3 of them silent before.
+- **`@lokascript/semantic`: upstream's collection expressions** read in English and translate:
+  `set :items to <span/> in #box where it matches .a`, `put matches mapped to its textContent into
+  #out`, `repeat for x in :items where x.val > 10 …`. They were refused in every language, English
+  too, or kept as an English clause after the command. A translation writes the language's own `where`,
+  as it already did in a condition (es `donde`, de `wo`), and keeps `mapped to` in English until native
+  review. Also read now: an element-scoped variable (`:items`) inside a longer value, the article in `in
+  the closest <table/>` and `checked of the :boxes`, and zh/tl's `no` before a sigil variable. Quechua and
+  Vietnamese read their own `where` back (it read as `target`, or split at its `_`), which also clears a
+  silent pair in each. In the command-shape gate, 154 lanes are better, 2 of them silent before.
 - **Test runs no longer fill the temp directory**: `scripts/vitest-run.sh` gives each run its own
   `TMPDIR` and removes it. Vitest 5.0.2 leaves a copy of every transformed module in `$TMPDIR` per run.
 
