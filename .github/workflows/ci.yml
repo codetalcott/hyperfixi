@@ -879,12 +879,14 @@ jobs:
         run: npm test --prefix packages/core
 
       - name: Test semantic
-        # VITEST_TIMEOUT: the same 5 minutes as core's step, for the same
-        # reason. The script's default is 120s, and the suite was killed
-        # mid-run at 120s on 2026-09-28, once the value matrix's phrase fixes
-        # added their round trips (type-names.test.ts alone is 1,952).
+        # VITEST_TIMEOUT: the script's default is 120s, and the suite was
+        # killed mid-run at 120s on 2026-09-28, once the value matrix's phrase
+        # fixes added their round trips (type-names.test.ts alone is 1,952).
+        # Raised to 10 minutes on 2026-10-12: the suite ran 290s of 300 on
+        # #1480, and P57's round trips (collection-expressions.test.ts, 15s
+        # here) pushed it over: exit 124 with every streamed test green.
         env:
-          VITEST_TIMEOUT: '300'
+          VITEST_TIMEOUT: '600'
         run: npm test --prefix packages/semantic
 
   # ============================================
