@@ -44,7 +44,13 @@ import { getPutPatternsEn } from './put';
 import { getEventHandlerPatternsEn } from './event-handler';
 import { getWaitPatternsEn } from './wait';
 import { getViewTransitionPatterns } from './view-transition';
-import { DURATION_TYPES, EVENT_NAME_TYPES } from '../generators/role-types';
+import {
+  CONDITION_TYPES,
+  DURATION_TYPES,
+  EVENT_NAME_TYPES,
+  FOR_SOURCE_TYPES,
+  FOR_VARIABLE_TYPES,
+} from '../generators/role-types';
 
 // =============================================================================
 // Hand-crafted English-only patterns
@@ -164,9 +170,9 @@ const forEnglish: LanguagePattern = {
     format: 'for {patient} in {source}',
     tokens: [
       { type: 'literal', value: 'for' },
-      { type: 'role', role: 'patient', expectedTypes: ['expression', 'reference'] },
+      { type: 'role', role: 'patient', expectedTypes: FOR_VARIABLE_TYPES },
       { type: 'literal', value: 'in' },
-      { type: 'role', role: 'source', expectedTypes: ['selector', 'expression', 'reference'] },
+      { type: 'role', role: 'source', expectedTypes: FOR_SOURCE_TYPES },
     ],
   },
   extraction: {
@@ -195,7 +201,7 @@ const ifEnglish: LanguagePattern = {
     format: 'if {condition}',
     tokens: [
       { type: 'literal', value: 'if' },
-      { type: 'role', role: 'condition', expectedTypes: ['expression', 'reference', 'selector'] },
+      { type: 'role', role: 'condition', expectedTypes: CONDITION_TYPES },
     ],
   },
   extraction: {
@@ -215,7 +221,7 @@ const unlessEnglish: LanguagePattern = {
     format: 'unless {condition}',
     tokens: [
       { type: 'literal', value: 'unless' },
-      { type: 'role', role: 'condition', expectedTypes: ['expression', 'reference', 'selector'] },
+      { type: 'role', role: 'condition', expectedTypes: CONDITION_TYPES },
     ],
   },
   extraction: {

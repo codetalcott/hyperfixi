@@ -21,6 +21,10 @@ import {
   FETCH_RESPONSE_TYPES,
   FETCH_OPTIONS_TYPES,
   VISIBILITY_STYLE_TYPES,
+  FOR_VARIABLE_TYPES,
+  FOR_SOURCE_TYPES,
+  VIEW_TRANSITION_STYLE_TYPES,
+  CONDITION_TYPES,
 } from './role-types';
 
 // =============================================================================
@@ -1597,7 +1601,7 @@ export const onSchema: CommandSchema = {
       // expression by the en parse. Without it every generated head pattern's
       // `[{source} から]` / `[من {source}]` slot rejected them and the render the
       // handler source now gets (spliceEventModifiers) did not parse back.
-      expectedTypes: ['selector', 'reference', 'expression'],
+      expectedTypes: ELEMENT_TARGET_TYPES,
       default: { type: 'reference', value: 'me' },
       svoPosition: 2,
       sovPosition: 1,
@@ -1606,7 +1610,7 @@ export const onSchema: CommandSchema = {
   widenTypeVariants: [
     {
       role: 'event',
-      types: ['literal', 'expression'],
+      types: EVENT_NAME_TYPES,
       idSuffix: 'expr-event',
       excludeLanguages: ['ko'],
     },
@@ -2278,7 +2282,7 @@ export const ifSchema: CommandSchema = {
       role: 'condition',
       description: 'The condition to evaluate',
       required: true,
-      expectedTypes: ['expression', 'reference', 'selector'],
+      expectedTypes: CONDITION_TYPES,
       svoPosition: 1,
       sovPosition: 1,
     },
@@ -2302,7 +2306,7 @@ export const unlessSchema: CommandSchema = {
       role: 'condition',
       description: 'The condition to evaluate (body executes when false)',
       required: true,
-      expectedTypes: ['expression', 'reference', 'selector'],
+      expectedTypes: CONDITION_TYPES,
       svoPosition: 1,
       sovPosition: 1,
     },
@@ -2390,7 +2394,7 @@ export const forSchema: CommandSchema = {
       required: true,
       // The transformer emits a bare identifier loop variable (`for item in …`),
       // which tokenizes as an expression — mirror the en handcrafted pattern.
-      expectedTypes: ['reference', 'expression'],
+      expectedTypes: FOR_VARIABLE_TYPES,
       svoPosition: 1,
       sovPosition: 2,
     },
@@ -2398,7 +2402,7 @@ export const forSchema: CommandSchema = {
       role: 'source',
       description: 'The collection to iterate over',
       required: true,
-      expectedTypes: ['selector', 'reference', 'expression'],
+      expectedTypes: FOR_SOURCE_TYPES,
       svoPosition: 2,
       sovPosition: 1,
       // The i18n dicts translate the for-loop's `in` connective, NOT the
@@ -2819,7 +2823,7 @@ export const viewTransitionSchema: CommandSchema = {
       description: 'The transition type (`using "slide"`), passed as `types: [type]`',
       required: false,
       // The engine reads a STRING only (`p.matchType('STRING')`).
-      expectedTypes: ['literal'],
+      expectedTypes: VIEW_TRANSITION_STYLE_TYPES,
       svoPosition: 1,
       sovPosition: 1,
       markerOverride: { en: 'using' },

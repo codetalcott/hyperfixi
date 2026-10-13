@@ -107,3 +107,18 @@ export const FETCH_OPTIONS_TYPES: ExpectedType[] = ['expression'];
 
 /** show/hide's `with <strategy>`: a strategy word (`opacity`) or a class (`.hidden`). */
 export const VISIBILITY_STYLE_TYPES: ExpectedType[] = ['expression', 'selector'];
+
+/**
+ * A loop's variable, `for item in …` (and `repeat for item in …`): a bare name,
+ * which tokenizes as an expression, or a reference.
+ */
+export const FOR_VARIABLE_TYPES: ExpectedType[] = ['reference', 'expression'];
+
+/** The collection a loop walks, `… in .items` / `… in $list`. */
+export const FOR_SOURCE_TYPES: ExpectedType[] = ['selector', 'reference', 'expression'];
+
+/** viewTransition's `using "slide"`: the engine reads a string only. */
+export const VIEW_TRANSITION_STYLE_TYPES: ExpectedType[] = ['literal'];
+
+/** An `if`/`unless` condition: an expression, a reference (`if it`), or a selector (`if .a`). */
+export const CONDITION_TYPES: ExpectedType[] = ['expression', 'reference', 'selector'];

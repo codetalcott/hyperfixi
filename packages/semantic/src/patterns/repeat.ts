@@ -30,7 +30,7 @@
 
 import type { ExpectedType, LanguagePattern, PatternToken } from '../types';
 import { NATIVE_COUNT_WORDS } from './count-words';
-import { EVENT_NAME_TYPES } from '../generators/role-types';
+import { EVENT_NAME_TYPES, FOR_SOURCE_TYPES, FOR_VARIABLE_TYPES } from '../generators/role-types';
 
 /**
  * What a count can be. A variable with its sigil (`$n`, `:n`), `it` and
@@ -255,12 +255,12 @@ function repeatForInHead(
       });
     }
   }
-  tokens.push({ type: 'role', role: 'patient', expectedTypes: ['expression', 'reference'] });
+  tokens.push({ type: 'role', role: 'patient', expectedTypes: FOR_VARIABLE_TYPES });
   for (const w of spec.inWords) tokens.push({ type: 'literal', value: w });
   tokens.push({
     type: 'role',
     role: 'source',
-    expectedTypes: ['selector', 'expression', 'reference'],
+    expectedTypes: FOR_SOURCE_TYPES,
   });
   return {
     id: written ? `repeat-${language}-written-for-in` : `repeat-${language}-for-in`,
@@ -751,9 +751,9 @@ function sovForBindingHead(
     template: {
       format: `{patient} ${spec.inWords.join(' ')} {source} [${spec.objMarker}] ${spec.forVerb}`,
       tokens: [
-        { type: 'role', role: 'patient', expectedTypes: ['expression', 'reference'] },
+        { type: 'role', role: 'patient', expectedTypes: FOR_VARIABLE_TYPES },
         ...spec.inWords.map(w => ({ type: 'literal' as const, value: w })),
-        { type: 'role', role: 'source', expectedTypes: ['selector', 'expression', 'reference'] },
+        { type: 'role', role: 'source', expectedTypes: FOR_SOURCE_TYPES },
         {
           type: 'group',
           optional: true,
@@ -856,7 +856,7 @@ addPattern('en', {
     tokens: [
       { type: 'literal', value: 'repeat' },
       { type: 'literal', value: 'in' },
-      { type: 'role', role: 'source', expectedTypes: ['selector', 'expression', 'reference'] },
+      { type: 'role', role: 'source', expectedTypes: FOR_SOURCE_TYPES },
     ],
   },
   extraction: {
