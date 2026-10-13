@@ -3,8 +3,8 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 26491,
-  "refused": 749,
+  "pass": 26502,
+  "refused": 738,
   "silent": 0,
   "entries": {
     "6f60177037": {
@@ -403,11 +403,6 @@
       "refused": "en *",
       "loud": "beep: `beep!`, upstream's debugging command, has no schema: its form in each language is an owner vocabulary decision (the M2 sheet)"
     },
-    "eeb30e2d38": {
-      "src": "for item in <li/> add .done to item end",
-      "family": "for",
-      "refused": "bn hi sw"
-    },
     "63143b6f80": {
       "src": "return",
       "family": "return",
@@ -452,21 +447,6 @@
       "src": "repeat 5 times log \"hello\" end repeat for item in items log item end",
       "family": "repeat",
       "refused": "bn"
-    },
-    "be1d3cc50d": {
-      "src": "for item in items log item end",
-      "family": "for",
-      "refused": "bn hi ko sw"
-    },
-    "461f84cebf": {
-      "src": "repeat for x in items if x is empty break end",
-      "family": "break",
-      "refused": "bn ko"
-    },
-    "4c2f167281": {
-      "src": "repeat for x in items if x < 0 continue log x end",
-      "family": "continue",
-      "refused": "bn ko"
     },
     "92546b4cad": {
       "src": "focus #search focus the first <input/>",
