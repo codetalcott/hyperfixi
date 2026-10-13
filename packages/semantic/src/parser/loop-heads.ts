@@ -30,6 +30,16 @@ import { tokenValue } from './token-value';
 import { NATIVE_COUNT_WORDS } from '../patterns/count-words';
 
 /**
+ * Heads whose body the clause walker nests under them: the loop heads, folded
+ * into a {@link LoopSemanticNode}, and `tell`'s and `start view transition`'s,
+ * which keep theirs as a {@link BlockCommandSemanticNode}. `while` is not one: a standalone
+ * `while` node is the SOV fronted while-phrase that
+ * {@link foldFrontedWhileIntoRepeat} merges into its `repeat`,
+ * never a loop of its own.
+ */
+export const BLOCK_HEAD_ACTIONS = new Set(['repeat', 'for', ...BLOCK_COMMAND_ACTIONS]);
+
+/**
  * Where the clause walker consumed a loop's closing `end`. It lives only in the
  * walker's own list: {@link foldLoopBlocks} turns each head … marker span into a
  * loop node before anything else sees the list.
