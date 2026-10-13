@@ -1,8 +1,8 @@
 {
   "description": "English-leak gate, command-shape half (src/multilingual/english-leaks.ts): per command-shape case, the findings of each language's render (translate(src, 'en', L)): an English grammar word, `event:<name>`, `case:<pronoun>` or `spacing:<marker>`. `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts.",
-  "renders": 25334,
-  "leaky": 3885,
-  "findings": 7329,
+  "renders": 25359,
+  "leaky": 3888,
+  "findings": 7339,
   "kinds": {
     "word": {
       "renders": 2728,
@@ -17,8 +17,8 @@
       "findings": 39
     },
     "spacing": {
-      "renders": 1278,
-      "findings": 2718
+      "renders": 1281,
+      "findings": 2728
     }
   },
   "entries": {
@@ -1966,7 +1966,10 @@
       "spacing:e spacing:i": "tr"
     },
     "8712ddea5b": {
-      "spacing:를 spacing:에 spacing:의": "ko"
+      "spacing:de spacing:e spacing:i spacing:i spacing:nin": "tr",
+      "spacing:এ spacing:কে": "bn",
+      "spacing:를 spacing:에 spacing:의": "ko",
+      "spacing:で spacing:の spacing:を": "ja"
     },
     "87250fbc5e": {
       "case:it-object": "ar es it",
@@ -3552,11 +3555,8 @@
     }
   },
   "unrendered": {
-    "05f81357fb": "vi",
     "094982a419": "it pl ru uk",
-    "09f435f419": "vi",
     "129c41c03b": "hi qu",
-    "12ff2cf365": "vi",
     "15c22f6ecd": "*",
     "162e3e0582": "th vi",
     "1aa9c955fa": "ko",
@@ -3569,24 +3569,18 @@
     "23f2b7dd1b": "bn hi",
     "240935231f": "*",
     "2c6143ba00": "ko",
-    "2d9422b3af": "vi",
     "2f7af96b02": "id ms vi",
     "3030e3cc43": "ko pl",
-    "32502101bd": "vi",
     "32bbb02918": "pl",
     "348175b219": "bn hi ja ko tl vi zh",
-    "38fd7baa12": "vi",
     "391f640b6b": "hi",
     "394a7bfb45": "*",
     "3f9872bcd4": "pl",
-    "4293df22ee": "vi",
     "461f84cebf": "bn ko",
     "47a37edc5b": "de",
     "4c2f167281": "bn ko",
     "4d698f4f27": "ko",
-    "4da1d2fe85": "vi",
     "55c3d28c9e": "bn ko qu th vi",
-    "5763f61aac": "vi",
     "580655e71a": "it pl ru uk",
     "5fc5e421fe": "*",
     "61bc69c358": "*",
@@ -3600,17 +3594,13 @@
     "6f60177037": "qu",
     "6f6d57c10a": "bn",
     "73325ff027": "bn",
-    "73c2ff9c12": "vi",
     "7835c70e58": "bn hi ko",
     "7896ec4b23": "tr",
-    "798cb5bb41": "vi",
     "7ab4a541ee": "*",
     "7dee91f428": "*",
     "829e32df04": "ko pl",
     "8353b546d7": "ko",
     "85d0684e94": "*",
-    "8712ddea5b": "bn hi ja qu tr",
-    "897b7048f1": "vi",
     "8e7118ac3b": "ko",
     "91ef0c1608": "hi",
     "92546b4cad": "ko",
@@ -3626,7 +3616,6 @@
     "a893804c5f": "*",
     "ae5ed6eb80": "*",
     "ae7e10324c": "de",
-    "af53446a0a": "vi",
     "b0492a08fb": "*",
     "b19c6cad07": "qu tr",
     "b2ec75a2bf": "*",
@@ -3634,8 +3623,6 @@
     "b6d4332c89": "bn hi ja ko qu tr",
     "b9502de444": "bn hi ko",
     "bb2c2ab053": "qu",
-    "bbf040ee1a": "vi",
-    "bcf30473e0": "vi",
     "bd56aad55e": "bn hi ko",
     "bd7175dd23": "*",
     "be1d3cc50d": "bn hi ko sw",
@@ -3643,17 +3630,13 @@
     "c44765f7b0": "*",
     "c48b233ac7": "pt sw",
     "c55282fb85": "*",
-    "c8992c103b": "vi",
     "ca8adcde99": "*",
     "d438ab49b4": "bn th vi",
     "da38860cb8": "hi",
     "db3346f209": "ko",
-    "db7fef03e9": "vi",
     "dc8881fc7d": "qu",
     "dd2ca23457": "de it tr",
-    "dd8bfb1190": "vi",
-    "deac58c100": "ms vi",
-    "dee03cd129": "vi",
+    "deac58c100": "ms",
     "dfea5b51b5": "ko",
     "e51cb64feb": "de fr ko",
     "e8446a57e2": "ko",

@@ -1230,6 +1230,12 @@ const PUT_AT_END: ReadonlyArray<{
   of: string;
   /** Other spellings of `of` the reader takes: pl `ze` before `mnie` (M2 N3). */
   ofAlts?: string[];
+  /**
+   * The `of` word and `me` as the tokenizer reads them together: vi `của tôi`,
+   * one `my` token, so `tại kết thúc của tôi` (at end of me) has no `của` and no
+   * destination of its own. Read by a parse-only pattern whose destination is `me`.
+   */
+  ofMe?: string;
   /** verb-final word order: `{patient} at end of {destination} <objMarker> verb`. */
   sov?: boolean;
   /** SOV object marker between the body destination and the trailing verb. */
@@ -1260,7 +1266,7 @@ const PUT_AT_END: ReadonlyArray<{
     of: 'dari',
   },
   { lang: 'ms', verb: 'letak', at: 'di', end: 'tamat', of: 'daripada' },
-  { lang: 'vi', verb: 'đặt', at: 'tại', end: 'kết thúc', of: 'của' },
+  { lang: 'vi', verb: 'đặt', at: 'tại', end: 'kết thúc', of: 'của', ofMe: 'của tôi' },
   { lang: 'pl', verb: 'umieść', at: 'przy', end: 'koniec', of: 'z', ofAlts: ['ze'] },
   { lang: 'ru', verb: 'положить', at: 'у', end: 'конец', of: 'из' },
   { lang: 'uk', verb: 'покласти', at: 'в', end: 'кінець', of: 'з' },
@@ -1335,9 +1341,7 @@ export function isAtEndPositionNoun(
 ): boolean {
   const spec = PUT_AT_END.find(s => s.lang === language);
   if (!spec) return false;
-  const eq = (a: string | undefined, b: string): boolean =>
-    (a ?? '').toLowerCase() === b.toLowerCase();
-  return eq(endValue, spec.end) && eq(prevValue, spec.at) && isOfWord(spec, nextValue);
+  return eq(endValue, spec.end) && eq(prevValue, spec.at) && isOfOrOfMe(spec, nextValue);
 }
 
 /** Is `value` the spec's `of` word, or one of its other spellings (pl `ze`)? */
@@ -1345,6 +1349,13 @@ function isOfWord(spec: (typeof PUT_AT_END)[number], value: string | undefined):
   const v = (value ?? '').toLowerCase();
   return v === spec.of.toLowerCase() || (spec.ofAlts ?? []).some(a => a.toLowerCase() === v);
 }
+
+/** The `of` word, or `of` and `me` read as one token (vi `của tôi`). */
+function isOfOrOfMe(spec: (typeof PUT_AT_END)[number], value: string | undefined): boolean {
+  return isOfWord(spec, value) || (spec.ofMe !== undefined && eq(value, spec.ofMe));
+}
+
+const eq = (a: string | undefined, b: string): boolean => (a ?? '').toLowerCase() === b.toLowerCase();
 
 /**
  * Whether a word is one of a language's `at end of` connective words (`at`/`end`/
@@ -1379,7 +1390,7 @@ export function isAtEndNounBeforeOf(
 ): boolean {
   const spec = PUT_AT_END.find(s => s.lang === language);
   if (!spec || next === undefined) return false;
-  return value.toLowerCase() === spec.end.toLowerCase() && isOfWord(spec, next);
+  return value.toLowerCase() === spec.end.toLowerCase() && isOfOrOfMe(spec, next);
 }
 
 function buildAtEndPutPatterns(language: string): LanguagePattern[] {
@@ -1417,7 +1428,7 @@ function buildAtEndPutPatterns(language: string): LanguagePattern[] {
     if (spec.objMarker) tokens.push({ type: 'literal', value: spec.objMarker });
     tokens.push(verbToken);
   }
-  return [
+  const atEnd: LanguagePattern[] = [
     {
       id: `put-${spec.lang}-at-end`,
       language: spec.lang,
@@ -1431,6 +1442,31 @@ function buildAtEndPutPatterns(language: string): LanguagePattern[] {
       },
       extraction: {
         manner: { default: { type: 'literal', value: 'at end of' } },
+      },
+    } satisfies LanguagePattern,
+  ];
+  if (!spec.ofMe || spec.sov) return atEnd;
+  // `of me` read as one token: the destination is `me`. The renderer writes
+  // `của` and `tôi` from the pattern above, and they read back as this one.
+  const ofMeTokens: LanguagePattern['template']['tokens'] = [
+    ...tokens.slice(0, -2),
+    { type: 'literal', value: spec.ofMe },
+  ];
+  return [
+    ...atEnd,
+    {
+      id: `put-${spec.lang}-at-end-of-me`,
+      language: spec.lang,
+      command: 'put',
+      priority: 110,
+      parseOnly: true,
+      template: {
+        format: `put {patient} ${spec.at} ${spec.end} ${spec.ofMe}`,
+        tokens: ofMeTokens,
+      },
+      extraction: {
+        manner: { default: { type: 'literal', value: 'at end of' } },
+        destination: { default: { type: 'reference', value: 'me' } },
       },
     } satisfies LanguagePattern,
   ];

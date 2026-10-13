@@ -51,7 +51,8 @@ const MOSTLY: ReadonlyArray<readonly [string, readonly string[]]> = [
     'set :others to <input[type=checkbox]/> in the closest <table/> where it is not me on click put :others.length into #out',
     [],
   ],
-  ['on click repeat for x in :items where x.val > 10 put x.name at end of me end', ['vi']],
+  // vi reads its `at end of me` since its `của tôi` (one `my` token) has a reader.
+  ['on click repeat for x in :items where x.val > 10 put x.name at end of me end', []],
   // bn, th and vi refuse `checked of :boxes` without a collection too.
   ['on change set checked of the :checkboxes to my checked', ['bn', 'th', 'vi']],
   ['on click put matches mapped to its textContent into #out', ['bn', 'qu']],
