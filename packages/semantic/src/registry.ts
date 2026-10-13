@@ -22,7 +22,7 @@
 import type { LanguageTokenizer, LanguagePattern, LanguageToken, TokenStream } from './types';
 import { TokenStreamImpl } from './tokenizers/token-utils';
 import { VALUE_WORDS } from './value-words';
-import { CSS_UNITS } from './css-units';
+import { CSS_UNITS, PARENTHESIZED_OPERAND } from './css-units';
 import { elementScopeWord } from './element-scope';
 
 // Re-export profile types from generators for convenience
@@ -533,6 +533,22 @@ function fuseGluedValues(stream: TokenStream, language: string): TokenStream {
     const t = tokens[i]!;
     const next = tokens[i + 1];
     const value = tokens[i + 2];
+    // `[@name]`: the bracketed spelling of `@name`, which both engines read as
+    // the same attribute reference (`my [@data-foo]` is `my @data-foo`).
+    if (t.kind === 'selector' && /^\[@[\w-]+\]$/.test(t.value)) {
+      out.push({ ...t, value: t.value.slice(1, -1), kind: 'identifier' } as LanguageToken);
+      changed = true;
+      continue;
+    }
+    // English `it @disabled`: a pronoun before an attribute is its owner, as
+    // both engines read it (an attribute after a value is that value's).
+    // Written as the possessive the readers take: `its @disabled`.
+    const owner = language === 'en' ? PRONOUN_POSSESSIVES[t.value.toLowerCase()] : undefined;
+    if (owner && next && (/^@[\w-]+$/.test(next.value) || /^\[@[\w-]+\]$/.test(next.value))) {
+      out.push({ ...t, value: owner, normalized: owner } as LanguageToken);
+      changed = true;
+      continue;
+    }
     // `@name=value`: the value a word or a string, every part touching.
     if (
       /^@[\w-]+$/.test(t.value) &&
@@ -588,9 +604,58 @@ function fuseGluedValues(stream: TokenStream, language: string): TokenStream {
       changed = true;
       continue;
     }
+    // `(startWidth)px`: a parenthesized operand and the unit touching its `)`.
+    // Not a call's parentheses (`f(x)px`).
+    if (t.value === '(' && !touches(out[out.length - 1], t)) {
+      const close = parenthesizedLengthEnd(tokens, i);
+      if (close !== undefined) {
+        const unit = tokens[close + 1]!;
+        out.push({
+          value: tokens
+            .slice(i, close + 2)
+            .map((p, k, run) =>
+              k === 0 ? p.value : ' '.repeat(p.position.start - run[k - 1]!.position.end) + p.value
+            )
+            .join(''),
+          kind: 'literal',
+          position: { ...t.position, end: unit.position.end },
+        } as LanguageToken);
+        i = close + 1;
+        changed = true;
+        continue;
+      }
+    }
     out.push(t);
   }
   return changed ? new TokenStreamImpl(out, language) : stream;
+}
+
+/** English pronouns and the possessive each owns an attribute with. */
+const PRONOUN_POSSESSIVES: Readonly<Record<string, string>> = { it: 'its', me: 'my', you: 'your' };
+
+/**
+ * Where the `)` of `(…)unit` is, for a `(` at `open`: the parentheses hold
+ * an operand only (PARENTHESIZED_OPERAND), and a CSS unit touches the `)`.
+ * Undefined otherwise.
+ */
+function parenthesizedLengthEnd(tokens: readonly LanguageToken[], open: number): number | undefined {
+  let close = open + 1;
+  while (close < tokens.length && tokens[close]!.value !== ')') {
+    if (tokens[close]!.value === '(') return undefined;
+    close++;
+  }
+  const end = tokens[close];
+  const unit = tokens[close + 1];
+  if (!end || !unit || end.position.end !== unit.position.start || !CSS_UNITS.has(unit.value)) {
+    return undefined;
+  }
+  const interior = tokens
+    .slice(open + 1, close)
+    .map((p, k, run) =>
+      k === 0 ? p.value : ' '.repeat(p.position.start - run[k - 1]!.position.end) + p.value
+    )
+    .join('');
+  return PARENTHESIZED_OPERAND.test(interior) ? close : undefined;
 }
 
 /** The words that name a variable's scope before it, as upstream reads them. */

@@ -1033,6 +1033,17 @@ export const setSchema: CommandSchema = {
   // parser also desugars `increment counter` into the same shape. Semantic
   // binds destination='myVar', patient='value'.
   argSkipTokens: ['to'],
+  requiredRoleVariants: [
+    // `set {bar: 2, baz: 3} on obj`: an object literal's properties set on a
+    // target, with no `to` (upstream's set command). The target may be a
+    // variable, which the `set @a … on X` scope never is.
+    {
+      role: 'scope',
+      omit: ['patient'],
+      widen: { role: 'scope', types: ['selector', 'reference', 'expression'] },
+      idSuffix: 'object-on',
+    },
+  ],
   roles: [
     {
       role: 'destination',
@@ -1995,14 +2006,6 @@ export const getCommandSchema: CommandSchema = {
         bn: 'কে', // Bengali SOV: #element কে পান (patient marker)
         qu: 'ta', // Quechua SOV: #element ta taripay (patient marker)
       },
-    },
-    {
-      role: 'destination',
-      description: 'Where to store the result (optional)',
-      required: false,
-      expectedTypes: ['reference'],
-      svoPosition: 2,
-      sovPosition: 1,
     },
   ],
 };

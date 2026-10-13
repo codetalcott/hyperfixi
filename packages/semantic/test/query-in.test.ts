@@ -86,18 +86,18 @@ describe('only a query’s `in`', () => {
   });
 });
 
-// Where the language's `in` is also a marker the command wants, the reader can
-// take it as the command's (es `obtener valor de primero <input/> en yo` read as
-// get's `on me`): the verified render writes English's there.
-describe('a native `in` the reader would misread is written as English’s', () => {
-  // A positional run in a value, and a scoped query role (es `obtener <input/>
-  // en yo` read as get's `on me` too).
+// es `obtener <input/> en yo` was read as get's `on me` while get had a
+// destination slot (which no reader used), so the verified render wrote
+// English's `in` after a get. With the slot gone, the language's word reads back.
+describe('a native `in` after a get reads back', () => {
+  // A positional run in a value, and a scoped query role.
   describe.each(['on click get the value of first <input/> in me', 'on click get <input/> in me'])(
     '%s',
     source => {
       it.each(['es', 'ar', 'pl', 'ru'])('%s', language => {
         const rendered = render(parse(source, 'en')!, language);
-        expect(words(rendered)).toContain('in');
+        expect(words(rendered)).not.toContain('in');
+        expect(writesQueryIn(rendered, language), rendered).toBe(true);
         expect(translate(rendered, language, 'en')).toBe(source);
       });
     }

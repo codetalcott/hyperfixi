@@ -670,18 +670,6 @@ export const LOUD: readonly LoudFamily[] = [
       ),
   },
   {
-    name: 'rare-values',
-    reason:
-      'value spellings rare in pages: an escaped class name (`.group-\\[…\\]`), a comma ' +
-      'list in a query (`<#d1, #d2/>`), an attribute after a bare or bracketed reference ' +
-      '(`it @a`, `my [@a]`), a dotted path before `of`, a unit after parentheses ' +
-      '(`(w)px`), `set {…} on <obj>`',
-    matches: source =>
-      /\\\[|<[^<>]*,[^<>]*\/>|\b(my|its|your)\s+\[@|\bset\s+(it|me|you)\s+@|\b[a-z]\w*\.[a-z]\w*\s+of\b|\)(px|em|rem|%)|\bset\s+\{[^}]*\}\s+on\b/i.test(
-        source
-      ),
-  },
-  {
     name: 'rare-commands',
     reason:
       'commands rare in pages: `measure` of a property list, `pick characters 0 to 3 from …`, ' +
@@ -716,11 +704,6 @@ export const SILENT_FAMILIES: readonly SilentFamily[] = [
       "a language's word inside a value reads back as another English word: pl `to` → " +
       '`it` (its `it` word, after `closest`), qu `where` → `target`, vi `where` split at `_`',
     ids: ['d74a86f3a0', 'da24c9d768', 'b948ed872b'],
-  },
-  {
-    name: 'it-locative',
-    reason: 'it `in me` (a query scope) reads back as `on me`',
-    ids: ['2159462e64', '0ff2f70080', 'd7b35fefe6'],
   },
   {
     name: 'possessive-split',

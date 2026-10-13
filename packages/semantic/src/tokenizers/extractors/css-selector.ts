@@ -46,6 +46,13 @@ function consumePseudoSegments(input: string, pos: number): number {
   return end;
 }
 
+/** One selector inside a query: a tag, then id, class, attribute and pseudo clauses. */
+const QUERY_SELECTOR =
+  /(?=[\w.#[:])[\w-]*(?:[#.][\w-]+|\[[^\]]+\]|::?[a-zA-Z][a-zA-Z0-9-]*(?:\([^)]*\))?)*/.source;
+
+/** A query, `<…/>`: one selector, or several joined by commas. */
+const QUERY = new RegExp(`^<${QUERY_SELECTOR}(?:\\s*,\\s*${QUERY_SELECTOR})*\\s*\\/>`);
+
 /**
  * Extract a CSS selector from input at position.
  * Wraps the existing extractCssSelector logic from framework.
@@ -70,6 +77,12 @@ export function extractCssSelector(input: string, position: number): string | nu
   if (char === '.') {
     const dynamic = input.slice(position).match(/^\.\{[a-zA-Z_$][\w$]*\}/);
     if (dynamic) return dynamic[0];
+    // A class name with a backslash escape (`.group-\[:nth-of-type\(3\)_\&\]:block`,
+    // Tailwind's arbitrary variants) reads as upstream's tokenizer reads it: letters,
+    // digits, `-`, `_` and `:`, and any character after a `\`. Without escapes the
+    // name stops at `:`, which begins a pseudo segment below.
+    const escaped = input.slice(position).match(/^\.(?:[\w:-]|\\.)+/);
+    if (escaped && escaped[0].includes('\\')) return escaped[0];
     const match = input.slice(position).match(/^\.[a-zA-Z_][\w-]*/);
     if (!match) return null;
     const end = consumePseudoSegments(input, position + match[0].length);
@@ -118,12 +131,9 @@ export function extractCssSelector(input: string, position: number): string | nu
   // in the clause chain (<.foo:hover/>). The tag name is optional, but the
   // lookahead requires the char after `<` to start a tag/`#`/`.`/`[`/pseudo clause
   // — so a less-than comparison (`a < b`) is never mis-extracted (the space fails it).
+  // A comma joins selectors (`<#d1, #d2/>`), each held to the same lookahead.
   if (char === '<') {
-    const match = input
-      .slice(position)
-      .match(
-        /^<(?=[\w.#[:])[\w-]*(?:[#.][\w-]+|\[[^\]]+\]|::?[a-zA-Z][a-zA-Z0-9-]*(?:\([^)]*\))?)*\s*\/>/
-      );
+    const match = input.slice(position).match(QUERY);
     return match ? match[0] : null;
   }
 
