@@ -462,10 +462,10 @@ const MAX_UNCONSUMED_SPAN_CHARS = 120;
  * or null when the pattern accounted for the whole token stream.
  *
  * Purely observational: callers attach the result as a diagnostic. Confidence is
- * computed from role coverage alone and is deliberately left untouched here —
- * penalizing an unconsumed tail is a scoring change that would move the
- * multilingual fidelity baseline across all 24 languages, and must be measured
- * (see the `--diagnose-coverage` sweep) before it is attempted.
+ * computed from role coverage alone and is deliberately left untouched here: a
+ * penalty for an unconsumed tail was measured (OPEN_ITEMS G1, 2026-10-13) and
+ * changes no pattern choice, while translate() already refuses the tail (F1)
+ * and MCP reports it. The diagnostic is what callers act on.
  */
 function describeUnconsumedInput(
   match: PatternMatchResult,
