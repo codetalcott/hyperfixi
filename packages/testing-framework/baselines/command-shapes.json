@@ -3,8 +3,8 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 26419,
-  "refused": 821,
+  "pass": 26430,
+  "refused": 810,
   "silent": 0,
   "entries": {
     "6f60177037": {
@@ -16,11 +16,6 @@
       "src": "on click add .foo to .item when it matches .nope then if the result is empty remove @hidden from #none",
       "family": "add",
       "refused": "qu"
-    },
-    "f1bc20c608": {
-      "src": "on click call global_function()",
-      "family": "call",
-      "refused": "de es fr id it pl pt qu sw tr vi"
     },
     "b9502de444": {
       "src": "on click fetch /test as Object then get result as JSONString then put it into my.innerHTML",

@@ -56,7 +56,10 @@ function createPolishCharClassifiers() {
   const polishPattern =
     /[a-zA-Z\u0105\u0119\u0107\u0144\u00f3\u015b\u017a\u017c\u0142\u0104\u0118\u0106\u0143\u00d3\u015a\u0179\u017b\u0141]/;
   const isLetter = (char: string) => polishPattern.test(char);
-  const isIdentifierChar = (char: string) => /[0-9]/.test(char) || polishPattern.test(char);
+  // `_` is a word character mid-word (never a word start: canExtract tests isLetter), so a
+  // snake_case name (`my_func()`) is one word and an `_`-joined keyword is looked up whole,
+  // as the Cyrillic and Malay extractors read them. It split at `_` before.
+  const isIdentifierChar = (char: string) => /[0-9_]/.test(char) || polishPattern.test(char);
   return { isLetter, isIdentifierChar };
 }
 

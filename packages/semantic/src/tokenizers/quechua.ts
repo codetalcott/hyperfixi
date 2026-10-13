@@ -202,6 +202,9 @@ const QUECHUA_EXTRAS: KeywordEntry[] = [
   // `s in _ kan "a"`. Same whole-token shape; longest-first makes it beat
   // `ukupi`. CONNECTIVE_LEXICON.qu already maps it back to `contains`.
   { native: 'ukupi_kan', normalized: 'contains' },
+  // The transformer's until-compound `hayk_akama`, read whole since `_` continues a word
+  // (it split into the junk `hayk _ a kama`, which a read-only head matched in-pattern).
+  { native: 'hayk_akama', normalized: 'until' },
   { native: 'qaylla', normalized: 'closest' },
   { native: 'tayta', normalized: 'parent' },
 
