@@ -8,7 +8,11 @@
  */
 
 import type { ExpectedType, LanguagePattern } from '../types';
-import { SET_VALUE_TYPES } from '../generators/role-types';
+import {
+  SET_DESTINATION_TYPES,
+  SET_SCOPE_TYPES,
+  SET_VALUE_TYPES,
+} from '../generators/role-types';
 import { handcrafted } from './handcrafted';
 
 /**
@@ -16,8 +20,11 @@ import { handcrafted } from './handcrafted';
  * array included (`set el to #panel`, `set x to [1, 2]`), and a possessive
  * (`set x to #d1's value`, which he renders `value מ #d1`). de/fr/id/ms/pt's
  * patterns, and he/sw's, once copied the narrower list, and such a set was
- * lost. (es/qu/zh keep their copies: where they reject a value, the generated
- * patterns read it, so the copies never decide.)
+ * lost; vi's `gán … vào …` (set-vi-vao) kept a copy until M3, which a generated
+ * pattern covered. (es/qu/zh keep their
+ * copies: where they reject a value, the generated patterns read it, so the
+ * copies never decide.) The destination and the scope take the schema's lists
+ * (role-types.ts), never a copy.
  */
 const SET_PATIENT_TYPES: ExpectedType[] = [...SET_VALUE_TYPES];
 
@@ -84,7 +91,7 @@ export function getSetPatternsDe(): LanguagePattern[] {
           {
             type: 'role',
             role: 'destination',
-            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+            expectedTypes: SET_DESTINATION_TYPES,
           },
           { type: 'literal', value: 'auf', alternatives: ['zu', 'an'] },
           { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
@@ -109,7 +116,7 @@ export function getSetPatternsDe(): LanguagePattern[] {
           {
             type: 'role',
             role: 'destination',
-            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+            expectedTypes: SET_DESTINATION_TYPES,
           },
           { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
         ],
@@ -130,7 +137,7 @@ export function getSetPatternsDe(): LanguagePattern[] {
           {
             type: 'role',
             role: 'destination',
-            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+            expectedTypes: SET_DESTINATION_TYPES,
           },
           { type: 'literal', value: '=' },
           { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
@@ -162,7 +169,7 @@ export function getSetPatternsEs(): LanguagePattern[] {
           {
             type: 'role',
             role: 'destination',
-            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+            expectedTypes: SET_DESTINATION_TYPES,
           },
           { type: 'literal', value: 'a', alternatives: ['en', 'como'] },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
@@ -190,7 +197,7 @@ export function getSetPatternsEs(): LanguagePattern[] {
           {
             type: 'role',
             role: 'destination',
-            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+            expectedTypes: SET_DESTINATION_TYPES,
           },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
         ],
@@ -211,7 +218,7 @@ export function getSetPatternsEs(): LanguagePattern[] {
           {
             type: 'role',
             role: 'destination',
-            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+            expectedTypes: SET_DESTINATION_TYPES,
           },
           { type: 'literal', value: '=' },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
@@ -245,7 +252,7 @@ export function getSetPatternsFr(): LanguagePattern[] {
           {
             type: 'role',
             role: 'destination',
-            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+            expectedTypes: SET_DESTINATION_TYPES,
           },
           { type: 'literal', value: 'à', alternatives: ['a', 'sur', 'comme'] },
           { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
@@ -269,7 +276,7 @@ export function getSetPatternsFr(): LanguagePattern[] {
           {
             type: 'role',
             role: 'destination',
-            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+            expectedTypes: SET_DESTINATION_TYPES,
           },
           { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
         ],
@@ -290,7 +297,7 @@ export function getSetPatternsFr(): LanguagePattern[] {
           {
             type: 'role',
             role: 'destination',
-            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+            expectedTypes: SET_DESTINATION_TYPES,
           },
           { type: 'literal', value: '=' },
           { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
@@ -367,7 +374,7 @@ export function getSetPatternsId(): LanguagePattern[] {
           {
             type: 'role',
             role: 'destination',
-            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+            expectedTypes: SET_DESTINATION_TYPES,
           },
           { type: 'literal', value: 'ke', alternatives: ['menjadi', 'jadi', 'pada'] },
           { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
@@ -391,7 +398,7 @@ export function getSetPatternsId(): LanguagePattern[] {
           {
             type: 'role',
             role: 'destination',
-            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+            expectedTypes: SET_DESTINATION_TYPES,
           },
           { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
         ],
@@ -412,7 +419,7 @@ export function getSetPatternsId(): LanguagePattern[] {
           {
             type: 'role',
             role: 'destination',
-            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+            expectedTypes: SET_DESTINATION_TYPES,
           },
           { type: 'literal', value: '=' },
           { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
@@ -445,7 +452,7 @@ export function getSetPatternsMs(): LanguagePattern[] {
           {
             type: 'role',
             role: 'destination',
-            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+            expectedTypes: SET_DESTINATION_TYPES,
           },
           { type: 'literal', value: 'ke', alternatives: ['kepada', 'menjadi', 'jadi'] },
           { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
@@ -475,7 +482,7 @@ export function getSetPatternsIt(): LanguagePattern[] {
             role: 'destination',
             // property-path opts the of-possessive matcher in (mirrors set-es-full;
             // `impostare the *--primary-color di #theme in …` truncated without it)
-            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+            expectedTypes: SET_DESTINATION_TYPES,
           },
           {
             type: 'group',
@@ -527,7 +534,7 @@ export function getSetPatternsPl(): LanguagePattern[] {
             type: 'role',
             role: 'destination',
             // property-path opts the of-possessive matcher in (mirrors set-es-full)
-            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+            expectedTypes: SET_DESTINATION_TYPES,
           },
           {
             type: 'group',
@@ -579,7 +586,7 @@ export function getSetPatternsPt(): LanguagePattern[] {
           {
             type: 'role',
             role: 'destination',
-            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+            expectedTypes: SET_DESTINATION_TYPES,
           },
           { type: 'literal', value: 'para', alternatives: ['como', 'a', 'em'] },
           { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
@@ -604,7 +611,7 @@ export function getSetPatternsPt(): LanguagePattern[] {
           {
             type: 'role',
             role: 'destination',
-            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+            expectedTypes: SET_DESTINATION_TYPES,
           },
           { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
         ],
@@ -625,7 +632,7 @@ export function getSetPatternsPt(): LanguagePattern[] {
           {
             type: 'role',
             role: 'destination',
-            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+            expectedTypes: SET_DESTINATION_TYPES,
           },
           { type: 'literal', value: '=' },
           { type: 'role', role: 'patient', expectedTypes: SET_PATIENT_TYPES },
@@ -654,7 +661,7 @@ export function getSetPatternsRu(): LanguagePattern[] {
             type: 'role',
             role: 'destination',
             // property-path opts the of-possessive matcher in (mirrors set-es-full)
-            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+            expectedTypes: SET_DESTINATION_TYPES,
           },
           {
             type: 'group',
@@ -710,7 +717,7 @@ export function getSetPatternsSw(): LanguagePattern[] {
           {
             type: 'role',
             role: 'destination',
-            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+            expectedTypes: SET_DESTINATION_TYPES,
           },
           { type: 'literal', value: 'kwa', alternatives: ['kwenye'] },
           {
@@ -746,7 +753,7 @@ export function getSetPatternsTh(): LanguagePattern[] {
             type: 'role',
             role: 'destination',
             // property-path opts the of-possessive matcher in (mirrors set-es-full)
-            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+            expectedTypes: SET_DESTINATION_TYPES,
           },
           {
             type: 'group',
@@ -781,7 +788,7 @@ export function getSetPatternsUk(): LanguagePattern[] {
             type: 'role',
             role: 'destination',
             // property-path opts the of-possessive matcher in (mirrors set-es-full)
-            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+            expectedTypes: SET_DESTINATION_TYPES,
           },
           {
             type: 'group',
@@ -842,7 +849,7 @@ export function getSetPatternsHe(): LanguagePattern[] {
           {
             type: 'role',
             role: 'destination',
-            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+            expectedTypes: SET_DESTINATION_TYPES,
           },
           { type: 'literal', value: 'על', alternatives: ['ב', 'אל', 'ל', 'כ'] },
           {
@@ -882,13 +889,13 @@ export function getSetPatternsVi(): LanguagePattern[] {
           {
             type: 'role',
             role: 'destination',
-            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+            expectedTypes: SET_DESTINATION_TYPES,
           },
           { type: 'literal', value: 'vào', alternatives: ['cho', 'đến'] },
           {
             type: 'role',
             role: 'patient',
-            expectedTypes: ['literal', 'expression', 'reference', 'selector'],
+            expectedTypes: SET_PATIENT_TYPES,
           },
         ],
       },
@@ -963,7 +970,7 @@ export function getSetPatternsZh(): LanguagePattern[] {
           {
             type: 'role',
             role: 'destination',
-            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+            expectedTypes: SET_DESTINATION_TYPES,
           },
           { type: 'literal', value: '到', alternatives: ['为', '為', '成'] },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
@@ -991,7 +998,7 @@ export function getSetPatternsZh(): LanguagePattern[] {
           {
             type: 'role',
             role: 'destination',
-            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+            expectedTypes: SET_DESTINATION_TYPES,
           },
           {
             type: 'literal',
@@ -1036,7 +1043,7 @@ export function getSetPatternsZh(): LanguagePattern[] {
           {
             type: 'role',
             role: 'destination',
-            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+            expectedTypes: SET_DESTINATION_TYPES,
           },
           {
             type: 'group',
@@ -1062,7 +1069,7 @@ export function getSetPatternsZh(): LanguagePattern[] {
           {
             type: 'role',
             role: 'destination',
-            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+            expectedTypes: SET_DESTINATION_TYPES,
           },
           { type: 'literal', value: '=' },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
@@ -1115,7 +1122,7 @@ export function getSetPatternsQu(): LanguagePattern[] {
           {
             type: 'role',
             role: 'destination',
-            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+            expectedTypes: SET_DESTINATION_TYPES,
           },
           { type: 'literal', value: 'ta' },
           {
@@ -1166,7 +1173,7 @@ function withTrailingScope(patterns: LanguagePattern[]): LanguagePattern[] {
                 type: 'role',
                 role: 'scope',
                 optional: true,
-                expectedTypes: ['selector', 'reference'],
+                expectedTypes: SET_SCOPE_TYPES,
               },
             ],
           },

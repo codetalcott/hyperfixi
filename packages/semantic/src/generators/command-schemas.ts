@@ -13,6 +13,14 @@ import {
   PUT_DESTINATION_TYPES,
   PUT_VALUE_TYPES,
   SET_VALUE_TYPES,
+  SET_DESTINATION_TYPES,
+  SET_SCOPE_TYPES,
+  EVENT_NAME_TYPES,
+  DURATION_TYPES,
+  FETCH_SOURCE_TYPES,
+  FETCH_RESPONSE_TYPES,
+  FETCH_OPTIONS_TYPES,
+  VISIBILITY_STYLE_TYPES,
 } from './role-types';
 
 // =============================================================================
@@ -1051,7 +1059,7 @@ export const setSchema: CommandSchema = {
       required: true,
       // 'property-path' opts this role into the "of"-possessive matcher
       // (`set *--x of #y to z`); see pattern-matcher tryMatchOfPossessiveExpression.
-      expectedTypes: ['selector', 'reference', 'expression', 'property-path'],
+      expectedTypes: SET_DESTINATION_TYPES,
       svoPosition: 1,
       sovPosition: 1,
       // Override destination marker for English (remove 'on', use no marker)
@@ -1163,7 +1171,7 @@ export const setSchema: CommandSchema = {
       role: 'scope',
       description: 'The element(s) the attribute/property is set on (defaults to me)',
       required: false,
-      expectedTypes: ['selector', 'reference'],
+      expectedTypes: SET_SCOPE_TYPES,
       svoPosition: 3,
       sovPosition: 3,
       markerOverride: {
@@ -1501,7 +1509,7 @@ export const showSchema: CommandSchema = {
       // `hide me`.
       description: 'The hide/show strategy (`with opacity`, `with *opacity`)',
       required: false,
-      expectedTypes: ['expression', 'selector'],
+      expectedTypes: VISIBILITY_STYLE_TYPES,
       svoPosition: 2,
       sovPosition: 2,
     },
@@ -1542,7 +1550,7 @@ export const hideSchema: CommandSchema = {
       // `hide me`.
       description: 'The hide/show strategy (`with opacity`, `with *opacity`)',
       required: false,
-      expectedTypes: ['expression', 'selector'],
+      expectedTypes: VISIBILITY_STYLE_TYPES,
       svoPosition: 2,
       sovPosition: 2,
     },
@@ -1628,7 +1636,7 @@ export const triggerSchema: CommandSchema = {
       role: 'event',
       description: 'The event to trigger (supports namespaced events like draggable:start)',
       required: true,
-      expectedTypes: ['literal', 'expression'], // expression for custom/namespaced event names
+      expectedTypes: EVENT_NAME_TYPES, // expression for custom/namespaced event names
       svoPosition: 1,
       sovPosition: 2,
       // hi/qu/bn mark trigger's event ACCUSATIVELY (`draggable:start को ट्रिगर`,
@@ -1673,7 +1681,7 @@ export const waitSchema: CommandSchema = {
       role: 'duration',
       description: 'Duration or event to wait for',
       required: true,
-      expectedTypes: ['literal', 'expression'],
+      expectedTypes: DURATION_TYPES,
       svoPosition: 1,
       sovPosition: 1,
     },
@@ -1702,7 +1710,7 @@ export const fetchSchema: CommandSchema = {
       role: 'source',
       description: 'The URL to fetch from',
       required: true,
-      expectedTypes: ['literal', 'expression'],
+      expectedTypes: FETCH_SOURCE_TYPES,
       svoPosition: 1,
       sovPosition: 1,
       // No markerOverride — uses profile default 'from' for parsing.
@@ -1716,7 +1724,7 @@ export const fetchSchema: CommandSchema = {
       // expression-only slot through its object-literal fold, which preserves the
       // source text so the expression parser can build a real objectLiteral.
       // `style` is the role whose marker is `with` in every language profile.
-      expectedTypes: ['expression'],
+      expectedTypes: FETCH_OPTIONS_TYPES,
       // Shape-anchored, so an UNCAPTURED style slot carries no evidence against
       // the pattern. This is the same lever toggle's `[{duration}]` and swap's
       // `[using view {manner}]` needed, and for the same reason: giving the 23
@@ -1742,7 +1750,7 @@ export const fetchSchema: CommandSchema = {
       role: 'responseType',
       description: 'Response format (json, text, html, blob, etc.)',
       required: false,
-      expectedTypes: ['literal', 'expression'], // json/text/html are identifiers → expression type
+      expectedTypes: FETCH_RESPONSE_TYPES, // json/text/html are identifiers → expression type
       svoPosition: 3,
       sovPosition: 3,
       // `as` in en; `として` ("as/qua") in ja. ja's profile style marker is the
@@ -2201,7 +2209,7 @@ export const sendSchema: CommandSchema = {
       role: 'event',
       description: 'The event to send',
       required: true,
-      expectedTypes: ['literal', 'expression'], // identifiers tokenize as expression
+      expectedTypes: EVENT_NAME_TYPES, // identifiers tokenize as expression
       svoPosition: 1,
       sovPosition: 2,
       // bn marks the event sent accusatively, as trigger's: with the
@@ -2220,7 +2228,7 @@ export const sendSchema: CommandSchema = {
       // the destination silently defaulted to `me` — in the en reference AND
       // most translations alike (socket-send ×23). Marker-guarded, same
       // precedent as add.destination (#571).
-      expectedTypes: ['selector', 'reference', 'expression'],
+      expectedTypes: ELEMENT_TARGET_TYPES,
       default: { type: 'reference', value: 'me' },
       svoPosition: 2,
       sovPosition: 1,
@@ -2345,7 +2353,7 @@ export const repeatSchema: CommandSchema = {
       role: 'event',
       description: 'Event to wait for (terminates loop)',
       required: false,
-      expectedTypes: ['literal', 'expression'],
+      expectedTypes: EVENT_NAME_TYPES,
       svoPosition: 2,
       sovPosition: 2,
     },

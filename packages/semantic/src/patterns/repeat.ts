@@ -30,6 +30,7 @@
 
 import type { ExpectedType, LanguagePattern, PatternToken } from '../types';
 import { NATIVE_COUNT_WORDS } from './count-words';
+import { EVENT_NAME_TYPES } from '../generators/role-types';
 
 /**
  * What a count can be. A variable with its sigil (`$n`, `:n`), `it` and
@@ -500,7 +501,7 @@ function repeatUntilHeadVerbFirst(
   tokens.push({ type: 'literal', value: spec.untilWord });
   if (spec.preEvent) tokens.push({ type: 'literal', value: spec.preEvent });
   tokens.push({ type: 'literal', value: spec.eventWord });
-  tokens.push({ type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] });
+  tokens.push({ type: 'role', role: 'event', expectedTypes: EVENT_NAME_TYPES });
   tokens.push({
     type: 'group',
     optional: true,
@@ -584,7 +585,7 @@ function repeatUntilHeadSOV(
       tokens: [
         { type: 'literal', value: spec.untilWord },
         { type: 'literal', value: spec.eventWord },
-        { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
+        { type: 'role', role: 'event', expectedTypes: EVENT_NAME_TYPES },
         { type: 'literal', value: spec.objMarker },
         repeatVerb(language),
         {
@@ -631,7 +632,7 @@ function repeatUntilHeadSOVVerbFinal(
       tokens: [
         { type: 'literal', value: spec.untilWord },
         { type: 'literal', value: spec.eventWord },
-        { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
+        { type: 'role', role: 'event', expectedTypes: EVENT_NAME_TYPES },
         { type: 'literal', value: spec.objMarker },
         {
           type: 'role',
@@ -667,7 +668,7 @@ const repeatUntilHeadQuMidClause: LanguagePattern = {
     tokens: [
       { type: 'literal', value: 'until' },
       { type: 'literal', value: 'event' },
-      { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
+      { type: 'role', role: 'event', expectedTypes: EVENT_NAME_TYPES },
       { type: 'literal', value: 'ta' },
       { type: 'role', role: 'source', expectedTypes: ['selector', 'reference', 'expression'] },
       { type: 'literal', value: 'manta' },
@@ -713,7 +714,7 @@ const repeatUntilHeadQu: LanguagePattern = {
       { type: 'literal', value: 'a' },
       { type: 'literal', value: 'until' },
       { type: 'literal', value: 'event' },
-      { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
+      { type: 'role', role: 'event', expectedTypes: EVENT_NAME_TYPES },
       { type: 'literal', value: 'ta' },
       { type: 'role', role: 'source', expectedTypes: ['selector', 'reference', 'expression'] },
       { type: 'literal', value: 'manta' },
@@ -903,7 +904,7 @@ const repeatUntilHeadQuCanonical: LanguagePattern = {
     tokens: [
       { type: 'literal', value: 'kama' },
       { type: 'literal', value: 'ruway' },
-      { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
+      { type: 'role', role: 'event', expectedTypes: EVENT_NAME_TYPES },
       { type: 'literal', value: 'ta' },
       repeatVerb('qu'),
       {
