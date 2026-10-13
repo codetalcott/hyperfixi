@@ -468,8 +468,18 @@ export function matchQueryScope(
   // #box where it matches .a into me`, P57/P62): the marker comes after it.
   const filter =
     !!after &&
-    expressionWordOf(profile?.code ?? 'en', after, tokens[at + scope.consumed], tokens[at + 2 + scope.consumed], undefined).toLowerCase() === 'where';
-  if (isMarkerOwedByPattern?.(marker) === true && isMarkerOwedByPattern(after) !== true && !filter) {
+    expressionWordOf(
+      profile?.code ?? 'en',
+      after,
+      tokens[at + scope.consumed],
+      tokens[at + 2 + scope.consumed],
+      undefined
+    ).toLowerCase() === 'where';
+  if (
+    isMarkerOwedByPattern?.(marker) === true &&
+    isMarkerOwedByPattern(after) !== true &&
+    !filter
+  ) {
     return null;
   }
   return { marker, scope };
@@ -603,8 +613,16 @@ export function matchPositionalRun(
   // a comparison that some tokenizers lex as a selector: tr `son < 3` (a
   // variable spelled like tr's end word, whose reading is `last`) joined as
   // `last <` (PR 112).
+  // `closest @foo` (the nearest element with the attribute, upstream's form) queries an
+  // attribute, which every tokenizer reads as an identifier: without it the run declined
+  // and sw's `karibu` (a particle) stayed in the value, `(karibu @foo to #d1)`.
   const sel = tokens[i];
-  if (!sel || sel.kind !== 'selector' || COMPARISON_OPERATORS.has(sel.value)) return null;
+  const attributeQuery =
+    (dualHead ?? head.normalized ?? head.value).toLowerCase() === 'closest' &&
+    sel?.kind === 'identifier' &&
+    /^@[\w-]/.test(sel.value);
+  if (!sel || (sel.kind !== 'selector' && !attributeQuery) || COMPARISON_OPERATORS.has(sel.value))
+    return null;
   parts.push({ text: sel.value, token: sel });
   i++;
 
@@ -672,7 +690,11 @@ export function matchPositionalRun(
     // normalize to the ROLE NAME rather than an English word, so es `en` has to be
     // mapped back to the locative sense the slot carries (`in`) — otherwise this
     // renders `last <.message/> destination #chat`.
-    parts.push({ text: toEnglishLocative(profile, marker), token: marker });
+    //
+    // `to` is `closest X to Y`'s own word, which every language writes in English; read
+    // as a locative, pl's `to` (its word for `it`) came back `closest .bar it .foo`.
+    const englishTo = marker.value.toLowerCase() === 'to';
+    parts.push({ text: englishTo ? 'to' : toEnglishLocative(profile, marker), token: marker });
     parts.push({ text: source.value, token: source });
     i += 2;
   } else {
@@ -1763,7 +1785,9 @@ export function joinExpressionTokens(
       next !== undefined &&
       ((previousWord === 'in' &&
         ['closest', 'next', 'previous', 'first', 'last'].includes(next.value.toLowerCase())) ||
-        (previousWord === 'of' && next.kind === 'identifier' && /^[:$]?[A-Za-z_]\w*$/.test(next.value)))
+        (previousWord === 'of' &&
+          next.kind === 'identifier' &&
+          /^[:$]?[A-Za-z_]\w*$/.test(next.value)))
     ) {
       continue;
     }
@@ -1869,9 +1893,13 @@ export function joinExpressionTokens(
         });
       const propIdx = skipsConnector ? i + 2 : i + 1;
       const prop = tokens[propIdx];
-      if (prop && isPropertyHeadCandidate(prop, languageCode)) {
+      // After a connector an `@` attribute or `*` style property is the property too:
+      // id `saya punya @data-x` is `my @data-x`, and it read back `me punya @data-x`.
+      // Only after the connector, the shape the renderer writes for a possessive.
+      const sigilProperty = skipsConnector && prop !== undefined && /^[@*][\w-]/.test(prop.value);
+      if (prop && (sigilProperty || isPropertyHeadCandidate(prop, languageCode))) {
         append(getEnglishPossessiveAdjective(reference), token);
-        append(translatePropertyName(languageCode, prop.value), prop);
+        append(sigilProperty ? prop.value : translatePropertyName(languageCode, prop.value), prop);
         i = propIdx;
         continue;
       }

@@ -39,10 +39,26 @@ import type { ValueExtractor, ExtractionResult } from './value-extractor-types';
  * them a template literal shattered into ~12 fragments and no set pattern
  * could match the clause (template-literal-interpolation, R1 Family B).
  */
+/**
+ * A possessive `'s` glued to the word before it (`$data's`, `#d1's`), which qu renders as
+ * written: a word character before, `s` and a boundary after. Read as a string opener, a
+ * chain swallowed the text between its two `'s` (`$data's inner's val` →
+ * `$data` + `'s inner'` + `s val`, read back as `$data 's inner' s val`).
+ */
+function isPossessiveApostrophe(input: string, position: number): boolean {
+  return (
+    position > 0 &&
+    /[\p{L}\p{N}_\])]/u.test(input[position - 1]) &&
+    /s/i.test(input[position + 1] ?? '') &&
+    !/[\p{L}\p{N}_]/u.test(input[position + 2] ?? '')
+  );
+}
+
 class QuechuaStringLiteralExtractor implements ValueExtractor {
   readonly name = 'quechua-string-literal';
 
   canExtract(input: string, position: number): boolean {
+    if (input[position] === "'" && isPossessiveApostrophe(input, position)) return false;
     return input[position] === '"' || input[position] === "'" || input[position] === '`';
   }
 
