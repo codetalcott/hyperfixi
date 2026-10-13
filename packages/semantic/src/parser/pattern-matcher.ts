@@ -43,8 +43,6 @@ import {
   isConversionTypeName,
   ambiguousSenseOf,
   ofChainEnd,
-  endWordIsValue,
-  endWordPlace,
 } from './utils/expression-lexicon';
 import {
   BINARY_PHRASES,
@@ -77,7 +75,7 @@ import {
 import type { LanguageProfile } from '../generators/profiles/types';
 import { tryGetProfile } from '../registry';
 import { isAtEndConnective, isAtEndNounBeforeOf, isAtEndPositionNoun } from '../patterns/put';
-import { isCuratedEndKeyword } from './end-keywords';
+import { endWordIsValue, endWordPlace, isEndWord, isNormalizedEnd } from './end-words';
 import { foldNakedNamedArgsRaw } from './naked-args-fold';
 import { tokenValue } from './token-value';
 import type { ConfidenceModel } from './confidence-model';
@@ -1902,8 +1900,8 @@ export class PatternMatcher {
     if (next.kind === 'conjunction') return true;
     if (next.kind !== 'keyword') return false;
     const norm = (next.normalized ?? next.value).toLowerCase();
-    if (norm === 'then' || norm === 'end') return true;
-    return isCuratedEndKeyword(next.value, this.currentProfile?.code ?? '');
+    if (norm === 'then') return true;
+    return isEndWord(next, this.currentProfile?.code ?? '');
   }
 
   /**
@@ -2607,7 +2605,7 @@ export class PatternMatcher {
         token.kind === 'keyword') &&
       !RUN_OPERATORS.has(token.value) &&
       !['then', 'else'].includes(norm) &&
-      (norm !== 'end' || this.endWordIsValueAt(tokens)) &&
+      (!isNormalizedEnd(token) || this.endWordIsValueAt(tokens)) &&
       token.value !== ')'
     ) {
       tokens.advance();

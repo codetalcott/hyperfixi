@@ -20,21 +20,19 @@ import { createCommandNode, createCompoundNode, createConditionalNode } from '..
 import { tokenize as tokenizeInternal, TokenStreamImpl } from '../tokenizers';
 import { tryGetProfile } from '../registry';
 import { getSchema } from '../generators/command-schemas';
-import { endWordIsValue, endWordPlace } from './utils/expression-lexicon';
 import { patternMatcher } from './pattern-matcher';
 import { CONDITION_PREDICATES, copulaHoldsCondition } from './value-reading';
+import { isElseKeyword, isIfKeyword, isThenKeyword, isUnlessKeyword } from './clause-keywords';
 import {
+  endWordIsValue,
+  endWordPlace,
+  isAtEndOfNoun,
   isBlockEndToken,
-  isElseKeyword,
   isEndKeyword,
-  isIfKeyword,
   isThenAt,
-  isThenKeyword,
-  isUnlessKeyword,
-} from './clause-keywords';
+} from './end-words';
 import { consumeJsBlock, consumeVerbFinalJsBlock } from './js-block';
 import { type ParserState } from './parser-state';
-import { isAtEndPositionNoun } from '../patterns/put';
 import { joinTokenText } from './value-from-tokens';
 import {
   tryAttachTrailingDuration,
@@ -226,32 +224,16 @@ export function parseBodyWithClauses(
       (current.kind === 'keyword' &&
         isThenAt(current, endWordPlace(tokens.tokens, tokens.position()), language));
 
-    // Check if this is an 'end' keyword (terminates block). The English
-    // positional-put phrase `at end of <target>` contains the literal word
-    // `end` — when the pending clause ends with `at` and the next token is
-    // `of`, this `end` is the position noun, not a block terminator
-    // (`put it at end of body`, make-toast-element). The sandwich check is
-    // value-based and language-safe: no other language's end keyword sits
-    // between literal `at`/`of` tokens.
-    const prevClauseToken = currentClauseTokens[currentClauseTokens.length - 1];
-    const followingToken = tokens.peek(1);
-    const beforePrevClauseToken = currentClauseTokens[currentClauseTokens.length - 2];
-    const isPositionalEndNoun =
-      (followingToken?.value.toLowerCase() === 'of' &&
-        (prevClauseToken?.value.toLowerCase() === 'at' ||
-          // `at the end of`, which upstream reads too.
-          (prevClauseToken?.value.toLowerCase() === 'the' &&
-            beforePrevClauseToken?.value.toLowerCase() === 'at'))) ||
-      // Per-language `at end of` phrase (zh `在 结束 的`, id `di akhir dari`, …):
-      // the `end` noun tokenizes as a keyword in some languages and would
-      // otherwise chop make-toast's trailing `put it at end of body` clause.
-      isAtEndPositionNoun(language, current.value, prevClauseToken?.value, followingToken?.value);
+    // Check if this is an 'end' keyword (terminates block): not the noun of
+    // `at end of <target>` (`put it at end of body`, make-toast-element; zh
+    // `在 结束 的`, id `di akhir dari`), which is a position, and not a variable
+    // spelled like it where a value stands (C3).
+    const place = endWordPlace(tokens.tokens, tokens.position());
     const isEnd =
       current.kind === 'keyword' &&
       isEndKeyword(current.value, language) &&
-      !isPositionalEndNoun &&
-      // An end word where a value stands is a variable spelled like it (C3).
-      !endWordIsValue(endWordPlace(tokens.tokens, tokens.position()), language);
+      !isAtEndOfNoun(current, place, language) &&
+      !endWordIsValue(place, language);
 
     // Depth-aware termination. An `end` that closes a NESTED block accumulated
     // mid-clause must not terminate the whole body. A nested `if`/`unless`/
@@ -282,10 +264,7 @@ export function parseBodyWithClauses(
     // it and it never terminates a body; it can still close an open loop, by
     // the conditional fold's test (a keyword normalized `end`, not before a
     // selector). closeLoopAtEnd declines unless a loop is open.
-    const closesBlock =
-      isEnd ||
-      (!isPositionalEndNoun &&
-        isBlockEndToken(current, endWordPlace(tokens.tokens, tokens.position()), language));
+    const closesBlock = isEnd || isBlockEndToken(current, place, language);
     // A `while` no `repeat` claimed, last in a loop, is that loop's bottom
     // test (`repeat … while x < 3 end`): the `end` is the loop's. An SOV
     // while-phrase is claimed by the `repeat` verb after it before any `end`.
@@ -1070,8 +1049,7 @@ export function parseBodyWithGrammarPatterns(
       current &&
       openLoops() > 0 &&
       !isEndKeyword(current.value, language) &&
-      isBlockEndToken(current, endWordPlace(tokens.tokens, tokens.position()), language) &&
-      !isAtEndPositionNoun(language, current.value, tokens.peek(-1)?.value, tokens.peek(1)?.value)
+      isBlockEndToken(current, endWordPlace(tokens.tokens, tokens.position()), language)
     ) {
       flushClause();
       commands.push(LOOP_CLOSE);
@@ -1079,15 +1057,8 @@ export function parseBodyWithGrammarPatterns(
       continue;
     }
     if (current && isEndKeyword(current.value, language)) {
-      const prevTok = tokens.peek(-1);
-      const nextTok = tokens.peek(1);
-      const isPositionalEnd = isAtEndPositionNoun(
-        language,
-        current.value,
-        prevTok?.value,
-        nextTok?.value
-      );
-      if (!isPositionalEnd) {
+      const place = endWordPlace(tokens.tokens, tokens.position());
+      if (!isAtEndOfNoun(current, place, language)) {
         flushClause();
         if (openLoops() > 0) {
           // This `end` closes an earlier loop head — mark it and keep walking.

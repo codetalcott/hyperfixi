@@ -42,7 +42,7 @@ import type { LanguageProfile } from '../../generators/profiles/types';
 import { commandSchemas } from '../../generators/command-schemas';
 import { isValidReference } from '../../types';
 import { ROLE_MARKER_CONCEPTS } from './marker-resolution';
-import { isCuratedEndKeyword } from '../end-keywords';
+import { isEndWord, type EndWordPlace } from '../end-keywords';
 import { getPatternsForLanguage, tryGetProfile } from '../../registry';
 import { getEnglishPossessiveAdjective, getPossessiveReference } from './possessive-keywords';
 import { NATIVE_COUNT_WORDS } from '../../patterns/count-words';
@@ -1409,38 +1409,6 @@ function isStructureKeyword(token: LanguageToken): boolean {
   const norm = (token.normalized ?? token.value).toLowerCase();
   if (norm === 'event' || isValidReference(norm)) return false;
   return STRUCTURE_WORDS.has(norm) || ROLE_MARKER_CONCEPTS.has(norm);
-}
-
-/** An end word: a keyword normalized `end`, or one of the language's curated end words. */
-export function isEndWord(token: LanguageToken, languageCode: string): boolean {
-  if (token.kind !== 'keyword') return false;
-  const norm = (token.normalized ?? token.value).toLowerCase();
-  return norm === 'end' || isCuratedEndKeyword(token.value, languageCode);
-}
-
-/**
- * Where an end word stands: the two tokens either side of it. `beforePrev`
- * says whether `prev` is itself a value (a verb's or a marker's), and
- * `afterNext` whether `next` is the end word's own marker.
- */
-export interface EndWordPlace {
-  readonly prev?: LanguageToken | undefined;
-  readonly beforePrev?: LanguageToken | undefined;
-  /** The token before `beforePrev`. */
-  readonly third?: LanguageToken | undefined;
-  readonly next?: LanguageToken | undefined;
-  readonly afterNext?: LanguageToken | undefined;
-}
-
-/** The place of the token at `i` of `tokens`. */
-export function endWordPlace(tokens: readonly LanguageToken[], i: number): EndWordPlace {
-  return {
-    prev: tokens[i - 1],
-    beforePrev: tokens[i - 2],
-    third: tokens[i - 3],
-    next: tokens[i + 1],
-    afterNext: tokens[i + 2],
-  };
 }
 
 /**

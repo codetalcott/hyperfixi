@@ -18,8 +18,7 @@ import type {
 import { createCommandNode, BLOCK_COMMAND_ACTIONS } from '../types';
 import { tokenize as tokenizeInternal, TokenStreamImpl } from '../tokenizers';
 import { tryGetProfile } from '../registry';
-import { endWordPlace } from './utils/expression-lexicon';
-import { isBlockEndToken, isThenAt } from './clause-keywords';
+import { endWordPlace, isBlockEndToken, isThenAt } from './end-words';
 import { type ParserState } from './parser-state';
 import { joinTokenText } from './value-from-tokens';
 import {

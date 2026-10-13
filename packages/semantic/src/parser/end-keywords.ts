@@ -1,4 +1,9 @@
 /**
+ * End words, defined: the curated per-language block-terminator surfaces, what
+ * an end word is, and the place it stands in. The readers that ask the
+ * parser's questions of one are in `end-words.ts`; this layer sits below the
+ * expression lexicon, which reads end words too (C3, END_WORD_READERS.md).
+ *
  * Curated per-language block-terminator surfaces.
  *
  * These sets are AUDITED for two collision classes and deliberately exclude
@@ -16,6 +21,8 @@
  * Shared by the semantic parser's isEndKeyword and the pattern matcher's
  * role-value guards (pattern-matcher can't import semantic-parser — cycle).
  */
+import type { LanguageToken } from '../types';
+
 const CURATED_END_KEYWORDS: Record<string, Set<string>> = {
   en: new Set(['end']),
   // 終了 is deliberately ABSENT: it is the i18n dict's `exit` emission
@@ -62,4 +69,36 @@ export function curatedEndKeywordSet(language: string): Set<string> | undefined 
  */
 export function isCuratedEndKeyword(value: string, language: string): boolean {
   return CURATED_END_KEYWORDS[language]?.has(value.toLowerCase()) ?? false;
+}
+
+/** An end word: a keyword normalized `end`, or one of the language's curated end words. */
+export function isEndWord(token: LanguageToken, languageCode: string): boolean {
+  if (token.kind !== 'keyword') return false;
+  const norm = (token.normalized ?? token.value).toLowerCase();
+  return norm === 'end' || isCuratedEndKeyword(token.value, languageCode);
+}
+
+/**
+ * Where an end word stands: the two tokens either side of it. `beforePrev`
+ * says whether `prev` is itself a value (a verb's or a marker's), and
+ * `afterNext` whether `next` is the end word's own marker.
+ */
+export interface EndWordPlace {
+  readonly prev?: LanguageToken | undefined;
+  readonly beforePrev?: LanguageToken | undefined;
+  /** The token before `beforePrev`. */
+  readonly third?: LanguageToken | undefined;
+  readonly next?: LanguageToken | undefined;
+  readonly afterNext?: LanguageToken | undefined;
+}
+
+/** The place of the token at `i` of `tokens`. */
+export function endWordPlace(tokens: readonly LanguageToken[], i: number): EndWordPlace {
+  return {
+    prev: tokens[i - 1],
+    beforePrev: tokens[i - 2],
+    third: tokens[i - 3],
+    next: tokens[i + 1],
+    afterNext: tokens[i + 2],
+  };
 }

@@ -19,7 +19,8 @@ import { TokenStreamImpl } from '../tokenizers';
 import { tryGetProfile } from '../registry';
 import { getSchema } from '../generators/command-schemas';
 import { patternMatcher } from './pattern-matcher';
-import { isEndKeyword, isThenKeyword } from './clause-keywords';
+import { isThenKeyword } from './clause-keywords';
+import { isStrayTerminator } from './end-words';
 import { KNOWN_EVENTS, WAITABLE_EVENT_WORDS } from './event-words';
 import { tokensToSemanticValue } from './value-from-tokens';
 
@@ -220,44 +221,15 @@ export function extractRolesFromMarkedTokens(
 ): Record<string, SemanticValue> {
   const roles: Record<string, SemanticValue> = {};
 
-  // A block terminator the SOV reorder absorbed into a role phrase (bn
-  // repeat-while renders wait's object phrase as `200ms শেষ কে` — the
-  // terminator belongs after the verb) is structural residue, never part
-  // of a value: joined in it glues (`200msশেষ`), alone it fabricates a
-  // phantom trailing role. Recognized like isBlockEndToken (curated
-  // isEndKeyword surface OR keyword normalized `end`), but the positional
-  // lookahead applies to BOTH modes: a value group is exactly where a
-  // positional-`last` phrase lives (bn `শেষ <li/>`, tr `son .item`), so any
-  // terminator-shaped token followed by a selector keeps its positional
-  // reading.
-  const isStrayTerminator = (t: LanguageToken, next: LanguageToken | undefined): boolean => {
-    const curatedEnd = isEndKeyword(t.value, language);
-    const normalizedEnd = t.kind === 'keyword' && (t.normalized ?? '').toLowerCase() === 'end';
-    if (!curatedEnd && !normalizedEnd) return false;
-    // A terminator the clause walker matched to a tracked block opener is
-    // ALWAYS structural (never positional `last`), even before a selector —
-    // see the annotation in parseBodyWithClauses.
-    if (t.metadata?.closesTrackedBlock === true) return true;
-    // A CURATED end word is never the positional `last`: the curated sets
-    // are audited for exactly that collision (tr emits `sonuncu` for last,
-    // `son` stays the terminator; qu last is `qhipa`, not `tukuy`; ar آخر is
-    // deliberately absent BECAUSE it is positional). Without this, a loop's
-    // own `son` directly before the next command's selector was read as
-    // `last <sel>` and prefixed that command's role value (tr
-    // behavior-sortable remove.patient="last .{dragClass}").
-    if (curatedEnd) return true;
-    // Dual-use words reached via the normalized fallback (bn শেষ = end AND
-    // positional last) keep their positional reading before a selector.
-    return !(next && next.kind === 'selector');
-  };
-
   // Process a group of tokens: collect value tokens until a marker is found
   const processGroup = (tokens: LanguageToken[]) => {
     let valueTokens: LanguageToken[] = [];
 
     for (let i = 0; i < tokens.length; i++) {
       const token = tokens[i];
-      if (isStrayTerminator(token, tokens[i + 1])) continue;
+      // A block terminator the SOV reorder absorbed into a role phrase is
+      // structural residue, never part of a value (isStrayTerminator).
+      if (isStrayTerminator(token, tokens[i + 1], language)) continue;
       const role = markerToRole.get(token.value);
       if (role && token.kind === 'particle' && valueTokens.length > 0) {
         // This is a marker — assign the preceding value tokens to this role
