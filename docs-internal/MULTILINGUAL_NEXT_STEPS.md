@@ -176,7 +176,11 @@ command-shape dry run shows each move.
   prefixed until-head, still the render whenever the loop had a source, is read-only now, and
   `test/parse-only-patterns.test.ts` lists every read-only pattern.
 - (c) Arc D: penalize unconsumed input in the confidence score (G1). Then try deleting `parseInternal`'s
-  stages 0 and 0.5.
+  stages 0 and 0.5. **Measured 2026-10-13, superseded:** confidence only breaks ties
+  between patterns of equal priority, and over the command-shape cases in every language a coverage
+  penalty would change no choice (1 rival consumed more in 81,272 `matchBest` calls, never within 0.1
+  confidence). Stages 0/0.5 do not compare confidence, so a penalty cannot retire them. An unread tail
+  is already refused (F1, F2) and reported (MCP). OPEN_ITEMS G1 has the numbers.
 - (d) Split `semantic-parser.ts` by responsibility, behavior-preserving and checked against a parity
   oracle.
 - (e) Decide the semantic/framework `PatternMatcher` fork (4,247 vs 1,630 lines on 2026-10-06; Phase 3
