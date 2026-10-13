@@ -98,8 +98,12 @@ export const EVENT_NAME_TYPES: ExpectedType[] = ['literal', 'expression'];
 /** How long a `wait` waits: a time literal (`2s`) or an expression. */
 export const DURATION_TYPES: ExpectedType[] = ['literal', 'expression'];
 
-/** What `fetch` fetches: a URL literal, or an expression (a template, a variable). */
-export const FETCH_SOURCE_TYPES: ExpectedType[] = ['literal', 'expression'];
+/**
+ * What `fetch` fetches: a URL literal, an expression (a template, a variable), or a
+ * reference: a `$` or `:` variable reads as one, and without it every `fetch $u as JSON`
+ * fell to the pattern with no `as`, whose value then took `as JSON` as a conversion.
+ */
+export const FETCH_SOURCE_TYPES: ExpectedType[] = ['literal', 'expression', 'reference'];
 
 /** fetch's `as <type>`: json/text/html, which tokenize as identifiers (expression). */
 export const FETCH_RESPONSE_TYPES: ExpectedType[] = ['literal', 'expression'];
