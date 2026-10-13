@@ -33,7 +33,6 @@ import {
   createSelector,
   createLiteral,
   createReference,
-  isValidReference,
   BLOCK_COMMAND_ACTIONS,
   isBlockCommand,
   withPosition,
@@ -72,6 +71,21 @@ import {
   isUnlessKeyword,
 } from './clause-keywords';
 import { consumeJsBlock, consumeVerbFinalJsBlock } from './js-block';
+import {
+  MAX_UNCONSUMED_SPAN_CHARS,
+  NORMALIZE_CHILD_FIELDS,
+  describeUnconsumedInput,
+  hoistUnconsumedDiagnostics,
+  parseDiagnostic,
+  withDiagnostics,
+} from './parse-diagnostics';
+import { AS_MARKERS_AFTER, AS_MARKERS_BEFORE, RESPONSE_TYPE_WORDS } from './response-type-words';
+import {
+  reclaimCapturedDestinationTail,
+  reclaimDanglingFromTail,
+  reclaimEventCompoundTail,
+  reclaimResponseTypeTail,
+} from './tail-reclaim';
 import {
   parseErrorClauses,
   splitErrorClauses,
@@ -447,55 +461,6 @@ export class SemanticParseError extends Error {
   }
 }
 
-/** Helper to create a parse diagnostic */
-function parseDiagnostic(
-  message: string,
-  severity: 'error' | 'warning' | 'info',
-  code?: string
-): Diagnostic {
-  return { message, severity, source: 'semantic-parser', ...(code && { code }) };
-}
-
-/** Attach diagnostics to a semantic node */
-function withDiagnostics<T extends SemanticNode>(node: T, diagnostics: Diagnostic[]): T {
-  if (diagnostics.length === 0) return node;
-  return { ...node, diagnostics } as T;
-}
-
-/** Longest dropped span reported; keeps a runaway tail out of the diagnostic. */
-const MAX_UNCONSUMED_SPAN_CHARS = 120;
-
-/**
- * Describe the suffix of `input` that a winning command pattern never consumed,
- * or null when the pattern accounted for the whole token stream.
- *
- * Purely observational: callers attach the result as a diagnostic. Confidence is
- * computed from role coverage alone and is deliberately left untouched here: a
- * penalty for an unconsumed tail was measured (OPEN_ITEMS G1, 2026-10-13) and
- * changes no pattern choice, while translate() already refuses the tail (F1)
- * and MCP reports it. The diagnostic is what callers act on.
- */
-function describeUnconsumedInput(
-  match: PatternMatchResult,
-  tokens: TokenStream,
-  input: string
-): string | null {
-  const total = tokens.tokens.length;
-  if (match.consumedTokens >= total) return null;
-
-  const first = tokens.tokens[match.consumedTokens];
-  const last = tokens.tokens[total - 1];
-  if (!first || !last) return null;
-
-  const text = input.slice(first.position.start, last.position.end);
-  if (!text.trim()) return null;
-
-  const shown =
-    text.length > MAX_UNCONSUMED_SPAN_CHARS ? `${text.slice(0, MAX_UNCONSUMED_SPAN_CHARS)}…` : text;
-  const dropped = total - match.consumedTokens;
-  return `pattern ${match.pattern.id} left ${dropped} token(s) unconsumed: "${shown}"`;
-}
-
 /**
  * The repeat HEAD patterns: each stops before the loop body (see
  * patterns/repeat.ts), so a fused handler's re-parse can swap one in without
@@ -604,38 +569,6 @@ const COVERAGE_RESIDUE_NORMALIZED = new Set([
 ]);
 
 /**
- * Hoist `unconsumed-input` and `verbatim-clause` diagnostics from every
- * descendant node onto the top node, deduplicated by message. The coverage sweep and `compile(...).meta`
- * read only the TOP node's diagnostics; per-segment drops are recorded on the
- * node whose parse produced them (so they die with a discarded speculative
- * parse), and this lifts the survivors into view at the outermost parse exit.
- */
-function hoistUnconsumedDiagnostics(top: SemanticNode): SemanticNode {
-  const collected: Diagnostic[] = [];
-  const seen = new Set<string>((top.diagnostics ?? []).map(d => `${d.code}|${d.message}`));
-  const visit = (node: SemanticNode | null | undefined): void => {
-    if (!node || typeof node !== 'object') return;
-    if (node !== top) {
-      for (const d of node.diagnostics ?? []) {
-        if (d.code !== 'unconsumed-input' && d.code !== 'verbatim-clause') continue;
-        const key = `${d.code}|${d.message}`;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        collected.push(d);
-      }
-    }
-    const rec = node as unknown as Record<string, unknown>;
-    for (const field of NORMALIZE_CHILD_FIELDS) {
-      const child = rec[field];
-      if (Array.isArray(child)) for (const c of child) visit(c as SemanticNode);
-    }
-  };
-  visit(top);
-  if (collected.length === 0) return top;
-  return withDiagnostics(top, [...(top.diagnostics ?? []), ...collected]);
-}
-
-/**
  * Strip a symmetric pair of surrounding quote characters from a string
  * literal token's raw value. Unbalanced values are returned unchanged.
  */
@@ -672,16 +605,6 @@ function stripQuotes(val: string): string {
  *
  * Recurses into every body node; idempotent.
  */
-const NORMALIZE_CHILD_FIELDS = [
-  'body',
-  'statements',
-  'thenBranch',
-  'elseBranch',
-  'eventHandlers',
-  'initBlock',
-  'catchBody',
-  'finallyBody',
-] as const;
 
 /**
  * Whether a go destination, as written, is the language's own `back`: the word,
@@ -1080,14 +1003,15 @@ export class SemanticParserImpl implements ISemanticParser {
         // consumes its span or returns null, so the chain converges.
         if (node.kind === 'event-handler') {
           let cur = { node: node as EventHandlerSemanticNode, input };
+          const parseBack = (text: string, lang: string): SemanticNode => this.parse(text, lang);
           const em = cur.node.eventModifiers;
           if (em && (em.once || em.debounce !== undefined || em.throttle !== undefined)) {
             for (let round = 0; round < 4; round++) {
               const next =
-                this.reclaimDanglingFromTail(cur.node, cur.input, language) ??
-                this.reclaimEventCompoundTail(cur.node, cur.input, language) ??
-                this.reclaimResponseTypeTail(cur.node, cur.input, language) ??
-                this.reclaimCapturedDestinationTail(cur.node, cur.input, language);
+                reclaimDanglingFromTail(cur.node, cur.input, language, parseBack) ??
+                reclaimEventCompoundTail(cur.node, cur.input, language) ??
+                reclaimResponseTypeTail(cur.node, cur.input, language, parseBack) ??
+                reclaimCapturedDestinationTail(cur.node, cur.input, language);
               if (!next) break;
               cur = next;
             }
@@ -1103,7 +1027,7 @@ export class SemanticParserImpl implements ISemanticParser {
           // reclaim keeps first claim on its span: once the compound has
           // retired its words, the from-tail's improvement check (fewer
           // dropped tokens after re-parse) can no longer pass.
-          const compound = this.reclaimEventCompoundTail(cur.node, cur.input, language);
+          const compound = reclaimEventCompoundTail(cur.node, cur.input, language);
           if (compound) cur = compound;
           node = cur.node;
         }
@@ -1681,7 +1605,7 @@ export class SemanticParserImpl implements ISemanticParser {
           // (ar `تمرير الماوس` is mouseover, not its first word's `scroll`).
           // This re-parse is nested, so join it here.
           if (reparsed?.kind === 'event-handler') {
-            const joined = this.reclaimEventCompoundTail(
+            const joined = reclaimEventCompoundTail(
               hoistUnconsumedDiagnostics(reparsed) as EventHandlerSemanticNode,
               reduced,
               language
@@ -3361,7 +3285,7 @@ export class SemanticParserImpl implements ISemanticParser {
         const rSpec = rSchema?.roles.find(r => r.role === 'responseType' && !r.required);
         if (rSpec && !rNode.roles.has('responseType')) {
           const isResponseWord = (w: unknown): w is string =>
-            typeof w === 'string' && SemanticParserImpl.RESPONSE_TYPE_WORDS.has(w.toLowerCase());
+            typeof w === 'string' && RESPONSE_TYPE_WORDS.has(w.toLowerCase());
           const rebuildWithResponseType = (word: string, dropDestination: boolean): void => {
             const roles = Object.fromEntries(rNode.roles) as Record<string, SemanticValue>;
             if (dropDestination) delete roles.destination;
@@ -5390,7 +5314,7 @@ export class SemanticParserImpl implements ISemanticParser {
     // exactly as before (the en reference drops it too: equal lossiness).
     if (
       run.length === 1 &&
-      SemanticParserImpl.RESPONSE_TYPE_WORDS.has(run[0].value.toLowerCase())
+      RESPONSE_TYPE_WORDS.has(run[0].value.toLowerCase())
     ) {
       return;
     }
@@ -5408,43 +5332,6 @@ export class SemanticParserImpl implements ISemanticParser {
     for (let i = 0; i <= markerOffset; i++) stream.advance();
     this.tryAttachResponseTypeAfterStyle(stream, command, language);
   }
-
-  /**
-   * Per-language `as`-marker surfaces for the post-style responseType attach
-   * below. The semantic profiles carry no responseType role marker outside en
-   * (the generated patterns never needed one), so these come from the corpus
-   * renders — the ground truth for marker surfaces (fetch-with-headers ×24).
-   * Prepositional: `<marker> JSON` (es `como JSON`, zh `的 JSON`, ar `كـ JSON`).
-   * Postpositional sequences: `JSON <marker…>` (ko `JSON 로`, hi `JSON के रूप
-   * में`); ja/bn render the response word bare.
-   */
-  private static readonly AS_MARKERS_BEFORE: Record<string, readonly string[]> = {
-    en: ['as'],
-    es: ['como'],
-    fr: ['comme'],
-    pt: ['como'],
-    it: ['come'],
-    de: ['als'],
-    id: ['sebagai'],
-    ms: ['sebagai', 'sbg'],
-    sw: ['kuwa', 'kama'],
-    th: ['เป็น'],
-    vi: ['như'],
-    tl: ['bilang'],
-    he: ['כ'],
-    ar: ['كـ'],
-    pl: ['jako'],
-    ru: ['как'],
-    uk: ['як'],
-    zh: ['的', '作为', '当作'],
-  };
-
-  private static readonly AS_MARKERS_AFTER: Record<string, readonly (readonly string[])[]> = {
-    ko: [['로'], ['으로']],
-    qu: [['hina']],
-    tr: [['olarak']],
-    hi: [['के', 'रूप', 'में']],
-  };
 
   /**
    * Consume a trailing as-phrase into `responseType` right after a style
@@ -5467,7 +5354,7 @@ export class SemanticParserImpl implements ISemanticParser {
     const schema = getSchema(command.action as ActionType);
     if (!schema?.roles.some(r => r.role === 'responseType' && !r.required)) return;
     const isResponseWord = (w: string | undefined): w is string =>
-      !!w && SemanticParserImpl.RESPONSE_TYPE_WORDS.has(w.toLowerCase());
+      !!w && RESPONSE_TYPE_WORDS.has(w.toLowerCase());
 
     const t0 = stream.peek();
     if (!t0) return;
@@ -5475,7 +5362,7 @@ export class SemanticParserImpl implements ISemanticParser {
       roles.set('responseType', { type: 'expression', raw: word } as SemanticValue);
     };
 
-    const before = SemanticParserImpl.AS_MARKERS_BEFORE[language];
+    const before = AS_MARKERS_BEFORE[language];
     if (before?.some(m => t0.value.toLowerCase() === m)) {
       const t1 = stream.peek(1);
       if (t1 && isResponseWord(t1.value)) {
@@ -5489,7 +5376,7 @@ export class SemanticParserImpl implements ISemanticParser {
     if (isResponseWord(t0.value)) {
       stream.advance();
       setResponseType(t0.value);
-      for (const seq of SemanticParserImpl.AS_MARKERS_AFTER[language] ?? []) {
+      for (const seq of AS_MARKERS_AFTER[language] ?? []) {
         if (seq.every((w, i) => stream.peek(i)?.value.toLowerCase() === w)) {
           for (let i = 0; i < seq.length; i++) stream.advance();
           break;
@@ -6549,24 +6436,6 @@ export class SemanticParserImpl implements ISemanticParser {
    * SOV event marker particles per language (postpositions that mark the event role).
    * Korean has no event marker particle -- the event keyword stands alone.
    */
-  /**
-   * Known `fetch … as <type>` response-type words. Untranslated loanwords in
-   * every corpus language (the transformer localizes the `as` marker, never the
-   * word), so a value-set gate is language-invariant. Used by the trailing
-   * response-type reclaim in {@link buildEventHandler} — mirrors core's
-   * supported conversions (json/text/html/response + binary forms).
-   */
-  private static readonly RESPONSE_TYPE_WORDS = new Set([
-    'json',
-    'text',
-    'html',
-    'xml',
-    'blob',
-    'arraybuffer',
-    'formdata',
-    'response',
-  ]);
-
   static readonly SOV_EVENT_MARKERS: Record<string, Set<string>> = {
     ja: new Set(['で']),
     ko: new Set(), // ko's marker is the two-token 할 때 phrase — see SOV_EVENT_MARKER_PHRASES
@@ -8705,304 +8574,6 @@ export class SemanticParserImpl implements ISemanticParser {
       return { remainingInput: stripped };
     }
     return { remainingInput: null };
-  }
-
-  /**
-   * Reclaim a dangling `from <source>` phrase left unconsumed by an
-   * event-handler parse (Arc F stage 2, the window-resize shape). The grammar
-   * transformer floats the handler-head `from window` clause away from the
-   * event (SVO renders leave it clause-final after the body — `llamar
-   * adjustLayout() de ventana` — SOV renders leave it trailing — `呼び出し
-   * ウィンドウ から`), where no pattern consumes it and the two tokens drop.
-   * When the dropped span is exactly (or contains) a `<source-marker> <noun>`
-   * phrase, excise the phrase, re-parse, and attach the noun as
-   * eventModifiers.from — the same field the pattern-extracted `source` role
-   * (en `on resize from window …`) lands in, so all languages carry the same
-   * shape. Triple-gated: the marker must be profile/normalized-identified,
-   * the noun a bare identifier/keyword, and the phrase verbatim inside an
-   * actual unconsumed span — a `from` phrase any pattern consumed (fetch
-   * from, take … from) never has a matching drop and is untouchable here.
-   * Only fires from the event-modifier lift, so ordinary parses never enter.
-   */
-  private static droppedTokenCount(node: SemanticNode): number {
-    return (node.diagnostics ?? [])
-      .filter(d => d.code === 'unconsumed-input')
-      .reduce(
-        (sum, d) => sum + (parseInt(/left (\d+) token/.exec(d.message)?.[1] ?? '0', 10) || 0),
-        0
-      );
-  }
-
-  private static unconsumedSpans(node: SemanticNode): string[] {
-    return (node.diagnostics ?? [])
-      .filter(d => d.code === 'unconsumed-input')
-      .map(d => /unconsumed: "(.*)"$/.exec(d.message)?.[1])
-      .filter((s): s is string => !!s)
-      .map(s => s.replace(/\s+/g, ' ').trim());
-  }
-
-  /** Drop the unconsumed-input diagnostics whose quoted span equals `span`. */
-  private static withoutSpanDiagnostics<T extends SemanticNode>(node: T, span: string): T {
-    return {
-      ...node,
-      diagnostics: (node.diagnostics ?? []).filter(d => {
-        if (d.code !== 'unconsumed-input') return true;
-        const q = /unconsumed: "(.*)"$/.exec(d.message)?.[1];
-        return !q || q.replace(/\s+/g, ' ').trim() !== span;
-      }),
-    };
-  }
-
-  /**
-   * Type a reclaimed event-source noun the way the matcher's head captures do:
-   * a selector, or a reference the tokenizer normalized (ar نافذة / vi `window`
-   * → `window`), so the English render says `from window`, not `from "نافذة"`.
-   * Anything else keeps the legacy string literal.
-   */
-  private static sourceNounValue(noun: LanguageToken): SemanticValue {
-    if (noun.kind === 'selector') return createSelector(noun.value);
-    const name = (noun.normalized ?? noun.value).toLowerCase();
-    if (isValidReference(name)) return { type: 'reference', value: name };
-    return { type: 'literal', value: noun.value, dataType: 'string' };
-  }
-
-  private reclaimDanglingFromTail(
-    handler: EventHandlerSemanticNode,
-    input: string,
-    language: string
-  ): { node: EventHandlerSemanticNode; input: string } | null {
-    const droppedTokenCount = SemanticParserImpl.droppedTokenCount;
-    const spans = SemanticParserImpl.unconsumedSpans(handler);
-    if (spans.length === 0) return null;
-    const beforeCount = droppedTokenCount(handler);
-
-    const marker = tryGetProfile(language)?.roleMarkers?.source;
-    const markerForms = new Set<string>();
-    if (marker?.primary) markerForms.add(marker.primary);
-    marker?.alternatives?.forEach(a => markerForms.add(a));
-
-    const toks = tokenizeInternal(input, language).tokens;
-    for (let i = 0; i < toks.length; i++) {
-      const t = toks[i];
-      if (t.normalized !== 'source' && !markerForms.has(t.value)) continue;
-      // Postpositional markers (ja から, ko 에서, tr den) follow the noun;
-      // prepositional ones (es de, de von, ar من) precede it.
-      const nounIdx = marker?.position === 'after' ? i - 1 : i + 1;
-      const noun = toks[nounIdx];
-      if (!noun || (noun.kind !== 'identifier' && noun.kind !== 'keyword')) continue;
-      const start = Math.min(t.position.start, noun.position.start);
-      const end = Math.max(t.position.end, noun.position.end);
-      const phrase = input.slice(start, end).replace(/\s+/g, ' ').trim();
-      if (!spans.some(s => s === phrase || s.includes(phrase))) continue;
-      const excised = (input.slice(0, start).trimEnd() + ' ' + input.slice(end).trimStart()).trim();
-      if (!excised || excised === input) continue;
-      try {
-        // The re-parse runs below the depth-1 wrapper, so its subtree
-        // diagnostics were NOT hoisted — hoist here, both for an honest
-        // dropped-token comparison and so the returned node (which becomes
-        // the top node) still surfaces every residual firing to the sweep.
-        const reparsed = this.parse(excised, language);
-        if (!reparsed || reparsed.kind !== 'event-handler') continue;
-        const hoisted = hoistUnconsumedDiagnostics(reparsed) as EventHandlerSemanticNode;
-        if (droppedTokenCount(hoisted) < beforeCount) {
-          return {
-            node: {
-              ...hoisted,
-              eventModifiers: {
-                ...hoisted.eventModifiers,
-                from: SemanticParserImpl.sourceNounValue(noun),
-              },
-            },
-            input: excised,
-          };
-        }
-      } catch {
-        // keep scanning — a failed excision must not lose the stage-1 result
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Rebind a tokenizer-split compound event name (Arc F). A hand-written name
-   * can be several words the tokenizer does not emit whole (ar `تمرير الماوس`,
-   * mouseover): the event slot captures only the first word (canonicalized to
-   * the WRONG event — `scroll`) and the rest drops unconsumed. (The names the
-   * renderer writes are all read whole, so a render never needs this.) When a
-   * dangling span, joined offset-exactly with the token immediately before
-   * it, hits a compound key in eventNameTranslations — and that preceding
-   * token is the very word the current event was
-   * canonicalized from — rebind the event to the compound's English name and
-   * retire the span's diagnostic: the fragment is consumed by attribution.
-   */
-  private reclaimEventCompoundTail(
-    handler: EventHandlerSemanticNode,
-    input: string,
-    language: string
-  ): { node: EventHandlerSemanticNode; input: string } | null {
-    const spans = SemanticParserImpl.unconsumedSpans(handler);
-    if (spans.length === 0) return null;
-    const table = eventNameTranslations[language];
-    if (!table) return null;
-    const roles = handler.roles as Map<SemanticRole, SemanticValue>;
-    const eventRole = roles.get('event');
-    const currentEvent =
-      eventRole?.type === 'literal' && typeof eventRole.value === 'string' ? eventRole.value : null;
-    if (!currentEvent) return null;
-    const collapse = (s: string): string => s.replace(/\s+/g, ' ').trim();
-    const toks = tokenizeInternal(input, language).tokens;
-    for (const span of spans) {
-      for (let i = 1; i < toks.length; i++) {
-        for (let j = i; j < toks.length; j++) {
-          const surface = collapse(input.slice(toks[i].position.start, toks[j].position.end));
-          if (surface.length > span.length) break;
-          if (surface !== span) continue;
-          const prev = toks[i - 1];
-          const prevEnglish = table[prev.value] ?? prev.normalized;
-          if (prevEnglish !== currentEvent) break;
-          const candidate = collapse(input.slice(prev.position.start, toks[j].position.end));
-          const english = table[candidate];
-          if (!english) break;
-          roles.set('event', { type: 'literal', value: english, dataType: 'string' });
-          return { node: SemanticParserImpl.withoutSpanDiagnostics(handler, span), input };
-        }
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Reclaim a stranded `as <type>` phrase into the body fetch's responseType
-   * (Arc F). Lifting the modifier phrase changes which event pattern wins for
-   * he/id event-debounce, and the winning fused path strands the as-phrase
-   * (`כ json`, `sebagai json`) the losing path used to consume. When a
-   * dangling span is exactly `<as-marker> <known-response-word>`, excise it,
-   * re-parse, and set the captured word as responseType on the first body
-   * command whose schema declares the (optional) role — the same value shape
-   * the trailing-responseType reclaim produces.
-   */
-  private reclaimResponseTypeTail(
-    handler: EventHandlerSemanticNode,
-    input: string,
-    language: string
-  ): { node: EventHandlerSemanticNode; input: string } | null {
-    const spans = SemanticParserImpl.unconsumedSpans(handler);
-    if (spans.length === 0) return null;
-    const before = SemanticParserImpl.AS_MARKERS_BEFORE[language];
-    if (!before) return null;
-    const collapse = (s: string): string => s.replace(/\s+/g, ' ').trim();
-    const beforeCount = SemanticParserImpl.droppedTokenCount(handler);
-    const toks = tokenizeInternal(input, language).tokens;
-    for (let i = 0; i + 1 < toks.length; i++) {
-      const a = toks[i];
-      const b = toks[i + 1];
-      if (!before.some(m => a.value.toLowerCase() === m)) continue;
-      if (!SemanticParserImpl.RESPONSE_TYPE_WORDS.has(b.value.toLowerCase())) continue;
-      const phrase = collapse(input.slice(a.position.start, b.position.end));
-      if (!spans.includes(phrase)) continue;
-      const excised = (
-        input.slice(0, a.position.start).trimEnd() +
-        ' ' +
-        input.slice(b.position.end).trimStart()
-      ).trim();
-      if (!excised || excised === input) continue;
-      try {
-        const reparsed = this.parse(excised, language);
-        if (!reparsed || reparsed.kind !== 'event-handler') continue;
-        const hoisted = hoistUnconsumedDiagnostics(reparsed) as EventHandlerSemanticNode;
-        if (SemanticParserImpl.droppedTokenCount(hoisted) >= beforeCount) continue;
-        const target = SemanticParserImpl.findResponseTypeTarget(hoisted);
-        if (!target) continue;
-        (target.roles as Map<SemanticRole, SemanticValue>).set('responseType', {
-          type: 'expression',
-          raw: b.value,
-        } as SemanticValue);
-        return { node: hoisted, input: excised };
-      } catch {
-        // keep scanning
-      }
-    }
-    return null;
-  }
-
-  /** First command in the tree whose schema declares an optional, unset responseType. */
-  private static findResponseTypeTarget(node: SemanticNode): CommandSemanticNode | null {
-    let found: CommandSemanticNode | null = null;
-    const visit = (n: SemanticNode | null | undefined): void => {
-      if (!n || typeof n !== 'object' || found) return;
-      if (n.kind === 'command') {
-        const cmd = n as CommandSemanticNode;
-        const schema = getSchema(cmd.action as ActionType);
-        if (
-          schema?.roles.some(r => r.role === 'responseType' && !r.required) &&
-          !(cmd.roles as Map<SemanticRole, SemanticValue>).has('responseType')
-        ) {
-          found = cmd;
-          return;
-        }
-      }
-      const rec = n as unknown as Record<string, unknown>;
-      for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'commands']) {
-        const c = rec[f];
-        if (Array.isArray(c)) c.forEach(x => visit(x as SemanticNode));
-      }
-    };
-    visit(node);
-    return found;
-  }
-
-  /**
-   * Retire a provably-false dropped-destination record (Arc F). The zh
-   * event-once body walk records `到 我` as dropped in a superseded clause
-   * attempt, yet the committed tree HAS the add command's
-   * destination:reference=me — the span's content was captured, the record
-   * just outlived the attempt that made it. Only when the span is exactly
-   * `<destination-marker> <me>` AND a body command carries
-   * destination:reference=me is the diagnostic removed; nothing else changes.
-   */
-  private reclaimCapturedDestinationTail(
-    handler: EventHandlerSemanticNode,
-    input: string,
-    language: string
-  ): { node: EventHandlerSemanticNode; input: string } | null {
-    const spans = SemanticParserImpl.unconsumedSpans(handler);
-    if (spans.length === 0) return null;
-    const dest = tryGetProfile(language)?.roleMarkers?.destination;
-    const forms = new Set<string>();
-    if (dest?.primary) forms.add(dest.primary);
-    dest?.alternatives?.forEach(a => forms.add(a));
-    if (forms.size === 0) return null;
-    const collapse = (s: string): string => s.replace(/\s+/g, ' ').trim();
-    const toks = tokenizeInternal(input, language).tokens;
-    for (let i = 0; i + 1 < toks.length; i++) {
-      const a = toks[i];
-      const b = toks[i + 1];
-      const prepositional = forms.has(a.value) && b.normalized === 'me';
-      const postpositional = a.normalized === 'me' && forms.has(b.value);
-      if (!prepositional && !postpositional) continue;
-      const phrase = collapse(input.slice(a.position.start, b.position.end));
-      if (!spans.includes(phrase)) continue;
-      let captured = false;
-      const visit = (n: SemanticNode | null | undefined): void => {
-        if (!n || typeof n !== 'object' || captured) return;
-        if (n.kind === 'command') {
-          const d = (n as CommandSemanticNode).roles.get('destination');
-          if (d?.type === 'reference' && d.value === 'me') {
-            captured = true;
-            return;
-          }
-        }
-        const rec = n as unknown as Record<string, unknown>;
-        for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'commands']) {
-          const c = rec[f];
-          if (Array.isArray(c)) c.forEach(x => visit(x as SemanticNode));
-        }
-      };
-      visit(handler);
-      if (!captured) continue;
-      return { node: SemanticParserImpl.withoutSpanDiagnostics(handler, phrase), input };
-    }
-    return null;
   }
 
   /**
