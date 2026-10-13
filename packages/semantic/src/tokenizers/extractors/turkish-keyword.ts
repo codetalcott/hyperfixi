@@ -109,11 +109,14 @@ export class TurkishKeywordExtractor implements ContextAwareExtractor {
 
     const startPos = position;
 
-    // An `_`-joined run that is a registered keyword is one token (`tuş_bas`,
-    // `fare_bas`: keydown, mousedown), as Swahili's extractor reads one. Any
-    // other run splits at `_` exactly as before (was OPEN_ITEMS P51).
+    // An `_`-joined run is one token: a registered keyword (`tuş_bas`, `fare_bas`:
+    // keydown, mousedown; was OPEN_ITEMS P51) or a snake_case name (`my_func()`),
+    // which split at `_` before. Digits continue a name's run (`x_1`).
     let runEnd = startPos;
-    while (runEnd < input.length && (isTurkishLetter(input[runEnd]) || input[runEnd] === '_')) {
+    while (
+      runEnd < input.length &&
+      (isTurkishLetter(input[runEnd]) || input[runEnd] === '_' || /[0-9]/.test(input[runEnd]))
+    ) {
       runEnd++;
     }
     const run = input.slice(startPos, runEnd);
@@ -128,6 +131,7 @@ export class TurkishKeywordExtractor implements ContextAwareExtractor {
           },
         };
       }
+      if (!run.endsWith('_')) return { value: run, length: run.length };
     }
 
     // First, try to find the longest matching keyword starting at this position

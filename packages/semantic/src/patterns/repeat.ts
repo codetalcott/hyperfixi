@@ -647,13 +647,13 @@ function repeatUntilHeadSOVVerbFinal(
 }
 
 /**
- * Mid-clause twin of {@link repeatUntilHeadQu}: anchors at `kama`(→until)
- * WITHOUT the `hayk _ a` junk prefix. Inside a multi-command clause (the
- * sortable behavior body) the PRECEDING command's verb-first pattern greedily
- * consumes `hayk` as its trailing role, so the clause loop reaches the repeat
- * head at `_ a kama …` and skips to `kama` — where the prefixed variant can no
- * longer match. Both variants are HEAD-ONLY (id ends in `-until-head` for the
- * re-parse allowlist).
+ * qu event-terminated loop HEAD as the retired i18n transformer wrote it:
+ * `hayk_akama ruway {event} ta {source} manta kutipay`, the until-compound fronted and
+ * the source phrase BEFORE the clause-final verb. `hayk_akama` is one keyword (→until)
+ * since `_` continues a word; it used to split into `hayk _ a kama`, which a second,
+ * prefixed head matched in-pattern (removed 2026-10-13). The literals are NORMALIZED
+ * forms (→until, ruway→event, kutipay→repeat), so the head survives respellings of the
+ * verbs. HEAD-ONLY: the id ends in `-until-head` for the re-parse allowlist.
  */
 const repeatUntilHeadQuMidClause: LanguagePattern = {
   id: 'repeat-qu-midclause-until-head',
@@ -687,46 +687,6 @@ const SOV_UNTIL_HEADS: Array<
   ['ko', { untilWord: '까지', eventWord: '이벤트', objMarker: '를', fromWord: '에서' }],
   ['tr', { untilWord: 'kadar', eventWord: 'olay', objMarker: 'i', fromWord: 'den' }],
 ];
-
-/**
- * qu event-terminated loop HEAD: `hayk_akama ruway {event} ta {source} manta
- * kutipay` — until + event-kw fronted, source phrase BEFORE the clause-final
- * verb (unlike the other SOV five, where source trails the verb). The
- * `hayk_akama` until-compound tokenizes as `hayk _ a kama`(→until); the junk
- * prefix is matched IN-PATTERN because a standalone statement parse only
- * tries patterns at position 0 (it has no skip-ahead — the behaviors' repeat
- * line is exactly this statement). The trailing literals are NORMALIZED forms
- * (kama→until, ruway→event, kutipay→repeat), so the head survives dictionary
- * respellings of the verbs.
- */
-const repeatUntilHeadQu: LanguagePattern = {
-  id: 'repeat-qu-until-head',
-  language: 'qu',
-  command: 'repeat',
-  priority: 110,
-  // Read-only (R6): its junk prefix and English literals are what the retired
-  // transformer wrote, never Quechua. With a source it outscored the canonical
-  // head below, so qu wrote `hayk _ a until event pointerup ta #box manta repeat`.
-  parseOnly: true,
-  template: {
-    format: 'hayk _ a until event {event} ta {source} manta repeat',
-    tokens: [
-      { type: 'literal', value: 'hayk' },
-      { type: 'literal', value: '_' },
-      { type: 'literal', value: 'a' },
-      { type: 'literal', value: 'until' },
-      { type: 'literal', value: 'event' },
-      { type: 'role', role: 'event', expectedTypes: EVENT_NAME_TYPES },
-      { type: 'literal', value: 'ta' },
-      { type: 'role', role: 'source', expectedTypes: ELEMENT_TARGET_TYPES },
-      { type: 'literal', value: 'manta' },
-      { type: 'literal', value: 'repeat' },
-    ],
-  },
-  extraction: {
-    loopType: { default: { type: 'literal', value: 'until-event' } },
-  },
-};
 
 /**
  * Verb-FINAL for-binding head — the SOV mirror of `repeatForInHead`, emitted
@@ -883,8 +843,8 @@ for (const [lang, spec] of SOV_UNTIL_HEADS) {
  * [{source} manta]`, the same shape the other SOV five get from
  * `repeatUntilHeadSOV`.
  *
- * The two heads below it exist to READ the i18n transformer's
- * `hayk_akama … kutipay` output and carry that junk prefix IN-PATTERN — so the
+ * The head above it READS the i18n transformer's `hayk_akama … kutipay` output. The
+ * transformer's forms used to be matched with their junk prefix IN-PATTERN, so the
  * renderer, choosing among the patterns registered for the command, emitted the
  * junk as a surface: `hayk _ a until event mouseup ta manta repeat`. That is not
  * Quechua, and qu was the only language whose repeat-until row could not read
@@ -893,13 +853,12 @@ for (const [lang, spec] of SOV_UNTIL_HEADS) {
  *
  * Outranking them was not enough: with a source, the prefixed head's required
  * `{source}` outscored this one's optional group, and the junk came back
- * (`repeat until event pointerup from #box`). Both are `parseOnly` now (R6), so
- * the renderer never sees them.
+ * (`repeat until event pointerup from #box`). The transformer's head is `parseOnly`
+ * (R6), so the renderer never sees it.
  *
- * It cannot reuse `repeatUntilHeadSOV`: that builder derives the id
- * `repeat-{lang}-until-head`, which is exactly `repeatUntilHeadQu`'s id, and the
- * registration would silently REPLACE the tolerance (measured: the i18n form
- * then failed to parse at all).
+ * It does not use `repeatUntilHeadSOV`, whose id `repeat-{lang}-until-head` was the
+ * removed prefixed head's: registering both under one id silently REPLACED the
+ * tolerance (measured: the i18n form then failed to parse at all).
  */
 const repeatUntilHeadQuCanonical: LanguagePattern = {
   id: 'repeat-qu-canonical-until-head',
@@ -930,7 +889,6 @@ const repeatUntilHeadQuCanonical: LanguagePattern = {
 };
 
 addPattern('qu', repeatUntilHeadQuCanonical);
-addPattern('qu', repeatUntilHeadQu);
 addPattern('qu', repeatUntilHeadQuMidClause);
 
 /**

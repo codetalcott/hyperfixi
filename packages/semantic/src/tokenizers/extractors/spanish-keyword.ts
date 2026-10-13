@@ -14,7 +14,10 @@ import { isWhitespace } from '../base';
 
 function createLatinCharClassifiers(pattern: RegExp) {
   const isLetter = (char: string) => pattern.test(char);
-  const isIdentifierChar = (char: string) => /[0-9]/.test(char) || pattern.test(char);
+  // `_` is a word character mid-word (never a word start: canExtract tests isLetter), so a
+  // snake_case name (`my_func()`) is one word and an `_`-joined keyword is looked up whole,
+  // as the Cyrillic and Malay extractors read them. It split at `_` before.
+  const isIdentifierChar = (char: string) => /[0-9_]/.test(char) || pattern.test(char);
   return { isLetter, isIdentifierChar };
 }
 
