@@ -40,7 +40,12 @@ src/
 │   └── pattern-generator.ts    # Generate patterns from schemas
 │
 ├── parser/               # Semantic parser
-│   ├── semantic-parser.ts      # Main parser
+│   ├── semantic-parser.ts      # Entry: SemanticParserImpl.parse + the public functions
+│   ├── parse-internal.ts       # One parse, stage by stage (parseInternal)
+│   ├── clause-walk.ts          # A body read clause by clause; conditional blocks
+│   ├── event-handler-builder.ts # buildEventHandler
+│   ├── parser-state.ts         # ParserState: the moved functions take it first
+│   ├── …                       # 17 more modules split out in M3 (d)
 │   └── pattern-matcher.ts      # Pattern matching engine
 │
 ├── patterns/             # Hand-crafted patterns (fallback)
@@ -247,7 +252,7 @@ Available templates:
 | `src/generators/profiles/marker-templates.ts` | Shared role markers, verb configs, possessive templates — **DEAD CODE: zero importers, drifted**                                                                                                                                                                           |
 | `src/patterns/builders.ts`                    | Pattern registry and `buildPatternsForLanguage()`                                                                                                                                                                                                                          |
 | `src/patterns/handcrafted.ts`                 | Per-language hand-crafted patterns: each `languages/<lang>.ts` registers its `patterns/handcrafted/<lang>.ts` list through `/core`, so a single-language bundle holds only its own. A new `get<Cmd>Patterns<Lang>` goes in that list (`test/handcrafted-registry.test.ts`) |
-| `src/parser/semantic-parser.ts`               | Main parsing logic                                                                                                                                                                                                                                                         |
+| `src/parser/semantic-parser.ts`               | Entry: `SemanticParserImpl.parse` and the public functions; the stages of a parse live beside it (`parse-internal.ts`, `clause-walk.ts`, `event-handler-builder.ts`, …)                                                                                                    |
 | `src/parser/pattern-matcher.ts`               | Pattern matching engine                                                                                                                                                                                                                                                    |
 | `src/tokenizers/base.ts`                      | BaseTokenizer class with `initializeKeywordsFromProfile()`                                                                                                                                                                                                                 |
 | `src/core-bridge.ts`                          | SemanticIntegrationAdapter for core package                                                                                                                                                                                                                                |

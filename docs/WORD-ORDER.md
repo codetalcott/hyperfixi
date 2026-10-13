@@ -31,7 +31,8 @@ The canonical `toggle .active on #button`:
 A faithful parse of all of these collapses to the **same** semantic node
 (`toggle`, patient `.active`, destination `#button`). The phenomena below are the
 ways that collapse goes wrong — and how the engine handles each. Mechanisms live in
-[`semantic-parser.ts`](../packages/semantic/src/parser/semantic-parser.ts),
+[`semantic-parser.ts`](../packages/semantic/src/parser/semantic-parser.ts) and the modules beside it in
+[`parser/`](../packages/semantic/src/parser/) (the clause walk, the event handler, the stages of a parse),
 [`block-parser.ts`](../packages/semantic/src/parser/block-parser.ts), and the
 per-language [`tokenizers/`](../packages/semantic/src/tokenizers/); the inverse
 transform is the renderer, [`semantic/.../renderer.ts`](../packages/semantic/src/explicit/renderer.ts)
