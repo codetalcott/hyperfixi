@@ -37,6 +37,10 @@ import { createThaiExtractors } from './extractors/thai-keyword';
  * - Additional modifiers (when, to, with)
  */
 const THAI_EXTRAS: KeywordEntry[] = [
+  // `checked`, the property word the render writes (PROPERTY_NAME_LEXICON): read
+  // as `เลือก` and `แล้ว` (then), it split the clause (`set checked of :boxes …`).
+  { native: 'เลือกแล้ว', normalized: 'checked' },
+
   // Values/Literals
   { native: 'จริง', normalized: 'true' },
   { native: 'เท็จ', normalized: 'false' },

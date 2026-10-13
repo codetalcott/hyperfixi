@@ -98,6 +98,9 @@ const VIETNAMESE_EXTRAS: KeywordEntry[] = [
   { native: 'tạo ra', normalized: 'make' },
   { native: 'đặt giá trị', normalized: 'set' },
   { native: 'giá trị', normalized: 'value' },
+  // `checked`, the property word the render writes (PROPERTY_NAME_LEXICON): two
+  // words, and read apart neither was the property (`set checked of :boxes …`).
+  { native: 'được chọn', normalized: 'checked' },
   { native: 'ghi nhật ký', normalized: 'log' },
   { native: 'chuyển tới', normalized: 'go' },
   { native: 'ngược lại', normalized: 'else' },

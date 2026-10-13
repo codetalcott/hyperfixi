@@ -3,8 +3,8 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 26521,
-  "refused": 719,
+  "pass": 26528,
+  "refused": 712,
   "silent": 0,
   "entries": {
     "6f60177037": {
@@ -191,12 +191,12 @@
     "162e3e0582": {
       "src": "set :checkboxes to <input[type=checkbox]/> in the closest <table/> where it is not me on change set checked of the :che…",
       "family": "expressions/collectionExpressions",
-      "refused": "bn th vi"
+      "refused": "vi"
     },
     "55c3d28c9e": {
       "src": "set :checkboxes to <input[type=checkbox]/> in the closest <table/> where it is not me on change set checked of the :che…",
       "family": "expressions/collectionExpressions",
-      "refused": "bn ko qu th vi"
+      "refused": "ko qu vi"
     },
     "9bb9b09088": {
       "src": "on click set ^data on closest .store to 'hello'",
@@ -233,11 +233,6 @@
       "family": "expressions/in",
       "refused": "en *",
       "loud": "templated-selector: a templated selector (`#{…}`, `.{\"…\"}`, `<${…}/>`) is rare, and its fix is in the tokenizer"
-    },
-    "d438ab49b4": {
-      "src": "bind .dark and #dark-toggle's checked",
-      "family": "bind",
-      "refused": "bn th vi"
     },
     "d66d670d34": {
       "src": "on example.event add .called",

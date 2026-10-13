@@ -2651,6 +2651,12 @@ export class PatternMatcher {
    * possessive pronouns belong to other matchers and are never property names.
    */
   private isBareWordPropertyHead(token: LanguageToken): boolean {
+    // A keyword the language's own table names a property (vi `được chọn`, th
+    // `เลือกแล้ว`: checked), the voucher the possessive matcher takes one on:
+    // `gán được chọn of :boxes vào đúng` (set checked of :boxes to true).
+    if (token.kind === 'keyword') {
+      return !!this.currentProfile && isKnownPropertySurface(this.currentProfile.code, token.value);
+    }
     if (token.kind !== 'identifier') return false;
     if (/^[$:@#.*]/.test(token.value)) return false;
     if (this.isStructuralKeyword(token.value)) return false;
