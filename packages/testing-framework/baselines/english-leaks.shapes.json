@@ -1,8 +1,8 @@
 {
   "description": "English-leak gate, command-shape half (src/multilingual/english-leaks.ts): per command-shape case, the findings of each language's render (translate(src, 'en', L)): an English grammar word, `event:<name>`, `case:<pronoun>` or `spacing:<marker>`. `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts.",
-  "renders": 25282,
-  "leaky": 3898,
-  "findings": 7343,
+  "renders": 25300,
+  "leaky": 3901,
+  "findings": 7346,
   "kinds": {
     "word": {
       "renders": 2746,
@@ -17,8 +17,8 @@
       "findings": 39
     },
     "spacing": {
-      "renders": 1274,
-      "findings": 2714
+      "renders": 1277,
+      "findings": 2717
     }
   },
   "entries": {
@@ -146,6 +146,9 @@
     },
     "08e8a68c85": {
       "spacing:e spacing:e spacing:i spacing:i": "tr"
+    },
+    "092699feee": {
+      "spacing:i": "tr"
     },
     "094982a419": {
       "spacing:e spacing:i": "tr"
@@ -1077,6 +1080,9 @@
       "from with": "ar bn de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh"
     },
     "4f4e17d09d": {
+      "spacing:i": "tr"
+    },
+    "4fa7c5a9f9": {
       "spacing:i": "tr"
     },
     "4fd31fc469": {
@@ -3170,6 +3176,9 @@
     "df2ee54ee8": {
       "spacing:e spacing:i": "tr"
     },
+    "df922f3370": {
+      "spacing:i": "tr"
+    },
     "dfbe4ff63d": {
       "spacing:e spacing:i": "tr"
     },
@@ -3542,7 +3551,6 @@
   },
   "unrendered": {
     "05f81357fb": "vi",
-    "092699feee": "ar de fr he ja tr",
     "094982a419": "it pl ru uk",
     "09f435f419": "vi",
     "129c41c03b": "hi qu",
@@ -3577,7 +3585,6 @@
     "4c2f167281": "bn ko",
     "4d698f4f27": "ko",
     "4da1d2fe85": "vi",
-    "4fa7c5a9f9": "ar de fr he ja tr",
     "540540cc5a": "bn es it ko pl ru th tl uk",
     "55c3d28c9e": "bn ko qu th vi",
     "5763f61aac": "vi",
@@ -3648,7 +3655,6 @@
     "dd8bfb1190": "vi",
     "deac58c100": "ms vi",
     "dee03cd129": "vi",
-    "df922f3370": "ar de fr he ja tr",
     "dfea5b51b5": "ko",
     "e51cb64feb": "de fr ko",
     "e8446a57e2": "ko",
