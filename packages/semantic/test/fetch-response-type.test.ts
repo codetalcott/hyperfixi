@@ -22,6 +22,10 @@ const CASES = [
   'on click fetch "/x" as json then put it into me',
   'on click fetch "/x" as JSON then put it into me',
   'on click fetch "/x" as response then log it',
+  // A `$` or `:` variable URL reads as a reference, which fetch's `as` patterns did not
+  // take: the bare pattern won and its value swallowed `as JSON` as a conversion.
+  'on click fetch $u as JSON then put it into me',
+  'on click fetch :u as text then put it into me',
 ];
 
 describe.each(CASES)('%s, through every language', src => {
@@ -44,4 +48,10 @@ it.each([
   const foreign = render(parse(CASES[0], 'en')!, language);
   expect(foreign).toContain('text');
   expect(foreign).not.toContain(word);
+});
+
+it('a `$` variable URL leaves `as JSON` to the response type', () => {
+  const fetchNode = parse('on click fetch $u as JSON', 'en')!.body![0]!;
+  expect(fetchNode.roles.get('source')).toMatchObject({ type: 'reference', value: '$u' });
+  expect(fetchNode.roles.get('responseType')).toMatchObject({ raw: 'JSON' });
 });

@@ -5,6 +5,11 @@
  */
 
 import type { LanguagePattern } from '../../../types';
+import {
+  FETCH_OPTIONS_TYPES,
+  FETCH_RESPONSE_TYPES,
+  FETCH_SOURCE_TYPES,
+} from '../../../generators/role-types';
 
 /**
  * English: "fetch /url as json" with response type.
@@ -19,10 +24,10 @@ export const fetchWithResponseTypeEnglish: LanguagePattern = {
     format: 'fetch {source} as {responseType}',
     tokens: [
       { type: 'literal', value: 'fetch' },
-      { type: 'role', role: 'source', expectedTypes: ['literal', 'expression'] },
+      { type: 'role', role: 'source', expectedTypes: FETCH_SOURCE_TYPES },
       { type: 'literal', value: 'as' },
       // json/text/html are identifiers not keywords, so we need to accept 'expression' type
-      { type: 'role', role: 'responseType', expectedTypes: ['literal', 'expression'] },
+      { type: 'role', role: 'responseType', expectedTypes: FETCH_RESPONSE_TYPES },
     ],
   },
   extraction: {
@@ -50,13 +55,13 @@ export const fetchWithOptionsAndResponseTypeEnglish: LanguagePattern = {
     format: 'fetch {source} with {style} as {responseType}',
     tokens: [
       { type: 'literal', value: 'fetch' },
-      { type: 'role', role: 'source', expectedTypes: ['literal', 'expression'] },
+      { type: 'role', role: 'source', expectedTypes: FETCH_SOURCE_TYPES },
       { type: 'literal', value: 'with', alternatives: ['by', 'using'] },
       // expression-ONLY: routes `{ … }` to the object-literal fold, which keeps
       // the source text intact for the expression parser.
-      { type: 'role', role: 'style', expectedTypes: ['expression'] },
+      { type: 'role', role: 'style', expectedTypes: FETCH_OPTIONS_TYPES },
       { type: 'literal', value: 'as' },
-      { type: 'role', role: 'responseType', expectedTypes: ['literal', 'expression'] },
+      { type: 'role', role: 'responseType', expectedTypes: FETCH_RESPONSE_TYPES },
     ],
   },
   extraction: {
@@ -78,9 +83,9 @@ export const fetchWithOptionsEnglish: LanguagePattern = {
     format: 'fetch {source} with {style}',
     tokens: [
       { type: 'literal', value: 'fetch' },
-      { type: 'role', role: 'source', expectedTypes: ['literal', 'expression'] },
+      { type: 'role', role: 'source', expectedTypes: FETCH_SOURCE_TYPES },
       { type: 'literal', value: 'with', alternatives: ['by', 'using'] },
-      { type: 'role', role: 'style', expectedTypes: ['expression'] },
+      { type: 'role', role: 'style', expectedTypes: FETCH_OPTIONS_TYPES },
     ],
   },
   extraction: {

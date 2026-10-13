@@ -3,8 +3,8 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 26360,
-  "refused": 880,
+  "pass": 26383,
+  "refused": 857,
   "silent": 0,
   "entries": {
     "6f60177037": {
@@ -46,11 +46,6 @@
       "src": "on click fetch \"/test\" {headers: {\"X-CustomHeader\": \"foo\"}} then put it into my.innerHTML end",
       "family": "fetch",
       "refused": "ja"
-    },
-    "4ac868eb40": {
-      "src": "on click set $u to \"/test\" then fetch $u as JSON then get result as JSONString then put it into my.innerHTML",
-      "family": "fetch",
-      "refused": "*"
     },
     "ffb70089e3": {
       "src": "on click halt the event's then add .continued",
