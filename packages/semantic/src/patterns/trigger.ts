@@ -9,6 +9,7 @@
 
 import type { LanguagePattern } from '../types';
 import { handcrafted } from './handcrafted';
+import { ELEMENT_TARGET_TYPES, EVENT_NAME_TYPES } from '../generators/role-types';
 
 export function getTriggerPatternsEn(): LanguagePattern[] {
   return [
@@ -21,7 +22,7 @@ export function getTriggerPatternsEn(): LanguagePattern[] {
         format: 'trigger {event} on {destination}',
         tokens: [
           { type: 'literal', value: 'trigger' },
-          { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
+          { type: 'role', role: 'event', expectedTypes: EVENT_NAME_TYPES },
           {
             type: 'group',
             optional: true,
@@ -49,7 +50,7 @@ export function getTriggerPatternsEn(): LanguagePattern[] {
         format: 'trigger {event}',
         tokens: [
           { type: 'literal', value: 'trigger' },
-          { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
+          { type: 'role', role: 'event', expectedTypes: EVENT_NAME_TYPES },
         ],
       },
       extraction: {
@@ -84,7 +85,7 @@ export function getTriggerPatternsZh(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: '触发', alternatives: ['觸發'] },
           { type: 'literal', value: '把' },
-          { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
+          { type: 'role', role: 'event', expectedTypes: EVENT_NAME_TYPES },
           {
             type: 'group',
             optional: true,
@@ -93,7 +94,7 @@ export function getTriggerPatternsZh(): LanguagePattern[] {
               {
                 type: 'role',
                 role: 'destination',
-                expectedTypes: ['selector', 'reference', 'expression'],
+                expectedTypes: ELEMENT_TARGET_TYPES,
               },
             ],
           },
@@ -127,7 +128,7 @@ export function getTriggerPatternsHe(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'הפעל', alternatives: ['שגר'] },
           { type: 'literal', value: 'את' },
-          { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
+          { type: 'role', role: 'event', expectedTypes: EVENT_NAME_TYPES },
           {
             type: 'group',
             optional: true,
@@ -136,7 +137,7 @@ export function getTriggerPatternsHe(): LanguagePattern[] {
               {
                 type: 'role',
                 role: 'destination',
-                expectedTypes: ['selector', 'reference', 'expression'],
+                expectedTypes: ELEMENT_TARGET_TYPES,
               },
             ],
           },
@@ -173,7 +174,7 @@ export function getTriggerPatternsQu(): LanguagePattern[] {
       template: {
         format: '{event} ta [{destination} man] trigger',
         tokens: [
-          { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
+          { type: 'role', role: 'event', expectedTypes: EVENT_NAME_TYPES },
           { type: 'literal', value: 'ta' },
           {
             type: 'group',
@@ -182,7 +183,7 @@ export function getTriggerPatternsQu(): LanguagePattern[] {
               {
                 type: 'role',
                 role: 'destination',
-                expectedTypes: ['selector', 'reference', 'expression'],
+                expectedTypes: ELEMENT_TARGET_TYPES,
               },
               { type: 'literal', value: 'man' },
             ],

@@ -24,6 +24,7 @@
 import type { LanguagePattern } from '../types';
 import { handcrafted } from './handcrafted';
 import { tryGetProfile } from '../registry';
+import { DURATION_TYPES } from '../generators/role-types';
 
 export function getWaitPatternsZh(): LanguagePattern[] {
   return [
@@ -39,7 +40,7 @@ export function getWaitPatternsZh(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: '等待', alternatives: ['等', '稍候'] },
           { type: 'literal', value: '把' },
-          { type: 'role', role: 'duration', expectedTypes: ['literal', 'expression'] },
+          { type: 'role', role: 'duration', expectedTypes: DURATION_TYPES },
         ],
       },
       extraction: {
@@ -65,7 +66,7 @@ export function getWaitPatternsHe(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'חכה', alternatives: ['המתן'] },
           { type: 'literal', value: 'את' },
-          { type: 'role', role: 'duration', expectedTypes: ['literal', 'expression'] },
+          { type: 'role', role: 'duration', expectedTypes: DURATION_TYPES },
         ],
       },
       extraction: {
@@ -103,7 +104,7 @@ export function getWaitPatternsAr(): LanguagePattern[] {
           { type: 'literal', value: 'انتظر', alternatives: ['انتظري'] },
           { type: 'literal', value: 'من' },
           { type: 'role', role: 'source', expectedTypes: ['expression', 'reference'] },
-          { type: 'role', role: 'duration', expectedTypes: ['expression', 'literal'] },
+          { type: 'role', role: 'duration', expectedTypes: DURATION_TYPES },
         ],
       },
       extraction: {
@@ -174,7 +175,7 @@ export function getWaitPatternsTl(): LanguagePattern[] {
           { type: 'literal', value: 'maghintay', alternatives: ['hintay'] },
           { type: 'literal', value: 'mula_sa', alternatives: ['galing_sa'] },
           { type: 'role', role: 'source', expectedTypes: ['expression', 'reference'] },
-          { type: 'role', role: 'duration', expectedTypes: ['expression', 'literal'] },
+          { type: 'role', role: 'duration', expectedTypes: DURATION_TYPES },
         ],
       },
       extraction: {
@@ -261,7 +262,7 @@ function verbFinalOrRunWait(
           value: sourceMarker,
           ...(sourceMarkerAlternatives ? { alternatives: sourceMarkerAlternatives } : {}),
         },
-        { type: 'role', role: 'duration', expectedTypes: ['expression', 'literal'] },
+        { type: 'role', role: 'duration', expectedTypes: DURATION_TYPES },
         parenGroup(),
         { type: 'literal', value: orWord },
         { type: 'role', role: 'patient', expectedTypes: ['expression', 'literal'] },
@@ -331,7 +332,7 @@ function verbFirstOrRunWait(
       format: `${verb} {duration} ${orWord} [${forWord}] {patient} [${forWord}] {source} ${sourceMarker}`,
       tokens: [
         { type: 'literal', value: verb },
-        { type: 'role', role: 'duration', expectedTypes: ['expression', 'literal'] },
+        { type: 'role', role: 'duration', expectedTypes: DURATION_TYPES },
         parenGroup(),
         { type: 'literal', value: orWord },
         forGroup(),

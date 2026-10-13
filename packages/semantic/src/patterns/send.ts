@@ -13,6 +13,7 @@
 
 import type { LanguagePattern } from '../types';
 import { handcrafted } from './handcrafted';
+import { ELEMENT_TARGET_TYPES, EVENT_NAME_TYPES } from '../generators/role-types';
 
 export function getSendPatternsZh(): LanguagePattern[] {
   return [
@@ -26,7 +27,7 @@ export function getSendPatternsZh(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: '发送', alternatives: ['發送', '传送', '傳送'] },
           { type: 'literal', value: '把' },
-          { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
+          { type: 'role', role: 'event', expectedTypes: EVENT_NAME_TYPES },
           {
             type: 'group',
             optional: true,
@@ -35,7 +36,7 @@ export function getSendPatternsZh(): LanguagePattern[] {
               {
                 type: 'role',
                 role: 'destination',
-                expectedTypes: ['selector', 'reference', 'expression'],
+                expectedTypes: ELEMENT_TARGET_TYPES,
               },
             ],
           },
@@ -73,7 +74,7 @@ export function getSendPatternsHe(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'שלח' },
           { type: 'literal', value: 'את' },
-          { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
+          { type: 'role', role: 'event', expectedTypes: EVENT_NAME_TYPES },
           {
             type: 'group',
             optional: true,
@@ -82,7 +83,7 @@ export function getSendPatternsHe(): LanguagePattern[] {
               {
                 type: 'role',
                 role: 'destination',
-                expectedTypes: ['selector', 'reference', 'expression'],
+                expectedTypes: ELEMENT_TARGET_TYPES,
               },
             ],
           },

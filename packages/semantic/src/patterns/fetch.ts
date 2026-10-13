@@ -27,6 +27,7 @@ import type {
 } from '../types';
 import type { LanguageProfile } from '../generators/language-profiles';
 import { handcrafted } from './handcrafted';
+import { FETCH_RESPONSE_TYPES, FETCH_SOURCE_TYPES } from '../generators/role-types';
 
 /**
  * The optional `with {options}` group, built from the profile's own `style`
@@ -95,7 +96,7 @@ export function getFetchPatternsZh(profile?: LanguageProfile): LanguagePattern[]
             optional: true,
             tokens: [{ type: 'literal', value: '把', alternatives: ['从', '由'] }],
           },
-          { type: 'role', role: 'source', expectedTypes: ['literal', 'expression'] },
+          { type: 'role', role: 'source', expectedTypes: FETCH_SOURCE_TYPES },
           // Optional "as <responseType>": transformer emits 的; 作为 is the natural form.
           ...(zhStyle ? [zhStyle.token] : []),
           {
@@ -103,7 +104,7 @@ export function getFetchPatternsZh(profile?: LanguageProfile): LanguagePattern[]
             optional: true,
             tokens: [
               { type: 'literal', value: '的', alternatives: ['作为', '当作'] },
-              { type: 'role', role: 'responseType', expectedTypes: ['literal', 'expression'] },
+              { type: 'role', role: 'responseType', expectedTypes: FETCH_RESPONSE_TYPES },
             ],
           },
         ],
@@ -140,14 +141,14 @@ export function getFetchPatternsMs(profile?: LanguageProfile): LanguagePattern[]
             optional: true,
             tokens: [{ type: 'literal', value: 'dari' }],
           },
-          { type: 'role', role: 'source', expectedTypes: ['literal', 'expression'] },
+          { type: 'role', role: 'source', expectedTypes: FETCH_SOURCE_TYPES },
           ...(msStyle ? [msStyle.token] : []),
           {
             type: 'group',
             optional: true,
             tokens: [
               { type: 'literal', value: 'sebagai', alternatives: ['sbg'] },
-              { type: 'role', role: 'responseType', expectedTypes: ['literal', 'expression'] },
+              { type: 'role', role: 'responseType', expectedTypes: FETCH_RESPONSE_TYPES },
             ],
           },
         ],
@@ -186,14 +187,14 @@ export function getFetchPatternsFr(profile?: LanguageProfile): LanguagePattern[]
             optional: true,
             tokens: [{ type: 'literal', value: 'de' }],
           },
-          { type: 'role', role: 'source', expectedTypes: ['literal', 'expression'] },
+          { type: 'role', role: 'source', expectedTypes: FETCH_SOURCE_TYPES },
           ...(frStyle ? [frStyle.token] : []),
           {
             type: 'group',
             optional: true,
             tokens: [
               { type: 'literal', value: 'comme' },
-              { type: 'role', role: 'responseType', expectedTypes: ['literal', 'expression'] },
+              { type: 'role', role: 'responseType', expectedTypes: FETCH_RESPONSE_TYPES },
             ],
           },
         ],
@@ -228,14 +229,14 @@ export function getFetchPatternsPt(profile?: LanguageProfile): LanguagePattern[]
             optional: true,
             tokens: [{ type: 'literal', value: 'de' }],
           },
-          { type: 'role', role: 'source', expectedTypes: ['literal', 'expression'] },
+          { type: 'role', role: 'source', expectedTypes: FETCH_SOURCE_TYPES },
           ...(ptStyle ? [ptStyle.token] : []),
           {
             type: 'group',
             optional: true,
             tokens: [
               { type: 'literal', value: 'como' },
-              { type: 'role', role: 'responseType', expectedTypes: ['literal', 'expression'] },
+              { type: 'role', role: 'responseType', expectedTypes: FETCH_RESPONSE_TYPES },
             ],
           },
         ],
@@ -290,7 +291,7 @@ function markerlessFetch(
             },
           ],
         },
-        { type: 'role', role: 'source', expectedTypes: ['literal', 'expression'] },
+        { type: 'role', role: 'source', expectedTypes: FETCH_SOURCE_TYPES },
         ...(style ? [style.token] : []),
         {
           type: 'group',
@@ -301,7 +302,7 @@ function markerlessFetch(
               value: asMarker,
               ...(asMarkerAlternatives ? { alternatives: asMarkerAlternatives } : {}),
             },
-            { type: 'role', role: 'responseType', expectedTypes: ['literal', 'expression'] },
+            { type: 'role', role: 'responseType', expectedTypes: FETCH_RESPONSE_TYPES },
           ],
         },
       ],
@@ -351,7 +352,7 @@ function sovFetch(
   // bare there; see the call sites for the surfaces each language actually
   // produces.
   const responseTypeTokens: PatternToken[] = [
-    { type: 'role', role: 'responseType', expectedTypes: ['literal', 'expression'] },
+    { type: 'role', role: 'responseType', expectedTypes: FETCH_RESPONSE_TYPES },
   ];
   if (asMarker) {
     responseTypeTokens.push({
@@ -373,7 +374,7 @@ function sovFetch(
     template: {
       format: `{source} ${patientMarker} ${verb}`,
       tokens: [
-        { type: 'role', role: 'source', expectedTypes: ['literal', 'expression'] },
+        { type: 'role', role: 'source', expectedTypes: FETCH_SOURCE_TYPES },
         {
           type: 'group',
           optional: true,

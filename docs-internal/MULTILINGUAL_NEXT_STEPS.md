@@ -186,6 +186,15 @@ command-shape dry run shows each move.
 - the number of copied type lists;
 - the number of readers per question in `VALUE_READING.md`.
 
+**Stamped 2026-10-12, when M3 started (after the reliability rows: rare values #1480, P57 #1481, P62):**
+
+- `semantic-parser.ts`: 9,680 lines (`wc -l`; 9,494 on 2026-10-11, 8,871 on 2026-10-06).
+- Copied type lists: 139 literal `expectedTypes: [...]` in `src/patterns/*.ts` (158 on 2026-10-06), 5 files reading
+  shared lists (`generators/role-types.ts`). After (a)'s first PR: 63. Of those left, 8 copies are narrower than
+  their schema on purpose (es/qu/zh set values, `set.ts` says why), and the rest are wider or narrower copies to
+  judge one by one (repeat's and pick's sources, the event-handler heads), or roles their schema lacks.
+- Readers per question: an end word still has nine (`VALUE_READING.md` C3).
+
 ### M4: the small queue (take items opportunistically)
 
 - **Parser items not in M1:** P6, P7, P13, P16, P17, P23–P25, P29, P31–P44, P53, P55. (P16 and P17

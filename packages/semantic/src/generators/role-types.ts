@@ -42,6 +42,20 @@ export const SET_VALUE_TYPES: ExpectedType[] = [
   'property-path',
 ];
 
+/**
+ * What a `set` writes to: a property path (`#d1's value`, `the *color of #t`), an
+ * element or attribute, a reference, or a variable.
+ */
+export const SET_DESTINATION_TYPES: ExpectedType[] = [
+  'selector',
+  'reference',
+  'expression',
+  'property-path',
+];
+
+/** The element(s) `set @a to v on <scope>` sets the attribute on. */
+export const SET_SCOPE_TYPES: ExpectedType[] = ['selector', 'reference'];
+
 /** What a `get` reads: a literal, an element, a variable, a property. */
 export const GET_SOURCE_TYPES: ExpectedType[] = [
   'literal',
@@ -71,3 +85,25 @@ export const PUT_DESTINATION_TYPES: ExpectedType[] = [
   'expression',
   'property-path',
 ];
+
+/**
+ * An event's name: a word (`click`), or an expression for a custom or namespaced
+ * name (`draggable:start` tokenizes as one), as `trigger`, `send` and `repeat until
+ * event` take it.
+ */
+export const EVENT_NAME_TYPES: ExpectedType[] = ['literal', 'expression'];
+
+/** How long a `wait` waits: a time literal (`2s`) or an expression. */
+export const DURATION_TYPES: ExpectedType[] = ['literal', 'expression'];
+
+/** What `fetch` fetches: a URL literal, or an expression (a template, a variable). */
+export const FETCH_SOURCE_TYPES: ExpectedType[] = ['literal', 'expression'];
+
+/** fetch's `as <type>`: json/text/html, which tokenize as identifiers (expression). */
+export const FETCH_RESPONSE_TYPES: ExpectedType[] = ['literal', 'expression'];
+
+/** fetch's request options, `with { … }`: an expression only (the object-literal fold). */
+export const FETCH_OPTIONS_TYPES: ExpectedType[] = ['expression'];
+
+/** show/hide's `with <strategy>`: a strategy word (`opacity`) or a class (`.hidden`). */
+export const VISIBILITY_STYLE_TYPES: ExpectedType[] = ['expression', 'selector'];

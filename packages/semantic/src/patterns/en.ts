@@ -44,6 +44,7 @@ import { getPutPatternsEn } from './put';
 import { getEventHandlerPatternsEn } from './event-handler';
 import { getWaitPatternsEn } from './wait';
 import { getViewTransitionPatterns } from './view-transition';
+import { DURATION_TYPES, EVENT_NAME_TYPES } from '../generators/role-types';
 
 // =============================================================================
 // Hand-crafted English-only patterns
@@ -63,7 +64,7 @@ const repeatUntilEventFromEnglish: LanguagePattern = {
       { type: 'literal', value: 'repeat' },
       { type: 'literal', value: 'until' },
       { type: 'literal', value: 'event' },
-      { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
+      { type: 'role', role: 'event', expectedTypes: EVENT_NAME_TYPES },
       { type: 'literal', value: 'from' },
       { type: 'role', role: 'source', expectedTypes: ['selector', 'reference', 'expression'] },
     ],
@@ -89,7 +90,7 @@ const repeatUntilEventEnglish: LanguagePattern = {
       { type: 'literal', value: 'repeat' },
       { type: 'literal', value: 'until' },
       { type: 'literal', value: 'event' },
-      { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
+      { type: 'role', role: 'event', expectedTypes: EVENT_NAME_TYPES },
     ],
   },
   extraction: {
@@ -234,7 +235,7 @@ const temporalInEnglish: LanguagePattern = {
     format: 'in {duration}',
     tokens: [
       { type: 'literal', value: 'in' },
-      { type: 'role', role: 'duration', expectedTypes: ['literal', 'expression'] },
+      { type: 'role', role: 'duration', expectedTypes: DURATION_TYPES },
     ],
   },
   extraction: {
@@ -254,7 +255,7 @@ const temporalAfterEnglish: LanguagePattern = {
     format: 'after {duration}',
     tokens: [
       { type: 'literal', value: 'after' },
-      { type: 'role', role: 'duration', expectedTypes: ['literal', 'expression'] },
+      { type: 'role', role: 'duration', expectedTypes: DURATION_TYPES },
     ],
   },
   extraction: {

@@ -8,7 +8,7 @@
  */
 
 import type { ExpectedType, LanguagePattern } from '../types';
-import { ELEMENT_TARGET_TYPES } from '../generators/role-types';
+import { ELEMENT_TARGET_TYPES, VISIBILITY_STYLE_TYPES } from '../generators/role-types';
 import { handcrafted } from './handcrafted';
 
 /**
@@ -78,7 +78,7 @@ export function getShowPatternsDe(): LanguagePattern[] {
             optional: true,
             tokens: [
               { type: 'literal', value: 'mit' },
-              { type: 'role', role: 'style', expectedTypes: ['expression', 'selector'] },
+              { type: 'role', role: 'style', expectedTypes: VISIBILITY_STYLE_TYPES },
             ],
           },
         ],
@@ -110,7 +110,7 @@ export function getShowPatternsFr(): LanguagePattern[] {
             optional: true,
             tokens: [
               { type: 'literal', value: 'avec' },
-              { type: 'role', role: 'style', expectedTypes: ['expression', 'selector'] },
+              { type: 'role', role: 'style', expectedTypes: VISIBILITY_STYLE_TYPES },
             ],
           },
         ],
@@ -335,7 +335,7 @@ export function getShowPatternsTh(): LanguagePattern[] {
             optional: true,
             tokens: [
               { type: 'literal', value: 'ด้วย' },
-              { type: 'role', role: 'style', expectedTypes: ['expression', 'selector'] },
+              { type: 'role', role: 'style', expectedTypes: VISIBILITY_STYLE_TYPES },
             ],
           },
         ],
