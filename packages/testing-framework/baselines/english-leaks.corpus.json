@@ -2,11 +2,11 @@
   "description": "English-leak gate, corpus half (src/multilingual/english-leaks.ts): per corpus row, the findings of each language's render (render(parse(en), L)): an English grammar word, `event:<name>` (an English event the lexicon has a word for) or `case:me` / `case:it` (a nominative pronoun beside a marker; `-object`: as an unmarked object) or `spacing:<marker>` (a marker the language attaches, written apart). `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts after a fresh populate.",
   "renders": 3519,
   "leaky": 402,
-  "findings": 766,
+  "findings": 757,
   "kinds": {
     "word": {
       "renders": 191,
-      "findings": 302
+      "findings": 293
     },
     "event": {
       "renders": 0,
@@ -50,9 +50,9 @@
       "case:me": "hi",
       "case:me spacing:da spacing:den spacing:den spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
       "case:me spacing:কে spacing:কে": "bn",
-      "event repeat trigger trigger trigger until": "qu",
       "spacing:에서 spacing:에서": "ko",
-      "spacing:から spacing:から": "ja"
+      "spacing:から spacing:から": "ja",
+      "trigger trigger trigger": "qu"
     },
     "behavior-removable": {
       "case:me": "bn hi",
@@ -62,19 +62,19 @@
       "trigger trigger": "qu"
     },
     "behavior-resizable": {
-      "event repeat trigger trigger trigger until": "qu",
       "spacing:da spacing:den spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
       "spacing:কে spacing:কে": "bn",
       "spacing:에서": "ko",
-      "spacing:から": "ja"
+      "spacing:から": "ja",
+      "trigger trigger trigger": "qu"
     },
     "behavior-sortable": {
-      "event repeat trigger trigger trigger until": "qu",
       "null": "he",
       "spacing:da spacing:den spacing:den spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
       "spacing:কে spacing:কে": "bn",
       "spacing:에서": "ko",
-      "spacing:から": "ja"
+      "spacing:から": "ja",
+      "trigger trigger trigger": "qu"
     },
     "bind-auto-detect": {
       "spacing:e spacing:i": "tr"
