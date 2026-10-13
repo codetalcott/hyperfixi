@@ -21,8 +21,10 @@ import type { ExpectedType } from '../types';
  * English's handcrafted pattern leaves untyped, dropped it in 14 languages.
  * Both engines read a variable there, each form run on both.
  *
- * Not fetch's destination or repeat's source: the response-type recovery and
- * the fused-role junk check read an expression there as a mis-capture. Nor the
+ * Not fetch's destination or the source of repeat's schema: the response-type
+ * recovery and the fused-role junk check read an expression there as a
+ * mis-capture. (The handcrafted `repeat until event … from` heads take it: they
+ * read the source after their own event word, where no such capture happens.) Nor the
  * `on` target of set, transition or install, or clone's: neither engine reads
  * those forms (core takes `set … on el`'s `on el` for a new handler).
  */
@@ -122,3 +124,18 @@ export const VIEW_TRANSITION_STYLE_TYPES: ExpectedType[] = ['literal'];
 
 /** An `if`/`unless` condition: an expression, a reference (`if it`), or a selector (`if .a`). */
 export const CONDITION_TYPES: ExpectedType[] = ['expression', 'reference', 'selector'];
+
+/**
+ * What a counted loop counts (`repeat 3 times`). A variable with its sigil (`$n`,
+ * `:n`), `it` and `event's detail` read as references, and the `of` form a
+ * translation writes for `#a's textContent` (es `textContent de #a`) as a property
+ * path. The head took neither: the loop was dropped with the command after it, or
+ * read `forever` (PR 125).
+ */
+export const COUNT_TYPES: ExpectedType[] = ['literal', 'expression', 'reference', 'property-path'];
+
+/**
+ * Where `append`/`prepend` write: an element, or a variable (`append item to
+ * myArray`, `append " World" to greeting`), which tokenizes as an expression.
+ */
+export const APPEND_DESTINATION_TYPES: ExpectedType[] = ['selector', 'reference', 'expression'];

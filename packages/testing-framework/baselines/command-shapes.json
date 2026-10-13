@@ -3,8 +3,8 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 26305,
-  "refused": 930,
+  "pass": 26306,
+  "refused": 929,
   "silent": 5,
   "entries": {
     "6f60177037": {
@@ -359,7 +359,7 @@
     "73325ff027": {
       "src": "when (the length of <.picked/> in #list-scope) changes set result to it put the textContent of last <.picked/> in #list…",
       "family": "core/reactive-queries",
-      "refused": "bn zh"
+      "refused": "bn"
     },
     "a0bcf49227": {
       "src": "on click from closest parent <div/> put \"Foo\" into me",

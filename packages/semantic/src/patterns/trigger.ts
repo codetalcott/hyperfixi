@@ -28,7 +28,7 @@ export function getTriggerPatternsEn(): LanguagePattern[] {
             optional: true,
             tokens: [
               { type: 'literal', value: 'on' },
-              { type: 'role', role: 'destination', expectedTypes: ['selector', 'reference'] },
+              { type: 'role', role: 'destination', expectedTypes: ELEMENT_TARGET_TYPES },
             ],
           },
         ],

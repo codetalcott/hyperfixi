@@ -102,7 +102,7 @@ export function getShowPatternsFr(): LanguagePattern[] {
         format: 'afficher {patient}',
         tokens: [
           { type: 'literal', value: 'afficher', alternatives: ['montrer', 'présenter', 'show'] },
-          { type: 'role', role: 'patient', expectedTypes: ['selector', 'reference'] },
+          { type: 'role', role: 'patient', expectedTypes: ELEMENT_TARGET_TYPES },
           // `avec <strategy>` (`… avec *opacity`): without it this pattern
           // outranked the generated one and dropped the strategy.
           {

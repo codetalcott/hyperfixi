@@ -25,6 +25,7 @@ import {
   FOR_SOURCE_TYPES,
   VIEW_TRANSITION_STYLE_TYPES,
   CONDITION_TYPES,
+  APPEND_DESTINATION_TYPES,
 } from './role-types';
 
 // =============================================================================
@@ -1899,7 +1900,7 @@ export const appendSchema: CommandSchema = {
       // context references tokenize as `reference`, and the single-token check
       // in pattern-matcher compares expectedTypes with a raw `.includes`, so the
       // type has to be listed explicitly. Same list as put.patient.
-      expectedTypes: ['literal', 'selector', 'reference', 'expression', 'property-path'],
+      expectedTypes: PUT_VALUE_TYPES,
       svoPosition: 1,
       sovPosition: 2,
     },
@@ -1912,7 +1913,7 @@ export const appendSchema: CommandSchema = {
       // rejected while this was [selector, reference], since a plain identifier
       // tokenizes as `expression`. Marker-guarded, same precedent as
       // add.destination (#571) and send.destination.
-      expectedTypes: ['selector', 'reference', 'expression'],
+      expectedTypes: APPEND_DESTINATION_TYPES,
       svoPosition: 2,
       sovPosition: 1,
       markerOverride: { en: 'to' }, // "append <content> to #element"
@@ -1938,7 +1939,7 @@ export const prependSchema: CommandSchema = {
       role: 'patient',
       description: 'The content to prepend',
       required: true,
-      expectedTypes: ['literal', 'selector', 'reference', 'expression', 'property-path'],
+      expectedTypes: PUT_VALUE_TYPES,
       svoPosition: 1,
       sovPosition: 2,
     },
@@ -1946,7 +1947,7 @@ export const prependSchema: CommandSchema = {
       role: 'destination',
       description: 'The element to prepend to',
       required: true,
-      expectedTypes: ['selector', 'reference', 'expression'],
+      expectedTypes: APPEND_DESTINATION_TYPES,
       svoPosition: 2,
       sovPosition: 1,
       markerOverride: { en: 'to' }, // "prepend <content> to #element"

@@ -212,13 +212,13 @@ export function getHidePatternsPl(): LanguagePattern[] {
             tokens: [
               { type: 'literal', value: 'z', alternatives: ['ze', 'jako'] },
               // Polish `z` is both "with" (instrumental style) AND "from" (ablative
-              // source). Constrain the style slot to the schema's literal-only type
-              // so a reference (`z okno` = "from window", an event source en drops
-              // by design) is REJECTED here — the optional group then backtracks and
-              // the source clause is left unconsumed/dropped, matching es/de/en.
-              // Without this, `window` (a reference since Phase 5) rendered the
-              // invalid `hide .modal with window`.
-              { type: 'role', role: 'style', expectedTypes: ['literal'] },
+              // source). The style slot takes the schema's types, which leave out
+              // `reference`, so a reference (`z okno` = "from window", an event
+              // source en drops by design) is REJECTED here — the optional group
+              // then backtracks and the source clause is left unconsumed, which
+              // translate() refuses (F1). Without this, `window` (a reference since Phase
+              // 5) rendered the invalid `hide .modal with window`.
+              { type: 'role', role: 'style', expectedTypes: VISIBILITY_STYLE_TYPES },
             ],
           },
         ],
@@ -344,11 +344,11 @@ export function getHidePatternsUk(): LanguagePattern[] {
             tokens: [
               { type: 'literal', value: 'з', alternatives: ['із', 'як'] },
               // Ukrainian `з` is both "with" (instrumental style) AND "from"
-              // (ablative source) — same collision as Polish `z` above. Constrain
-              // the style slot to literal-only so `з вікно` = "from window" (a
-              // reference source) is rejected and dropped rather than rendering the
-              // invalid `hide .modal with window`.
-              { type: 'role', role: 'style', expectedTypes: ['literal'] },
+              // (ablative source) — same collision as Polish `z` above. The
+              // schema's style types leave out `reference`, so `з вікно` = "from
+              // window" (a reference source) is rejected and refused rather than
+              // rendering the invalid `hide .modal with window`.
+              { type: 'role', role: 'style', expectedTypes: VISIBILITY_STYLE_TYPES },
             ],
           },
         ],

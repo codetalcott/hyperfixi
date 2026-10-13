@@ -1085,7 +1085,7 @@ export function getPutPatternsZh(): LanguagePattern[] {
           {
             type: 'role',
             role: 'patient',
-            expectedTypes: ['literal', 'selector', 'reference', 'expression'],
+            expectedTypes: PUT_VALUE_TYPES,
           },
           { type: 'literal', value: '到', alternatives: ['在', '于', '入'] },
           { type: 'role', role: 'destination', expectedTypes: PUT_DESTINATION_TYPES },
@@ -1113,7 +1113,7 @@ export function getPutPatternsZh(): LanguagePattern[] {
           {
             type: 'role',
             role: 'patient',
-            expectedTypes: ['literal', 'selector', 'reference', 'expression'],
+            expectedTypes: PUT_VALUE_TYPES,
           },
           { type: 'literal', value: '放置', alternatives: ['放到', '放在', '放入', '放', '置入'] },
           {
