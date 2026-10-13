@@ -74,8 +74,8 @@ M2 sheet), halt's `default` modes and collection expressions are filed (P56, P57
 rare in pages.
 
 **Left.** The English lane has no refusal outside a LOUD family (step 3's exit; silent pairs 7,614 at
-the first run → 19 on 2026-10-11, each in a named family). The foreign lanes' refusals and the 19 are
-the reliability rows after M2 (below). **Exit:** every IN family passes or has a reason; stop
+the first run → 19 on 2026-10-11 → 0 on 2026-10-13). The foreign lanes' refusals are the reliability rows
+after M2 (below). **Exit:** every IN family passes or has a reason; stop
 widening when a widening finds nothing a user would write (rule 4).
 
 ### M2: translations that read as the language
@@ -149,9 +149,9 @@ below → M3. Every PR records `semantic-parser.ts`'s line count.
 **Why.** In the command-shape gate 2,537 of 27,240 lanes are refused: safe, but to a user it does not
 work. 1,626 are LOUD families (shapes semantic does not model), 911 are shapes it models.
 
-**Work, in order.** (1) The 19 silent pairs: ms/pl `… is undefined` (8), pl/sw `closest … to …` (3),
-it `get … in me` (3; done 2026-10-12: `get`'s destination role, which no reader used, took Italian's `in`), qu/vi `if no <span/> in #box where …` (2), qu possessive chains (2), id `when my
-@data-x changes` (1); each fixed, or its reason written in `SILENT_FAMILIES`. (2) Refusals by reach:
+**Work, in order.** (1) The 19 silent pairs. **Done 2026-10-13: 0 left** (re-check: `npx tsx
+tools/regen-command-shapes-baseline.ts --dry-run`); the last five were reader fixes (pl/sw `closest … to …` and
+`closest @attr`, qu `'s` chains, id `saya punya @attr`), and `SILENT_FAMILIES` is empty. (2) Refusals by reach:
 handler-head counts (`on click 1`; done 2026-10-12: 375 lanes, with every head clause bn, it and th
 dropped, `on click elsewhere` among them; residue P61), `wait for <custom event>` (P52, done), pseudo-class
 queries (`<:checked/>`; done 2026-10-12: 161 lanes; the two cases left are P62's), rare values (escaped class names, comma queries, `(w)px`, `[@a]`, `it @a`, a dotted path before `of`, `set {…} on obj`; done 2026-10-12: 202 lanes, with qu's `fetch … as JSON`), collection expressions (P57; done 2026-10-12: 154 lanes, 2 of them silent), a query's scope inside a phrase (P62; done 2026-10-12), then `transition` with two properties

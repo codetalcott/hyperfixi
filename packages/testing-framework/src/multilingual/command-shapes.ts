@@ -610,19 +610,11 @@ export const LOUD: readonly LoudFamily[] = [
   },
   {
     name: 'closest-forms',
-    reason:
-      "`closest @attr` (an ancestor's attribute) and `closest parent <q/>`: the forms of " +
-      '`closest` besides a query, rare in pages',
+    // `closest @attr` (an ancestor's attribute) left this family when the positional
+    // run took an attribute query (2026-10-13).
+    reason: '`closest parent <q/>`: the form of `closest` that starts at the parent, rare in pages',
     matches: (_source, _types, plain) =>
-      someNode(
-        plain,
-        node =>
-          node.type === 'closestExpr' &&
-          // Not `closest @foo to #d1`, which English reads (value-words).
-          (node.parentSearch === true ||
-            (String(node.css ?? '').startsWith('[') &&
-              (node.to as { type?: unknown } | undefined)?.type === 'implicitMeTarget'))
-      ),
+      someNode(plain, node => node.type === 'closestExpr' && node.parentSearch === true),
   },
   {
     name: 'colon-event-arguments',
@@ -673,22 +665,9 @@ export interface SilentFamily {
   ids: readonly string[];
 }
 
-export const SILENT_FAMILIES: readonly SilentFamily[] = [
-  {
-    name: 'value-words',
-    reason:
-      "a language's word inside a value reads back as another English word: pl `to` → " +
-      '`it` (its `it` word, after `closest`)',
-    ids: ['d74a86f3a0', 'da24c9d768'],
-  },
-  {
-    name: 'possessive-split',
-    reason:
-      "a possessive reads back split or reworded: qu `$data 's inner' s val`, id `my` → " +
-      '`me punya`',
-    ids: ['76130fbf7d', 'b839394853'],
-  },
-];
+// Empty since 2026-10-13: the last two families (pl `to` after `closest`, qu and id
+// possessives) were reader fixes. A new silent pair needs a family here, with its reason.
+export const SILENT_FAMILIES: readonly SilentFamily[] = [];
 
 /** The silent family a case belongs to, if any. */
 export function silentFamilyOf(id: string): SilentFamily | undefined {

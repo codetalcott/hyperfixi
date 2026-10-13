@@ -14,7 +14,7 @@ lokascript-learn (live), lokascript-examples (demos), `_hyper_min`'s docs site, 
 
 ## Order
 
-Owner, 2026-10-13: the semantic work comes first. Proposed meaning, for the owner to confirm:
+Owner, 2026-10-13: the semantic work comes first, and it is done when (confirmed by the owner the same day):
 
 - the roadmap's Reliability rows (the silent pairs, then the refusals by reach) and M3's leftovers (C3, an end
   word's nine readers) are done;
