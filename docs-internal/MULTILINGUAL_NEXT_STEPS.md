@@ -172,7 +172,9 @@ command-shape dry run shows each move.
 - (a) Where a handcrafted pattern copies a schema's type list, derive it (as `put.ts`, `get.ts` and
   `hide.ts` do). Where it narrows the list deliberately, say why in a comment.
 - (b) An explicit render/parse-only flag on patterns (R6), so the render surface is chosen rather than
-  inherited. Four parse-only patterns became the render by accident.
+  inherited. Four parse-only patterns became the render by accident. **Done 2026-10-13:** the flag is `parseOnly` (P52); qu's
+  prefixed until-head, still the render whenever the loop had a source, is read-only now, and
+  `test/parse-only-patterns.test.ts` lists every read-only pattern.
 - (c) Arc D: penalize unconsumed input in the confidence score (G1). Then try deleting `parseInternal`'s
   stages 0 and 0.5.
 - (d) Split `semantic-parser.ts` by responsibility, behavior-preserving and checked against a parity

@@ -660,6 +660,7 @@ const repeatUntilHeadQuMidClause: LanguagePattern = {
   language: 'qu',
   command: 'repeat',
   priority: 109, // below the prefixed variant so position-0 parses prefer it
+  parseOnly: true, // R6: the same transformer form, read and never written
   template: {
     format: 'until event {event} ta {source} manta repeat',
     tokens: [
@@ -703,6 +704,10 @@ const repeatUntilHeadQu: LanguagePattern = {
   language: 'qu',
   command: 'repeat',
   priority: 110,
+  // Read-only (R6): its junk prefix and English literals are what the retired
+  // transformer wrote, never Quechua. With a source it outscored the canonical
+  // head below, so qu wrote `hayk _ a until event pointerup ta #box manta repeat`.
+  parseOnly: true,
   template: {
     format: 'hayk _ a until event {event} ta {source} manta repeat',
     tokens: [
@@ -885,6 +890,11 @@ for (const [lang, spec] of SOV_UNTIL_HEADS) {
  * Quechua, and qu was the only language whose repeat-until row could not read
  * itself back (repeat-until-event qu). The words are the ones those tolerances
  * already normalize to (kama→until, ruway→event, manta→from).
+ *
+ * Outranking them was not enough: with a source, the prefixed head's required
+ * `{source}` outscored this one's optional group, and the junk came back
+ * (`repeat until event pointerup from #box`). Both are `parseOnly` now (R6), so
+ * the renderer never sees them.
  *
  * It cannot reuse `repeatUntilHeadSOV`: that builder derives the id
  * `repeat-{lang}-until-head`, which is exactly `repeatUntilHeadQu`'s id, and the
