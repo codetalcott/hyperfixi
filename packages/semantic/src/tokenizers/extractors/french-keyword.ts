@@ -82,6 +82,20 @@ export class FrenchKeywordExtractor implements ContextAwareExtractor {
 
     if (!word) return null;
 
+    // A keyword with an apostrophe in it is one word: the profile's `until` is
+    // `jusqu'à`, which read as `jusqu`, a quote and `à` (to), and a loop's
+    // closing `jusqu'à x est 3` was lost. Joined only when the whole is a keyword,
+    // so an elided clitic (`l'afficher`) still splits.
+    if ((input[pos] === "'" || input[pos] === '’') && isFrenchLetter(input[pos + 1] ?? '')) {
+      let end = pos + 1;
+      while (end < input.length && isFrenchIdentifierChar(input[end])) end++;
+      const joined = `${word}'${input.slice(pos + 1, end)}`;
+      if (this.context.lookupKeyword(joined.toLowerCase())) {
+        word = joined;
+        pos = end;
+      }
+    }
+
     const lower = word.toLowerCase();
 
     // Check if it's a preposition

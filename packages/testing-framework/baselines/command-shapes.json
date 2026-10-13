@@ -3,8 +3,8 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 26502,
-  "refused": 738,
+  "pass": 26510,
+  "refused": 730,
   "silent": 0,
   "entries": {
     "6f60177037": {
@@ -83,11 +83,6 @@
       "family": "put",
       "refused": "qu tr"
     },
-    "ae7e10324c": {
-      "src": "def repeatForeverWithReturn() set retVal to 0 repeat forever set retVal to retVal + 1 if retVal == 5 then return retVal…",
-      "family": "repeat",
-      "refused": "de"
-    },
     "deac58c100": {
       "src": "on click repeat in [1, 2, 3] put it at end of me end",
       "family": "repeat",
@@ -97,21 +92,6 @@
       "src": "def sprayInto(elt) for x in [1, 2, 3] for y in [1, 2, 3] put x * y at end of elt end end end",
       "family": "repeat",
       "refused": "pt sw"
-    },
-    "e51cb64feb": {
-      "src": "on click set x to 0 repeat set x to x + 1 until x is 3 end put x into me",
-      "family": "repeat",
-      "refused": "de fr ko"
-    },
-    "47a37edc5b": {
-      "src": "on click set x to 0 repeat set x to x + 1 while x < 3 end put x into me",
-      "family": "repeat",
-      "refused": "de"
-    },
-    "a5867275db": {
-      "src": "on click set x to 0 repeat set x to x + 1 until true end put x into me",
-      "family": "repeat",
-      "refused": "de fr ko"
     },
     "20161acab0": {
       "src": "on click scroll to #item in #box",
