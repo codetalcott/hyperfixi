@@ -52,7 +52,7 @@ word by word:
 | J5  | a conjunction is an operand where it cannot join: after an operator, before one or a comparison word, in brackets, or first in the value (pl `i`, es `si y`, pl `i - 1`)                                    | `isConnectiveOperand` → `precedesOperand`, `followsOperand` (over `utils/operators.ts`) | 59; alone 81; first 104 | `connective-operand.test.ts`, `colliding-names.test.ts`                                           |
 | J6  | a `<property> <of-marker>` chain reads to its selector owner                                                                                                                                               | `ofChainEnd`                                 | 58, 65                | `property-before-of.test.ts`, `possessive-chain.test.ts`                                          |
 
-**The condition scan** (`SemanticParserImpl.tryParseConditionalBlock`, `semantic-parser.ts`):
+**The condition scan** (`tryParseConditionalBlock`, `parser/clause-walk.ts`):
 
 | #   | Reads                                                                                                                                                                                         | Where            | PR                           | Pinned by                                                                                          |
 | --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ---------------------------- | -------------------------------------------------------------------------------------------------- |

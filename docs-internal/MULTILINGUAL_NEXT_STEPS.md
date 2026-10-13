@@ -182,7 +182,12 @@ command-shape dry run shows each move.
   confidence). Stages 0/0.5 do not compare confidence, so a penalty cannot retire them. An unread tail
   is already refused (F1, F2) and reported (MCP). OPEN_ITEMS G1 has the numbers.
 - (d) Split `semantic-parser.ts` by responsibility, behavior-preserving and checked against a parity
-  oracle.
+  oracle. **Done 2026-10-13, in nine PRs (from #1488):** 9,680 → 751 lines, each phase 0 differences
+  on the oracle (`packages/semantic/scripts/parse-parity.ts`: 27,194 parses of every command-shape
+  case and its render in every language). 22 new modules under `parser/`; the parse state is one
+  `ParserState` (`parser-state.ts`) the moved functions take first; `SemanticParserImpl` keeps its
+  public surface. `clause-walk.ts` (1,617) is the one module over ~1,500: its members call each
+  other. Optional: name `parseInternal`'s stages as functions.
 - (e) Decide the semantic/framework `PatternMatcher` fork (4,247 vs 1,630 lines on 2026-10-06; Phase 3
   of the old `multilingual/plan.md`, archived 2026-10-06).
 
@@ -194,7 +199,7 @@ command-shape dry run shows each move.
 
 **Stamped 2026-10-12, when M3 started (after the reliability rows: rare values #1480, P57 #1481, P62):**
 
-- `semantic-parser.ts`: 9,680 lines (`wc -l`; 9,494 on 2026-10-11, 8,871 on 2026-10-06).
+- `semantic-parser.ts`: 9,680 lines (`wc -l`; 9,494 on 2026-10-11, 8,871 on 2026-10-06). After (d): 751.
 - Copied type lists: 139 literal `expectedTypes: [...]` in `src/patterns/*.ts` (158 on 2026-10-06), 5 files reading
   shared lists (`generators/role-types.ts`). After (a)'s first PR: 63; after its second: 46 (the `for` loop, the
   `on` heads, `if`/`unless`, wait's event, fetch's options, viewTransition's style); after its third: 28 (the
