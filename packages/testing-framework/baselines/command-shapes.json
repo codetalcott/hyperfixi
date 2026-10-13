@@ -3,8 +3,8 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 26510,
-  "refused": 730,
+  "pass": 26521,
+  "refused": 719,
   "silent": 0,
   "entries": {
     "6f60177037": {
@@ -124,16 +124,6 @@
       "family": "take",
       "refused": "id vi"
     },
-    "8353b546d7": {
-      "src": "on click throw \"foo\" then put \"bar\" into my.innerHTML end on exception(error) put error into my.innerHTML end",
-      "family": "throw",
-      "refused": "ko"
-    },
-    "8e7118ac3b": {
-      "src": "on click wait 2ms then throw \"foo\" then put \"bar\" into my.innerHTML end on exception(error) put error into my.innerHTML…",
-      "family": "throw",
-      "refused": "ko"
-    },
     "be37dedb54": {
       "src": "on click transition *width from 0px to 100px *height from 0px to 100px",
       "family": "transition",
@@ -144,20 +134,10 @@
       "family": "transition",
       "refused": "bn hi ja ko qu tr"
     },
-    "ef499d89c4": {
-      "src": "on click trigger foo(x:42) end on foo(x) put x into my.innerHTML",
-      "family": "trigger",
-      "refused": "ko"
-    },
     "3d6f0303b4": {
       "src": "on click trigger foo.bar end on foo.bar add .foo-set end",
       "family": "trigger",
       "refused": "qu"
-    },
-    "e9e92774e7": {
-      "src": "on click trigger foo.bar(x:42) end on foo.bar(x) put x into my.innerHTML",
-      "family": "trigger",
-      "refused": "ko"
     },
     "7dee91f428": {
       "src": "on click trigger foo:bar(x:42) end on foo:bar(x) put x into my.innerHTML",
@@ -202,11 +182,6 @@
       "family": "core/scoping",
       "refused": "en *",
       "loud": "rare-commands: commands rare in pages: `measure` of a property list, `pick characters 0 to 3 from …`, an `if` whose body is empty (`if false end`), a behavior holding a bare command, two behaviors with no `end` between"
-    },
-    "db3346f209": {
-      "src": "on hyperscript:beep(value) set my @data-value to the value on click get beep! \"foo\"",
-      "family": "expressions/beep!",
-      "refused": "ko"
     },
     "f76ff620e1": {
       "src": "on click set items to <li/> in #list then set matches to items where it matches .yes then put matches mapped to its tex…",
@@ -311,21 +286,6 @@
       "src": "on mutation of characterData put \"Mutated\" into me",
       "family": "on",
       "refused": "qu"
-    },
-    "3030e3cc43": {
-      "src": "on click put \"foo\" into me then throw \"bar\" on exception(error) put error into me",
-      "family": "on",
-      "refused": "ko pl"
-    },
-    "829e32df04": {
-      "src": "on click put \"foo\" into me then throw \"bar\" catch e log e on exception(error) put error into me",
-      "family": "on",
-      "refused": "ko pl"
-    },
-    "ee008e0a98": {
-      "src": "on click put \"foo\" into me then throw \"bar\" catch e throw e on exception(error) put error into me",
-      "family": "on",
-      "refused": "ko pl"
     },
     "e856eb7927": {
       "src": "on click from #d1 or click from #d2 increment @count then put @count into me",

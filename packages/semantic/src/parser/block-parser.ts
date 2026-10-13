@@ -617,8 +617,9 @@ function handlerStartAt(
   if (leads) return withFrontedSource(tokens, j, segStart, heads, true);
 
   // Written after the event: the event is at j - 1, and the handler that began
-  // at segStart has its own head before it.
-  const eventAt = j - 1;
+  // at segStart has its own head before it. A parameterized event's name stands
+  // before its parameters (ko `exception(error) 할 때`): split there, not at `)`.
+  const eventAt = beforeParameters(tokens, j - 1, segStart);
   const event = tokens[eventAt];
   if (eventAt <= segStart || !looksLikeEvent(event)) return null;
   if (heads.trailing.some(words => wordsAt(tokens, j, words))) {
@@ -634,6 +635,29 @@ function handlerStartAt(
     return withFrontedSource(tokens, eventAt, segStart, heads, false);
   }
   return null;
+}
+
+/**
+ * Where an event ends at `at` with a `)`, the index of its name: the token
+ * before the `(` that opens the parameters and touches it (`exception(error)`).
+ * Otherwise `at`. A handler's parameters are names; a call's are not, or are
+ * none (bn `bar()তে`, `to bar()`, where `তে` is also bn's `on`).
+ */
+function beforeParameters(tokens: readonly LanguageToken[], at: number, segStart: number): number {
+  if (tokens[at]?.value !== ')') return at;
+  const isName = (t: LanguageToken) => /^[\p{L}_$][\p{L}\p{N}_$]*$/u.test(t.value);
+  let open = at - 1;
+  while (open > segStart && tokens[open]!.value !== '(') {
+    if (tokens[open]!.value !== ',' && !isName(tokens[open]!)) return at;
+    open--;
+  }
+  const name = tokens[open - 1];
+  return tokens[open]?.value === '(' &&
+    open < at - 1 &&
+    name !== undefined &&
+    name.position.end === tokens[open]!.position.start
+    ? open - 1
+    : at;
 }
 
 /**
