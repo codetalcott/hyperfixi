@@ -820,9 +820,9 @@ interface AmbiguousSenseRule {
   beforePredicate?: string;
   /** Emitted when the NEXT token is a conversion type name (`Number`, `json`). */
   beforeTypeName?: string;
-  /** Emitted when the NEXT token is a bare ASCII identifier (`dragHandle`) —
-      the word shape is required because some tokenizers lex `(`/`)` as
-      identifier-kind too. */
+  /** Emitted when the NEXT token is a bare ASCII identifier (`dragHandle`,
+      `:items`, `$n`) — the word shape is required because some tokenizers lex
+      `(`/`)` as identifier-kind too. */
   beforeBareIdentifier?: string;
   /** Emitted when the NEXT token is a selector (`.w`, `#a`, `<p/>`): zh
       `没有 .w` and tl `walang .w` are `no .w`, as `没有 flag` is `no flag`. */
@@ -969,6 +969,9 @@ const AMBIGUOUS_SENSES: Readonly<Record<string, Readonly<Record<string, Ambiguou
   bn: { আছে: { afterSubject: 'exists', beforeClassRef: 'has' }, আছি: HAS },
   qu: {
     mana: { beforeOperand: 'not', beforeComparison: 'not' },
+    // qu's `where` is also the `target` reference: after a collection, the
+    // filter (`items maypi chay tupan .a`, P57).
+    maypi: { afterOperand: 'where' },
     chusaq: { afterCopula: 'empty' },
     kachkan: HAS,
     kachkani: HAS,
@@ -1094,10 +1097,11 @@ function resolveAmbiguousSense(
   ) {
     return rule.afterCopula;
   }
+  // A sigil variable is a bare name too: zh `没有 :checkboxes` is `no :checkboxes`.
   if (
     rule.beforeBareIdentifier &&
     next?.kind === 'identifier' &&
-    /^[A-Za-z_]\w*$/.test(next.value)
+    /^[:$]?[A-Za-z_]\w*$/.test(next.value)
   ) {
     return rule.beforeBareIdentifier;
   }
@@ -1279,6 +1283,8 @@ export function expressionWordOf(
   // to`), and its `to` is a word some languages have their own sense for: pl
   // reads it as `it`, so `p is equal to 1` came back `p is equal it 1`.
   if (prevText?.toLowerCase() === 'equal' && token.value.toLowerCase() === 'to') return 'to';
+  // So does a collection's `mapped to` (P57): pl reads `to` as `it`.
+  if (prevText?.toLowerCase() === 'mapped' && token.value.toLowerCase() === 'to') return 'to';
   if (isCopulaWord(prevText) && token.value.toLowerCase() === 'in') return 'in';
   // The verb of `does not include` (`contain`, `match`, `exist`) stays English
   // in every rendering. it's connective table reads `include` as `includes`
@@ -1735,6 +1741,22 @@ export function joinExpressionTokens(
     const reference = profile ? possessiveReferenceOf(profile, token) : undefined;
 
     const next = tokens[i + 1];
+
+    // `<input/> in the closest <table/>`, `checked of the :boxes`: the article
+    // between a query's `in` and a positional, or between `of` and a variable,
+    // is noise, as the engine reads it. Joined, a translation wrote it as
+    // English (de `in the nächstgelegene <table/>`, ru `отмечено of the :boxes`)
+    // and read it back as nothing (P57).
+    const previousWord = previousText?.toLowerCase();
+    if (
+      token.value.toLowerCase() === 'the' &&
+      next !== undefined &&
+      ((previousWord === 'in' &&
+        ['closest', 'next', 'previous', 'first', 'last'].includes(next.value.toLowerCase())) ||
+        (previousWord === 'of' && next.kind === 'identifier' && /^[:$]?[A-Za-z_]\w*$/.test(next.value)))
+    ) {
+      continue;
+    }
 
     // A conversion's `Fixed:2` or `Values:Form`, which a non-English tokenizer
     // splits at its colon: glued back as English writes it. The spaced `Fixed

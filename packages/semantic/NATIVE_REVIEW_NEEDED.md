@@ -682,6 +682,26 @@ Questions for the reviewer: which word would you write for this `on` (the target
 onto)? And de: the object form takes de's default destination marker (`festlegen auf {a: 1}`) where
 `set @a to 1` writes none (`setze @a`); which reads right?
 
+## Collection expressions: `where` and `mapped to` (M2 reliability row 8, P57) ⚠️ (October 2026)
+
+Upstream's `items where it matches .a` (keep the items the condition holds for) and `items mapped to its
+textContent` (replace each) were refused in every language. They now read back. `where` is written in the
+lexicon's word, which a condition (`if no <q/> where …`) already wrote; `mapped to` stays English, because
+no translation wrote its dictionary word before and new forms wait for this review:
+
+| lang | `set m to items where it matches .yes` | `… mapped to its textContent`          | dictionary `mapped to` |
+| ---- | -------------------------------------- | -------------------------------------- | ---------------------- |
+| es   | `establecer m a items donde ello coincide .yes` | `… items mapped to su textContent` | `transformado a`       |
+| de   | `setze m auf items wo es passt .yes`   | `… items mapped to sein textContent`   | `zugeordnet zu`        |
+| ja   | `mを items どこ それ 一致する .yesに 設定` | `mを items mapped to その textContentに 設定` | `に変換`        |
+| ko   | `m를 items 어디 그것 일치 .yes에 설정`  | `m를 items mapped to 그것의 textContent에 설정` | `로_변환`     |
+| tr   | `m i items nerede o eşleşir .yes e ayarla` | `m i items mapped to onun textContent e ayarla` | `ye dönüştürülmüş` |
+| ru   | `установить в m items где это соответствует .yes` | `… items mapped to его textContent` | `преобразовано_в` |
+
+Questions for the reviewer: several `where` words are the question "where?" (ja `どこ`, ko `어디`, zh `哪里`,
+tr `nerede`), not a filter's "for which"; what would you write? And which word would you write for `mapped
+to`: the dictionary's, or another?
+
 ## `ask` and `answer` in the language's own verbs (M2, vocabulary sheet B8) ⚠️ (October 2026)
 
 Upstream's two dialog commands, refused in every language until now: `ask "Name?"` prompts and the

@@ -111,6 +111,10 @@ export class ExpressionParser {
     return this.peek().type === TokenType.EOF;
   }
 
+  private isAtEndAt(offset: number): boolean {
+    return this.peekAt(offset).type === TokenType.EOF;
+  }
+
   private advance(): Token {
     if (!this.isAtEnd()) {
       this.current++;
@@ -254,7 +258,7 @@ export class ExpressionParser {
   }
 
   private parseMultiplication(): ExpressionNode {
-    let left = this.parseConversion();
+    let left = this.parseCollection();
 
     while (
       this.peek().value === '*' ||
@@ -263,11 +267,47 @@ export class ExpressionParser {
       this.checkValue('mod')
     ) {
       const operator = this.advance().value.toLowerCase();
-      const right = this.parseConversion();
+      const right = this.parseCollection();
       left = this.createBinaryExpression(operator, left, right);
     }
 
     return left;
+  }
+
+  /** Inside a collection operator's operand, which ends at the next one. */
+  private collectionOperand = 0;
+
+  /**
+   * Upstream 0.9.93's collection operators (P57): `items where it matches .a`
+   * keeps the items its operand holds for, `items mapped to its textContent`
+   * replaces each. The engine binds them looser than a conversion and tighter
+   * than arithmetic; the operand is a whole expression, up to the next
+   * collection word (`x where a mapped to b` filters, then maps).
+   */
+  private parseCollection(): ExpressionNode {
+    let left = this.parseConversion();
+    if (this.collectionOperand > 0) return left;
+    for (let op = this.collectionOperator(); op; op = this.collectionOperator()) {
+      this.advance();
+      if (op === 'mapped to') this.advance();
+      this.collectionOperand++;
+      let right: ExpressionNode;
+      try {
+        right = this.parseExpression();
+      } finally {
+        this.collectionOperand--;
+      }
+      left = this.createBinaryExpression(op, left, right);
+    }
+    return left;
+  }
+
+  private collectionOperator(): 'where' | 'mapped to' | undefined {
+    if (this.checkValue('where')) return 'where';
+    if (this.checkValue('mapped') && this.peekAt(1).value.toLowerCase() === 'to') {
+      return 'mapped to';
+    }
+    return undefined;
   }
 
   /**
@@ -324,7 +364,12 @@ export class ExpressionParser {
   }
 
   private parseUnary(): ExpressionNode {
-    if (this.checkValue('not') || this.checkValue('no') || this.peek().value === '-') {
+    // `no` takes a collection (`no :boxes where it is checked`), as the engine reads it.
+    if (this.checkValue('no')) {
+      const operator = this.advance().value;
+      return this.createUnaryExpression(operator, this.parseCollection());
+    }
+    if (this.checkValue('not') || this.peek().value === '-') {
       const operator = this.advance().value;
       const operand = this.parseUnary();
       return this.createUnaryExpression(operator, operand);
@@ -418,6 +463,14 @@ export class ExpressionParser {
   }
 
   private parsePrimary(): ExpressionNode {
+    // `<input/> in the closest <table/>`: the article before a positional is
+    // noise, as the engine reads it.
+    if (
+      this.checkValue('the') &&
+      ['closest', 'next', 'previous', 'first', 'last'].includes(this.peekAt(1).value.toLowerCase())
+    ) {
+      this.advance();
+    }
     const token = this.peek();
 
     // `the textContent of #d1`: core's propertyOfExpression. The article was
@@ -612,6 +665,8 @@ export class ExpressionParser {
     targetTakesAs = true
   ): PropertyOfExpressionNode {
     this.advance(); // of
+    // `checked of the :checkboxes`: the article before the owner is noise.
+    if (this.checkValue('the') && !this.isAtEndAt(1)) this.advance();
     const target = targetTakesAs ? this.parseConversion() : this.parseUnary();
     return {
       type: 'propertyOfExpression',

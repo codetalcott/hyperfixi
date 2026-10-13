@@ -400,6 +400,27 @@ export function tokenize(input: string): Token[] {
       tokens.push(makeToken(TokenType.COMMA, ',', start));
       continue;
     }
+    // `:items`, an element-scoped variable, where a value starts: first, after
+    // a space, or after an operator or opening punctuation. A colon touching a
+    // word is a key's (`{a:b}`) or a type's (`as Fixed:2`). Without this the
+    // parser read no value that began with one (`:items where it > 1`, P57).
+    const prevType = tokens[tokens.length - 1]?.type;
+    if (
+      char === ':' &&
+      /[a-zA-Z_]/.test(input[pos + 1] ?? '') &&
+      (prevType === undefined ||
+        /\s/.test(input[pos - 1] ?? '') ||
+        prevType === TokenType.OPERATOR ||
+        prevType === TokenType.COMPARISON ||
+        prevType === TokenType.LPAREN ||
+        prevType === TokenType.LBRACKET ||
+        prevType === TokenType.COMMA)
+    ) {
+      advance();
+      const word = readWhile(c => /[\w$]/.test(c));
+      tokens.push(makeToken(TokenType.IDENTIFIER, `:${word}`, start));
+      continue;
+    }
     if (char === ':') {
       advance();
       tokens.push(makeToken(TokenType.COLON, ':', start));
