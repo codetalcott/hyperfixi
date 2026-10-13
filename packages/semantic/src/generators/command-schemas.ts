@@ -557,6 +557,14 @@ export const toggleSchema: CommandSchema = {
   // literal identifier 'on' and `#panel` bound to nothing. Semantic binds
   // patient='.active', destination='me'/'#panel'.
   argSkipTokens: ['on'],
+  // `toggle my *display` (upstream's form: a style property of an element) is a
+  // possessive, which reads as a property-path, not the patient's selector. en and
+  // es read it through handcrafted patterns that leave the patient untyped; every
+  // generated pattern refused it, so ar/de/fr/he/ja/tr could not read their own
+  // render. A lower-priority variant, so it never takes a span a selector matches.
+  widenTypeVariants: [
+    { role: 'patient', types: ['selector', 'property-path'], idSuffix: 'possessive-patient' },
+  ],
   requiredRoleVariants: [
     // `toggle between .a and .b [on #x]`
     { role: 'goal', omit: ['patient'], idSuffix: 'between-pair' },
@@ -3910,7 +3918,9 @@ export const scrollSchema: CommandSchema = {
   // (tryScrollModifiers, the renderer), in the language's word (grammar-words).
   // Below the `to` patterns: where the amount is bare (tl, vi, uk), a variant
   // that outranked them read `sa #item` as the amount.
-  requiredRoleVariants: [{ role: 'quantity', omit: ['destination'], idSuffix: 'by', priorityDelta: -10 }],
+  requiredRoleVariants: [
+    { role: 'quantity', omit: ['destination'], idSuffix: 'by', priorityDelta: -10 },
+  ],
   // ScrollCommand's parseInput reads ONLY `raw.args` (`parsePosition` and
   // `resolveTarget` both walk that list) and throws when it is empty, so the
   // destination has to be an ARG. The blanket fallback mapping emitted
@@ -3946,7 +3956,8 @@ export const scrollSchema: CommandSchema = {
     },
     {
       role: 'patient',
-      description: 'The element scrolled by an amount (`scroll #box down by 200px`); the window when absent',
+      description:
+        'The element scrolled by an amount (`scroll #box down by 200px`); the window when absent',
       required: false,
       // An element only: a bare word here would take the direction (`down`).
       expectedTypes: ['selector', 'reference'],
