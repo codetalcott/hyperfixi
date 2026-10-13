@@ -51,7 +51,6 @@ import {
   endWordPlace,
   joinExpressionTokens,
   loneKeywordKind,
-  type EndWordPlace,
 } from './utils/expression-lexicon';
 import { blankComments } from './utils/comments';
 import { isOrWordToken } from './utils/or-words';
@@ -63,7 +62,16 @@ import { CONDITION_PREDICATES, copulaHoldsCondition } from './value-reading';
 import { tokenValue } from './token-value';
 import { NATIVE_COUNT_WORDS } from '../patterns/count-words';
 import { readsAsOneExpression } from './utils/value-extent';
-import { curatedEndKeywordSet } from './end-keywords';
+import {
+  isBlockEndToken,
+  isElseKeyword,
+  isEndKeyword,
+  isIfKeyword,
+  isThenAt,
+  isThenKeyword,
+  isUnlessKeyword,
+} from './clause-keywords';
+import { consumeJsBlock, consumeVerbFinalJsBlock } from './js-block';
 import {
   parseErrorClauses,
   splitErrorClauses,
@@ -1187,9 +1195,9 @@ export class SemanticParserImpl implements ISemanticParser {
       return true;
     }
     if (
-      this.isThenKeyword(t.value, language) ||
-      this.isEndKeyword(t.value, language) ||
-      this.isElseKeyword(t.value, language)
+      isThenKeyword(t.value, language) ||
+      isEndKeyword(t.value, language) ||
+      isElseKeyword(t.value, language)
     ) {
       return true;
     }
@@ -1266,9 +1274,9 @@ export class SemanticParserImpl implements ISemanticParser {
       if (i === 0 && words.some(w => CLAUSE_OPENERS.has(w))) return false;
       return (
         words.some(w => CLAUSE_BOUNDARIES.has(w)) ||
-        this.isThenKeyword(t.value, language) ||
-        this.isEndKeyword(t.value, language) ||
-        this.isElseKeyword(t.value, language) ||
+        isThenKeyword(t.value, language) ||
+        isEndKeyword(t.value, language) ||
+        isElseKeyword(t.value, language) ||
         (t.kind === 'keyword' && words.some(w => !!getSchema(w as ActionType)))
       );
     });
@@ -1431,7 +1439,7 @@ export class SemanticParserImpl implements ISemanticParser {
     // byte-identical.
     {
       const mark = tokens.mark();
-      const bareJs = this.consumeJsBlock(tokens, language);
+      const bareJs = consumeJsBlock(tokens, language, this.positionSource);
       if (bareJs && tokens.isAtEnd()) return withDiagnostics(bareJs, diagnostics);
       tokens.reset(mark);
     }
@@ -2285,7 +2293,7 @@ export class SemanticParserImpl implements ISemanticParser {
       tokens,
       commandPatterns,
       language,
-      this.isIfKeyword(tokens.tokens[0]?.value ?? '', language)
+      isIfKeyword(tokens.tokens[0]?.value ?? '', language)
     );
     if (compoundResult) {
       diagnostics.push(
@@ -2623,7 +2631,7 @@ export class SemanticParserImpl implements ISemanticParser {
       for (let k = tokens.position() - 1; k >= 0; k--) {
         const kTok = all[k] as { normalized?: string; value: string };
         const kv = (kTok.normalized ?? kTok.value).toLowerCase();
-        if (this.isIfKeyword(kv, language)) {
+        if (isIfKeyword(kv, language)) {
           ifIdx = k;
           break;
         }
@@ -2633,7 +2641,7 @@ export class SemanticParserImpl implements ISemanticParser {
       // pattern may have consumed too.
       while (ifIdx > 0) {
         const before = all[ifIdx - 1]!;
-        if (!this.isIfKeyword((before.normalized ?? before.value).toLowerCase(), language)) break;
+        if (!isIfKeyword((before.normalized ?? before.value).toLowerCase(), language)) break;
         ifIdx--;
       }
       if (ifIdx >= 0) {
@@ -2782,7 +2790,7 @@ export class SemanticParserImpl implements ISemanticParser {
                 !t ||
                 t.kind === 'conjunction' ||
                 (t.kind === 'keyword' &&
-                  (this.isThenKeyword(t.value, language) || this.isEndKeyword(t.value, language)))
+                  (isThenKeyword(t.value, language) || isEndKeyword(t.value, language)))
               ) {
                 break;
               }
@@ -2891,11 +2899,11 @@ export class SemanticParserImpl implements ISemanticParser {
           if (t.kind !== 'keyword') return false;
           const place = endWordPlace(all, k);
           return (
-            this.isThenAt(t, place, language) ||
+            isThenAt(t, place, language) ||
             // isBlockEndToken: not a variable spelled like it (C3), and not the
             // noun of `at end of` (ms `letak x di tamat daripada saya`, he `at
             // סוף of`), which ended a loop body's clause inside its put.
-            (this.isEndKeyword(t.value, language) && this.isBlockEndToken(t, place, language))
+            (isEndKeyword(t.value, language) && isBlockEndToken(t, place, language))
           );
         };
         // A loop head's clause also stops at the loop's own `end` where
@@ -2904,7 +2912,7 @@ export class SemanticParserImpl implements ISemanticParser {
         const loopHeadAction = actionName === 'repeat' || actionName === 'while';
         const endsClause = (k: number): boolean =>
           isClauseBoundary(k) ||
-          (loopHeadAction && this.isBlockEndToken(all[k], endWordPlace(all, k), language));
+          (loopHeadAction && isBlockEndToken(all[k], endWordPlace(all, k), language));
         // The scan-back below identifies the verb by its NORMALIZED form. That
         // misses whenever the language's verb normalizes to something other
         // than the action name: id `muat` normalizes to `load` (a synonym) and
@@ -2949,12 +2957,12 @@ export class SemanticParserImpl implements ISemanticParser {
             const before = wordBefore(all, clauseEnd);
             if (
               loopHeadAction &&
-              this.isIfKeyword((t.normalized ?? t.value).toLowerCase(), language) &&
+              isIfKeyword((t.normalized ?? t.value).toLowerCase(), language) &&
               !this.isElseIfChain(t, before, language)
             ) {
               nested++;
             } else if (nested > 0) {
-              if (this.isBlockEndToken(t, endWordPlace(all, clauseEnd), language)) nested--;
+              if (isBlockEndToken(t, endWordPlace(all, clauseEnd), language)) nested--;
             } else if (endsClause(clauseEnd)) {
               break;
             }
@@ -3474,7 +3482,7 @@ export class SemanticParserImpl implements ISemanticParser {
       // dropped (a degenerate parse — see fidelity ratchet). Gate the extra parse
       // on a leading then-keyword so we never sweep up unrelated trailing tokens.
       const nextToken = tokens.peek();
-      const hasTrailingThenChain = !!nextToken && this.isThenKeyword(nextToken.value, language);
+      const hasTrailingThenChain = !!nextToken && isThenKeyword(nextToken.value, language);
 
       // A fused VSO/SVO event pattern can capture a *block* command (if/unless/
       // while/repeat/for) as the action but leave the block's condition and branch
@@ -3482,7 +3490,7 @@ export class SemanticParserImpl implements ISemanticParser {
       // *not* bridged by a then-marker (`on click if <cond> show … else … end`).
       const isBlockBodyAction = BLOCK_BODY_ACTIONS.has(actionName);
       const hasBlockBody =
-        isBlockBodyAction && !!nextToken && !this.isEndKeyword(nextToken.value, language);
+        isBlockBodyAction && !!nextToken && !isEndKeyword(nextToken.value, language);
 
       // General case: a fused event pattern captured the *first* body command as the
       // action and left the rest unconsumed. The body's remaining commands may be
@@ -3494,7 +3502,7 @@ export class SemanticParserImpl implements ISemanticParser {
       // already-consumed simple handler (no remainder) is unchanged, and stray role
       // words can never become spurious commands. Subsumes the then-chain and
       // block-body cases above; both are kept named for documentation.
-      const hasTrailingBody = !!nextToken && !this.isEndKeyword(nextToken.value, language);
+      const hasTrailingBody = !!nextToken && !isEndKeyword(nextToken.value, language);
 
       // The captured command can be a LOOP head (`repeat-event-es-vso` fuses
       // `al clic repetir 3 times`), whose body the re-parse above recovered.
@@ -3504,7 +3512,7 @@ export class SemanticParserImpl implements ISemanticParser {
       const leading: WalkEntry[] = [commandNode, ...reparsedTail];
       const closesLeadingLoop =
         !!nextToken &&
-        this.isEndKeyword(nextToken.value, language) &&
+        isEndKeyword(nextToken.value, language) &&
         openLoopCount(leading) > 0 &&
         tokens.peek(1) !== null;
       if (closesLeadingLoop) {
@@ -3734,7 +3742,7 @@ export class SemanticParserImpl implements ISemanticParser {
         // `js` command (as it already does for a standalone block) and the JS body
         // never reaches the command patterns.
         const jsNode =
-          this.consumeJsBlock(tokens, language) ?? this.consumeVerbFinalJsBlock(tokens, language);
+          consumeJsBlock(tokens, language, this.positionSource) ?? consumeVerbFinalJsBlock(tokens, language, this.positionSource);
         if (jsNode) {
           clauses.push(jsNode);
           continue;
@@ -3758,7 +3766,7 @@ export class SemanticParserImpl implements ISemanticParser {
       const isConjunction =
         current.kind === 'conjunction' ||
         (current.kind === 'keyword' &&
-          this.isThenAt(current, endWordPlace(tokens.tokens, tokens.position()), language));
+          isThenAt(current, endWordPlace(tokens.tokens, tokens.position()), language));
 
       // Check if this is an 'end' keyword (terminates block). The English
       // positional-put phrase `at end of <target>` contains the literal word
@@ -3782,7 +3790,7 @@ export class SemanticParserImpl implements ISemanticParser {
         isAtEndPositionNoun(language, current.value, prevClauseToken?.value, followingToken?.value);
       const isEnd =
         current.kind === 'keyword' &&
-        this.isEndKeyword(current.value, language) &&
+        isEndKeyword(current.value, language) &&
         !isPositionalEndNoun &&
         // An end word where a value stands is a variable spelled like it (C3).
         !endWordIsValue(endWordPlace(tokens.tokens, tokens.position()), language);
@@ -3819,7 +3827,7 @@ export class SemanticParserImpl implements ISemanticParser {
       const closesBlock =
         isEnd ||
         (!isPositionalEndNoun &&
-          this.isBlockEndToken(current, endWordPlace(tokens.tokens, tokens.position()), language));
+          isBlockEndToken(current, endWordPlace(tokens.tokens, tokens.position()), language));
       // A `while` no `repeat` claimed, last in a loop, is that loop's bottom
       // test (`repeat … while x < 3 end`): the `end` is the loop's. An SOV
       // while-phrase is claimed by the `repeat` verb after it before any `end`.
@@ -3935,7 +3943,7 @@ export class SemanticParserImpl implements ISemanticParser {
           const tIsBoundary =
             t.kind === 'conjunction' ||
             (t.kind === 'keyword' &&
-              (this.isThenKeyword(t.value, language) || this.isEndKeyword(t.value, language)));
+              (isThenKeyword(t.value, language) || isEndKeyword(t.value, language)));
           if (tIsBoundary) break;
           trailingTokens.push(t);
           tokens.advance();
@@ -3992,7 +4000,7 @@ export class SemanticParserImpl implements ISemanticParser {
       const cv = (current.normalized ?? current.value).toLowerCase();
       const isRepeatWord = isRepeatToken(current);
       if (current.kind === 'keyword' || isRepeatWord) {
-        const isIf = this.isIfKeyword(cv, language);
+        const isIf = isIfKeyword(cv, language);
         const prev = wordBefore(currentClauseTokens, currentClauseTokens.length);
         if ((cv === 'for' || cv === 'while') && prev && isRepeatToken(prev)) {
           // the form word of `repeat for …` / `repeat while …`
@@ -4002,7 +4010,7 @@ export class SemanticParserImpl implements ISemanticParser {
           pendingOpenerKinds[pendingOpenerKinds.length - 1] = 'loop';
         } else if (
           isIf ||
-          this.isUnlessKeyword(cv, language) ||
+          isUnlessKeyword(cv, language) ||
           cv === 'while' ||
           cv === 'for' ||
           isRepeatWord
@@ -4557,7 +4565,7 @@ export class SemanticParserImpl implements ISemanticParser {
     for (let k = stream.position() + 1; k < all.length; k++) {
       const t = all[k]!;
       const place = endWordPlace(all, k);
-      if (this.isBlockEndToken(t, place, language) || this.isThenAt(t, place, language)) break;
+      if (isBlockEndToken(t, place, language) || isThenAt(t, place, language)) break;
       // A loop's own word: the until-phrase heads a loop, fronted where an SOV
       // render writes it (bn `পর্যন্ত n > 3 পুনরাবৃত্তি …`, until n > 3 repeat).
       if (isRepeatToken(t)) return null;
@@ -4645,7 +4653,7 @@ export class SemanticParserImpl implements ISemanticParser {
     const lastTok = clauseTokens[clauseTokens.length - 1];
     if (lastTok && clauseTokens.length >= 2) {
       const lv = (lastTok.normalized ?? lastTok.value).toLowerCase();
-      if (this.isUnlessKeyword(lv, language)) {
+      if (isUnlessKeyword(lv, language)) {
         trailingGuard = 'unless' as ActionType;
         bodyTokens = clauseTokens.slice(0, -1);
       }
@@ -4820,7 +4828,7 @@ export class SemanticParserImpl implements ISemanticParser {
       if (
         !commandMatch &&
         startTok &&
-        this.isIfKeyword((startTok.normalized ?? startTok.value).toLowerCase(), language)
+        isIfKeyword((startTok.normalized ?? startTok.value).toLowerCase(), language)
       ) {
         const conditional = this.tryParseConditionalBlock(clauseStream, commandPatterns, language);
         if (conditional) {
@@ -4853,7 +4861,7 @@ export class SemanticParserImpl implements ISemanticParser {
         clauseStream.reset(startMark);
         while (!clauseStream.isAtEnd()) {
           const h = clauseStream.peek();
-          if (!h || this.isIfKeyword((h.normalized ?? h.value).toLowerCase(), language)) break;
+          if (!h || isIfKeyword((h.normalized ?? h.value).toLowerCase(), language)) break;
           skipped.push(h);
           clauseStream.advance();
         }
@@ -5345,7 +5353,7 @@ export class SemanticParserImpl implements ISemanticParser {
     const isBoundary = (t: LanguageToken): boolean =>
       t.kind === 'conjunction' ||
       (t.kind === 'keyword' &&
-        (this.isThenKeyword(t.value, language) || this.isEndKeyword(t.value, language)));
+        (isThenKeyword(t.value, language) || isEndKeyword(t.value, language)));
 
     // Cap comfortably above the widest corpus blob (qu fetch-with-headers
     // splits to 13 tokens) while keeping a runaway scan impossible.
@@ -5616,7 +5624,7 @@ export class SemanticParserImpl implements ISemanticParser {
     const isBoundary = (t: LanguageToken): boolean =>
       t.kind === 'conjunction' ||
       (t.kind === 'keyword' &&
-        (this.isThenKeyword(t.value, language) || this.isEndKeyword(t.value, language)));
+        (isThenKeyword(t.value, language) || isEndKeyword(t.value, language)));
 
     const SCAN_CAP = 24;
     const run: LanguageToken[] = [];
@@ -5841,7 +5849,7 @@ export class SemanticParserImpl implements ISemanticParser {
       for (let i = verbIdx + 1; i < clauseTokens.length; i++) {
         const t = clauseTokens[i];
         // Stop at then-keywords
-        if (t.kind === 'conjunction' || this.isThenKeyword(t.value, language)) {
+        if (t.kind === 'conjunction' || isThenKeyword(t.value, language)) {
           endIdx = i;
           break;
         }
@@ -5885,7 +5893,7 @@ export class SemanticParserImpl implements ISemanticParser {
       // Skip conjunction/then-keyword if present
       if (pos < clauseTokens.length) {
         const t = clauseTokens[pos];
-        if (t.kind === 'conjunction' || this.isThenKeyword(t.value, language)) {
+        if (t.kind === 'conjunction' || isThenKeyword(t.value, language)) {
           pos++;
         }
       }
@@ -5922,7 +5930,7 @@ export class SemanticParserImpl implements ISemanticParser {
     // terminator-shaped token followed by a selector keeps its positional
     // reading.
     const isStrayTerminator = (t: LanguageToken, next: LanguageToken | undefined): boolean => {
-      const curatedEnd = this.isEndKeyword(t.value, language);
+      const curatedEnd = isEndKeyword(t.value, language);
       const normalizedEnd = t.kind === 'keyword' && (t.normalized ?? '').toLowerCase() === 'end';
       if (!curatedEnd && !normalizedEnd) return false;
       // A terminator the clause walker matched to a tracked block opener is
@@ -6215,7 +6223,7 @@ export class SemanticParserImpl implements ISemanticParser {
       const current = tokens.peek();
 
       // Check for 'then' keyword - skip it and continue parsing
-      if (current && this.isThenKeyword(current.value, language)) {
+      if (current && isThenKeyword(current.value, language)) {
         flushClause();
         tokens.advance();
         continue;
@@ -6233,8 +6241,8 @@ export class SemanticParserImpl implements ISemanticParser {
       if (
         current &&
         openLoops() > 0 &&
-        !this.isEndKeyword(current.value, language) &&
-        this.isBlockEndToken(current, endWordPlace(tokens.tokens, tokens.position()), language) &&
+        !isEndKeyword(current.value, language) &&
+        isBlockEndToken(current, endWordPlace(tokens.tokens, tokens.position()), language) &&
         !isAtEndPositionNoun(language, current.value, tokens.peek(-1)?.value, tokens.peek(1)?.value)
       ) {
         flushClause();
@@ -6242,7 +6250,7 @@ export class SemanticParserImpl implements ISemanticParser {
         tokens.advance();
         continue;
       }
-      if (current && this.isEndKeyword(current.value, language)) {
+      if (current && isEndKeyword(current.value, language)) {
         const prevTok = tokens.peek(-1);
         const nextTok = tokens.peek(1);
         const isPositionalEnd = isAtEndPositionNoun(
@@ -6289,7 +6297,7 @@ export class SemanticParserImpl implements ISemanticParser {
       if (
         current &&
         !clauseHadMatch &&
-        this.isIfKeyword((current.normalized ?? current.value).toLowerCase(), language)
+        isIfKeyword((current.normalized ?? current.value).toLowerCase(), language)
       ) {
         flushClause();
         const conditional = this.tryParseConditionalBlock(tokens, commandPatterns, language);
@@ -6370,7 +6378,7 @@ export class SemanticParserImpl implements ISemanticParser {
             tokens.reset(preMatch);
             while (!tokens.isAtEnd()) {
               const h = tokens.peek();
-              if (!h || this.isIfKeyword((h.normalized ?? h.value).toLowerCase(), language)) break;
+              if (!h || isIfKeyword((h.normalized ?? h.value).toLowerCase(), language)) break;
               tokens.advance();
             }
             const conditional = this.tryParseConditionalBlock(tokens, commandPatterns, language);
@@ -6463,9 +6471,9 @@ export class SemanticParserImpl implements ISemanticParser {
     const allTokens = tokens.tokens;
     const hasThenKeyword = allTokens.some(
       t =>
-        t.kind === 'conjunction' || (t.kind === 'keyword' && this.isThenKeyword(t.value, language))
+        t.kind === 'conjunction' || (t.kind === 'keyword' && isThenKeyword(t.value, language))
     );
-    const hasElseKeyword = allTokens.some(t => this.isElseKeyword(t.value, language));
+    const hasElseKeyword = allTokens.some(t => isElseKeyword(t.value, language));
     if (!conditionalHead && !hasThenKeyword && !hasElseKeyword) return null;
 
     // Reset token stream and parse using clause-based parsing
@@ -7677,7 +7685,7 @@ export class SemanticParserImpl implements ISemanticParser {
     // An input that opens with the language's `if` is a conditional block: its
     // last verb is a command, never a handler's event (ko `만약 … 을 포커스 …`,
     // focus, read as `on focus`). The renderer writes a handler's event first.
-    if (this.isIfKeyword(allTokens[0]?.value ?? '', language)) return null;
+    if (isIfKeyword(allTokens[0]?.value ?? '', language)) return null;
 
     // Build a set of native event names for this language (from eventNameTranslations)
     const langEvents = eventNameTranslations[language];
@@ -7992,23 +8000,6 @@ export class SemanticParserImpl implements ISemanticParser {
   }
 
   /**
-   * Match a token value against a language profile's keyword (primary +
-   * alternatives) for the given key. Used by the then/end/else recognizers to
-   * cover languages absent from their curated keyword maps — every profile
-   * carries `then`/`end`/`else`, so this generalizes recognition to all 24
-   * languages without hand-maintaining each map.
-   */
-  private profileKeywordMatches(language: string, key: string, value: string): boolean {
-    const kw = (
-      tryGetProfile(language)?.keywords as
-        Record<string, { primary?: string; alternatives?: string[] }> | undefined
-    )?.[key];
-    if (!kw) return false;
-    if (kw.primary?.toLowerCase() === value) return true;
-    return !!kw.alternatives?.some(a => a.toLowerCase() === value);
-  }
-
-  /**
    * Check if a token is a 'then' keyword in the given language.
    */
   /**
@@ -8029,368 +8020,6 @@ export class SemanticParserImpl implements ISemanticParser {
       post.value === forKw?.primary ||
       (forKw?.alternatives ?? []).includes(post.value);
     if (isForWord) tokens.advance();
-  }
-
-  /**
-   * Is `tok` the language's `then` where it stands? tl `tapos` is both `then`
-   * and one of its end words, and where a value stands it is neither (C3,
-   * endWordIsValue): `kung tapos at flag …` (if tapos and flag) read `if` with
-   * no condition, then its branch.
-   */
-  private isThenAt(tok: LanguageToken, place: EndWordPlace, language: string): boolean {
-    if (!this.isThenKeyword(tok.value, language)) return false;
-    return !(this.isEndKeyword(tok.value, language) && endWordIsValue(place, language));
-  }
-
-  private isThenKeyword(value: string, language: string): boolean {
-    const v = value.toLowerCase();
-    const thenKeywords: Record<string, Set<string>> = {
-      en: new Set(['then']),
-      // 'そして' and ko '그리고' are deliberately ABSENT: they are what the ja/ko
-      // renderers write for `and` (`p そして q`), so keeping them here split a
-      // condition or value at its `and`. then-chains use それから / 그다음.
-      ja: new Set(['それから', '次に']),
-      ar: new Set(['ثم', 'بعدها', 'ثمّ']),
-      es: new Set(['entonces', 'luego', 'después']),
-      ko: new Set(['그다음', '그런후', '그러면']),
-      // 之后 is deliberately ABSENT: the zh transformer emits it as positional
-      // `after` (`放置 把 X 之后 Y`, put-after) and emits 那么 for then — keeping
-      // it here split the put clause at 之后 and dropped the put.
-      zh: new Set(['然后', '接着', '那么']),
-      // 'sonra' is deliberately ABSENT (mirrors zh dropping 之后): the tr
-      // transformer emits it as positional `after` (`{patient} sonra {dest} … koy`,
-      // put-after); keeping it here split the put clause at sonra and dropped the
-      // put. then-chains use ardından (the i18n dict's then emission).
-      tr: new Set(['ardından', 'daha sonra', 'ardindan']),
-      pt: new Set(['então', 'depois', 'logo']),
-      fr: new Set(['puis', 'ensuite', 'alors']),
-      de: new Set(['dann', 'danach', 'anschließend']),
-      id: new Set(['lalu', 'kemudian', 'setelah itu']),
-      tl: new Set(['pagkatapos', 'tapos']),
-      // 'পরে' is deliberately ABSENT (mirrors tr dropping 'sonra' / zh dropping
-      // 之后): the bn transformer emits it as positional `after` (`{patient} পরে
-      // {dest} … রাখুন`, put-after); keeping it here split the put clause at পরে and
-      // dropped the put. then-chains use তারপর (the bn dict's then emission).
-      bn: new Set(['তারপর']),
-      qu: new Set(['chaymantataq', 'hinaspa', 'chaymanta', 'chayqa']),
-      sw: new Set(['kisha', 'halafu', 'baadaye']),
-    };
-    // Languages with a curated map keep their exact (colloquial-rich) behavior.
-    // Languages absent from it (it/ru/th/vi/he/hi/ms/pl/uk) fall back to the
-    // profile's `then` form + the English literal the transformer passes through —
-    // without this their multi-command then-chains collapsed to the first command.
-    const curated = thenKeywords[language];
-    if (curated) return curated.has(v);
-    return v === 'then' || this.profileKeywordMatches(language, 'then', v);
-  }
-
-  /**
-   * Check if a token is an 'else' keyword in the given language. Derived from the
-   * language profile (primary + alternatives), with the English literal always
-   * accepted (the grammar transformer leaves `else` verbatim for profiles without
-   * an else form). Used to let the compound fallback recognize an `if … else …`
-   * block whose branches are joined by `else` rather than a then-keyword.
-   */
-  private isElseKeyword(value: string, language: string): boolean {
-    const v = value.toLowerCase();
-    // Upstream reads `otherwise` as `else`; English is written with `else`.
-    if (v === 'else' || v === 'otherwise') return true;
-    return this.profileKeywordMatches(language, 'else', v);
-  }
-
-  /**
-   * Check if a token is an 'end' keyword in the given language.
-   */
-  private isEndKeyword(value: string, language: string): boolean {
-    const v = value.toLowerCase();
-    // Curated sets live in end-keywords.ts (shared with the pattern matcher's
-    // role-value guards) — see that module for the collision-audit notes.
-    //
-    // The English literal `end` is accepted in EVERY language, not just the
-    // profile-fallback ones: hyperscript keywords that pass through a translation
-    // untouched keep their English form, and crucially a masked `js(…) … end`
-    // block restores its terminator as the English `end`. If a curated language
-    // (es `fin`, ja `終わり`, …) rejected that literal, the depth tracker in
-    // `tryParseConditionalBlock` would count the js body's `if` (+1) but never the
-    // js block's `end` (−1) — leaving depth unbalanced so the conditional
-    // over-consumes the rest of the handler body (the removable/sortable
-    // command-drop: `trigger`, `remove`, … vanish after the js-bearing `if`).
-    // en already works because `end` is in its curated set; this aligns the rest.
-    const curated = curatedEndKeywordSet(language);
-    if (curated) return v === 'end' || curated.has(v);
-    return v === 'end' || this.profileKeywordMatches(language, 'end', v);
-  }
-
-  /**
-   * Whether a token opens a `js` block. The `js` command keyword survives
-   * translation verbatim (the i18n transformer masks the whole block, so the
-   * keyword stays English), so the English literal is the reliable signal; the
-   * profile form is also accepted for completeness.
-   */
-  private isJsKeyword(token: LanguageToken): boolean {
-    const v = (token.normalized ?? token.value).toLowerCase();
-    return v === 'js' || this.profileKeywordMatches('en', 'js', v);
-  }
-
-  /**
-   * Whether a token is the language's own PATIENT role marker, by surface.
-   * Homonym particles carry no `normalized` (zh `把` tokenizes as a bare
-   * particle), so the profile's declared forms are what identify it.
-   */
-  private isPatientMarker(token: LanguageToken, language: string): boolean {
-    const spec = (
-      tryGetProfile(language)?.roleMarkers as
-        Record<string, { primary?: string; alternatives?: string[] } | undefined> | undefined
-    )?.patient;
-    if (!spec?.primary) return false;
-    const value = token.value.toLowerCase();
-    if (spec.primary.toLowerCase() === value) return true;
-    return !!spec.alternatives?.some(a => a.toLowerCase() === value);
-  }
-
-  /**
-   * The terminator of a js BLOCK, which is looser than {@link isEndKeyword}.
-   *
-   * A curated language's end set deliberately omits surfaces that double as the
-   * positional word `last` — bn `শেষ`, ar `آخر` — because a role-value guard
-   * must not read `last` as a terminator. But `শেষ` IS what the renderer emits
-   * for bn's `end`, so inside a js block that exclusion means the block has no
-   * recognizable close at all: `consumeJsBlock` walks past it and the JavaScript
-   * is handed to the command patterns (bn `js(me) if (…) return "cancel";` came
-   * back as `js ;`). The homonym cannot bite here — the span being scanned is
-   * raw JavaScript, which is ASCII, so a Bengali positional `last` cannot occur
-   * inside it — so the profile's own `end` word is accepted alongside the
-   * curated set.
-   */
-  private isJsBlockTerminator(value: string, language: string): boolean {
-    return (
-      this.isEndKeyword(value, language) ||
-      this.profileKeywordMatches(language, 'end', value.toLowerCase())
-    );
-  }
-
-  /**
-   * The verb-FINAL shape of the same block: `<body> <marker> <js> <end>`.
-   *
-   * SOV and agglutinative renders put the command word last — bn `console.log("x")
-   * কে জেএস শেষ`, ja `console.log("x") を JS実行 終わり`, tr `console.log("x") i js
-   * son` — so the head of the clause is the JavaScript, not the keyword, and
-   * `consumeJsBlock`'s head test never fires. The body then reached the command
-   * patterns, which is how a js body containing `if (…) return …;` produced
-   * phantom `if`/`return` commands in bn and a bare `js ;` in ja/tr (the
-   * behavior-removable action-drop rows).
-   *
-   * Gated hard, so it can only add parses: the js keyword must be followed
-   * immediately by `end` (that is what makes it verb-FINAL rather than a `js`
-   * command with a body after it), there must be at least one token before it,
-   * and the scan stops at a conjunction so it can never reach across a clause
-   * boundary into a later `js … end`.
-   */
-  private consumeVerbFinalJsBlock(
-    tokens: ReturnType<typeof tokenizeInternal>,
-    language: string
-  ): SemanticNode | null {
-    const startMark = tokens.mark();
-
-    let offset = 0;
-    let jsAt = -1;
-    for (;;) {
-      const token = tokens.peek(offset);
-      if (!token) break;
-      if (
-        this.isThenKeyword(token.value, language) ||
-        this.isJsBlockTerminator(token.value, language)
-      ) {
-        break;
-      }
-      if (this.isJsKeyword(token)) {
-        // The verb may be an ASCII+CJK compound the tokenizer split (zh `JS执行`,
-        // ja `JS実行`) — see the same allowance in consumeJsBlock.
-        const tail = tokens.peek(offset + 1);
-        const tailIsVerb =
-          !!tail &&
-          token.position?.end !== undefined &&
-          token.position.end === tail.position?.start &&
-          this.profileKeywordMatches(language, 'js', `${token.value}${tail.value}`.toLowerCase());
-        const closer = tokens.peek(offset + (tailIsVerb ? 2 : 1));
-        if (offset > 0 && closer && this.isJsBlockTerminator(closer.value, language)) {
-          jsAt = offset;
-          break;
-        }
-      }
-      offset++;
-    }
-    if (jsAt <= 0) return null;
-
-    const bodyTokens: LanguageToken[] = [];
-    for (let i = 0; i < jsAt; i++) {
-      const token = tokens.peek(i);
-      if (token) bodyTokens.push(token);
-    }
-    // Drop a POST-posed patient marker: it belongs to the command, not the code
-    // (bn কে, ja を, ko 을, tr i, qu ta).
-    const last = bodyTokens[bodyTokens.length - 1];
-    if (last && this.isPatientMarker(last, language)) bodyTokens.pop();
-    if (bodyTokens.length === 0) {
-      tokens.reset(startMark);
-      return null;
-    }
-
-    const raw = this.rawJsBody(bodyTokens);
-    for (let i = 0; i < jsAt; i++) tokens.advance();
-    // Consume the verb (plus a split compound tail) and its closing `end`.
-    tokens.advance();
-    const afterVerb = tokens.peek();
-    if (afterVerb && !this.isJsBlockTerminator(afterVerb.value, language)) tokens.advance();
-    tokens.advance();
-
-    return createCommandNode(
-      'js' as ActionType,
-      { patient: { type: 'expression', raw: raw || '()' } },
-      { sourceLanguage: language, patternId: `js-opaque-final-${language}`, confidence: 1 }
-    );
-  }
-
-  /**
-   * Consume a `js(…) … end` block from the stream as one opaque unit and return a
-   * single `js` command node. The FIRST `end` after the `js` keyword closes the
-   * block — the same heuristic the i18n transformer's js-masking uses (raw JS never
-   * carries a bare hyperscript `end` token). Returns null without consuming when
-   * the head isn't a js keyword or the block has no closing `end` (malformed —
-   * leave it to the normal path).
-   *
-   * The node is built directly rather than re-parsed: `matchBest` in `parseClause`
-   * would match the `js` head and then keep matching the raw JS body (`if`,
-   * `return`, …) as sibling commands — the exact phantom actions this skip exists
-   * to suppress. Emitting `{ action: 'js', roles: { patient: expression } }`
-   * mirrors the shape a standalone `js(…)` parse produces, and applies uniformly to
-   * English and every translation (the keyword survives translation verbatim), so
-   * the reference and candidate js nodes stay identical for fidelity scoring.
-   */
-  private consumeJsBlock(
-    tokens: ReturnType<typeof tokenizeInternal>,
-    language: string
-  ): SemanticNode | null {
-    const head = tokens.peek();
-    if (!head || !this.isJsKeyword(head)) return null;
-
-    const startMark = tokens.mark();
-    const bodyTokens: LanguageToken[] = [];
-    tokens.advance(); // consume `js`
-
-    // The authored verb may be an ASCII+CJK compound the tokenizer split: the
-    // zh dict writes `JS执行`, the ASCII extractor claims `JS` (which is what
-    // isJsKeyword matched), and the stranded `执行` lands at the head of the raw
-    // body, leaking into the rendered JS (`js 执行 console.log(...)` —
-    // canonically invalid). When the head and the next token are
-    // source-adjacent and their concatenation is the profile's own js-command
-    // surface, the second half is part of the VERB — consume it too.
-    const verbTail = tokens.peek();
-    if (
-      verbTail &&
-      head.position?.end !== undefined &&
-      head.position.end === verbTail.position?.start &&
-      this.profileKeywordMatches(language, 'js', `${head.value}${verbTail.value}`.toLowerCase())
-    ) {
-      tokens.advance();
-    }
-
-    // A PRE-posed patient marker belongs to the command, not to the JavaScript.
-    // he renders `js את console.log(…)` and zh `JS执行 把 console.log(…)`; without
-    // this the particle is swallowed into the opaque body and comes back as
-    // `js את console.log ( … )`. Languages whose patient marker FOLLOWS the body
-    // (ja を, ko 을, bn কে, tr i, qu ta) are unaffected: the marker is never at the
-    // head, and the body walk stops at `end` before reaching it.
-    const marker = tokens.peek();
-    if (marker && this.isPatientMarker(marker, language)) tokens.advance();
-
-    let sawEnd = false;
-    while (!tokens.isAtEnd()) {
-      const t = tokens.peek();
-      if (!t) break;
-      tokens.advance();
-      if (this.isJsBlockTerminator(t.value, language)) {
-        sawEnd = true;
-        break;
-      }
-      bodyTokens.push(t);
-    }
-
-    if (!sawEnd) {
-      tokens.reset(startMark);
-      return null;
-    }
-
-    const raw = this.rawJsBody(bodyTokens);
-    return createCommandNode(
-      'js' as ActionType,
-      { patient: { type: 'expression', raw: raw || '()' } },
-      { sourceLanguage: language, patternId: `js-opaque-${language}`, confidence: 1 }
-    );
-  }
-
-  /**
-   * Recover a js block's body EXACTLY as it was written.
-   *
-   * It used to be `bodyTokens.map(t => t.value).join(' ')`, which re-spaces the
-   * JavaScript around every token boundary: `console.log("from js")` came back
-   * as `console .log ( "from js" )`. That is not cosmetic — the js body is the
-   * one role whose value is code in another language, so re-spacing it makes
-   * the rendered surface differ from the reference's own English (the round-trip
-   * veto that kept js-inline on the i18n renderer in ar/tl/zh) and, on a body
-   * carrying a `//` comment or an ASI-sensitive line break, changes what the
-   * JavaScript MEANS.
-   *
-   * The token positions index into `positionSource`, so the body is a slice of
-   * it. The slice is verified against the token values with whitespace removed
-   * before it is trusted: a nested `this.parse` of a sub-block overwrites
-   * `positionSource`, and a re-tokenized sub-stream's offsets would then index
-   * the wrong text. When it does not hold, fall back to joining on token
-   * ADJACENCY — `position.start === previous.position.end` means the two were
-   * written with nothing between them — which reproduces the original for every
-   * single-line body and is never worse than the old unconditional space.
-   */
-  private rawJsBody(bodyTokens: readonly LanguageToken[]): string {
-    if (bodyTokens.length === 0) return '';
-
-    const start = bodyTokens[0].position?.start;
-    const end = bodyTokens[bodyTokens.length - 1].position?.end;
-    const source = this.positionSource;
-    if (source !== undefined && start !== undefined && end !== undefined) {
-      const slice = source.slice(start, end);
-      const bare = (text: string): string => text.replace(/\s+/g, '');
-      if (bare(slice) === bare(bodyTokens.map(t => t.value).join(''))) return slice.trim();
-    }
-
-    let out = '';
-    for (let i = 0; i < bodyTokens.length; i++) {
-      const previous = bodyTokens[i - 1];
-      const adjacent =
-        previous?.position?.end !== undefined &&
-        bodyTokens[i].position?.start === previous.position.end;
-      if (i > 0 && !adjacent) out += ' ';
-      out += bodyTokens[i].value;
-    }
-    return out.trim();
-  }
-
-  /**
-   * Check if a token value is an `if` keyword in the given language (profile
-   * primary + alternatives, with the English literal always accepted).
-   */
-  private isIfKeyword(value: string, language: string): boolean {
-    const v = value.toLowerCase();
-    if (v === 'if') return true;
-    return this.profileKeywordMatches(language, 'if', v);
-  }
-
-  /**
-   * Check if a token value is an `unless` keyword (negated conditional).
-   */
-  private isUnlessKeyword(value: string, language: string): boolean {
-    const v = value.toLowerCase();
-    if (v === 'unless') return true;
-    return this.profileKeywordMatches(language, 'unless', v);
   }
 
   /**
@@ -8464,7 +8093,7 @@ export class SemanticParserImpl implements ISemanticParser {
   ): SemanticNode[] | null {
     const head = tokens.peek();
     if (!head) return null;
-    if (!this.isUnlessKeyword((head.normalized ?? head.value).toLowerCase(), language)) return null;
+    if (!isUnlessKeyword((head.normalized ?? head.value).toLowerCase(), language)) return null;
 
     const mark = tokens.mark();
     const folded = this.tryParseConditionalBlock(tokens, commandPatterns, language, true);
@@ -8497,42 +8126,6 @@ export class SemanticParserImpl implements ISemanticParser {
   }
 
   /**
-   * Block-terminator check for the conditional fold, by surface OR normalized
-   * form. bn renders `end` as শেষ, which the curated {@link isEndKeyword} set
-   * cannot list by value (শেষ is ALSO bn's positional `last` — the ar آخر
-   * lesson), so the value-only check never terminated a bn fold: the block
-   * consumed the rest of the handler body and every sibling after the
-   * conditional nested into the branch (behavior-removable bn dropped both
-   * `trigger`s once the junk verb-first event capture stopped masking it).
-   * The tokenizer already disambiguates the dual-use word: a KEYWORD token
-   * whose normalized form is `end` is the block terminator — except when
-   * followed by a selector, which is the positional reading (`শেষ <li/>` =
-   * `last <li/>`), never a block close. The lookahead exception is scoped to
-   * normalized-only recognition: a curated surface form (`end`, ja 終わり, …)
-   * keeps terminating even before a selector-led sibling clause.
-   */
-  private isBlockEndToken(tok: LanguageToken, place: EndWordPlace, language: string): boolean {
-    const next = place.next;
-    const endWord =
-      this.isEndKeyword(tok.value, language) ||
-      (tok.kind === 'keyword' &&
-        (tok.normalized ?? '').toLowerCase() === 'end' &&
-        !(next && next.kind === 'selector'));
-    // An end word where a value stands is a variable spelled like it (C3): tr
-    // `eğer son ve flag` (if son and flag) ended its block at `son`. The noun
-    // of `at end of` is a position (`if x put 'a' at end of me end`): taken for
-    // the block's `end`, it ended the conditional early, its own `end` closed
-    // the loop or handler around it, and the commands after it ran inside it.
-    const word = (t: LanguageToken | undefined) => t?.value.toLowerCase();
-    const positional =
-      (word(place.next) === 'of' &&
-        (word(place.prev) === 'at' ||
-          (word(place.prev) === 'the' && word(place.beforePrev) === 'at'))) ||
-      isAtEndPositionNoun(language, tok.value, place.prev?.value, place.next?.value);
-    return endWord && !endWordIsValue(place, language) && !positional;
-  }
-
-  /**
    * Does this `if` continue an `else if` chain? Only on the `else`'s line, as
    * upstream reads it: an `if` on the next line opens a block of its own, with
    * its own `end`, and the else branch runs on after it. Read as a chain, the
@@ -8543,7 +8136,7 @@ export class SemanticParserImpl implements ISemanticParser {
     prev: LanguageToken | undefined,
     language: string
   ): boolean {
-    return !!prev && this.isElseKeyword(prev.value, language) && !t.metadata?.lineStart;
+    return !!prev && isElseKeyword(prev.value, language) && !t.metadata?.lineStart;
   }
 
   /**
@@ -8568,8 +8161,8 @@ export class SemanticParserImpl implements ISemanticParser {
     language: string
   ): boolean {
     const tv = (t.normalized ?? t.value).toLowerCase();
-    if (this.isIfKeyword(tv, language)) return !this.isElseIfChain(t, prev, language);
-    if (this.isUnlessKeyword(tv, language)) return true;
+    if (isIfKeyword(tv, language)) return !this.isElseIfChain(t, prev, language);
+    if (isUnlessKeyword(tv, language)) return true;
     if (tv === 'repeat') return t.kind === 'keyword' || t.kind === 'identifier';
     if (tv !== 'for' || t.kind !== 'keyword') return false;
     return !(prev && isRepeatToken(prev));
@@ -8594,8 +8187,8 @@ export class SemanticParserImpl implements ISemanticParser {
     // parse already produced, so no action set changes — only the nesting and the
     // (previously truncated) condition do.
     if (
-      !this.isIfKeyword(headVal, language) &&
-      !(allowUnless && this.isUnlessKeyword(headVal, language))
+      !isIfKeyword(headVal, language) &&
+      !(allowUnless && isUnlessKeyword(headVal, language))
     ) {
       return null;
     }
@@ -8631,7 +8224,7 @@ export class SemanticParserImpl implements ISemanticParser {
         tokens.advance();
         continue;
       }
-      if (this.isBlockEndToken(t, endWordPlace(tokens.tokens, tokens.position()), language)) {
+      if (isBlockEndToken(t, endWordPlace(tokens.tokens, tokens.position()), language)) {
         if (depth === 0) {
           tokens.advance(); // consume the terminating `end`
           closed = true;
@@ -8668,17 +8261,17 @@ export class SemanticParserImpl implements ISemanticParser {
       const tv = (t.normalized ?? t.value).toLowerCase();
       // Conditionals only: a loop head here STARTS the then-branch, so it must
       // stay visible to the command-start test below.
-      if (i > 0 && (this.isIfKeyword(tv, language) || this.isUnlessKeyword(tv, language))) {
+      if (i > 0 && (isIfKeyword(tv, language) || isUnlessKeyword(tv, language))) {
         bodyDepth++;
-      } else if (this.isBlockEndToken(t, endWordPlace(all, blockStart + i), language)) bodyDepth--;
-      if (bodyDepth === 0 && this.isThenAt(t, endWordPlace(all, blockStart + i), language)) {
+      } else if (isBlockEndToken(t, endWordPlace(all, blockStart + i), language)) bodyDepth--;
+      if (bodyDepth === 0 && isThenAt(t, endWordPlace(all, blockStart + i), language)) {
         sawThen = true;
         i++; // skip the `then`
         break;
       }
       // An empty then-branch: the condition ends at its `else` (`if x else …`).
       // Read on, the condition took in the else branch whole.
-      if (bodyDepth === 0 && condTokens.length > 0 && this.isElseKeyword(t.value, language)) break;
+      if (bodyDepth === 0 && condTokens.length > 0 && isElseKeyword(t.value, language)) break;
       if (bodyDepth === 0 && condTokens.length > 0) {
         const cur = (t.normalized ?? t.value).toLowerCase();
         // Does a copula before this word keep it in the condition (S2, S3)?
@@ -8759,8 +8352,8 @@ export class SemanticParserImpl implements ISemanticParser {
     for (; i < blockTokens.length; i++) {
       const t = blockTokens[i];
       if (this.opensNestedBlock(t, wordBefore(blockTokens, i), language)) branchDepth++;
-      else if (this.isBlockEndToken(t, endWordPlace(all, blockStart + i), language)) branchDepth--;
-      if (branchDepth === 0 && !inElse && this.isElseKeyword(t.value, language)) {
+      else if (isBlockEndToken(t, endWordPlace(all, blockStart + i), language)) branchDepth--;
+      if (branchDepth === 0 && !inElse && isElseKeyword(t.value, language)) {
         inElse = true;
         continue; // skip the `else`
       }
