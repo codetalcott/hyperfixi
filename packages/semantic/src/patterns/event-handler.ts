@@ -9,6 +9,7 @@
 
 import type { LanguagePattern, PatternToken, ExtractionRules } from '../types';
 import { handcrafted } from './handcrafted';
+import { ELEMENT_TARGET_TYPES, EVENT_NAME_TYPES } from '../generators/role-types';
 
 // =============================================================================
 // Shared Event Name Translations
@@ -827,7 +828,7 @@ export function getEventHandlerPatternsKo(): LanguagePattern[] {
       template: {
         format: '{event} 할 때',
         tokens: [
-          { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
+          { type: 'role', role: 'event', expectedTypes: EVENT_NAME_TYPES },
           { type: 'literal', value: '할' },
           { type: 'literal', value: '때' },
         ],
@@ -846,9 +847,9 @@ export function getEventHandlerPatternsKo(): LanguagePattern[] {
       template: {
         format: '{source} 에서 {event} 할 때',
         tokens: [
-          { type: 'role', role: 'source', expectedTypes: ['selector', 'reference', 'expression'] },
+          { type: 'role', role: 'source', expectedTypes: ELEMENT_TARGET_TYPES },
           { type: 'literal', value: '에서' },
-          { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
+          { type: 'role', role: 'event', expectedTypes: EVENT_NAME_TYPES },
           { type: 'literal', value: '할' },
           { type: 'literal', value: '때' },
         ],
@@ -1736,7 +1737,7 @@ export function getEventHandlerPatternsQu(): LanguagePattern[] {
               {
                 type: 'role',
                 role: 'source',
-                expectedTypes: ['selector', 'reference', 'expression'],
+                expectedTypes: ELEMENT_TARGET_TYPES,
               },
               { type: 'literal', value: 'manta', alternatives: ['-manta'] },
             ],

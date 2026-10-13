@@ -16,6 +16,7 @@
  */
 
 import type { LanguagePattern } from '../types';
+import { VIEW_TRANSITION_STYLE_TYPES } from '../generators/role-types';
 
 /** `start [a] view transition`: English's head. */
 const HEAD: LanguagePattern['template']['tokens'] = [
@@ -59,7 +60,11 @@ export function getViewTransitionPatterns(
         tokens: [
           ...tokens,
           { type: 'literal' as const, value: 'using' },
-          { type: 'role' as const, role: 'style' as const, expectedTypes: ['literal' as const] },
+          {
+            type: 'role' as const,
+            role: 'style' as const,
+            expectedTypes: VIEW_TRANSITION_STYLE_TYPES,
+          },
         ],
       },
       extraction: {

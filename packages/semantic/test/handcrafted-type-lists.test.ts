@@ -14,7 +14,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 /** Literal `expectedTypes: [...]` lists in src/patterns/ on 2026-10-12 (139 before M3). */
-const MAX_LITERAL_LISTS = 63;
+const MAX_LITERAL_LISTS = 46;
 
 describe('handcrafted pattern type lists', () => {
   it('do not grow back', () => {

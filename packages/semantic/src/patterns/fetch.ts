@@ -27,7 +27,11 @@ import type {
 } from '../types';
 import type { LanguageProfile } from '../generators/language-profiles';
 import { handcrafted } from './handcrafted';
-import { FETCH_RESPONSE_TYPES, FETCH_SOURCE_TYPES } from '../generators/role-types';
+import {
+  FETCH_OPTIONS_TYPES,
+  FETCH_RESPONSE_TYPES,
+  FETCH_SOURCE_TYPES,
+} from '../generators/role-types';
 
 /**
  * The optional `with {options}` group, built from the profile's own `style`
@@ -60,7 +64,11 @@ function styleGroup(
   // `style` is expression-ONLY by schema: the matcher routes a `{ … }` run in an
   // expression-only slot through its object-literal fold, which is what lets the
   // expression parser rebuild a real objectLiteral rather than a token soup.
-  const role: RolePatternToken = { type: 'role', role: 'style', expectedTypes: ['expression'] };
+  const role: RolePatternToken = {
+    type: 'role',
+    role: 'style',
+    expectedTypes: FETCH_OPTIONS_TYPES,
+  };
   return {
     token: {
       type: 'group',

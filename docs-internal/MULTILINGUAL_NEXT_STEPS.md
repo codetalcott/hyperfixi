@@ -190,9 +190,11 @@ command-shape dry run shows each move.
 
 - `semantic-parser.ts`: 9,680 lines (`wc -l`; 9,494 on 2026-10-11, 8,871 on 2026-10-06).
 - Copied type lists: 139 literal `expectedTypes: [...]` in `src/patterns/*.ts` (158 on 2026-10-06), 5 files reading
-  shared lists (`generators/role-types.ts`). After (a)'s first PR: 63. Of those left, 8 copies are narrower than
-  their schema on purpose (es/qu/zh set values, `set.ts` says why), and the rest are wider or narrower copies to
-  judge one by one (repeat's and pick's sources, the event-handler heads), or roles their schema lacks.
+  shared lists (`generators/role-types.ts`). After (a)'s first PR: 63; after its second: 46 (the `for` loop, the
+  `on` heads, `if`/`unless`, wait's event, fetch's options, viewTransition's style). Of those left, 8 copies are
+  narrower than their schema on purpose (es/qu/zh set values, `set.ts` says why), and the rest are wider or
+  narrower copies to judge one by one (repeat's and pick's sources, en append/prepend/trigger, pl/uk hide's
+  style), or roles their schema lacks (repeat's and wait's conditions, wait's source).
 - Readers per question: an end word still has nine (`VALUE_READING.md` C3).
 
 ### M4: the small queue (take items opportunistically)

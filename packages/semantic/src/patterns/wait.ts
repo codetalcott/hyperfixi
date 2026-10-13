@@ -24,7 +24,7 @@
 import type { LanguagePattern } from '../types';
 import { handcrafted } from './handcrafted';
 import { tryGetProfile } from '../registry';
-import { DURATION_TYPES } from '../generators/role-types';
+import { DURATION_TYPES, EVENT_NAME_TYPES } from '../generators/role-types';
 
 export function getWaitPatternsZh(): LanguagePattern[] {
   return [
@@ -140,7 +140,7 @@ export function getWaitPatternsEn(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'wait' },
           { type: 'literal', value: 'for' },
-          { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
+          { type: 'role', role: 'event', expectedTypes: EVENT_NAME_TYPES },
         ],
       },
       extraction: {
@@ -401,7 +401,7 @@ export function waitEventHeads(language: string): LanguagePattern[] {
   const event = {
     type: 'role' as const,
     role: 'event' as const,
-    expectedTypes: ['literal', 'expression'] as const,
+    expectedTypes: EVENT_NAME_TYPES,
   };
   // zh and he write their object marker after the verb (`等待 把 事件 foo`,
   // `חכה את אירוע foo`: wait-zh-ba, wait-he-et); the group is optional.
