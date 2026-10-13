@@ -154,7 +154,7 @@ it `get … in me` (3; done 2026-10-12: `get`'s destination role, which no reade
 @data-x changes` (1); each fixed, or its reason written in `SILENT_FAMILIES`. (2) Refusals by reach:
 handler-head counts (`on click 1`; done 2026-10-12: 375 lanes, with every head clause bn, it and th
 dropped, `on click elsewhere` among them; residue P61), `wait for <custom event>` (P52, done), pseudo-class
-queries (`<:checked/>`; done 2026-10-12: 161 lanes; the two cases left are P62's), rare values (escaped class names, comma queries, `(w)px`, `[@a]`, `it @a`, a dotted path before `of`, `set {…} on obj`; done 2026-10-12: 202 lanes, with qu's `fetch … as JSON`), collection expressions (P57; done 2026-10-12: 154 lanes, 2 of them silent), then `transition` with two properties
+queries (`<:checked/>`; done 2026-10-12: 161 lanes; the two cases left are P62's), rare values (escaped class names, comma queries, `(w)px`, `[@a]`, `it @a`, a dotted path before `of`, `set {…} on obj`; done 2026-10-12: 202 lanes, with qu's `fetch … as JSON`), collection expressions (P57; done 2026-10-12: 154 lanes, 2 of them silent), a query's scope inside a phrase (P62; done 2026-10-12), then `transition` with two properties
 in SOV, and the rest by the regen tool's family table. A refused pair that starts to render can come out silent: the
 command-shape dry run shows each move.
 

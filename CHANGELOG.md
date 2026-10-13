@@ -49,6 +49,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the closest <table/>` and `checked of the :boxes`, and zh/tl's `no` before a sigil variable. Quechua and
   Vietnamese read their own `where` back (it read as `target`, or split at its `_`), which also clears a
   silent pair in each. In the command-shape gate, 154 lanes are better, 2 of them silent before.
+- **`@lokascript/semantic`: a query's scope inside a phrase** reads in English and translates:
+  `put the length of <:checked/> in #box into me` (the value ended at the query and `in` was taken as
+  put's marker), `bind $n to the length of <:checked/> in the next <tbody/> …` (a positional scope),
+  `put <span/> in #box where it matches .a into me` (English came back silently as `… into #box …`), and
+  `put the length of <p/> into #out` and `put 'x' into the next <div/>'s textContent`, which the lossy
+  check refused because it read the `'s` after `<p/>` as a quote. In the command-shape gate, 63 lanes are
+  better, 1 of them silent before.
 - **Test runs no longer fill the temp directory**: `scripts/vitest-run.sh` gives each run its own
   `TMPDIR` and removes it. Vitest 5.0.2 leaves a copy of every transformed module in `$TMPDIR` per run.
 
