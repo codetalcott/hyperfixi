@@ -1,12 +1,12 @@
 {
   "description": "English-leak gate, command-shape half (src/multilingual/english-leaks.ts): per command-shape case, the findings of each language's render (translate(src, 'en', L)): an English grammar word, `event:<name>`, `case:<pronoun>` or `spacing:<marker>`. `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts.",
-  "renders": 25418,
-  "leaky": 3902,
-  "findings": 7358,
+  "renders": 25424,
+  "leaky": 3906,
+  "findings": 7370,
   "kinds": {
     "word": {
-      "renders": 2735,
-      "findings": 4582
+      "renders": 2738,
+      "findings": 4588
     },
     "event": {
       "renders": 0,
@@ -17,8 +17,8 @@
       "findings": 39
     },
     "spacing": {
-      "renders": 1288,
-      "findings": 2737
+      "renders": 1290,
+      "findings": 2743
     }
   },
   "entries": {
@@ -321,8 +321,8 @@
     },
     "162e3e0582": {
       "case:me of spacing:e spacing:e spacing:i spacing:i": "tr",
-      "in of spacing:তে": "bn",
-      "of": "ar de es fr he hi id it ja ko ms pl pt qu ru sw tl uk zh"
+      "of": "ar de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk zh",
+      "of spacing:এ spacing:তে": "bn"
     },
     "16cf73552a": {
       "spacing:e spacing:i": "tr",
@@ -1170,7 +1170,8 @@
     "55c3d28c9e": {
       "case:me of spacing:den spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i spacing:i": "tr",
       "checked checked of": "hi ms ru tl uk",
-      "no no of": "he",
+      "no no of": "he th",
+      "no no of spacing:এ spacing:কে spacing:কে spacing:তে": "bn",
       "of": "ar de es fr id it pl pt sw zh",
       "of spacing:から": "ja"
     },
@@ -2978,7 +2979,8 @@
       "spacing:로": "ko"
     },
     "d438ab49b4": {
-      "spacing:e spacing:i spacing:nin": "tr"
+      "spacing:e spacing:i spacing:nin": "tr",
+      "spacing:তে": "bn"
     },
     "d4559bb0fb": {
       "spacing:e spacing:i spacing:i": "tr"
@@ -3566,7 +3568,7 @@
   "unrendered": {
     "129c41c03b": "hi qu",
     "15c22f6ecd": "*",
-    "162e3e0582": "th vi",
+    "162e3e0582": "vi",
     "1aa9c955fa": "ko",
     "1ba900c09e": "ja",
     "1c37112e5a": "*",
@@ -3584,7 +3586,7 @@
     "394a7bfb45": "*",
     "3f9872bcd4": "pl",
     "4d698f4f27": "ko",
-    "55c3d28c9e": "bn ko qu th vi",
+    "55c3d28c9e": "ko qu vi",
     "5fc5e421fe": "*",
     "61bc69c358": "*",
     "62d0c2127b": "*",
@@ -3623,7 +3625,6 @@
     "c48b233ac7": "pt sw",
     "c55282fb85": "*",
     "ca8adcde99": "*",
-    "d438ab49b4": "bn th vi",
     "da38860cb8": "hi",
     "dc8881fc7d": "qu",
     "dd2ca23457": "de it tr",
