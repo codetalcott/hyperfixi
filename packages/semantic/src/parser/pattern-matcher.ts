@@ -3779,7 +3779,14 @@ export class PatternMatcher {
       // fused path consumes the `.`-selector props but a following `(` means it's
       // a method call, which must stay an expression (behavior-sortable).
       const fusedTrailing = tokens.peek();
-      const fusedIsMethodCall = !!fusedTrailing && fusedTrailing.value.startsWith('(');
+      // Where a role follows with no marker between (it/pl/ru/uk `set`: `impostare
+      // in window.called ( window.called o 0 ) + 1`), a spaced `(` opens the next
+      // value: the renderer writes a call's parens against its name.
+      const fusedIsMethodCall =
+        !!fusedTrailing &&
+        fusedTrailing.value.startsWith('(') &&
+        (PatternMatcher.abuts(tokens.tokens[tokens.position() - 1], fusedTrailing) ||
+          this.patternRest[0]?.type !== 'role');
       if (
         allowPropertyPath &&
         !fusedIsMethodCall &&

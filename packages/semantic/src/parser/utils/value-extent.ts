@@ -432,10 +432,11 @@ export function continuesValue(
   // leaves untranslated. qu and uk keep an apostrophe in a word, so `foo's` in
   // `obj's foo's bar` is one token. A name the reader fused, `(si)`, is one too
   // (registry.tokenize): `length of (si)`. So is an element-scoped variable,
-  // `:checkboxes` (`checked of :checkboxes`, P57).
+  // `:checkboxes` (`checked of :checkboxes`, P57), and a name with its index,
+  // which qu keeps one word (`element's bar["count"]`).
   return (
     token.kind === 'identifier' &&
-    /^(?::?[\p{L}_$][\p{L}\p{M}\p{N}_$]*('s)?|\([\p{L}_$][\p{L}\p{M}\p{N}_$]*\))$/u.test(
+    /^(?::?[\p{L}_$][\p{L}\p{M}\p{N}_$]*(\[[^\]]*\])*('s)?|\([\p{L}_$][\p{L}\p{M}\p{N}_$]*\))$/u.test(
       token.value
     )
   );
@@ -468,8 +469,10 @@ export function valueTailEnds(
 /**
  * C16: where each possessive link after a value ends, longest first — `'s v`
  * (en splits it into `'` `s`; uk keeps `obj's` one word, so the property
- * follows it), or an of-marker and its owner. What a value no marker bounds
- * may run on through (PR 83).
+ * follows it), an of-marker and its owner, or a `.member` or `[index]` that
+ * abuts the token before it (`.divs.innerHTML`, `#d1.parentNode`: a class name
+ * has no `.`, so upstream reads the property; `bar["count"]`). What a value no
+ * marker bounds may run on through (PR 83).
  */
 export function possessiveLinkEnds(
   all: readonly LanguageToken[],
@@ -484,10 +487,18 @@ export function possessiveLinkEnds(
     if (t.value === "'" && all[k + 1]?.value === 's' && all[k + 2]) k += 3;
     else if (/.'s$/.test(all[k - 1]?.value ?? '')) k += 1;
     else if (isOfPossessiveMarker(profile, t) && all[k + 1]) k += 2;
+    else if (/^(\.[\p{L}_$][\p{L}\p{N}_$]*|\[.*\])$/u.test(t.value) && abutsPrevious(all, k)) k += 1;
     else break;
     ends.push(k);
   }
   return ends.reverse();
+}
+
+/** Does `all[k]` start where the token before it ends (no space between)? */
+function abutsPrevious(all: readonly LanguageToken[], k: number): boolean {
+  const prev = all[k - 1];
+  const t = all[k];
+  return !!prev && !!t && prev.position.end === t.position.start;
 }
 
 /**
