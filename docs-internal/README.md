@@ -34,6 +34,8 @@ queue.
 
 ## Open briefs (work not started)
 
+- [`DOMAINS_RETHINK.md`](DOMAINS_RETHINK.md): one reliable core for semantic and the domain DSLs (M3 e),
+  and the domain family cut down and rebuilt on it; after the semantic work, owner decisions D1–D6 open.
 - [`hyperscript-org-offer/`](hyperscript-org-offer/): the offer to hyperscript.org, not sent (refreshed
   against 4.1.0 on 2026-10-06, #1400; OPEN_ITEMS PR8).
 - [`proposals/community-review-system.md`](proposals/community-review-system.md): the community review
