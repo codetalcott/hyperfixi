@@ -24,10 +24,9 @@ import { patternMatcher } from './pattern-matcher';
 import { CONDITION_PREDICATES, copulaHoldsCondition } from './value-reading';
 import { isElseKeyword, isIfKeyword, isThenKeyword, isUnlessKeyword } from './clause-keywords';
 import {
-  endWordIsValue,
+  closesBlockAt,
   endWordPlace,
   isAtEndOfNoun,
-  isBlockEndToken,
   isCuratedEndWord,
   isThenAt,
 } from './end-words';
@@ -228,12 +227,8 @@ export function parseBodyWithClauses(
     // `at end of <target>` (`put it at end of body`, make-toast-element; zh
     // `在 结束 的`, id `di akhir dari`), which is a position, and not a variable
     // spelled like it where a value stands (C3).
-    const place = endWordPlace(tokens.tokens, tokens.position());
-    const isEnd =
-      current.kind === 'keyword' &&
-      isCuratedEndWord(current, language) &&
-      !isAtEndOfNoun(current, place, language) &&
-      !endWordIsValue(place, language);
+    const closesBlock = closesBlockAt(tokens.tokens, tokens.position(), language);
+    const isEnd = closesBlock && current.kind === 'keyword' && isCuratedEndWord(current, language);
 
     // Depth-aware termination. An `end` that closes a NESTED block accumulated
     // mid-clause must not terminate the whole body. A nested `if`/`unless`/
@@ -264,7 +259,6 @@ export function parseBodyWithClauses(
     // it and it never terminates a body; it can still close an open loop, by
     // the conditional fold's test (a keyword normalized `end`, not before a
     // selector). closeLoopAtEnd declines unless a loop is open.
-    const closesBlock = isEnd || isBlockEndToken(current, place, language);
     // A `while` no `repeat` claimed, last in a loop, is that loop's bottom
     // test (`repeat … while x < 3 end`): the `end` is the loop's. An SOV
     // while-phrase is claimed by the `repeat` verb after it before any `end`.
@@ -1049,7 +1043,7 @@ export function parseBodyWithGrammarPatterns(
       current &&
       openLoops() > 0 &&
       !isCuratedEndWord(current, language) &&
-      isBlockEndToken(current, endWordPlace(tokens.tokens, tokens.position()), language)
+      closesBlockAt(tokens.tokens, tokens.position(), language)
     ) {
       flushClause();
       commands.push(LOOP_CLOSE);
@@ -1421,7 +1415,7 @@ export function tryParseConditionalBlock(
       tokens.advance();
       continue;
     }
-    if (isBlockEndToken(t, endWordPlace(tokens.tokens, tokens.position()), language)) {
+    if (closesBlockAt(tokens.tokens, tokens.position(), language)) {
       if (depth === 0) {
         tokens.advance(); // consume the terminating `end`
         closed = true;
@@ -1459,7 +1453,7 @@ export function tryParseConditionalBlock(
     // stay visible to the command-start test below.
     if (i > 0 && (isIfKeyword(tv, language) || isUnlessKeyword(tv, language))) {
       bodyDepth++;
-    } else if (isBlockEndToken(t, endWordPlace(all, blockStart + i), language)) bodyDepth--;
+    } else if (closesBlockAt(all, blockStart + i, language)) bodyDepth--;
     if (bodyDepth === 0 && isThenAt(t, endWordPlace(all, blockStart + i), language)) {
       sawThen = true;
       i++; // skip the `then`
@@ -1548,7 +1542,7 @@ export function tryParseConditionalBlock(
   for (; i < blockTokens.length; i++) {
     const t = blockTokens[i];
     if (opensNestedBlock(t, wordBefore(blockTokens, i), language)) branchDepth++;
-    else if (isBlockEndToken(t, endWordPlace(all, blockStart + i), language)) branchDepth--;
+    else if (closesBlockAt(all, blockStart + i, language)) branchDepth--;
     if (branchDepth === 0 && !inElse && isElseKeyword(t.value, language)) {
       inElse = true;
       continue; // skip the `else`

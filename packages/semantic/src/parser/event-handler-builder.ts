@@ -22,7 +22,7 @@ import { getSchema } from '../generators/command-schemas';
 import { ROLE_MARKER_CONCEPTS } from './utils/marker-resolution';
 import { patternMatcher } from './pattern-matcher';
 import { isIfKeyword, isThenKeyword } from './clause-keywords';
-import { endWordPlace, isBlockEndToken, isCuratedEndWord, isThenAt } from './end-words';
+import { closesBlockAt, endWordPlace, isCuratedEndWord, isThenAt } from './end-words';
 import { type ParserState } from './parser-state';
 import { RESPONSE_TYPE_WORDS } from './response-type-words';
 import { eventNameTranslations } from '../patterns/event-handler';
@@ -516,10 +516,10 @@ export function buildEventHandler(
         const place = endWordPlace(all, k);
         return (
           isThenAt(t, place, language) ||
-          // isBlockEndToken: not a variable spelled like it (C3), and not the
+          // closesBlockAt: not a variable spelled like it (C3), and not the
           // noun of `at end of` (ms `letak x di tamat daripada saya`, he `at
           // סוף of`), which ended a loop body's clause inside its put.
-          (isCuratedEndWord(t, language) && isBlockEndToken(t, place, language))
+          (isCuratedEndWord(t, language) && closesBlockAt(all, k, language))
         );
       };
       // A loop head's clause also stops at the loop's own `end` where
@@ -527,8 +527,7 @@ export function buildEventHandler(
       // `end` was swallowed as a stray terminator and the loop lost its extent.
       const loopHeadAction = actionName === 'repeat' || actionName === 'while';
       const endsClause = (k: number): boolean =>
-        isClauseBoundary(k) ||
-        (loopHeadAction && isBlockEndToken(all[k], endWordPlace(all, k), language));
+        isClauseBoundary(k) || (loopHeadAction && closesBlockAt(all, k, language));
       // The scan-back below identifies the verb by its NORMALIZED form. That
       // misses whenever the language's verb normalizes to something other
       // than the action name: id `muat` normalizes to `load` (a synonym) and
@@ -578,7 +577,7 @@ export function buildEventHandler(
           ) {
             nested++;
           } else if (nested > 0) {
-            if (isBlockEndToken(t, endWordPlace(all, clauseEnd), language)) nested--;
+            if (closesBlockAt(all, clauseEnd, language)) nested--;
           } else if (endsClause(clauseEnd)) {
             break;
           }

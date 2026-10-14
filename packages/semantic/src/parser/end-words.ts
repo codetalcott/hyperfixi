@@ -22,7 +22,7 @@
 import type { LanguageToken } from '../types';
 import { isAtEndPositionNoun } from '../patterns/put';
 import { isThenKeyword } from './clause-keywords';
-import { endWordKind, isEndWord, type EndWordPlace } from './end-keywords';
+import { endWordKind, endWordPlace, isEndWord, type EndWordPlace } from './end-keywords';
 import { endWordIsValue } from './utils/expression-lexicon';
 
 export {
@@ -39,7 +39,7 @@ export { endWordIsValue } from './utils/expression-lexicon';
  * A curated end word: read by its value, never the positional `last`. The
  * readers that do not read bn `শেষ` (`end`, and also `last`) at all: the
  * clause walk's own `end` (bn's closes an open loop there, through
- * isBlockEndToken, and never the body), the fused handler's body tests, the
+ * closesBlockAt, and never the body), the fused handler's body tests, the
  * trailing-role scans and the coverage residue.
  */
 export function isCuratedEndWord(token: LanguageToken, language: string): boolean {
@@ -104,26 +104,52 @@ export function isAtEndOfNoun(tok: LanguageToken, place: EndWordPlace, language:
 }
 
 /**
- * Block-terminator check for the conditional fold: an end word where it
- * stands (isEndWordAt). bn renders `end` as শেষ, which is also its positional
- * `last`, so a curated set cannot list it; read by value alone, a bn fold
- * never closed, and every sibling after the conditional nested into its
- * branch (behavior-removable bn dropped both `trigger`s).
+ * Is the end word at `i` a position, and no block's end? The positional
+ * `last` before a selector (the `end` kind only: bn `শেষ <li/>`), or the noun
+ * of `at end of` (isAtEndOfNoun).
  */
-export function isBlockEndToken(
-  tok: LanguageToken,
-  place: EndWordPlace,
+export function isPositionalEnd(
+  tokens: readonly LanguageToken[],
+  i: number,
   language: string
 ): boolean {
-  // An end word where a value stands is a variable spelled like it (C3): tr
-  // `eğer son ve flag` (if son and flag) ended its block at `son`. The noun
-  // of `at end of` is a position (`if x put 'a' at end of me end`): taken for
-  // the block's `end`, it ended the conditional early, its own `end` closed
-  // the loop or handler around it, and the commands after it ran inside it.
+  const tok = tokens[i];
+  if (!tok) return false;
+  const place = endWordPlace(tokens, i);
   return (
-    isEndWordAt(tok, place.next, language) &&
-    !endWordIsValue(place, language) &&
-    !isAtEndOfNoun(tok, place, language)
+    (endWordKind(tok, language) === 'end' && place.next?.kind === 'selector') ||
+    isAtEndOfNoun(tok, place, language)
+  );
+}
+
+/**
+ * Question 1: does the token at `i` close a block? An end word that is not a
+ * position (isPositionalEnd) and not a value (endWordIsValue), or one the
+ * clause walk matched to the block it tracks (`closesTrackedBlock`), which
+ * closes it before a selector too.
+ *
+ * Read by kind, not by value alone: bn renders `end` as শেষ, which is also its
+ * positional `last`, so no curated set can list it, and a bn conditional fold
+ * read by value never closed: every sibling after the conditional nested into
+ * its branch (behavior-removable bn dropped both `trigger`s). An end word
+ * where a value stands is a variable spelled like it (C3): tr `eğer son ve
+ * flag` (if son and flag) ended its block at `son`. The noun of `at end of`
+ * is a position (`if x put 'a' at end of me end`): taken for the block's
+ * `end`, it ended the conditional early, its own `end` closed the loop or
+ * handler around it, and the commands after it ran inside it.
+ */
+export function closesBlockAt(
+  tokens: readonly LanguageToken[],
+  i: number,
+  language: string
+): boolean {
+  const tok = tokens[i];
+  if (!tok) return false;
+  if (tok.metadata?.closesTrackedBlock === true) return true;
+  return (
+    isEndWord(tok, language) &&
+    !isPositionalEnd(tokens, i, language) &&
+    !endWordIsValue(endWordPlace(tokens, i), language)
   );
 }
 
