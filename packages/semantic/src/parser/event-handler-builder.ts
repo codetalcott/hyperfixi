@@ -22,7 +22,7 @@ import { getSchema } from '../generators/command-schemas';
 import { ROLE_MARKER_CONCEPTS } from './utils/marker-resolution';
 import { patternMatcher } from './pattern-matcher';
 import { isIfKeyword, isThenKeyword } from './clause-keywords';
-import { endWordPlace, isBlockEndToken, isEndKeyword, isThenAt } from './end-words';
+import { endWordPlace, isBlockEndToken, isCuratedEndWord, isThenAt } from './end-words';
 import { type ParserState } from './parser-state';
 import { RESPONSE_TYPE_WORDS } from './response-type-words';
 import { eventNameTranslations } from '../patterns/event-handler';
@@ -410,7 +410,7 @@ export function buildEventHandler(
               !t ||
               t.kind === 'conjunction' ||
               (t.kind === 'keyword' &&
-                (isThenKeyword(t.value, language) || isEndKeyword(t.value, language)))
+                (isThenKeyword(t.value, language) || isCuratedEndWord(t, language)))
             ) {
               break;
             }
@@ -519,11 +519,11 @@ export function buildEventHandler(
           // isBlockEndToken: not a variable spelled like it (C3), and not the
           // noun of `at end of` (ms `letak x di tamat daripada saya`, he `at
           // סוף of`), which ended a loop body's clause inside its put.
-          (isEndKeyword(t.value, language) && isBlockEndToken(t, place, language))
+          (isCuratedEndWord(t, language) && isBlockEndToken(t, place, language))
         );
       };
       // A loop head's clause also stops at the loop's own `end` where
-      // isEndKeyword cannot list it (bn শেষ, also `last`): read past, the
+      // no curated set can list it (bn শেষ, also `last`): read past, the
       // `end` was swallowed as a stray terminator and the loop lost its extent.
       const loopHeadAction = actionName === 'repeat' || actionName === 'while';
       const endsClause = (k: number): boolean =>
@@ -1106,8 +1106,7 @@ export function buildEventHandler(
     // body unconsumed — and, unlike a simple command, those trailing tokens are
     // *not* bridged by a then-marker (`on click if <cond> show … else … end`).
     const isBlockBodyAction = BLOCK_BODY_ACTIONS.has(actionName);
-    const hasBlockBody =
-      isBlockBodyAction && !!nextToken && !isEndKeyword(nextToken.value, language);
+    const hasBlockBody = isBlockBodyAction && !!nextToken && !isCuratedEndWord(nextToken, language);
 
     // General case: a fused event pattern captured the *first* body command as the
     // action and left the rest unconsumed. The body's remaining commands may be
@@ -1119,7 +1118,7 @@ export function buildEventHandler(
     // already-consumed simple handler (no remainder) is unchanged, and stray role
     // words can never become spurious commands. Subsumes the then-chain and
     // block-body cases above; both are kept named for documentation.
-    const hasTrailingBody = !!nextToken && !isEndKeyword(nextToken.value, language);
+    const hasTrailingBody = !!nextToken && !isCuratedEndWord(nextToken, language);
 
     // The captured command can be a LOOP head (`repeat-event-es-vso` fuses
     // `al clic repetir 3 times`), whose body the re-parse above recovered.
@@ -1129,7 +1128,7 @@ export function buildEventHandler(
     const leading: WalkEntry[] = [commandNode, ...reparsedTail];
     const closesLeadingLoop =
       !!nextToken &&
-      isEndKeyword(nextToken.value, language) &&
+      isCuratedEndWord(nextToken, language) &&
       openLoopCount(leading) > 0 &&
       tokens.peek(1) !== null;
     if (closesLeadingLoop) {

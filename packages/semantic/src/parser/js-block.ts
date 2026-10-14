@@ -47,7 +47,7 @@ export function consumeVerbFinalJsBlock(
   for (;;) {
     const token = tokens.peek(offset);
     if (!token) break;
-    if (isThenKeyword(token.value, language) || isJsBlockTerminator(token.value, language)) {
+    if (isThenKeyword(token.value, language) || isJsBlockTerminator(token, language)) {
       break;
     }
     if (isJsKeyword(token)) {
@@ -60,7 +60,7 @@ export function consumeVerbFinalJsBlock(
         token.position.end === tail.position?.start &&
         profileKeywordMatches(language, 'js', `${token.value}${tail.value}`.toLowerCase());
       const closer = tokens.peek(offset + (tailIsVerb ? 2 : 1));
-      if (offset > 0 && closer && isJsBlockTerminator(closer.value, language)) {
+      if (offset > 0 && closer && isJsBlockTerminator(closer, language)) {
         jsAt = offset;
         break;
       }
@@ -88,7 +88,7 @@ export function consumeVerbFinalJsBlock(
   // Consume the verb (plus a split compound tail) and its closing `end`.
   tokens.advance();
   const afterVerb = tokens.peek();
-  if (afterVerb && !isJsBlockTerminator(afterVerb.value, language)) tokens.advance();
+  if (afterVerb && !isJsBlockTerminator(afterVerb, language)) tokens.advance();
   tokens.advance();
 
   return createCommandNode(
@@ -157,7 +157,7 @@ export function consumeJsBlock(
     const t = tokens.peek();
     if (!t) break;
     tokens.advance();
-    if (isJsBlockTerminator(t.value, language)) {
+    if (isJsBlockTerminator(t, language)) {
       sawEnd = true;
       break;
     }

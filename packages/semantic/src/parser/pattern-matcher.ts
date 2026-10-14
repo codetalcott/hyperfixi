@@ -75,7 +75,7 @@ import {
 import type { LanguageProfile } from '../generators/profiles/types';
 import { tryGetProfile } from '../registry';
 import { isAtEndConnective, isAtEndNounBeforeOf, isAtEndPositionNoun } from '../patterns/put';
-import { endWordIsValue, endWordPlace, isEndWord, isNormalizedEnd } from './end-words';
+import { endWordIsValue, endWordPlace, isEndWord } from './end-words';
 import { foldNakedNamedArgsRaw } from './naked-args-fold';
 import { tokenValue } from './token-value';
 import type { ConfidenceModel } from './confidence-model';
@@ -2166,7 +2166,8 @@ export class PatternMatcher {
       patternToken,
       this.slotAfterLiteral,
       nextPatternToken,
-      this.wouldMatch
+      this.wouldMatch,
+      this.currentProfile?.code ?? ''
     );
   }
 
@@ -2605,7 +2606,7 @@ export class PatternMatcher {
         token.kind === 'keyword') &&
       !RUN_OPERATORS.has(token.value) &&
       !['then', 'else'].includes(norm) &&
-      (!isNormalizedEnd(token) || this.endWordIsValueAt(tokens)) &&
+      (!isEndWord(token, this.currentProfile?.code ?? '') || this.endWordIsValueAt(tokens)) &&
       token.value !== ')'
     ) {
       tokens.advance();

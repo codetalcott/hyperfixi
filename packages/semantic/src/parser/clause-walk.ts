@@ -28,7 +28,7 @@ import {
   endWordPlace,
   isAtEndOfNoun,
   isBlockEndToken,
-  isEndKeyword,
+  isCuratedEndWord,
   isThenAt,
 } from './end-words';
 import { consumeJsBlock, consumeVerbFinalJsBlock } from './js-block';
@@ -231,7 +231,7 @@ export function parseBodyWithClauses(
     const place = endWordPlace(tokens.tokens, tokens.position());
     const isEnd =
       current.kind === 'keyword' &&
-      isEndKeyword(current.value, language) &&
+      isCuratedEndWord(current, language) &&
       !isAtEndOfNoun(current, place, language) &&
       !endWordIsValue(place, language);
 
@@ -260,7 +260,7 @@ export function parseBodyWithClauses(
     // every opener in the pending clause is a loop — an open `if` or `unless`
     // keeps the block-content reading, which its own fold reassembles.
     //
-    // bn's শেষ is `end` AND the positional `last`, so isEndKeyword cannot list
+    // bn's শেষ is `end` AND the positional `last`, so no curated set can list
     // it and it never terminates a body; it can still close an open loop, by
     // the conditional fold's test (a keyword normalized `end`, not before a
     // selector). closeLoopAtEnd declines unless a loop is open.
@@ -380,7 +380,7 @@ export function parseBodyWithClauses(
         const tIsBoundary =
           t.kind === 'conjunction' ||
           (t.kind === 'keyword' &&
-            (isThenKeyword(t.value, language) || isEndKeyword(t.value, language)));
+            (isThenKeyword(t.value, language) || isCuratedEndWord(t, language)));
         if (tIsBoundary) break;
         trailingTokens.push(t);
         tokens.advance();
@@ -1042,13 +1042,13 @@ export function parseBodyWithGrammarPatterns(
     // parseBodyWithClauses applies, now mirrored on this fused-body path so a
     // make-event's trailing at-end put (make-toast) isn't chopped.
     //
-    // bn's শেষ (`end` AND the positional `last`) is no isEndKeyword; it closes
+    // bn's শেষ (`end` AND the positional `last`) is no curated end word; it closes
     // an open loop all the same, by the conditional fold's test — see the
     // matching note in parseBodyWithClauses.
     if (
       current &&
       openLoops() > 0 &&
-      !isEndKeyword(current.value, language) &&
+      !isCuratedEndWord(current, language) &&
       isBlockEndToken(current, endWordPlace(tokens.tokens, tokens.position()), language)
     ) {
       flushClause();
@@ -1056,7 +1056,7 @@ export function parseBodyWithGrammarPatterns(
       tokens.advance();
       continue;
     }
-    if (current && isEndKeyword(current.value, language)) {
+    if (current && isCuratedEndWord(current, language)) {
       const place = endWordPlace(tokens.tokens, tokens.position());
       if (!isAtEndOfNoun(current, place, language)) {
         flushClause();

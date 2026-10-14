@@ -10,7 +10,7 @@ import type { CommandSemanticNode, SemanticRole, ActionType, LanguageToken } fro
 import { tryGetProfile } from '../registry';
 import { getSchema } from '../generators/command-schemas';
 import { isElseKeyword, isThenKeyword } from './clause-keywords';
-import { isEndKeyword } from './end-words';
+import { isCuratedEndWord } from './end-words';
 import { MAX_UNCONSUMED_SPAN_CHARS, parseDiagnostic } from './parse-diagnostics';
 import { BLOCK_HEAD_ACTIONS, type WalkEntry } from './loop-heads';
 import type { ParserState } from './parser-state';
@@ -145,7 +145,7 @@ export function isCoverageResidueToken(t: LanguageToken, language: string): bool
   }
   if (
     isThenKeyword(t.value, language) ||
-    isEndKeyword(t.value, language) ||
+    isCuratedEndWord(t, language) ||
     isElseKeyword(t.value, language)
   ) {
     return true;
@@ -224,7 +224,7 @@ export function keepVerbatimClause(
     return (
       words.some(w => CLAUSE_BOUNDARIES.has(w)) ||
       isThenKeyword(t.value, language) ||
-      isEndKeyword(t.value, language) ||
+      isCuratedEndWord(t, language) ||
       isElseKeyword(t.value, language) ||
       (t.kind === 'keyword' && words.some(w => !!getSchema(w as ActionType)))
     );
