@@ -57,8 +57,23 @@ export function isEndWordAt(
   next: LanguageToken | undefined,
   language: string
 ): boolean {
-  const kind = endWordKind(token, language);
-  return kind === 'curated' || (kind === 'end' && next?.kind !== 'selector');
+  return isEndWord(token, language) && !isPositionalLast(token, next, language);
+}
+
+/**
+ * The positional `last`: an end word of the `end` kind before a selector on
+ * its line (bn `শেষ <li/>`). A selector that starts the next line begins a
+ * command or a handler of its own (bn `শেষ ⏎ .close থেকে ক্লিকে`, a handler's
+ * end and the next handler's source).
+ */
+function isPositionalLast(
+  token: LanguageToken,
+  next: LanguageToken | undefined,
+  language: string
+): boolean {
+  return (
+    next?.kind === 'selector' && !next.metadata?.lineStart && endWordKind(token, language) === 'end'
+  );
 }
 
 /**
@@ -116,10 +131,7 @@ export function isPositionalEnd(
   const tok = tokens[i];
   if (!tok) return false;
   const place = endWordPlace(tokens, i);
-  return (
-    (endWordKind(tok, language) === 'end' && place.next?.kind === 'selector') ||
-    isAtEndOfNoun(tok, place, language)
-  );
+  return isPositionalLast(tok, place.next, language) || isAtEndOfNoun(tok, place, language);
 }
 
 /**
@@ -154,16 +166,19 @@ export function closesBlockAt(
 }
 
 /**
- * The SOV value groups' stray terminator: a block terminator the SOV reorder
- * absorbed into a role phrase (bn repeat-while renders wait's object phrase
- * as `200ms শেষ কে` — the terminator belongs after the verb) is structural
- * residue, never part of a value: joined in it glues (`200msশেষ`), alone it
- * fabricates a phantom trailing role. An end word where it stands
- * (isEndWordAt), since a value group is exactly where a positional-`last`
- * phrase lives (bn `শেষ <li/>`) — unless the clause walker matched it to a
- * tracked block opener, which makes it structural even before a selector (tr
- * behavior-sortable's `son .{dragClass}`, loop end then remove's patient: see
- * the annotation in parseBodyWithClauses).
+ * The SOV value groups' stray terminator, a named exception to closesBlockAt
+ * (C3): a block terminator the SOV reorder absorbed into a role phrase is
+ * structural residue, never part of a value. bn repeat-while once rendered
+ * wait's object phrase as `200ms শেষ কে`: the terminator belongs after the
+ * verb, and joined in it glued (`200msশেষ`). It does not ask whether the word
+ * is a value: endWordIsValue reads an end word before its own case marker as
+ * one (tr `son i #out e koy`, put son into #out), and here the marker is the
+ * value's before it. It is an end word where it stands (isEndWordAt), since a
+ * value group is exactly where a positional-`last` phrase lives (bn `শেষ
+ * <li/>`), unless the clause walker matched it to a tracked block opener,
+ * which makes it structural even before a selector (tr behavior-sortable's
+ * `son .{dragClass}`, loop end then remove's patient: see the annotation in
+ * parseBodyWithClauses).
  */
 export function isStrayTerminator(
   t: LanguageToken,
