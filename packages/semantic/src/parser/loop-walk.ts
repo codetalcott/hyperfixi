@@ -18,7 +18,7 @@ import type {
 import { createCommandNode, BLOCK_COMMAND_ACTIONS } from '../types';
 import { tokenize as tokenizeInternal, TokenStreamImpl } from '../tokenizers';
 import { tryGetProfile } from '../registry';
-import { endWordPlace, isBlockEndToken, isThenAt } from './end-words';
+import { closesBlockAt, endWordPlace, isThenAt } from './end-words';
 import { type ParserState } from './parser-state';
 import { joinTokenText } from './value-from-tokens';
 import {
@@ -152,7 +152,7 @@ export function takeBottomUntil(
   for (let k = stream.position() + 1; k < all.length; k++) {
     const t = all[k]!;
     const place = endWordPlace(all, k);
-    if (isBlockEndToken(t, place, language) || isThenAt(t, place, language)) break;
+    if (closesBlockAt(all, k, language) || isThenAt(t, place, language)) break;
     // A loop's own word: the until-phrase heads a loop, fronted where an SOV
     // render writes it (bn `পর্যন্ত n > 3 পুনরাবৃত্তি …`, until n > 3 repeat).
     if (isRepeatToken(t)) return null;
