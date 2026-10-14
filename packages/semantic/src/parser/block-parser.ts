@@ -33,7 +33,7 @@ import { getPatternsForLanguage, tryGetProfile } from '../registry';
 import { tokenize } from '../tokenizers';
 import { commandSchemas } from '../generators/command-schemas';
 import { joinExpressionTokens } from './utils/expression-lexicon';
-import { endWordSurfaces, isEndWord } from './end-words';
+import { closesBlockAt, endWordSurfaces, isEndWord } from './end-words';
 import { isOrWordToken } from './utils/or-words';
 import { grammarWord, grammarWordForms } from './utils/grammar-words';
 
@@ -198,7 +198,7 @@ function tellTakesAnEnd(tokens: readonly LanguageToken[], j: number, forms: Open
   let depth = 0;
   for (let k = j + 1; k < tokens.length; k++) {
     const tok = tokens[k];
-    if (isEndWord(tok, forms.language)) {
+    if (closesBlockAt(tokens, k, forms.language)) {
       if (depth === 0) return true;
       depth--;
       continue;
@@ -713,18 +713,19 @@ const UNSURE_SPLIT_CONFIDENCE = 0.4;
  * still owes its verb.
  */
 function afterCommand(tokens: readonly LanguageToken[], at: number, heads: HandlerHeads): boolean {
-  const ends = (tok: LanguageToken | undefined): boolean => {
+  const ends = (k: number): boolean => {
+    const tok = tokens[k];
     if (!tok || tok.kind !== 'keyword') return false;
     const norm = (tok.normalized ?? tok.value).toLowerCase();
-    return isAction(norm) || isEndWord(tok, heads.language);
+    return isAction(norm) || closesBlockAt(tokens, k, heads.language);
   };
   const before = tokens[at - 1];
-  if (ends(before)) return true;
+  if (ends(at - 1)) return true;
   return (
     before !== undefined &&
     before.kind === 'particle' &&
     !tokenMatches(before, heads.patient) &&
-    ends(tokens[at - 3])
+    ends(at - 3)
   );
 }
 
@@ -971,8 +972,9 @@ function splitProgram(
 
   const forms = openerForms(language);
   const isOpener = (j: number): boolean => opensBlock(tokens, j, forms);
-  const isEnd = (tok: LanguageToken): boolean => isEndWord(tok, language);
-  const endsClause = (t: LanguageToken): boolean => isEnd(t) || tokenMatches(t, thenForms);
+  const isEnd = (j: number): boolean => closesBlockAt(tokens, j, language);
+  const endsClause = (t: LanguageToken): boolean =>
+    isEndWord(t, language) || tokenMatches(t, thenForms);
 
   // Split into top-level handler segments. At depth 0, a `end` closes the current
   // handler (end-delimited form), and a handler head starts a new one
@@ -984,7 +986,7 @@ function splitProgram(
   let segStart = 0;
   for (let j = 0; j < tokens.length; j++) {
     const tok = tokens[j];
-    if (isEnd(tok)) {
+    if (isEnd(j)) {
       if (depth > 0) {
         depth--;
         continue;
@@ -1259,12 +1261,13 @@ function parseBehaviorBlock(
   const initForms = keywordForms(language, 'init');
   const forms = openerForms(language);
   const isOpener = (j: number): boolean => opensBlock(tokens, j, forms);
-  const isEnd = (tok: LanguageToken): boolean => isEndWord(tok, language);
+  const isEnd = (j: number): boolean => closesBlockAt(tokens, j, language);
   // Where the handler after an `init` with no `end` starts: the same heads the
   // top-level split reads (handlerStartAt), in every word order.
   const heads = handlerHeads(language);
   const thenForms = keywordForms(language, 'then');
-  const endsClause = (t: LanguageToken): boolean => isEnd(t) || tokenMatches(t, thenForms);
+  const endsClause = (t: LanguageToken): boolean =>
+    isEndWord(t, language) || tokenMatches(t, thenForms);
 
   /** Parse the `init` segment `tokens[segStart] … tokens[stop - 1]` into initCommands. */
   const takeInit = (stop: number): void => {
@@ -1357,7 +1360,7 @@ function parseBehaviorBlock(
       segStart = tokens.length;
       break;
     }
-    if (isEnd(tok)) {
+    if (isEnd(j)) {
       if (depth > 0) {
         depth--; // closes a NESTED block (if/repeat/…) inside the current handler
         continue;
@@ -1453,7 +1456,7 @@ function parseDefBlock(
 
   const forms = openerForms(language);
   const isOpener = (j: number): boolean => opensBlock(tokens, j, forms);
-  const isEnd = (tok: LanguageToken): boolean => isEndWord(tok, language);
+  const isEnd = (j: number): boolean => closesBlockAt(tokens, j, language);
 
   // The def body is a flat command sequence (no event handlers). Find the def's
   // own closing `end` via depth-aware matching (nested if/repeat have their own
@@ -1461,7 +1464,7 @@ function parseDefBlock(
   let depth = 0;
   let endIdx = -1;
   for (let j = bodyStart; j < tokens.length; j++) {
-    if (isEnd(tokens[j])) {
+    if (isEnd(j)) {
       if (depth === 0) {
         endIdx = j;
         break;
@@ -1814,7 +1817,7 @@ function parseFeatureBlock(
 ): SemanticNode | null {
   const forms = openerForms(language);
   const isOpener = (j: number): boolean => opensBlock(tokens, j, forms);
-  const isEnd = (tok: LanguageToken): boolean => isEndWord(tok, language);
+  const isEnd = (j: number): boolean => closesBlockAt(tokens, j, language);
 
   const name = featureName(action, tokens, keywordIdx, language);
   if (NAMED_FEATURES.has(action) && (!name || !PASCAL_CASE_NAME.test(name))) return null;
@@ -1857,7 +1860,7 @@ function parseFeatureBlock(
     let segStart = bodyStart;
     for (let j = bodyStart; j < tokens.length; j++) {
       const tok = tokens[j];
-      if (isEnd(tok)) {
+      if (isEnd(j)) {
         if (depth > 0) {
           depth--; // closes a nested if/repeat inside the current segment
           continue;
@@ -2037,7 +2040,7 @@ function locateReactiveWhenHead(tokens: readonly LanguageToken[], language: stri
     const tok = tokens[j];
     if (tok.kind === 'literal') continue;
     if (isChangesWord(tok)) return j;
-    if (isEndWord(tok, language)) return -1;
+    if (closesBlockAt(tokens, j, language)) return -1;
     const norm = (tok.normalized ?? tok.value).toLowerCase();
     if (tok.kind === 'keyword' && WATCHED_EXPRESSION_STOP_WORDS.has(norm)) return -1;
   }
@@ -2092,7 +2095,7 @@ function parseReactiveWhenBlock(
 ): SemanticNode | null {
   const forms = openerForms(language);
   const isOpener = (j: number): boolean => opensBlock(tokens, j, forms);
-  const isEnd = (tok: LanguageToken): boolean => isEndWord(tok, language);
+  const isEnd = (j: number): boolean => closesBlockAt(tokens, j, language);
 
   const bodyStart = changesIdx + 1;
   if (bodyStart >= tokens.length) return null;
@@ -2131,12 +2134,12 @@ function parseReactiveWhenBlock(
 function findBlockEnd(
   tokens: readonly LanguageToken[],
   from: number,
-  isEnd: (tok: LanguageToken) => boolean,
+  isEnd: (j: number) => boolean,
   isOpener: (j: number) => boolean
 ): number {
   let depth = 0;
   for (let j = from; j < tokens.length; j++) {
-    if (isEnd(tokens[j])) {
+    if (isEnd(j)) {
       if (depth === 0) return j;
       depth--;
     } else if (isOpener(j)) {

@@ -1050,6 +1050,11 @@ export function parseBodyWithGrammarPatterns(
       tokens.advance();
       continue;
     }
+    // A named exception to closesBlockAt (C3): this `end` does not ask whether
+    // it is a value. Asked, endWordIsValue reads an end word after a marker as
+    // the marker's value, and it `per n in arr impostare in x a fine` (for n
+    // in arr set x to a end) writes a variable `a` spelled like its marker
+    // `a`: the loop lost its `end`, and the commands after it ran inside it.
     if (current && isCuratedEndWord(current, language)) {
       const place = endWordPlace(tokens.tokens, tokens.position());
       if (!isAtEndOfNoun(current, place, language)) {
