@@ -10,7 +10,7 @@ import type { CommandSemanticNode, SemanticRole, ActionType, LanguageToken } fro
 import { tryGetProfile } from '../registry';
 import { getSchema } from '../generators/command-schemas';
 import { isElseKeyword, isThenKeyword } from './clause-keywords';
-import { isCuratedEndWord } from './end-words';
+import { closesBlockAt } from './end-words';
 import { MAX_UNCONSUMED_SPAN_CHARS, parseDiagnostic } from './parse-diagnostics';
 import { BLOCK_HEAD_ACTIONS, type WalkEntry } from './loop-heads';
 import type { ParserState } from './parser-state';
@@ -138,14 +138,19 @@ export function getCoverageMarkerSurfaces(language: string): Set<string> {
  * words (normalized or language-surface forms). See NEXT_STEPS § "Input
  * coverage" step 3 — residue must not fire the diagnostic.
  */
-export function isCoverageResidueToken(t: LanguageToken, language: string): boolean {
+export function isCoverageResidueToken(
+  run: readonly LanguageToken[],
+  i: number,
+  language: string
+): boolean {
+  const t = run[i]!;
   if (t.kind === 'particle' || t.kind === 'conjunction') return true;
   if ((t.metadata as { closesTrackedBlock?: boolean } | undefined)?.closesTrackedBlock) {
     return true;
   }
   if (
     isThenKeyword(t.value, language) ||
-    isCuratedEndWord(t, language) ||
+    closesBlockAt(run, i, language) ||
     isElseKeyword(t.value, language)
   ) {
     return true;
@@ -171,7 +176,7 @@ export function recordDroppedTokens(
   if (run.length === 0) return;
   const frame = state.coverageFrames[state.coverageFrames.length - 1];
   if (!frame) return;
-  if (!run.some(t => !isCoverageResidueToken(t, language))) return;
+  if (!run.some((_, i) => !isCoverageResidueToken(run, i, language))) return;
   const text = run
     .map(t => t.value)
     .join(' ')
@@ -208,7 +213,7 @@ export function keepVerbatimClause(
   // What follows a block's head is its body (`repeat 3 times xyzzy end`).
   if (CLAUSE_LESS.has((owner as CommandSemanticNode).action)) return false;
   // Residue alone (`and` between two commands) is dropped by design.
-  if (run.every(t => isCoverageResidueToken(t, language))) return false;
+  if (run.every((_, i) => isCoverageResidueToken(run, i, language))) return false;
   // In another language the clause is the English a translation wrote: a run
   // that holds a word of the language itself is that language unread.
   if (language !== 'en' && run.some(t => isOwnWord(t))) return false;
@@ -224,7 +229,7 @@ export function keepVerbatimClause(
     return (
       words.some(w => CLAUSE_BOUNDARIES.has(w)) ||
       isThenKeyword(t.value, language) ||
-      isCuratedEndWord(t, language) ||
+      closesBlockAt(run, i, language) ||
       isElseKeyword(t.value, language) ||
       (t.kind === 'keyword' && words.some(w => !!getSchema(w as ActionType)))
     );

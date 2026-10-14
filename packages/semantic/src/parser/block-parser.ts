@@ -33,7 +33,7 @@ import { getPatternsForLanguage, tryGetProfile } from '../registry';
 import { tokenize } from '../tokenizers';
 import { commandSchemas } from '../generators/command-schemas';
 import { joinExpressionTokens } from './utils/expression-lexicon';
-import { closesBlockAt, endWordSurfaces, isEndWord } from './end-words';
+import { closesBlockAt, endsClauseAt, endWordSurfaces } from './end-words';
 import { isOrWordToken } from './utils/or-words';
 import { grammarWord, grammarWordForms } from './utils/grammar-words';
 
@@ -387,12 +387,12 @@ function isPrecedingCommandMarker(
   segStart: number,
   j: number,
   language: string,
-  endsClause: (tok: LanguageToken) => boolean
+  endsClause: (k: number) => boolean
 ): boolean {
   const surface = tokens[j].value.toLowerCase();
   for (let k = j - 1; k > segStart; k--) {
     const t = tokens[k];
-    if (endsClause(t) || t.value.toLowerCase() === surface) return false;
+    if (endsClause(k) || t.value.toLowerCase() === surface) return false;
     const action = (t.normalized ?? t.value).toLowerCase();
     // Not `on`: a handler is not the command before its own marker, and vi's
     // toggle target `trên` normalizes to `on` (`chuyển đổi .a trên #x khi keyup`).
@@ -599,7 +599,7 @@ function handlerStartAt(
   language: string,
   heads: HandlerHeads,
   thenForms: Set<string>,
-  endsClause: (tok: LanguageToken) => boolean
+  endsClause: (k: number) => boolean
 ): HandlerStart | null {
   const tok = tokens[j];
   const word = tok.value.toLowerCase();
@@ -973,8 +973,8 @@ function splitProgram(
   const forms = openerForms(language);
   const isOpener = (j: number): boolean => opensBlock(tokens, j, forms);
   const isEnd = (j: number): boolean => closesBlockAt(tokens, j, language);
-  const endsClause = (t: LanguageToken): boolean =>
-    isEndWord(t, language) || tokenMatches(t, thenForms);
+  const endsClause = (k: number): boolean =>
+    endsClauseAt(tokens, k, language) || tokenMatches(tokens[k]!, thenForms);
 
   // Split into top-level handler segments. At depth 0, a `end` closes the current
   // handler (end-delimited form), and a handler head starts a new one
@@ -1266,8 +1266,8 @@ function parseBehaviorBlock(
   // top-level split reads (handlerStartAt), in every word order.
   const heads = handlerHeads(language);
   const thenForms = keywordForms(language, 'then');
-  const endsClause = (t: LanguageToken): boolean =>
-    isEndWord(t, language) || tokenMatches(t, thenForms);
+  const endsClause = (k: number): boolean =>
+    endsClauseAt(tokens, k, language) || tokenMatches(tokens[k]!, thenForms);
 
   /** Parse the `init` segment `tokens[segStart] … tokens[stop - 1]` into initCommands. */
   const takeInit = (stop: number): void => {

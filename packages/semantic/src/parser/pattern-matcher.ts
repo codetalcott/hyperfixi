@@ -75,7 +75,7 @@ import {
 import type { LanguageProfile } from '../generators/profiles/types';
 import { tryGetProfile } from '../registry';
 import { isAtEndConnective, isAtEndNounBeforeOf, isAtEndPositionNoun } from '../patterns/put';
-import { endWordIsValue, endWordPlace, isEndWord } from './end-words';
+import { endsClauseAt } from './end-words';
 import { foldNakedNamedArgsRaw } from './naked-args-fold';
 import { tokenValue } from './token-value';
 import type { ConfidenceModel } from './confidence-model';
@@ -1892,16 +1892,10 @@ export class PatternMatcher {
   /**
    * Is the stream out of clause? Either genuinely at the end, or facing a
    * boundary token that belongs to the NEXT clause rather than this pattern
-   * (a conjunction, or a `then`/`end`-class keyword).
+   * (endsClauseAt: a conjunction, `then`, or an end word that closes a block).
    */
   private atClauseEnd(tokens: TokenStream): boolean {
-    const next = tokens.peek();
-    if (!next) return true;
-    if (next.kind === 'conjunction') return true;
-    if (next.kind !== 'keyword') return false;
-    const norm = (next.normalized ?? next.value).toLowerCase();
-    if (norm === 'then') return true;
-    return isEndWord(next, this.currentProfile?.code ?? '');
+    return endsClauseAt(tokens.tokens, tokens.position(), this.currentProfile?.code ?? '');
   }
 
   /**
@@ -2596,8 +2590,8 @@ export class PatternMatcher {
     // Single value token. Particles/conjunctions/punctuation are never
     // operands (they belong to the surrounding pattern), and neither is a
     // block's own word (sw `mwisho`, `end`, after `inafanana`, matches) —
-    // unless it stands where a value does (C3: `1 + fin`, es `fin`, a
-    // variable).
+    // unless it stands where a value does (C3, endsClauseAt: `1 + fin`, es
+    // `fin`, a variable).
     const norm = (token.normalized ?? '').toLowerCase();
     if (
       (token.kind === 'literal' ||
@@ -2606,21 +2600,13 @@ export class PatternMatcher {
         token.kind === 'keyword') &&
       !RUN_OPERATORS.has(token.value) &&
       !['then', 'else'].includes(norm) &&
-      (!isEndWord(token, this.currentProfile?.code ?? '') || this.endWordIsValueAt(tokens)) &&
+      !endsClauseAt(tokens.tokens, tokens.position(), this.currentProfile?.code ?? '') &&
       token.value !== ')'
     ) {
       tokens.advance();
       return true;
     }
     return false;
-  }
-
-  /** C3: is the end word at the stream's position a value (endWordIsValue)? */
-  private endWordIsValueAt(tokens: TokenStream): boolean {
-    return endWordIsValue(
-      endWordPlace(tokens.tokens, tokens.position()),
-      this.currentProfile?.code ?? ''
-    );
   }
 
   /**

@@ -22,7 +22,7 @@ import { getSchema } from '../generators/command-schemas';
 import { ROLE_MARKER_CONCEPTS } from './utils/marker-resolution';
 import { patternMatcher } from './pattern-matcher';
 import { isIfKeyword, isThenKeyword } from './clause-keywords';
-import { closesBlockAt, endWordPlace, isCuratedEndWord, isThenAt } from './end-words';
+import { closesBlockAt, endsClauseAt, endWordPlace, isCuratedEndWord, isThenAt } from './end-words';
 import { type ParserState } from './parser-state';
 import { RESPONSE_TYPE_WORDS } from './response-type-words';
 import { eventNameTranslations } from '../patterns/event-handler';
@@ -406,12 +406,7 @@ export function buildEventHandler(
           delete roles.patient;
           while (!tokens.isAtEnd()) {
             const t = tokens.peek();
-            if (
-              !t ||
-              t.kind === 'conjunction' ||
-              (t.kind === 'keyword' &&
-                (isThenKeyword(t.value, language) || isCuratedEndWord(t, language)))
-            ) {
+            if (!t || endsClauseAt(tokens.tokens, tokens.position(), language)) {
               break;
             }
             tokens.advance();

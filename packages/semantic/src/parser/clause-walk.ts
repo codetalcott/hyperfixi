@@ -25,6 +25,7 @@ import { CONDITION_PREDICATES, copulaHoldsCondition } from './value-reading';
 import { isElseKeyword, isIfKeyword, isThenKeyword, isUnlessKeyword } from './clause-keywords';
 import {
   closesBlockAt,
+  endsClauseAt,
   endWordPlace,
   isAtEndOfNoun,
   isCuratedEndWord,
@@ -371,11 +372,7 @@ export function parseBodyWithClauses(
       while (!tokens.isAtEnd()) {
         const t = tokens.peek();
         if (!t) break;
-        const tIsBoundary =
-          t.kind === 'conjunction' ||
-          (t.kind === 'keyword' &&
-            (isThenKeyword(t.value, language) || isCuratedEndWord(t, language)));
-        if (tIsBoundary) break;
+        if (endsClauseAt(tokens.tokens, tokens.position(), language)) break;
         trailingTokens.push(t);
         tokens.advance();
       }

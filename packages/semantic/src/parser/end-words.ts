@@ -188,3 +188,28 @@ export function isStrayTerminator(
   if (t.metadata?.closesTrackedBlock === true) return isEndWord(t, language);
   return isEndWordAt(t, next, language);
 }
+
+/**
+ * Question 2: does a clause or a value stop at the token at `i`? Nothing
+ * (the end of the input), a conjunction, the language's `then` where it
+ * stands (isThenAt), or an end word that closes a block (closesBlockAt): not
+ * a variable spelled like one, nor a position.
+ */
+export function endsClauseAt(
+  tokens: readonly LanguageToken[],
+  i: number,
+  language: string
+): boolean {
+  const tok = tokens[i];
+  if (!tok) return true;
+  if (tok.kind === 'conjunction') return true;
+  // The place is built only for a `then` word: this runs for nearly every token.
+  if (
+    tok.kind === 'keyword' &&
+    isThenKeyword(tok.value, language) &&
+    isThenAt(tok, endWordPlace(tokens, i), language)
+  ) {
+    return true;
+  }
+  return closesBlockAt(tokens, i, language);
+}

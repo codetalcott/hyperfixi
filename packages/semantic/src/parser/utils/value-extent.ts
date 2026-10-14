@@ -57,7 +57,7 @@ import { parseExpression } from '../../ast-builder/expression-parser/parser';
 import { tokenize } from '../../ast-builder/expression-parser/tokenizer';
 import type { LanguageProfile } from '../../generators/profiles/types';
 import type { LanguageToken } from '../../types';
-import { isEndWord } from '../end-words';
+import { endsClauseAt } from '../end-words';
 import { isParticleAfterOf } from '../value-reading';
 import {
   expressionWordOf,
@@ -358,13 +358,16 @@ function isReferenceAfterOf(
   return OF_OWNER_REFERENCES.has((token.normalized ?? token.value).toLowerCase());
 }
 
-/** C13: the clause's end, or a marker the pattern still owes. */
-export function isValueBoundary(token: LanguageToken, ctx: ExtentContext): boolean {
-  if (token.kind === 'conjunction') return true;
-  if (token.kind === 'keyword') {
-    const norm = (token.normalized ?? token.value).toLowerCase();
-    if (norm === 'then' || norm === 'else') return true;
-    if (isEndWord(token, ctx.profile?.code ?? '')) return true;
+/** C13: the clause's end (endsClauseAt), an `else`, or a marker the pattern still owes. */
+export function isValueBoundary(
+  all: readonly LanguageToken[],
+  i: number,
+  ctx: ExtentContext
+): boolean {
+  if (endsClauseAt(all, i, ctx.profile?.code ?? 'en')) return true;
+  const token = all[i]!;
+  if (token.kind === 'keyword' && (token.normalized ?? token.value).toLowerCase() === 'else') {
+    return true;
   }
   return ctx.owes(token);
 }
@@ -382,7 +385,7 @@ function stopsAt(all: readonly LanguageToken[], i: number, ctx: ExtentContext): 
   if (endsEqualTo(all, i, language) || isWordA(all[i]!)) return false;
   if (endsMappedTo(all, i)) return false;
   const token = all[i]!;
-  return isValueBoundary(token, ctx) || ctx.commandMarkers.has(token.value.toLowerCase());
+  return isValueBoundary(all, i, ctx) || ctx.commandMarkers.has(token.value.toLowerCase());
 }
 
 /**
