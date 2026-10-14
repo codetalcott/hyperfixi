@@ -37,14 +37,17 @@ import { createConstant } from '../types';
 import type { CommandSchema } from '../generators/command-schemas';
 import {
   COMMAND_ACTION_KEYWORDS,
-  endWordIsValue,
-  endWordPlace,
-  isEndWord,
   loneKeywordKind,
   translateConnective,
-  type EndWordPlace,
 } from './utils/expression-lexicon';
-import { isCuratedEndKeyword } from './end-keywords';
+import {
+  endWordIsValue,
+  endWordPlace,
+  isCaptureEndWord,
+  isEndWord,
+  isNormalizedEnd,
+  type EndWordPlace,
+} from './end-words';
 import { BINARY_OPERATORS, RUN_OPERATORS } from './utils/operators';
 
 /** Nothing follows, or `then`, `end` or `else`: the clause ends before `next`. */
@@ -52,7 +55,7 @@ export function clauseEndsAt(next: LanguageToken | undefined): boolean {
   if (!next) return true;
   if (next.kind !== 'keyword') return false;
   const norm = (next.normalized ?? next.value).toLowerCase();
-  return norm === 'then' || norm === 'end' || norm === 'else';
+  return norm === 'then' || isNormalizedEnd(next) || norm === 'else';
 }
 
 /** `next` is a run operator. */
@@ -161,10 +164,7 @@ export function neverAValue(slot: SlotContext, language: string): boolean {
   if (token.kind !== 'keyword') return false;
   const norm = (token.normalized ?? token.value).toLowerCase();
   if (norm === 'then') return true;
-  const endWord =
-    (norm === 'end' && slot.next?.kind !== 'selector') ||
-    isCuratedEndKeyword(token.value, language);
-  return endWord && !endWordIsValue(slot.place, language);
+  return isCaptureEndWord(token, slot.next, language) && !endWordIsValue(slot.place, language);
 }
 
 /**

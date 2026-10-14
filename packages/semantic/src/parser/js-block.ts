@@ -11,12 +11,12 @@ import type { ActionType, LanguageToken, SemanticNode } from '../types';
 import { createCommandNode } from '../types';
 import type { tokenize as tokenizeInternal } from '../tokenizers';
 import {
-  isJsBlockTerminator,
   isJsKeyword,
   isPatientMarker,
   isThenKeyword,
   profileKeywordMatches,
 } from './clause-keywords';
+import { isJsBlockTerminator } from './end-words';
 
 /**
  * The verb-FINAL shape of the same block: `<body> <marker> <js> <end>`.

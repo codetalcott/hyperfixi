@@ -9,7 +9,8 @@
 import type { CommandSemanticNode, SemanticRole, ActionType, LanguageToken } from '../types';
 import { tryGetProfile } from '../registry';
 import { getSchema } from '../generators/command-schemas';
-import { isElseKeyword, isEndKeyword, isThenKeyword } from './clause-keywords';
+import { isElseKeyword, isThenKeyword } from './clause-keywords';
+import { isEndKeyword } from './end-words';
 import { MAX_UNCONSUMED_SPAN_CHARS, parseDiagnostic } from './parse-diagnostics';
 import { BLOCK_HEAD_ACTIONS, type WalkEntry } from './loop-heads';
 import type { ParserState } from './parser-state';

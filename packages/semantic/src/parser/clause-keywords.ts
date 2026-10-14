@@ -1,16 +1,14 @@
 /**
  * The parser's clause keywords: is a token the language's `then`, `else`,
- * `end`, `if`, `unless`, `js`, or its patient marker? Each reads the
- * language's profile, and the curated sets where a profile word collides.
+ * `if`, `unless`, `js`, or its patient marker? Each reads the language's
+ * profile, and the curated sets where a profile word collides. `end` has its
+ * own module, `end-words.ts` (C3).
  *
  * Moved out of `semantic-parser.ts` (M3 (d), docs-internal/MULTILINGUAL_NEXT_STEPS.md);
  * the bodies are unchanged.
  */
 import type { LanguageToken } from '../types';
 import { tryGetProfile } from '../registry';
-import { endWordIsValue, type EndWordPlace } from './utils/expression-lexicon';
-import { curatedEndKeywordSet } from './end-keywords';
-import { isAtEndPositionNoun } from '../patterns/put';
 
 /**
  * Match a token value against a language profile's keyword (primary +
@@ -27,17 +25,6 @@ export function profileKeywordMatches(language: string, key: string, value: stri
   if (!kw) return false;
   if (kw.primary?.toLowerCase() === value) return true;
   return !!kw.alternatives?.some(a => a.toLowerCase() === value);
-}
-
-/**
- * Is `tok` the language's `then` where it stands? tl `tapos` is both `then`
- * and one of its end words, and where a value stands it is neither (C3,
- * endWordIsValue): `kung tapos at flag …` (if tapos and flag) read `if` with
- * no condition, then its branch.
- */
-export function isThenAt(tok: LanguageToken, place: EndWordPlace, language: string): boolean {
-  if (!isThenKeyword(tok.value, language)) return false;
-  return !(isEndKeyword(tok.value, language) && endWordIsValue(place, language));
 }
 
 export function isThenKeyword(value: string, language: string): boolean {
@@ -97,29 +84,6 @@ export function isElseKeyword(value: string, language: string): boolean {
 }
 
 /**
- * Check if a token is an 'end' keyword in the given language.
- */
-export function isEndKeyword(value: string, language: string): boolean {
-  const v = value.toLowerCase();
-  // Curated sets live in end-keywords.ts (shared with the pattern matcher's
-  // role-value guards) — see that module for the collision-audit notes.
-  //
-  // The English literal `end` is accepted in EVERY language, not just the
-  // profile-fallback ones: hyperscript keywords that pass through a translation
-  // untouched keep their English form, and crucially a masked `js(…) … end`
-  // block restores its terminator as the English `end`. If a curated language
-  // (es `fin`, ja `終わり`, …) rejected that literal, the depth tracker in
-  // `tryParseConditionalBlock` would count the js body's `if` (+1) but never the
-  // js block's `end` (−1) — leaving depth unbalanced so the conditional
-  // over-consumes the rest of the handler body (the removable/sortable
-  // command-drop: `trigger`, `remove`, … vanish after the js-bearing `if`).
-  // en already works because `end` is in its curated set; this aligns the rest.
-  const curated = curatedEndKeywordSet(language);
-  if (curated) return v === 'end' || curated.has(v);
-  return v === 'end' || profileKeywordMatches(language, 'end', v);
-}
-
-/**
  * Whether a token opens a `js` block. The `js` command keyword survives
  * translation verbatim (the i18n transformer masks the whole block, so the
  * keyword stays English), so the English literal is the reliable signal; the
@@ -147,26 +111,6 @@ export function isPatientMarker(token: LanguageToken, language: string): boolean
 }
 
 /**
- * The terminator of a js BLOCK, which is looser than {@link isEndKeyword}.
- *
- * A curated language's end set deliberately omits surfaces that double as the
- * positional word `last` — bn `শেষ`, ar `آخر` — because a role-value guard
- * must not read `last` as a terminator. But `শেষ` IS what the renderer emits
- * for bn's `end`, so inside a js block that exclusion means the block has no
- * recognizable close at all: `consumeJsBlock` walks past it and the JavaScript
- * is handed to the command patterns (bn `js(me) if (…) return "cancel";` came
- * back as `js ;`). The homonym cannot bite here — the span being scanned is
- * raw JavaScript, which is ASCII, so a Bengali positional `last` cannot occur
- * inside it — so the profile's own `end` word is accepted alongside the
- * curated set.
- */
-export function isJsBlockTerminator(value: string, language: string): boolean {
-  return (
-    isEndKeyword(value, language) || profileKeywordMatches(language, 'end', value.toLowerCase())
-  );
-}
-
-/**
  * Check if a token value is an `if` keyword in the given language (profile
  * primary + alternatives, with the English literal always accepted).
  */
@@ -183,44 +127,4 @@ export function isUnlessKeyword(value: string, language: string): boolean {
   const v = value.toLowerCase();
   if (v === 'unless') return true;
   return profileKeywordMatches(language, 'unless', v);
-}
-
-/**
- * Block-terminator check for the conditional fold, by surface OR normalized
- * form. bn renders `end` as শেষ, which the curated {@link isEndKeyword} set
- * cannot list by value (শেষ is ALSO bn's positional `last` — the ar آخر
- * lesson), so the value-only check never terminated a bn fold: the block
- * consumed the rest of the handler body and every sibling after the
- * conditional nested into the branch (behavior-removable bn dropped both
- * `trigger`s once the junk verb-first event capture stopped masking it).
- * The tokenizer already disambiguates the dual-use word: a KEYWORD token
- * whose normalized form is `end` is the block terminator — except when
- * followed by a selector, which is the positional reading (`শেষ <li/>` =
- * `last <li/>`), never a block close. The lookahead exception is scoped to
- * normalized-only recognition: a curated surface form (`end`, ja 終わり, …)
- * keeps terminating even before a selector-led sibling clause.
- */
-export function isBlockEndToken(
-  tok: LanguageToken,
-  place: EndWordPlace,
-  language: string
-): boolean {
-  const next = place.next;
-  const endWord =
-    isEndKeyword(tok.value, language) ||
-    (tok.kind === 'keyword' &&
-      (tok.normalized ?? '').toLowerCase() === 'end' &&
-      !(next && next.kind === 'selector'));
-  // An end word where a value stands is a variable spelled like it (C3): tr
-  // `eğer son ve flag` (if son and flag) ended its block at `son`. The noun
-  // of `at end of` is a position (`if x put 'a' at end of me end`): taken for
-  // the block's `end`, it ended the conditional early, its own `end` closed
-  // the loop or handler around it, and the commands after it ran inside it.
-  const word = (t: LanguageToken | undefined) => t?.value.toLowerCase();
-  const positional =
-    (word(place.next) === 'of' &&
-      (word(place.prev) === 'at' ||
-        (word(place.prev) === 'the' && word(place.beforePrev) === 'at'))) ||
-    isAtEndPositionNoun(language, tok.value, place.prev?.value, place.next?.value);
-  return endWord && !endWordIsValue(place, language) && !positional;
 }

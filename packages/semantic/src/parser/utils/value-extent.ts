@@ -57,7 +57,7 @@ import { parseExpression } from '../../ast-builder/expression-parser/parser';
 import { tokenize } from '../../ast-builder/expression-parser/tokenizer';
 import type { LanguageProfile } from '../../generators/profiles/types';
 import type { LanguageToken } from '../../types';
-import { isCuratedEndKeyword } from '../end-keywords';
+import { isEndWord } from '../end-words';
 import { isParticleAfterOf } from '../value-reading';
 import {
   expressionWordOf,
@@ -363,8 +363,8 @@ export function isValueBoundary(token: LanguageToken, ctx: ExtentContext): boole
   if (token.kind === 'conjunction') return true;
   if (token.kind === 'keyword') {
     const norm = (token.normalized ?? token.value).toLowerCase();
-    if (norm === 'then' || norm === 'end' || norm === 'else') return true;
-    if (isCuratedEndKeyword(token.value, ctx.profile?.code ?? '')) return true;
+    if (norm === 'then' || norm === 'else') return true;
+    if (isEndWord(token, ctx.profile?.code ?? '')) return true;
   }
   return ctx.owes(token);
 }
@@ -487,7 +487,8 @@ export function possessiveLinkEnds(
     if (t.value === "'" && all[k + 1]?.value === 's' && all[k + 2]) k += 3;
     else if (/.'s$/.test(all[k - 1]?.value ?? '')) k += 1;
     else if (isOfPossessiveMarker(profile, t) && all[k + 1]) k += 2;
-    else if (/^(\.[\p{L}_$][\p{L}\p{N}_$]*|\[.*\])$/u.test(t.value) && abutsPrevious(all, k)) k += 1;
+    else if (/^(\.[\p{L}_$][\p{L}\p{N}_$]*|\[.*\])$/u.test(t.value) && abutsPrevious(all, k))
+      k += 1;
     else break;
     ends.push(k);
   }

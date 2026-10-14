@@ -19,16 +19,10 @@ import { createCommandNode, createEventHandler, createCompoundNode } from '../ty
 import { tokenize as tokenizeInternal, TokenStreamImpl } from '../tokenizers';
 import { getPatternsForLanguage, tryGetProfile } from '../registry';
 import { getSchema } from '../generators/command-schemas';
-import { endWordPlace } from './utils/expression-lexicon';
 import { ROLE_MARKER_CONCEPTS } from './utils/marker-resolution';
 import { patternMatcher } from './pattern-matcher';
-import {
-  isBlockEndToken,
-  isEndKeyword,
-  isIfKeyword,
-  isThenAt,
-  isThenKeyword,
-} from './clause-keywords';
+import { isIfKeyword, isThenKeyword } from './clause-keywords';
+import { endWordPlace, isBlockEndToken, isEndKeyword, isThenAt } from './end-words';
 import { type ParserState } from './parser-state';
 import { RESPONSE_TYPE_WORDS } from './response-type-words';
 import { eventNameTranslations } from '../patterns/event-handler';
