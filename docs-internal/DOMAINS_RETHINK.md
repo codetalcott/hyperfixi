@@ -1,6 +1,7 @@
 # Domains rethink: one reliable core
 
-Plan, 2026-10-13. Not started; owner decisions D1–D6 open.
+Plan, 2026-10-13. Decisions D1–D6 taken 2026-10-14 (all as recommended; D1's open rows below); Phase 1 under
+way: lokascript-domains #21 (4.0.0).
 
 Owner, 2026-10-13: "The domains pattern only works if it is built on a reliable core. We may need to rethink
 domains, instead of trying to preserve it as is." This answers M3 (e) in
@@ -160,9 +161,9 @@ The layers stay: **intent** (node types, schema types, bracket syntax) → **fra
 - The domains repo's rule "the renderer is frozen: fix the schema, never the renderer" ends with the old renderer;
   the gate holds the core's renderer instead.
 
-## Portfolio (proposed; D1 decides)
+## Portfolio (D1, decided 2026-10-14)
 
-| domain                    | compiles to                                          | consumers                                                       | round trip                          | proposal                                                                                                       |
+| domain                    | compiles to                                          | consumers                                                       | round trip                          | decision                                                                                                       |
 | ------------------------- | ---------------------------------------------------- | --------------------------------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | sql                       | SQL                                                  | MCP ×4, learn drills, sql-explorer                              | 100%                                | **Keep.** The exemplar; first onto the core                                                                    |
 | llm                       | JSON prompt spec (MCP sampling)                      | MCP ×4 + sampling, docs-site generator, 2 demos, learn drills   | 92%                                 | **Keep**                                                                                                       |
@@ -171,52 +172,69 @@ The layers stay: **intent** (node types, schema types, bracket syntax) → **fra
 | bdd                       | Playwright                                           | MCP ×4 + extras, learn drills                                   | 33%                                 | **Merge into behaviorspec** (same output; open since the 2026-08 portfolio survey)                             |
 | voice                     | JS (a11y actions)                                    | MCP ×4, voice-navigator, learn drills                           | 75%                                 | **Keep its 14 own commands**; drop the 5 borrowed from hyperscript                                             |
 | learn                     | sentences and glosses for learners                   | lokascript-learn (live), MCP ×4                                 | 98% own; 55% read by the product    | **Rebuild on semantic** (D2)                                                                                   |
-| jsx                       | JSX                                                  | MCP ×4, learn drills                                            | 100%                                | Keep as the second exemplar, or retire (built as a proof)                                                      |
-| todo                      | JSON                                                 | MCP ×4, todo demo, learn drills                                 | 100%                                | Keep as the smallest tutorial domain, or retire (built as a proof)                                             |
-| sprites                   | Fly Sprites SDK calls; its own runtime and MCP server | none (learn imports it, never calls it)                         | 78%                                 | **Spin out or retire** (4 languages; the only `grammarProfile` user)                                           |
+| jsx                       | JSX                                                  | MCP ×4, learn drills                                            | 100%                                | **Retire** (built as a proof; sql, flow and behaviorspec already show a second grammar)                         |
+| todo                      | JSON                                                 | MCP ×4, todo demo, learn drills                                 | 100%                                | **Keep** as the smallest tutorial domain, for the new factory                                                  |
+| sprites                   | Fly Sprites SDK calls; its own runtime and MCP server | none (learn imports it, never calls it)                         | 78%                                 | **Retire** (4 languages; the only `grammarProfile` user; no consumer, and the tag keeps it)                     |
 | events, hypermedia        | English hyperscript (events partly invalid)          | learn drills only (render)                                      | 100%                                | **Retire.** They are hyperscript; learn's drills for them come from semantic                                   |
 | animation, control, html  | hyperscript, a skeleton, HTML                        | none                                                            | 100%, 40%, 83%                      | **Retire**                                                                                                     |
 | config, domains, toolkit  | registry, published aggregate, lint harness          | mcp-server's registry                                           | —                                   | Keep; toolkit's rules move into the gate kit                                                                   |
-| mcp-multilingual-intent   | Hono Siren HTTP API                                  | siren-grail's bridge                                            | —                                   | **Retire**, or rebuild on domain-config                                                                        |
+| mcp-multilingual-intent   | Hono Siren HTTP API                                  | siren-grail's bridge                                            | —                                   | **Retire** (its routing guard moves to domain-config's tests)                                                  |
 | lokascript-lessons (repo) | —                                                    | none                                                            | —                                   | **Archive** (a byte-identical dead copy)                                                                       |
 
-Proposed result: 16 domain packages → 6–8 DSLs (sql, llm, flow, behaviorspec, voice, learn on semantic; jsx and
-todo if kept).
+Result: 16 domain packages → 7 DSLs (sql, llm, flow, behaviorspec absorbing bdd, voice, todo, and learn on
+semantic). After Phase 1 there are 8 packages; bdd merges into behaviorspec in Phase 5.
 
-## Owner decisions (before any code)
+## Owner decisions (taken 2026-10-14)
 
-- **D1 — the portfolio** (table above): keep, merge, rebuild, spin out or retire, per row.
+Each as recommended below; D1 is the table above.
+
+- **D1 — the portfolio** (table above): keep, merge, rebuild, spin out or retire, per row. **Decided:** the table's
+  proposals, with jsx retired, todo kept, and sprites retired rather than spun out.
 - **D2 — domain-learn.** Its aim has been open since 2026-07-24 (a generator of sentences to read, or sentences
   learners type). The drills teach hyperscript in the learner's language, and the site's answer checker already
   parses with semantic. Recommended: the commanding sentence is semantic's render (what the adapter runs); learn
   keeps its narrating forms, morphology and glosses as teaching around it. That needs lokascript-learn off 2.x.
+  **Decided: as recommended.**
 - **D3 — where the core lives.** Recommended: framework, so the package domains already peer on stays the
   contract. Alternative: a new package (`@lokascript/grammar`), a fourth contract package for
-  `check-domains-peer-major`.
+  `check-domains-peer-major`. **Decided: framework.**
 - **D4 — release path.** Recommended: **additive.** The core ships beside `createMultilingualDSL` in framework
   4.x minors; domains move to it in their own releases against published 4.x; the old matcher and factory go in a
   later framework major no domain still uses (renumber-only, the 4.0 procedure). A contract-changing major
   deadlocks instead: `check-domains-peer-major` blocks this repo's publish until domains accepts the major, and a
-  real domains major has to wait for this repo's packages on the registry.
+  real domains major has to wait for this repo's packages on the registry. **Decided: additive.**
 - **D5 — refusal in the old factory now?** Phase 3 makes `createMultilingualDSL` refuse leftover input and
   translations that do not read back, with `{ lossy: 'allow' }` to opt out, as semantic's `translate` does. A call
   that returned now throws, in a minor. Recommended: yes; nothing deployed parses with a domain DSL, and the
-  callers are mcp-server's tools (which already report refusals) and demos.
+  callers are mcp-server's tools (which already report refusals) and demos. **Decided: yes.**
 - **D6 — the MCP surface.** Domain tools follow D1: a retired domain's tools go, bdd's become behaviorspec's,
-  learn's become semantic-backed. `detect_domain` and the composite tools stay on the kept domains.
+  learn's become semantic-backed. `detect_domain` and the composite tools stay on the kept domains. **Decided: as
+  recommended.**
 
 ## Phases (one PR per numbered step unless noted)
 
-**Phase 0 — decisions.** D1–D6 answered here. No code.
+**Phase 0 — decisions.** D1–D6 answered here. No code. **Done 2026-10-14.**
 
-**Phase 1 — the cuts** (lokascript-domains; the other repos for their own pieces). Deletions first, so the later
+**Phase 1 — the cuts, as domains 4.0.0** (lokascript-domains, then this repo). Deletions first, so the later
 phases carry only kept domains.
 
-1. Retire animation, control, html, events and hypermedia (and sprites, if D1 says so): delete under a tag
-   (`archived/domains-preview-2026-10`) with a pointer in the README, the same day. None is in `DOMAIN_PRIORITY`
-   or mcp-server's tools; lokascript-learn is on 2.11.1 and keeps working until its upgrade.
-2. mcp-multilingual-intent: retire, or replace its registry copy with domain-config.
-3. lokascript-lessons: archive the repo (owner's action).
+Found when it started (2026-10-14): the domains repo built and tested against framework, semantic and intent
+**3.3.0**. Its `validate-versions` ties the repo's major to the framework major it builds against (which is why
+Dependabot's #19, to 4.3.0, failed), so its own suites had never run on 4.x; only this repo's side had (framework's
+suite, server-bridge, and mcp-server on domains 3.0.1). A Phase 2 gate there would have measured 3.3.0. And removing
+published subpaths is breaking. So the cuts and the move to 4.x are one major:
+
+1. **domains 4.0.0** (lokascript-domains #21): peers `^4.0.0`, the lockfile on 4.5.0. jsx, animation, control,
+   events, html, hypermedia and sprites deleted under the tag `archived/domains-preview-2026-10` (34e146a), with a
+   pointer in the README; mcp-multilingual-intent deleted, its sql-vs-todo routing guard moved to domain-config's
+   tests. voice's five borrowed verbs dropped too (Phase 5's voice step, moved up): semantic 4.x gave `toggle` a
+   `goal` role, and the five failed 62 of voice's tests on 4.5.0; its 14 own commands generate identical patterns.
+   Gate on 4.5.0: 11 packages, 3,732 tests, and the pack smoke. Supersedes Dependabot #19, #20, #17, #15 and #11.
+2. Publish 4.0.0 ("Publish @lokascript/domains", dry run first).
+3. This repo: mcp-server's domains range `^3.0.1` → `^4.0.0`; its jsx tools go (D6: `feedback-tools.ts`,
+   `training-data.ts`, the registry integration test); `framework/scripts/domain-probes.ts` drops the retired
+   domains. lokascript-learn and lokascript-examples pin 2.x and are untouched.
+4. lokascript-lessons: archive the repo (owner's action).
 
 **Phase 2 — the domain gate** (lokascript-domains).
 
@@ -260,8 +278,7 @@ counts in each PR.
 **Phase 5 — the kept domains on the core** (lokascript-domains, one PR per domain; packed tarballs from this repo
 via `pack-smoke.sh UPSTREAM_TARBALLS` until it is published).
 
-1. sql first, then llm, flow, behaviorspec (absorbing bdd's commands and tests), voice (its own commands only),
-   jsx and todo if kept. No gate pair may get worse; the target is every pair `pass` or a listed refusal with a
+1. sql first, then llm, flow, behaviorspec (absorbing bdd's commands and tests), voice and todo. No gate pair may get worse; the target is every pair `pass` or a listed refusal with a
    reason; the snapshot shows each domain's changed parses for review.
 2. learn on semantic (D2): the commanding form from `render`, learn's narrating forms and glosses around it.
 3. mcp-server's tools follow (D6), in this repo.
@@ -285,7 +302,7 @@ delete `core/pattern-matching/` and the old `createMultilingualDSL` path, by the
 - Domain round trip: every pair `pass` or a listed refusal; 0 silent; 0 leftover input accepted.
 - learn: 135/135 commanding sentences read by the product as the source.
 - Semantic: parse-parity 0 differences through Phase 4; no hyperscript gate worse.
-- Domain packages: 16 → the D1 count; lokascript-learn on the current line.
+- Domain packages: 16 → 7 DSLs; lokascript-learn on the current line.
 
 ## Traps
 
@@ -295,10 +312,14 @@ delete `core/pattern-matching/` and the old `createMultilingualDSL` path, by the
   the matcher down must not duplicate it or grow the bundles; `language-module-reach.test.ts` stays green.
 - **The parity oracle covers hyperscript only.** Domain parses have only the Phase 2 gate and snapshot; build them
   before touching the core.
-- **The cross-repo cycle.** framework and server-bridge test against the locked domains (^3.0.1), mcp-server runs
-  it; the domains aggregate peers framework, semantic and intent at `^3.1.0 || ^4.0.0`. Every framework change
+- **The cross-repo cycle.** framework and server-bridge test against the locked domains (^3.0.1 until Phase 1
+  step 3, then ^4.0.0), mcp-server runs it; the domains aggregate peers framework, semantic and intent at
+  `^4.0.0` from 4.0.0 (`^3.1.0 || ^4.0.0` before). Every framework change
   runs against published domains in this repo's CI, every domains change against packed tarballs from here; the
   two must never disagree (`check-domains-peer-major`).
+- **The domains repo builds on the framework major its own major names** (`validate-versions`). Its gate measures
+  the framework its lockfile holds: relock it (or pass `UPSTREAM_TARBALLS`) before reading a number against a
+  framework change made here.
 - **lokascript-learn is live and two majors behind.** Its upgrade is its own project; nothing in Phases 1–4
   reaches it until it moves.
 - **The MCP server serves stale code after a rebuild** (`packages/mcp-server/src/freshness.ts`): reconnect it
