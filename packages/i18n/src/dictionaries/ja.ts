@@ -56,8 +56,8 @@ export const ja: Dictionary = {
     settle: '安定',
     append: '末尾追加',
     // 終了 → 退出: realigned to the semantic profile primary (ja.ts `exit: 退出`).
-    // 終了 was the historic exit/end collision word (see isEndKeyword's ja note);
-    // rendered as 終了 it tokenized as a plain identifier, so a guard-clause
+    // 終了 was the historic exit/end collision word (see the ja note in semantic's
+    // parser/end-keywords.ts); rendered as 終了 it tokenized as a plain identifier, so a guard-clause
     // `exit` inside `if … end` never parsed (behavior-sortable ja).
     exit: '退出',
     install: 'インストール',

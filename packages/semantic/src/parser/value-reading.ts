@@ -43,19 +43,18 @@ import {
 import {
   endWordIsValue,
   endWordPlace,
-  isCaptureEndWord,
   isEndWord,
-  isNormalizedEnd,
+  isEndWordAt,
   type EndWordPlace,
 } from './end-words';
 import { BINARY_OPERATORS, RUN_OPERATORS } from './utils/operators';
 
-/** Nothing follows, or `then`, `end` or `else`: the clause ends before `next`. */
-export function clauseEndsAt(next: LanguageToken | undefined): boolean {
+/** Nothing follows, or `then`, an end word or `else`: the clause ends before `next`. */
+export function clauseEndsAt(next: LanguageToken | undefined, language: string): boolean {
   if (!next) return true;
   if (next.kind !== 'keyword') return false;
   const norm = (next.normalized ?? next.value).toLowerCase();
-  return norm === 'then' || isNormalizedEnd(next) || norm === 'else';
+  return norm === 'then' || norm === 'else' || isEndWord(next, language);
 }
 
 /** `next` is a run operator. */
@@ -84,7 +83,9 @@ export class SlotContext {
     /** The slot directly follows a literal the pattern matched: its marker, or the verb. */
     readonly afterLiteral: boolean,
     private readonly nextPatternToken: PatternToken | undefined,
-    private readonly wouldMatch: (pt: PatternToken | undefined, token: LanguageToken) => boolean
+    private readonly wouldMatch: (pt: PatternToken | undefined, token: LanguageToken) => boolean,
+    /** The language being read. */
+    readonly language: string
   ) {
     const at = tokens.position();
     this.token = tokens.tokens[at]!;
@@ -118,7 +119,7 @@ export class SlotContext {
 
   /** The clause ends after the token. */
   get clauseEndsAfter(): boolean {
-    return clauseEndsAt(this.next);
+    return clauseEndsAt(this.next, this.language);
   }
 }
 
@@ -164,7 +165,7 @@ export function neverAValue(slot: SlotContext, language: string): boolean {
   if (token.kind !== 'keyword') return false;
   const norm = (token.normalized ?? token.value).toLowerCase();
   if (norm === 'then') return true;
-  return isCaptureEndWord(token, slot.next, language) && !endWordIsValue(slot.place, language);
+  return isEndWordAt(token, slot.next, language) && !endWordIsValue(slot.place, language);
 }
 
 /**
