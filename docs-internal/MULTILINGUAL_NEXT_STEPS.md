@@ -202,6 +202,8 @@ A refused pair that starts to render can come out silent: the command-shape dry 
   other. Optional: name `parseInternal`'s stages as functions.
 - (e) The semantic/framework `PatternMatcher` fork. **Decided 2026-10-13:** one matcher, built from semantic's,
   and the domain family cut down and rebuilt on it, after the semantic work: [`DOMAINS_RETHINK.md`](DOMAINS_RETHINK.md).
+  Its decisions D1–D6 were taken 2026-10-14; Phase 1 (domains 4.0.0: the cuts, and the family on framework 4.x)
+  is lokascript-domains #21.
 
 **Exit metrics** (stamp them when the arc starts):
 
