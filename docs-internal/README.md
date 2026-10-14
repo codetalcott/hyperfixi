@@ -34,8 +34,6 @@ queue.
 
 ## Open briefs (work not started)
 
-- [`END_WORD_READERS.md`](END_WORD_READERS.md): one reader per question for an end word (M3 C3), the last item
-  of the semantic work; phases 0–6, each measured against the parse-parity oracle.
 - [`DOMAINS_RETHINK.md`](DOMAINS_RETHINK.md): one reliable core for semantic and the domain DSLs (M3 e),
   and the domain family cut down and rebuilt on it; after the semantic work, owner decisions D1–D6 open.
 - [`hyperscript-org-offer/`](hyperscript-org-offer/): the offer to hyperscript.org, not sent (refreshed

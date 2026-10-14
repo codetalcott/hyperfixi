@@ -20,6 +20,14 @@ experiments, protocol python/rust), `archived/python-surfaces`, `moved/domain-fa
 packages, now `codetalcott/lokascript-domains`), `parked/sortable-fixes`. The unmerged cleanup branches
 `chore/docs-internal-triage` and `chore/sharpen-focus` hold their per-file verdicts of August.
 
+## Briefs whose arc shipped
+
+Each at its own tag, deleted when its arc was done.
+
+| File (under `docs-internal/`) | Class | Last | Note |
+| --- | --- | --- | --- |
+| `END_WORD_READERS.md` | CLOSED-RECORD | 2026-10-13 | M3 C3, one reader per question for an end word: done in #1513–#1518 (2026-10-13). Tag `archived/end-word-readers-2026-10-13`. The exit stamp is in `MULTILINGUAL_NEXT_STEPS.md` M3; the named exceptions are in `packages/semantic/src/parser/end-words.ts`. Cited by comments in `end-words.ts` and `end-keywords.ts` |
+
 ## The ten files of 2026-10-06
 
 At the tag `archived/docs-internal-2026-10-06`, after 4.1.0. The open items they still held moved to
