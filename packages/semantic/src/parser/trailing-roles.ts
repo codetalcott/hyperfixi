@@ -18,8 +18,7 @@ import { createLiteral, createReference } from '../types';
 import { TokenStreamImpl } from '../tokenizers';
 import { tryGetProfile } from '../registry';
 import { getSchema } from '../generators/command-schemas';
-import { isThenKeyword } from './clause-keywords';
-import { isCuratedEndWord } from './end-words';
+import { endsClauseAt } from './end-words';
 import { AS_MARKERS_AFTER, AS_MARKERS_BEFORE, RESPONSE_TYPE_WORDS } from './response-type-words';
 import { foldNakedNamedArgsRaw } from './naked-args-fold';
 import { joinTokenText, tokenToSemanticValue } from './value-from-tokens';
@@ -400,10 +399,6 @@ export function tryAttachTrailingStyle(
   const surfaces = new Set(
     [marker.primary, ...(marker.alternatives ?? [])].map(s => s.toLowerCase())
   );
-  const isBoundary = (t: LanguageToken): boolean =>
-    t.kind === 'conjunction' ||
-    (t.kind === 'keyword' && (isThenKeyword(t.value, language) || isCuratedEndWord(t, language)));
-
   // Cap comfortably above the widest corpus blob (qu fetch-with-headers
   // splits to 13 tokens) while keeping a runaway scan impossible.
   const SCAN_CAP = 24;
@@ -413,7 +408,7 @@ export function tryAttachTrailingStyle(
     // appears INSIDE formdata's parenthesized body; only a depth-0 marker
     // closes the options run.
     const t = stream.peek(i);
-    if (!t || isBoundary(t)) break;
+    if (!t || endsClauseAt(stream.tokens, stream.position() + i, language)) break;
     if (t.value === '(' || t.value === '{') depth++;
     else if (t.value === ')' || t.value === '}') depth = Math.max(0, depth - 1);
     if (
@@ -630,17 +625,13 @@ export function tryAttachTrailingExpressionRole(
     markerSurface = marker.primary.toLowerCase();
   }
 
-  const isBoundary = (t: LanguageToken): boolean =>
-    t.kind === 'conjunction' ||
-    (t.kind === 'keyword' && (isThenKeyword(t.value, language) || isCuratedEndWord(t, language)));
-
   const SCAN_CAP = 24;
   const run: LanguageToken[] = [];
   let depth = 0;
   let sawMarker = false;
   for (let i = 0; i < SCAN_CAP; i++) {
     const t = stream.peek(i);
-    if (!t || isBoundary(t)) break;
+    if (!t || endsClauseAt(stream.tokens, stream.position() + i, language)) break;
     if (t.value === '(' || t.value === '{') depth++;
     else if (t.value === ')' || t.value === '}') depth = Math.max(0, depth - 1);
     if (

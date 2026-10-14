@@ -27,44 +27,50 @@ export function profileKeywordMatches(language: string, key: string, value: stri
   return !!kw.alternatives?.some(a => a.toLowerCase() === value);
 }
 
+/**
+ * The curated `then` words, where a profile word collides (see the notes in
+ * the map). Built once: isThenKeyword runs for nearly every token a clause
+ * scan reads.
+ */
+const THEN_KEYWORDS: Readonly<Record<string, ReadonlySet<string>>> = {
+  en: new Set(['then']),
+  // 'そして' and ko '그리고' are deliberately ABSENT: they are what the ja/ko
+  // renderers write for `and` (`p そして q`), so keeping them here split a
+  // condition or value at its `and`. then-chains use それから / 그다음.
+  ja: new Set(['それから', '次に']),
+  ar: new Set(['ثم', 'بعدها', 'ثمّ']),
+  es: new Set(['entonces', 'luego', 'después']),
+  ko: new Set(['그다음', '그런후', '그러면']),
+  // 之后 is deliberately ABSENT: the zh transformer emits it as positional
+  // `after` (`放置 把 X 之后 Y`, put-after) and emits 那么 for then — keeping
+  // it here split the put clause at 之后 and dropped the put.
+  zh: new Set(['然后', '接着', '那么']),
+  // 'sonra' is deliberately ABSENT (mirrors zh dropping 之后): the tr
+  // transformer emits it as positional `after` (`{patient} sonra {dest} … koy`,
+  // put-after); keeping it here split the put clause at sonra and dropped the
+  // put. then-chains use ardından (the i18n dict's then emission).
+  tr: new Set(['ardından', 'daha sonra', 'ardindan']),
+  pt: new Set(['então', 'depois', 'logo']),
+  fr: new Set(['puis', 'ensuite', 'alors']),
+  de: new Set(['dann', 'danach', 'anschließend']),
+  id: new Set(['lalu', 'kemudian', 'setelah itu']),
+  tl: new Set(['pagkatapos', 'tapos']),
+  // 'পরে' is deliberately ABSENT (mirrors tr dropping 'sonra' / zh dropping
+  // 之后): the bn transformer emits it as positional `after` (`{patient} পরে
+  // {dest} … রাখুন`, put-after); keeping it here split the put clause at পরে and
+  // dropped the put. then-chains use তারপর (the bn dict's then emission).
+  bn: new Set(['তারপর']),
+  qu: new Set(['chaymantataq', 'hinaspa', 'chaymanta', 'chayqa']),
+  sw: new Set(['kisha', 'halafu', 'baadaye']),
+};
+
 export function isThenKeyword(value: string, language: string): boolean {
   const v = value.toLowerCase();
-  const thenKeywords: Record<string, Set<string>> = {
-    en: new Set(['then']),
-    // 'そして' and ko '그리고' are deliberately ABSENT: they are what the ja/ko
-    // renderers write for `and` (`p そして q`), so keeping them here split a
-    // condition or value at its `and`. then-chains use それから / 그다음.
-    ja: new Set(['それから', '次に']),
-    ar: new Set(['ثم', 'بعدها', 'ثمّ']),
-    es: new Set(['entonces', 'luego', 'después']),
-    ko: new Set(['그다음', '그런후', '그러면']),
-    // 之后 is deliberately ABSENT: the zh transformer emits it as positional
-    // `after` (`放置 把 X 之后 Y`, put-after) and emits 那么 for then — keeping
-    // it here split the put clause at 之后 and dropped the put.
-    zh: new Set(['然后', '接着', '那么']),
-    // 'sonra' is deliberately ABSENT (mirrors zh dropping 之后): the tr
-    // transformer emits it as positional `after` (`{patient} sonra {dest} … koy`,
-    // put-after); keeping it here split the put clause at sonra and dropped the
-    // put. then-chains use ardından (the i18n dict's then emission).
-    tr: new Set(['ardından', 'daha sonra', 'ardindan']),
-    pt: new Set(['então', 'depois', 'logo']),
-    fr: new Set(['puis', 'ensuite', 'alors']),
-    de: new Set(['dann', 'danach', 'anschließend']),
-    id: new Set(['lalu', 'kemudian', 'setelah itu']),
-    tl: new Set(['pagkatapos', 'tapos']),
-    // 'পরে' is deliberately ABSENT (mirrors tr dropping 'sonra' / zh dropping
-    // 之后): the bn transformer emits it as positional `after` (`{patient} পরে
-    // {dest} … রাখুন`, put-after); keeping it here split the put clause at পরে and
-    // dropped the put. then-chains use তারপর (the bn dict's then emission).
-    bn: new Set(['তারপর']),
-    qu: new Set(['chaymantataq', 'hinaspa', 'chaymanta', 'chayqa']),
-    sw: new Set(['kisha', 'halafu', 'baadaye']),
-  };
   // Languages with a curated map keep their exact (colloquial-rich) behavior.
   // Languages absent from it (it/ru/th/vi/he/hi/ms/pl/uk) fall back to the
   // profile's `then` form + the English literal the transformer passes through —
   // without this their multi-command then-chains collapsed to the first command.
-  const curated = thenKeywords[language];
+  const curated = THEN_KEYWORDS[language];
   if (curated) return curated.has(v);
   return v === 'then' || profileKeywordMatches(language, 'then', v);
 }
