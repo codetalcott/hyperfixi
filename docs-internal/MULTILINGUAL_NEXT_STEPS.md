@@ -18,7 +18,7 @@ What the gates measure. Each claim carries its re-check command:
 | --------------------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | Corpus fidelity, 11 ratchet signals     | 1.000 in all 24 languages (baseline 2026-09-25)                     | `cd packages/testing-framework && npx tsx src/multilingual/cli.ts --full --bundle browser-priority --regression` (after `populate`) |
 | Value matrix (4,537 cells × 48 lanes)   | 6 failing, all ACCEPTED, 0 open (2026-10-07)                        | `npx tsx tools/regen-value-matrix-baseline.ts --dry-run` (testing-framework)                                                        |
-| Command shapes (1,135 scripts × 24)     | 25,886 pass, 1,343 refused, 11 silent; en 1,089 / 46 / 0 (10-12)    | `npx tsx tools/regen-command-shapes-baseline.ts --report` (testing-framework)                                                       |
+| Command shapes (1,135 scripts × 24)     | 26,531 pass, 709 refused, 0 silent; en 1,109 / 26 / 0 (10-13)       | `npx tsx tools/regen-command-shapes-baseline.ts --report` (testing-framework)                                                       |
 | English left in renders: words / events / `me` case | corpus 5.4% / 0.0% / 9.0% of renders; command shapes 10.8% / 0.0% / 16.3%. Words counted toward the target (kept English out), per language: corpus 0.7–4.6%, shapes 3.9–6.2%, met in 23/23 (10-10) | `npx tsx tools/regen-english-leaks-baseline.ts --report` (testing-framework; corpus after `populate`) |
 | Canonical validity (upstream parses it) | both allowlists empty (3174/3174 foreign, 138/138 en on 2026-09-23) | `npm run test:canonical --prefix packages/testing-framework`                                                                        |
 | English reference preserved             | 162/163 units (1 allowlisted: async-block, by design; 2026-10-06)   | same                                                                                                                                |
@@ -177,7 +177,7 @@ A refused pair that starts to render can come out silent: the command-shape dry 
 - `semantic-parser.ts` is 8,871 lines (2026-10-06, `wc -l`), and grew 19% in the week of 2026-09-23.
 - The handcrafted patterns hold 158 hand-written `expectedTypes` lists; only 5 files derive theirs from
   a schema. A copied list that drifted is why German lost every `get` of a literal (PR 130).
-- An end word has nine readers.
+- An end word had nine readers (C3, below).
 
 **Work:**
 
@@ -219,10 +219,11 @@ A refused pair that starts to render can come out silent: the command-shape dry 
   drifted and lost a property). Of the 28, 8 are narrower than their schema on purpose (es/qu/zh set values,
   `set.ts` says why), pick's 6 wait for pick's own refusals, and the rest are roles their schema lacks (repeat's
   and wait's conditions, wait's source and value, qu set's source, hi's `जब` event).
-- Readers per question: an end word still has nine (`VALUE_READING.md` C3). Measured again 2026-10-13: nine
-  definitions of the word, 14 sites with their own "closes a block" test and 12 with their own "stops a clause"
-  test, 22 of which never ask whether the word is a value there. The plan to bring each question to one reader:
-  [`END_WORD_READERS.md`](END_WORD_READERS.md).
+- Readers per question (`VALUE_READING.md` C3): 9 definitions of an end word, 26 sites with their own test.
+  **C3 done 2026-10-13 (#1513–#1518):** one definition (`endWordKind`), one function per question
+  (`closesBlockAt`, `endsClauseAt`, `endWordIsValue`), four named exceptions (`parser/end-words.ts`). P58
+  fixed; P53's `end` half needs the render. Plan at `archived/end-word-readers-2026-10-13`. With C3 the
+  semantic work is done (the owner's definition); next: [`DOMAINS_RETHINK.md`](DOMAINS_RETHINK.md).
 
 ### M4: the small queue (take items opportunistically)
 
