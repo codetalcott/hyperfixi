@@ -42,7 +42,7 @@ import type { LanguageProfile } from '../../generators/profiles/types';
 import { commandSchemas } from '../../generators/command-schemas';
 import { isValidReference } from '../../types';
 import { ROLE_MARKER_CONCEPTS } from './marker-resolution';
-import { isEndWord, type EndWordPlace } from '../end-keywords';
+import { endWordPlace, isEndWord, type EndWordPlace } from '../end-keywords';
 import { getPatternsForLanguage, tryGetProfile } from '../../registry';
 import { getEnglishPossessiveAdjective, getPossessiveReference } from './possessive-keywords';
 import { NATIVE_COUNT_WORDS } from '../../patterns/count-words';
@@ -470,9 +470,7 @@ export function matchQueryScope(
     !!after &&
     expressionWordOf(
       profile?.code ?? 'en',
-      after,
-      tokens[at + scope.consumed],
-      tokens[at + 2 + scope.consumed],
+      { tokens, i: at + 1 + scope.consumed },
       undefined
     ).toLowerCase() === 'where';
   if (
@@ -1087,14 +1085,21 @@ function isBuiltInConversion(name: string): boolean {
   return CONVERSION_TYPE_NAMES.has(name) || /^Fixed(?::\d+)?$/.test(name);
 }
 
+/** A token by where it stands: the list it was read from, and its index there. */
+export interface TokenAt {
+  readonly tokens: readonly LanguageToken[];
+  readonly i: number;
+}
+
 function resolveAmbiguousSense(
   languageCode: string,
-  token: LanguageToken,
-  prev: LanguageToken | undefined,
-  next: LanguageToken | undefined,
+  at: TokenAt,
   prevText: string | undefined,
   afterNext: LanguageToken | undefined
 ): string | undefined {
+  const token = at.tokens[at.i]!;
+  const prev = at.tokens[at.i - 1];
+  const next = at.tokens[at.i + 1];
   const rule = senseRuleOf(languageCode, token);
   if (!rule) return undefined;
   // Type name beats predicate for th เป็น: `เป็น Number` is a conversion even
@@ -1140,7 +1145,7 @@ function resolveAmbiguousSense(
   const nextEndWordOperand =
     !!next &&
     isEndWord(next, languageCode) &&
-    endWordIsValue({ prev: token, beforePrev: prev, next: afterNext }, languageCode);
+    endWordIsValue(endWordPlace(at.tokens, at.i + 1), languageCode);
   if (rule.beforeOperand && (startsOperand(next) || nextEndWordOperand)) {
     return rule.beforeOperand;
   }
@@ -1184,13 +1189,8 @@ function senseRuleOf(languageCode: string, token: LanguageToken): AmbiguousSense
  * The sense a deliberately-ambiguous word takes between `prev` and `next`, if
  * the table has one for it there (qu `mana` before an operand is `not`).
  */
-export function ambiguousSenseOf(
-  languageCode: string,
-  token: LanguageToken,
-  prev: LanguageToken | undefined,
-  next: LanguageToken | undefined
-): string | undefined {
-  return resolveAmbiguousSense(languageCode, token, prev, next, undefined, undefined);
+export function ambiguousSenseOf(languageCode: string, at: TokenAt): string | undefined {
+  return resolveAmbiguousSense(languageCode, at, undefined, undefined);
 }
 
 /** A token a conjunction can never follow: an operator, or an opening bracket or comma. */
@@ -1291,7 +1291,7 @@ export function isCopulaIn(
   const token = tokens[i];
   const prev = tokens[i - 1];
   if (!token || !prev || token.value.toLowerCase() !== 'in') return false;
-  return isCopulaWord(expressionWordOf(languageCode, prev, tokens[i - 2], token, undefined));
+  return isCopulaWord(expressionWordOf(languageCode, { tokens, i: i - 1 }, undefined));
 }
 
 /**
@@ -1303,12 +1303,13 @@ export function isCopulaIn(
  */
 export function expressionWordOf(
   languageCode: string,
-  token: LanguageToken,
-  prev: LanguageToken | undefined,
-  next: LanguageToken | undefined,
+  at: TokenAt,
   prevText: string | undefined,
   afterNext?: LanguageToken
 ): string {
+  const token = at.tokens[at.i]!;
+  const prev = at.tokens[at.i - 1];
+  const next = at.tokens[at.i + 1];
   // `equal to` stays English in every rendering (`is greater than or equal
   // to`), and its `to` is a word some languages have their own sense for: pl
   // reads it as `it`, so `p is equal to 1` came back `p is equal it 1`.
@@ -1323,7 +1324,7 @@ export function expressionWordOf(
   if (prevText?.toLowerCase() === 'not' && DOES_NOT_VERBS.has(token.value.toLowerCase())) {
     return token.value.toLowerCase();
   }
-  const sense = resolveAmbiguousSense(languageCode, token, prev, next, prevText, afterNext);
+  const sense = resolveAmbiguousSense(languageCode, at, prevText, afterNext);
   if (sense !== undefined) return sense;
   if (isConnectiveOperand(languageCode, token, prev, next)) return token.value;
   const connective = translateConnective(languageCode, token.value);
@@ -1339,7 +1340,10 @@ export function expressionWordOf(
   // An end word where a value stands is a variable spelled like it (C3,
   // endWordIsValue): es `fin < 3` joined as `end < 3`, tr `son ve flag` (its
   // `son` reads `last`) as `last and flag`.
-  if (isEndWord(token, languageCode) && endWordIsValue({ prev, next, afterNext }, languageCode)) {
+  if (
+    isEndWord(token, languageCode) &&
+    endWordIsValue(endWordPlace(at.tokens, at.i), languageCode)
+  ) {
     return token.value;
   }
   return token.normalized ?? token.value;
@@ -2010,10 +2014,7 @@ export function joinExpressionTokens(
     // (these surfaces are deliberately NOT connectives; the sense table is
     // authoritative for them). See AMBIGUOUS_SENSES above for why this seam is
     // the one safe place to translate these words.
-    append(
-      expressionWordOf(languageCode, token, tokens[i - 1], next, previousText, tokens[i + 2]),
-      token
-    );
+    append(expressionWordOf(languageCode, { tokens, i }, previousText, tokens[i + 2]), token);
   }
 
   // A translation writes `X does not match Y` as the language's `X not matches

@@ -298,9 +298,7 @@ const EQUAL_TO_LEADS: ReadonlySet<string> = new Set(['is', 'not', 'really', 'am'
 function endsEqualTo(all: readonly LanguageToken[], i: number, language: string): boolean {
   const word = (k: number): string => {
     const token = all[k];
-    return token
-      ? expressionWordOf(language, token, all[k - 1], all[k + 1], undefined).toLowerCase()
-      : '';
+    return token ? expressionWordOf(language, { tokens: all, i: k }, undefined).toLowerCase() : '';
   };
   return word(i) === 'to' && word(i - 1) === 'equal' && EQUAL_TO_LEADS.has(word(i - 2));
 }
@@ -416,7 +414,7 @@ export function continuesValue(
     if (!token.value.startsWith('.') || !prev || tokensAdjacent(prev, token)) return true;
     if (RUN_OPERATORS.has(prev.value) || /^[([,]$/.test(prev.value)) return true;
     if (isOfPossessiveMarker(ctx.profile, prev)) return true;
-    const prevWord = expressionWordOf(language, prev, all[i - 2], token, undefined).toLowerCase();
+    const prevWord = expressionWordOf(language, { tokens: all, i: i - 1 }, undefined).toLowerCase();
     return OPERATOR_WORDS.has(prevWord);
   }
   if (RUN_OPERATORS.has(token.value)) return true;
@@ -427,7 +425,7 @@ export function continuesValue(
   if (isCopulaIn(language, all, i) || isParticleAfterOf(all, i)) return true;
   if (isReferenceAfterOf(all, i, ctx.profile)) return true;
   if (endsEqualTo(all, i, language)) return true;
-  const word = expressionWordOf(language, token, prev, all[i + 1], undefined).toLowerCase();
+  const word = expressionWordOf(language, { tokens: all, i }, undefined).toLowerCase();
   if (word === 'as' && ctx.hasResponseType) return false;
   if (EXPRESSION_WORDS.has(word)) return true;
   // An identifier in any script: the join translates a localized property
