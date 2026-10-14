@@ -1107,14 +1107,7 @@ export class PatternMatcher {
     if (this.currentSchema()?.roles.some(r => r.role === 'responseType')) return false;
     const all = tokens.tokens;
     const at = tokens.position();
-    const word = expressionWordOf(
-      language,
-      all[at]!,
-      all[at - 1],
-      all[at + 1],
-      undefined,
-      all[at + 2]
-    );
+    const word = expressionWordOf(language, { tokens: all, i: at }, undefined, all[at + 2]);
     return word.toLowerCase() === 'as';
   }
 
@@ -2095,7 +2088,7 @@ export class PatternMatcher {
     // is a marker the command owns: sw `na` is `and`, and `hide`'s `with`.
     if (this.commandMarkers().has(token.value.toLowerCase())) return undefined;
     const at = tokens.position();
-    const sense = ambiguousSenseOf(language, token, tokens.tokens[at - 1], tokens.tokens[at + 1]);
+    const sense = ambiguousSenseOf(language, { tokens: tokens.tokens, i: at });
     return sense && isLogical(sense) ? sense : undefined;
   }
 
@@ -2129,12 +2122,9 @@ export class PatternMatcher {
     const words: string[] = [];
     let prevText: string | undefined;
     for (let k = 0; k < 6 && start + k < all.length; k++) {
-      const token = all[start + k];
       const word = expressionWordOf(
         language,
-        token,
-        all[start + k - 1],
-        all[start + k + 1],
+        { tokens: all, i: start + k },
         prevText
       ).toLowerCase();
       words.push(word);
