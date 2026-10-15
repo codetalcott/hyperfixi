@@ -10,8 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **`@lokascript/semantic`: `ask` and `answer`** in every language's own word (es `preguntar` /
-  `responder`, ja `尋ねる` / `答える`, de `frage` / `antworte`): upstream's two dialog commands (`ask
-  "Name?"` prompts; `answer "Save?" with "Yes" or "No"` confirms, the choices after the language's
+  `responder`, ja `尋ねる` / `答える`, de `frage` / `antworte`): upstream's two dialog commands
+  (`ask "Name?"` prompts; `answer "Save?" with "Yes" or "No"` confirms, the choices after the language's
   `with`). Both were refused in every language. Listed for native review in
   `packages/semantic/NATIVE_REVIEW_NEEDED.md`.
 - **`@lokascript/semantic`: `scroll … by` with a direction** in every language's own words
@@ -48,8 +48,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`@lokascript/semantic`: a handler's count** (`on click 1 …`, the first click only; `on click 2 …`)
   is read in every language. The renders already wrote it (es `al clic 1 ocultar`), but every reader
   outside English dropped it, so the translation was refused in all 23 languages. Bengali, Italian and
-  Thai also read every clause between a handler's event and its body (`on click elsewhere`, `on
-  mutation of attributes`, `on foo queue first`), which their head pattern skipped. In the command-shape
+  Thai also read every clause between a handler's event and its body (`on click elsewhere`,
+  `on mutation of attributes`, `on foo queue first`), which their head pattern skipped. In the command-shape
   gate, 375 lanes that were refused now pass.
 - **`@lokascript/semantic`: a query of a pseudo-class alone** (`<:checked/>`, `<:not(.done)/>`) reads
   as a query in every language, English too. Every tokenizer read `<` and then a local variable
@@ -64,12 +64,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `get #p1 in me` read back as `get #p1 on me` in Italian, and `get result as JSONString` was refused
   in Quechua. In the command-shape gate, 202 lanes are better, 3 of them silent before.
 - **`@lokascript/semantic`: upstream's collection expressions** read in English and translate:
-  `set :items to <span/> in #box where it matches .a`, `put matches mapped to its textContent into
-  #out`, `repeat for x in :items where x.val > 10 …`. They were refused in every language, English
+  `set :items to <span/> in #box where it matches .a`,
+  `put matches mapped to its textContent into #out`, `repeat for x in :items where x.val > 10 …`. They were refused in every language, English
   too, or kept as an English clause after the command. A translation writes the language's own `where`,
   as it already did in a condition (es `donde`, de `wo`), and keeps `mapped to` in English until native
-  review. Also read now: an element-scoped variable (`:items`) inside a longer value, the article in `in
-  the closest <table/>` and `checked of the :boxes`, and zh/tl's `no` before a sigil variable. Quechua and
+  review. Also read now: an element-scoped variable (`:items`) inside a longer value, the article in
+  `in the closest <table/>` and `checked of the :boxes`, and zh/tl's `no` before a sigil variable. Quechua and
   Vietnamese read their own `where` back (it read as `target`, or split at its `_`), which also clears a
   silent pair in each. In the command-shape gate, 154 lanes are better, 2 of them silent before.
 - **`@lokascript/semantic`: a query's scope inside a phrase** reads in English and translates:
@@ -116,9 +116,9 @@ review in `packages/semantic/NATIVE_REVIEW_NEEDED.md`; none has been reviewed ye
 
 - **`@lokascript/semantic` writes a pronoun in the case its marker takes.** Free forms: es `en mí`,
   pt `a mim`, it `a me`, tl `sa akin`, pl `do mnie`, ru `ко мне` / `во мне`, uk `до мене`, de `zu mir`
-  / `in mich` (direction) / `auf mir` (location), hi `मुझ में`; `it` after a marker (ru `к этому`, pl `do
-  tego`, de `dazu` / `darin` / `darauf`, fr `à lui`, hi `इस में`); `me` as a verb's object (de `zeige
-  mich`, ru `покажи меня`). Fused forms: tr `bana` / `beni` / `benden`, `ona` / `onu`; ar `إليّ` / `فيه`;
+  / `in mich` (direction) / `auf mir` (location), hi `मुझ में`; `it` after a marker (ru `к этому`, pl
+  `do tego`, de `dazu` / `darin` / `darauf`, fr `à lui`, hi `इस में`); `me` as a verb's object (de
+  `zeige mich`, ru `покажи меня`). Fused forms: tr `bana` / `beni` / `benden`, `ona` / `onu`; ar `إليّ` / `فيه`;
   he `אליי` / `ממני`; bn `আমাকে` / `আমাতে`; hi `मुझे`; tl `dito`; pt `nele`. Object clitics on the verb:
   es `mostrarme`, it `metterlo`, pt `colocá-lo`, ar `ضعه`; fr writes the object pronoun before the
   infinitive (`le mettre`, `l'afficher`, `me cacher`). Every reader takes the nominative and the English
@@ -172,8 +172,8 @@ language has a word for. The words are the owner's vocabulary sheet
   counts, per render, the English grammar words (the tokens the engine's own parser matched in the
   source), English event names the language's lexicon has a word for, and a nominative `me` beside a
   marker in the 13 languages where that case is wrong. Two shrink-only baselines (the corpus, in
-  `test:canonical`, and the command-shape cases, in their shards); `tools/regen-english-leaks-baseline.ts
-  --report` prints each language against M2's targets. An English alternative a profile keeps for
+  `test:canonical`, and the command-shape cases, in their shards);
+  `tools/regen-english-leaks-baseline.ts --report` prints each language against M2's targets. An English alternative a profile keeps for
   code-switched input, beside a primary that is the language's own, counts as English.
 - **`@lokascript/semantic`: `transition … from … to`** reads and writes in every language (a `source`
   role), and the bare command reads in English. The schema's `destination` role is gone: upstream has
@@ -190,8 +190,8 @@ language has a word for. The words are the owner's vocabulary sheet
   back in English as upstream's first person), `does not match`, `fetch … do not throw`, `on first`,
   `go back`, `from elsewhere`, a loop's `index`, `start view transition`, a query's `in`, a conversion's
   `as` (the type name stays English), `the X of Y` inside an expression (es `valor de #price`, ja
-  `#priceの値`), `catch` and `finally`, `element x`, and `def` (as the noun "function", es `función
-  greet(name)`). bn, th and vi have their own `document` and `window`; he has its own words for all of
+  `#priceの値`), `catch` and `finally`, `element x`, and `def` (as the noun "function", es
+  `función greet(name)`). bn, th and vi have their own `document` and `window`; he has its own words for all of
   these and for `matches`, `exists`, `or`, `not`, `first`, `next`, `previous`, `closest`, `empty`, `is`,
   `document` and `window`; and the 15 languages that wrote English `forever` have their own (es
   `repetir siempre`, de `endlos`, ja `ずっと`). Every reader still takes the English words. Where a word
