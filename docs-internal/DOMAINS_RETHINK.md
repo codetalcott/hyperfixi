@@ -2,7 +2,8 @@
 
 Plan, 2026-10-13. Decisions D1–D6 taken 2026-10-14 (all as recommended; D1's open rows below). Phase 1 done
 2026-10-15 (lokascript-domains #21 = 4.0.0, this repo #1521); Phase 2 done 2026-10-15 (lokascript-domains #23,
-#24). Next: Phase 3.
+#24, corrected by #25); Phase 3 merged 2026-10-15 (#1524, #1525; domains readiness #26, #28), unreleased. Next:
+the framework minor release (owner), then the domains relock and re-baseline, then Phase 4.
 
 Owner, 2026-10-13: "The domains pattern only works if it is built on a reliable core. We may need to rethink
 domains, instead of trying to preserve it as is." This answers M3 (e) in
@@ -289,6 +290,13 @@ render), bdd's hyphenated words (`doble-clic` reads `doble`), zh's lost target a
 (the marker read as its source in 7 languages), learn's URLs. `domain-probes.ts` here keeps its placeholders and
 node comparison, so its numbers differ from the gate's; the gate is the one that counts.
 
+**Corrected the same day** (lokascript-domains #25): the reference code came from compiling the command's
+ENGLISH render, so the English lane was measured against itself, and where English is broken every correct
+language read as silent (bdd's `When double-click` reads `double`; ja/ko/zh/tr/fr compiled to `dblclick()` and
+were listed). The reference is now what the command's bracket form compiles to. That made the first numbers
+1,602/1,893 with 142 silent (English included: voice `navigate to /home` compiled to `href = '/'`). #26 then
+fixed what Phase 3 could not see (bdd/behaviorspec hyphenated words, fr `hover`'s word): 1,632/1,893, 116 silent.
+
 **Phase 3 — refusal in today's factory** (this repo, framework minor; if D5 says yes).
 
 1. `parseWithConfidence` ranks every matching pattern (priority, then confidence) instead of taking the first,
@@ -298,6 +306,29 @@ node comparison, so its numbers differ from the gate's; the gate is the one that
 3. mcp-server's domain tools return `ok: false` with the refusal, as `translate_code` does.
 
 Then the domain gate re-baselines: silent pairs become refused; none may go the other way.
+
+**Merged 2026-10-15, unreleased** (#1524: step 1; #1525: steps 2 and 3, one PR, one read-back rule). Measured
+before release with lokascript-domains #27 (`UPSTREAM_TARBALLS=… npm run gate:upstream`: the gate on a packed
+framework, report only):
+
+- Step 1 (`UnreadInputError`): 1,527 cases better, 62 worse, every one `pass → refused` (a value such as
+  `click`'s that the generator ignored, refused as unread instead of dropped); none became silent and none of
+  the 175 moved parses changed reading. Leftover accepted 1,748 → 159; silent 116 → 3 (ja/ko `select`, which needs
+  a value slot, Phase 5; learn tr `.active al`, D2).
+- Steps 2–3 (`TranslationReadBackError`, `{ lossy: 'allow' }`; the registry's tools answer `ok: false` with
+  `UNREAD_INPUT` / `TRANSLATION_DOES_NOT_READ_BACK`, a refused translation's text under `partial`): translating
+  every gate command from English, 46 renders that used to be returned are refused.
+- It found truncations in this repo too: framework's SQL fixture read `where age > 18` as `age` (its test checked
+  truthiness), and mcp-server's llm `ask what is 2+2` asked the model "what". A multi-word llm question is quoted
+  (`quoteMultiword` is llm's design; making it greedy would misread a question containing `from` silently).
+- And in the domains, before the relock could go red (lokascript-domains #28): bdd's `and` content read one word,
+  voice read `/home` as `/`. With the packed framework every domain package's own suite passes; only the
+  aggregate's gate needs re-baselining.
+
+Left for the relock (after the release): re-baseline with `gate:regen`; a rule for the 159 leftover cases whose
+unknown word lands in an open-text role (sql `condition`, behaviorspec `when.action`, voice `back`/`forward`
+quantity) — some are legitimate text, some a reader that should be narrower (a quantity); and the 62
+`pass → refused` cases are the gate's `when … value:v2x` variants for actions that take no value.
 
 **Phase 4 — the core, from semantic** (this repo; behavior-preserving for hyperscript). Every step: the
 parse-parity oracle (`packages/semantic/scripts/parse-parity.ts --check`, 27,194 parses) at 0 differences, the M3
@@ -341,8 +372,8 @@ delete `core/pattern-matching/` and the old `createMultilingualDSL` path, by the
 ## Exit metrics
 
 - One matcher: framework's old 1,630-line copy deleted.
-- Domain round trip: every pair `pass` or a listed refusal; 0 silent; 0 leftover input accepted (at Phase 2:
-  52 silent, 1,744/1,744 accepted).
+- Domain round trip: every pair `pass` or a listed refusal; 0 silent; 0 leftover input accepted (at Phase 2,
+  corrected: 116 silent after #26, 1,748 accepted; with Phase 3's framework packed: 3 silent, 159 accepted).
 - learn: 135/135 commanding sentences read by the product as the source.
 - Semantic: parse-parity 0 differences through Phase 4; no hyperscript gate worse.
 - Domain packages: 16 → 7 DSLs; lokascript-learn on the current line.
