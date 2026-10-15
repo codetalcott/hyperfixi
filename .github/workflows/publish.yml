@@ -204,13 +204,17 @@ jobs:
         run: npm run populate --prefix packages/patterns-reference
 
       - name: Run tests
-        # VITEST_TIMEOUT: the 5 minutes ci.yml's core and semantic steps have.
-        # scripts/vitest-run.sh defaults to 120s, which both suites outgrew
-        # (2026-09-26/28); the 3.2.0 dry run was killed mid-run in core's
-        # suite at 120s (exit 124, no summary) — CI had been green on the same
-        # tree with the longer budget.
+        # VITEST_TIMEOUT: the longest budget ci.yml gives a suite this step
+        # runs (semantic's 10 minutes; core's is 5). scripts/vitest-run.sh
+        # defaults to 120s, which both suites outgrew (2026-09-26/28); the
+        # 3.2.0 dry run was killed mid-run in core's suite at 120s (exit 124,
+        # no summary) — CI had been green on the same tree with the longer
+        # budget. It happened again on the 4.6.0 dry run: ci.yml raised
+        # semantic to 600 on 2026-10-12 (#1481) and this step stayed at 300,
+        # so semantic was killed at 300s with every streamed test green (CI's
+        # semantic step had run 323s on a PR that week). Raise this with ci.yml.
         env:
-          VITEST_TIMEOUT: '300'
+          VITEST_TIMEOUT: '600'
         run: |
           npm test --prefix packages/core
           npm test --prefix packages/semantic -- --run
