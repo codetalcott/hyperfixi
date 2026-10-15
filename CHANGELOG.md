@@ -59,6 +59,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Test runs no longer fill the temp directory**: `scripts/vitest-run.sh` gives each run its own
   `TMPDIR` and removes it. Vitest 5.0.2 leaves a copy of every transformed module in `$TMPDIR` per run.
 
+### Removed
+
+- **`@hyperfixi/mcp-server`: the jsx domain's four tools** (`parse_jsx`, `compile_jsx`, `validate_jsx`,
+  `translate_jsx`), and `jsx` as a `domain` for `lse_validate_and_feedback`, `generate_training_data`
+  and the `lse_generate` prompt. The server now depends on `@lokascript/domains` ^4.0.0, which retired
+  jsx with six other preview domains (`docs-internal/DOMAINS_RETHINK.md`, D1). 8 domains remain (sql,
+  bdd, behaviorspec, llm, flow, voice, todo, learn): 32 domain tools, 102 tools defined, 97 listed by
+  default.
+
 ## [4.5.0] - 2026-10-11
 
 Pronouns, suffixes and handler heads read as their language. In 4.4.0 every translation wrote `me` and

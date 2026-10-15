@@ -11,26 +11,16 @@ import {
 // =============================================================================
 
 describe('DomainRegistry Integration', () => {
-  it('registers all 9 domains', () => {
+  it('registers all 8 domains', () => {
     const registry = createDomainRegistry();
     const names = registry.getDomainNames().sort();
-    expect(names).toEqual([
-      'bdd',
-      'behaviorspec',
-      'flow',
-      'jsx',
-      'learn',
-      'llm',
-      'sql',
-      'todo',
-      'voice',
-    ]);
+    expect(names).toEqual(['bdd', 'behaviorspec', 'flow', 'learn', 'llm', 'sql', 'todo', 'voice']);
   });
 
-  it('generates 36 tool definitions (4 per domain)', () => {
+  it('generates 32 tool definitions (4 per domain)', () => {
     const registry = createDomainRegistry();
     const tools = registry.getToolDefinitions();
-    expect(tools).toHaveLength(36);
+    expect(tools).toHaveLength(32);
 
     const toolNames = tools.map(t => t.name).sort();
     expect(toolNames).toContain('parse_sql');
@@ -38,7 +28,6 @@ describe('DomainRegistry Integration', () => {
     expect(toolNames).toContain('validate_sql');
     expect(toolNames).toContain('translate_sql');
     expect(toolNames).toContain('parse_bdd');
-    expect(toolNames).toContain('parse_jsx');
     expect(toolNames).toContain('parse_behaviorspec');
     expect(toolNames).toContain('parse_learn');
   });
@@ -67,8 +56,8 @@ describe('DomainRegistry Integration', () => {
     const parseBdd = tools.find(t => t.name === 'parse_bdd')!;
     expect(parseBdd.inputSchema.required).toContain('scenario');
 
-    const parseJsx = tools.find(t => t.name === 'parse_jsx')!;
-    expect(parseJsx.inputSchema.required).toContain('code');
+    const parseFlow = tools.find(t => t.name === 'parse_flow')!;
+    expect(parseFlow.inputSchema.required).toContain('pipeline');
 
     const parseBs = tools.find(t => t.name === 'parse_behaviorspec')!;
     expect(parseBs.inputSchema.required).toContain('scenario');
@@ -78,7 +67,7 @@ describe('DomainRegistry Integration', () => {
     const registry = createDomainRegistry();
     expect(registry.canHandle('parse_sql')).toBe(true);
     expect(registry.canHandle('compile_bdd')).toBe(true);
-    expect(registry.canHandle('validate_jsx')).toBe(true);
+    expect(registry.canHandle('validate_todo')).toBe(true);
     expect(registry.canHandle('translate_behaviorspec')).toBe(true);
   });
 
@@ -104,10 +93,10 @@ describe('DomainRegistry Integration', () => {
     expect(data.language).toBe('en');
   });
 
-  it('JSX single-step compile dispatches through registry', async () => {
+  it('todo single-step compile dispatches through registry', async () => {
     const registry = createDomainRegistry();
-    const result = await registry.handleToolCall('compile_jsx', {
-      code: 'element div with className "app"',
+    const result = await registry.handleToolCall('compile_todo', {
+      command: 'add milk to groceries',
       language: 'en',
     });
 

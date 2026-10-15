@@ -27,7 +27,7 @@ const LSE_PROMPTS: Prompt[] = [
       {
         name: 'domain',
         description:
-          'Domain to generate for (flow, sql, bdd, llm, jsx, todo, behaviorspec, voice). Default: flow',
+          'Domain to generate for (flow, sql, bdd, llm, todo, behaviorspec, voice). Default: flow',
         required: false,
       },
       {

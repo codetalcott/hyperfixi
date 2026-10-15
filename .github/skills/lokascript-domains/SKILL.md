@@ -1,6 +1,6 @@
 ---
 name: lokascript-domains
-description: 'Parses, compiles, validates, and translates multilingual DSL commands across 8 domains (SQL, BDD, JSX, todos, testing, LLM prompts, data flow, voice). Use when user works with domain-specific commands in any of 24 supported languages, or needs cross-domain compilation, HATEOAS workflows, or LSE training data generation.'
+description: 'Parses, compiles, validates, and translates multilingual DSL commands across 8 domains (SQL, BDD, todos, testing, LLM prompts, data flow, voice, learn). Use when user works with domain-specific commands in any of 24 supported languages, or needs cross-domain compilation, HATEOAS workflows, or LSE training data generation.'
 ---
 
 # LokaScript Domain DSLs
@@ -9,10 +9,10 @@ description: 'Parses, compiles, validates, and translates multilingual DSL comma
 
 ## When to Use
 
-- User writes SQL, BDD scenarios, JSX, todos, or LLM prompts in natural language
+- User writes SQL, BDD scenarios, todos, or LLM prompts in natural language
 - User needs to translate domain commands between languages (en, es, ja, ar, ko, zh, tr, fr)
 - User asks to generate Playwright tests from BDD or behavior specs
-- User wants to compile natural language to target code (SQL, JSX, reactive JS)
+- User wants to compile natural language to target code (SQL, reactive JS)
 - User works with HATEOAS/Siren APIs via FlowScript commands
 - User needs LLM training data or feedback loops for LokaScript Explicit Syntax
 - User wants server route scaffolding from HTML fetch/htmx/fixi attributes
@@ -61,16 +61,16 @@ compile_composite({ input: "select name from users\ngiven #button exists", langu
 
 ## Domains
 
-| Domain           | Commands                                                     | Languages                      | `compile_{name}` Output            |
-| ---------------- | ------------------------------------------------------------ | ------------------------------ | ---------------------------------- |
-| **sql**          | SELECT, INSERT, UPDATE, DELETE                               | en, es, ja, ar, ko, zh, tr, fr | SQL query string                   |
-| **bdd**          | GIVEN, WHEN, THEN                                            | en, es, ja, ar                 | Playwright test                    |
-| **jsx**          | element, component, fragment                                 | en, es, ja, ar, ko, zh, tr, fr | JSX/React markup                   |
-| **todo**         | add, complete, remove, list                                  | en, es, ja, ar, ko, zh, tr, fr | Structured operation object        |
-| **behaviorspec** | given, when, then (pages)                                    | en, es, ja, ar, ko, zh, tr, fr | Playwright interaction test        |
-| **llm**          | ask, summarize, analyze, translate                           | en, es, ja, ar, ko, zh, tr, fr | LLMPromptSpec JSON                 |
-| **flow**         | fetch, poll, stream, submit, enter, follow, perform, capture | en, es, ja, ar, ko, zh, tr, fr | Reactive JS / HATEOAS WorkflowSpec |
-| **voice**        | click, scroll, type, navigate                                | en, es, ja, ar, ko, zh, tr, fr | DOM interaction command            |
+| Domain           | Commands                                                     | Languages                              | `compile_{name}` Output            |
+| ---------------- | ------------------------------------------------------------ | -------------------------------------- | ---------------------------------- |
+| **sql**          | SELECT, INSERT, UPDATE, DELETE                               | en, es, ja, ar, ko, zh, tr, fr         | SQL query string                   |
+| **bdd**          | GIVEN, WHEN, THEN                                            | en, es, ja, ar                         | Playwright test                    |
+| **todo**         | add, complete, remove, list                                  | en, es, ja, ar, ko, zh, tr, fr         | Structured operation object        |
+| **behaviorspec** | given, when, then (pages)                                    | en, es, ja, ar, ko, zh, tr, fr         | Playwright interaction test        |
+| **llm**          | ask, summarize, analyze, translate                           | en, es, ja, ar, ko, zh, tr, fr         | LLMPromptSpec JSON                 |
+| **flow**         | fetch, poll, stream, submit, enter, follow, perform, capture | en, es, ja, ar, ko, zh, tr, fr         | Reactive JS / HATEOAS WorkflowSpec |
+| **voice**        | click, scroll, type, navigate                                | en, es, ja, ar, ko, zh, tr, fr         | DOM interaction command            |
+| **learn**        | add, remove, toggle, put, set, show, hide, … (15)            | en, es, ja, ar, ko, zh, tr, fr, de, pt | Rendered sentence w/ morphology    |
 
 ## MCP Tools
 
