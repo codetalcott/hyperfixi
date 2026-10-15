@@ -749,6 +749,14 @@ In the MCP server, register your domain with the shared registry instead of writ
 
 ## Troubleshooting
 
+**`UnreadInputError: "…" reads as X only by leaving "…" unread`.**
+A parse must read the whole input: every pattern is tried, and only a match that consumes every
+token counts (highest priority, then confidence). The error names what the longest match read
+(`reading`) and the text it left (`unread`); `compile`, `validate` and `translate` report it too.
+If the unread text belongs to a role, that role stops too early: a value that runs to the end of the
+input (a SQL condition, `age > 18`) needs `greedy: true`. Before this refusal the trailing words were
+dropped without a word.
+
 **Parsing fails in SOV languages but works in SVO.**
 Check that your tokenizer's `keywordExtras` includes `{ native: '...', normalized: 'english_keyword' }` for every non-Latin keyword. The pattern matcher compares stop markers against both `token.value` (native) and `token.normalized` (English) — if normalization is missing, the matcher can't recognize when to stop consuming tokens.
 

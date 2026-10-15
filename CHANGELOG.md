@@ -20,6 +20,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   direction had a word, and scroll's schema modeled `scroll to <el>` alone. Listed for native review in
   `packages/semantic/NATIVE_REVIEW_NEEDED.md`.
 
+### Changed
+
+- **`@lokascript/framework`: a domain DSL's parse refuses input it did not read.**
+  `createMultilingualDSL`'s `parse` (and so `compile`, `validate`, `translate`) tries every pattern and
+  takes the best match that reads the WHOLE input: highest priority, then confidence. When the only
+  matches leave input unread, it throws `UnreadInputError` (exported; `code: 'unread-input'`, with the
+  longest match's `reading` and the `unread` text). It used to return the first match however much it
+  read, so a trailing word was dropped without a word: the domain gate (lokascript-domains) found
+  1,744 of 1,744 renders accepted with an unknown word after them, and `ask what is 2+2` asked the
+  model "what". Against the gate (domains 4.0.0, measured unpublished with `gate:upstream`): 1,527
+  cases better, 62 worse, every one `pass → refused` (a value such as `click`'s that the generator
+  ignored, now refused as unread rather than dropped); no case became silent, and no accepted parse
+  changed its reading. A multi-word llm question is quoted: `ask "what is 2+2"`.
+
 ### Fixed
 
 - **`@lokascript/semantic`: a handler's count** (`on click 1 …`, the first click only; `on click 2 …`)

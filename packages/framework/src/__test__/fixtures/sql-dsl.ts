@@ -47,6 +47,9 @@ export const selectCommand = defineCommand({
       description: 'WHERE clause condition',
       required: false,
       expectedTypes: ['expression'],
+      // As in domain-sql: the condition is the rest of the input (`age > 18`). Without it the
+      // condition read `age` and dropped `> 18`, which parse accepted until it refused unread input.
+      greedy: true,
       svoPosition: 0,
       sovPosition: 0,
       markerOverride: { en: 'where', es: 'donde' },
