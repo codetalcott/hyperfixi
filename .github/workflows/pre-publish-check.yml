@@ -166,11 +166,14 @@ jobs:
         run: npm run populate --prefix packages/patterns-reference
 
       - name: Run tests
-        # VITEST_TIMEOUT: the same 5 minutes as ci.yml and publish.yml's test
-        # steps; scripts/vitest-run.sh's 120s default is shorter than core's
-        # and semantic's suites now take on a 4-core runner.
+        # VITEST_TIMEOUT: the same budget as publish.yml's test step, the
+        # longest ci.yml gives a suite (semantic's 10 minutes since #1481);
+        # scripts/vitest-run.sh's 120s default is shorter than core's and
+        # semantic's suites now take on a 4-core runner. It was 300 until the
+        # 4.6.0 release, when publish.yml's dry run was killed in semantic at
+        # 300s; this check passed the same tree by luck of the runner.
         env:
-          VITEST_TIMEOUT: '300'
+          VITEST_TIMEOUT: '600'
         run: |
           set -o pipefail
           echo "" >> $GITHUB_STEP_SUMMARY
