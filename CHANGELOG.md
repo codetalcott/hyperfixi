@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.6.0] - 2026-10-15
+
 ### Added
 
 - **`@lokascript/semantic`: `ask` and `answer`** in every language's own word (es `preguntar` /
@@ -42,6 +44,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `TRANSLATION_DOES_NOT_READ_BACK` diagnostic instead of a generic tool error, and `translate_<domain>`
   reads its own rendering back the same way. Translating every domain gate command from English: 46
   renders that used to be returned are now refused (45 do not parse in the target language).
+- **`@lokascript/semantic`: the parser is split into modules.** `semantic-parser.ts` went from 9,680
+  lines to 751, across 22 modules under `parser/`, and each question about an end word (does it close a
+  block, does it stop a clause) has one reader. Each step was checked against 27,194 parses; the steps
+  that change a reading are listed under Fixed. `SemanticParseError` keeps its import path.
 
 ### Fixed
 
@@ -79,6 +85,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `put the length of <p/> into #out` and `put 'x' into the next <div/>'s textContent`, which the lossy
   check refused because it read the `'s` after `<p/>` as a quote. In the command-shape gate, 63 lanes are
   better, 1 of them silent before.
+- **`@lokascript/semantic`: no translation reads back as other English without saying so.** The
+  command-shape gate's last five silent pairs read back as their source: pl's `closest .bar to .foo`
+  (pl's own `to` is "it"), `closest @foo` in pl and sw, a Quechua chain of `'s` (`$data's inner's val`,
+  read as a string), and Indonesian's `saya punya @data-x`. English `set closest @foo to "doh"` and
+  `put closest @foo into me`, refused in all 24 languages, read now too.
+- **`@lokascript/semantic`: commands that semantic already models, refused in some languages,** read
+  and translate. In the command-shape gate, 168 lanes that were refused now pass; with the rows above,
+  the refused lanes of shapes semantic models went from 911 to 86, and the gate reads 26,531 pass,
+  709 refused and 0 silent. The commands:
+  - `fetch $u as JSON`, with a `$` or `:` variable as the URL (23 languages);
+  - `toggle my *display`, `*opacity` and `*visibility` (ar, de, fr, he, ja, tr);
+  - a `js(…) … end` block after `then` behind a handler head (bn, es, it, ko, pl, ru, th, tl, uk);
+  - a snake_case name (`call global_function()`), which 11 tokenizers split at its `_`;
+  - a custom event after a handler head's `or` (`on click or foo`: bn, it, ja, ko, th, tr, zh). English
+    no longer drops the second event of `on foo or bar`;
+  - `put … at end of` in Vietnamese, and in bn, hi, ja, qu and tr after a bare name
+    (`put response at end of #results`);
+  - a `set` target with no marker after it, in it, pl, ru and uk (`set .divs.innerHTML to "foo"`,
+    `#d1.parentNode`, `bar["count"]`), and `on keydown[key=="Enter"]` in ar, de, fr and he;
+  - `fetch … as Object` and `as Number` behind a bn, hi or ko handler head;
+  - a top-level `for item in items …`, which bn, hi, ko and sw read as a handler on `item`;
+  - a loop's bottom test (`repeat … until x is 3 end`) in de, fr and ko;
+  - a Korean second handler on a parameterized event (`on exception(error)`), and Polish
+    `then throw` after `do` (Polish for `into`);
+  - bn, th and vi's own word for `checked`.
+- **`@lokascript/semantic`: `at end of` inside a behavior or a def** reads in every language:
+  `behavior B on click put "x" at end of me end` was refused, English to English too, because the
+  `end` of `at end of` closed the block. A variable spelled like an end word in such a body reads too
+  (es `fin`).
+- **`@lokascript/semantic`: two copied type lists that had lost `property-path`.** Chinese reads
+  `put the textContent of last <.picked/> in #list`, which it refused, and ja, ko and zh write the count
+  of `repeat the textContent of #a times` in their own words (`#aのtextContent`), not English.
+- **`@lokascript/semantic`: Quechua's `repeat until event … from …`** writes Quechua
+  (`kama ruway pointerup ta kutipay #box manta …`), not a leftover of the retired i18n transformer with
+  English `until event` and `repeat` in it.
 - **Test runs no longer fill the temp directory**: `scripts/vitest-run.sh` gives each run its own
   `TMPDIR` and removes it. Vitest 5.0.2 leaves a copy of every transformed module in `$TMPDIR` per run.
 
@@ -1695,7 +1736,8 @@ _Synchronized version release. See git history for details._
 - npm access token stored in GitHub Secrets
 - 2FA recommended for npm organization
 
-[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v4.4.0...HEAD
+[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v4.6.0...HEAD
+[4.6.0]: https://github.com/codetalcott/hyperfixi/compare/v4.5.0...v4.6.0
 [4.5.0]: https://github.com/codetalcott/hyperfixi/compare/v4.4.0...v4.5.0
 [4.4.0]: https://github.com/codetalcott/hyperfixi/compare/v4.3.0...v4.4.0
 [4.3.0]: https://github.com/codetalcott/hyperfixi/compare/v4.2.0...v4.3.0
