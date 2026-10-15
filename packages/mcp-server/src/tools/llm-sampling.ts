@@ -132,14 +132,14 @@ export const samplingTools: Tool[] = [
   {
     name: 'execute_llm',
     description:
-      'Execute an LLM command written in natural language (8 languages supported). Compiles via domain-llm then invokes Claude via MCP sampling. Examples: "ask what is 2+2", "summarize #article as bullets", "요약 이 문서를 글머리로" (Korean). DEPRECATED: MCP sampling is deprecated as of protocol revision 2026-07-28 and works only on legacy-era connections whose client advertises the sampling capability; planned replacement is the input_required (MRTR) pattern.',
+      'Execute an LLM command written in natural language (8 languages supported). Compiles via domain-llm then invokes Claude via MCP sampling. Examples: ask "what is 2+2" (a question of several words is quoted), summarize #article as bullets, #article 요약 (Korean). DEPRECATED: MCP sampling is deprecated as of protocol revision 2026-07-28 and works only on legacy-era connections whose client advertises the sampling capability; planned replacement is the input_required (MRTR) pattern.',
     inputSchema: {
       type: 'object',
       properties: {
         command: {
           type: 'string',
           description:
-            'LLM command in natural language (e.g., "ask what is the capital of France")',
+            'LLM command in natural language (e.g., ask "what is the capital of France")',
         },
         language: {
           type: 'string',

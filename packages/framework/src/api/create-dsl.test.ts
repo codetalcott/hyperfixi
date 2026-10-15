@@ -13,6 +13,7 @@ import {
   defineRole,
   BaseTokenizer,
   getDefaultExtractors,
+  UnreadInputError,
   type SemanticNode,
 } from '../index';
 
@@ -394,6 +395,49 @@ describe('MultilingualDSL: Explicit Syntax Support', () => {
 
       expect(result.ok).toBe(true);
       expect(result.code).toContain('SELECT');
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Input left unread (DOMAINS_RETHINK.md, Phase 3)
+  // ---------------------------------------------------------------------------
+
+  describe('input left unread', () => {
+    it('refuses a parse that reads the command only by dropping what follows it', () => {
+      const dsl = createTestDSL();
+      let error: unknown;
+      try {
+        dsl.parse('select name from users banana', 'en');
+      } catch (e) {
+        error = e;
+      }
+      expect(error).toBeInstanceOf(UnreadInputError);
+      const refusal = error as UnreadInputError;
+      expect(refusal.code).toBe('unread-input');
+      expect(refusal.unread).toBe('banana');
+      expect(refusal.reading.action).toBe('select');
+      expect(refusal.message).toMatch(/leaving "banana" unread/);
+    });
+
+    it('compile and validate report the refusal instead of compiling the shorter reading', () => {
+      const dsl = createTestDSL();
+      const compiled = dsl.compile('select name from users banana banana', 'en');
+      expect(compiled.ok).toBe(false);
+      expect(compiled.errors?.[0]).toMatch(/leaving "banana banana" unread/);
+      expect(dsl.validate('select name from users banana', 'en').valid).toBe(false);
+    });
+
+    it('translate refuses too, rather than translating the shorter reading', () => {
+      const dsl = createBilingualTestDSL();
+      expect(() => dsl.translate('select name from users banana', 'en', 'es')).toThrow(
+        UnreadInputError
+      );
+    });
+
+    it('input read whole still parses, and nothing matching at all is still "No pattern matched"', () => {
+      const dsl = createTestDSL();
+      expect(dsl.parse('select name from users', 'en').action).toBe('select');
+      expect(() => dsl.parse('banana', 'en')).toThrow(/No pattern matched/);
     });
   });
 });

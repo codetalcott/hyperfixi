@@ -42,7 +42,7 @@ compile_behaviorspec({ spec: "given page /login when I type admin into #user the
 compile_llm({ command: "ask claude to summarize #article as bullets" })
   => LLMPromptSpec JSON
 
-execute_llm({ command: "ask what is the capital of France" })
+execute_llm({ command: 'ask "what is the capital of France"' })  // a question of several words is quoted
   => Compiles + executes via MCP sampling
 ```
 

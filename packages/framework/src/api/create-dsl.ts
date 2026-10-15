@@ -2,7 +2,12 @@
  * Main API for creating multilingual DSLs
  */
 
-import type { SemanticNode, LanguageTokenizer, LanguagePattern } from '../core/types';
+import type {
+  SemanticNode,
+  LanguageTokenizer,
+  LanguagePattern,
+  PatternMatchResult,
+} from '../core/types';
 import type { CommandSchema } from '../schema';
 import { PatternMatcher, type PatternMatcherProfile } from '../core/pattern-matching';
 import { generatePattern, type PatternGenLanguageProfile } from '../generation/pattern-generator';
@@ -194,6 +199,25 @@ export interface CompileResult {
 }
 
 /**
+ * Thrown by `parse` (and so `compile`, `validate`, `translate`) when the input reads as a command
+ * only by leaving some of it unread: `select name from users banana` is not `select name from users`.
+ * `reading` is what the longest such match read, `unread` the text after it.
+ */
+export class UnreadInputError extends Error {
+  readonly code = 'unread-input';
+
+  constructor(
+    readonly input: string,
+    readonly language: string,
+    readonly reading: SemanticNode,
+    readonly unread: string
+  ) {
+    super(`"${input}" (${language}) reads as ${reading.action} only by leaving "${unread}" unread`);
+    this.name = 'UnreadInputError';
+  }
+}
+
+/**
  * Main multilingual DSL interface.
  */
 export interface MultilingualDSL {
@@ -366,28 +390,64 @@ class MultilingualDSLImpl implements MultilingualDSL {
       code: language,
     };
 
-    // Try to match each pattern
+    // Every pattern is tried, and only a match that reads the WHOLE input counts; of those, the
+    // highest priority wins, then the highest confidence, then the earliest pattern. The first match
+    // used to win however much it read, so a trailing word was dropped without a word (the domain
+    // gate measured 1,744 of 1,744 such inputs accepted) and an earlier, shorter pattern could
+    // shadow the one that reads everything.
+    const total = tokens.tokens.length;
+    let best: PatternMatchResult | null = null;
+    let longestPartial: PatternMatchResult | null = null;
     for (const pattern of patterns) {
+      const mark = tokens.mark();
       const match = this.matcher.matchPattern(tokens, pattern, profile);
-      if (match) {
-        // Build semantic node
-        const node: SemanticNode = {
-          kind: 'command',
-          action: pattern.command,
-          roles: match.captured,
-          metadata: {
-            sourceLanguage: language,
-            sourceText: input,
-            patternId: pattern.id,
-            confidence: match.confidence,
-          },
-        };
-
-        return { node, confidence: match.confidence };
+      tokens.reset(mark);
+      if (!match) continue;
+      if (match.consumedTokens < total) {
+        if (!longestPartial || match.consumedTokens > longestPartial.consumedTokens)
+          longestPartial = match;
+        continue;
       }
+      if (
+        !best ||
+        match.pattern.priority > best.pattern.priority ||
+        (match.pattern.priority === best.pattern.priority &&
+          match.confidence > best.confidence + 0.001)
+      )
+        best = match;
     }
 
+    if (best) {
+      const node = this.nodeOf(best, input, language);
+      return { node, confidence: best.confidence };
+    }
+    if (longestPartial) {
+      const unread = tokens.tokens
+        .slice(longestPartial.consumedTokens)
+        .map(t => t.value)
+        .join(' ');
+      throw new UnreadInputError(
+        input,
+        language,
+        this.nodeOf(longestPartial, input, language),
+        unread
+      );
+    }
     throw new Error(`No pattern matched for input: ${input}`);
+  }
+
+  private nodeOf(match: PatternMatchResult, input: string, language: string): SemanticNode {
+    return {
+      kind: 'command',
+      action: match.pattern.command,
+      roles: match.captured,
+      metadata: {
+        sourceLanguage: language,
+        sourceText: input,
+        patternId: match.pattern.id,
+        confidence: match.confidence,
+      },
+    };
   }
 
   validate(input: string, language: string): ValidationResult {

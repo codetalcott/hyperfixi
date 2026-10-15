@@ -46,8 +46,8 @@ describe('SQL DSL Integration', () => {
       const condition = result.roles.get('condition');
       expect(condition).toBeDefined();
       if (condition && 'raw' in condition) {
-        // The condition role captures the expression after WHERE
-        expect(condition.raw).toBeTruthy();
+        // The condition role captures the whole expression after WHERE
+        expect(condition.raw).toBe('age > 18');
       }
     });
   });
