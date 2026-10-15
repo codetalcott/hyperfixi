@@ -1,7 +1,8 @@
 # Domains rethink: one reliable core
 
-Plan, 2026-10-13. Decisions D1–D6 taken 2026-10-14 (all as recommended; D1's open rows below); Phase 1 under
-way: lokascript-domains #21 (4.0.0).
+Plan, 2026-10-13. Decisions D1–D6 taken 2026-10-14 (all as recommended; D1's open rows below). Phase 1 done
+2026-10-15 (lokascript-domains #21 = 4.0.0, this repo #1521); Phase 2 done 2026-10-15 (lokascript-domains #23,
+#24). Next: Phase 3.
 
 Owner, 2026-10-13: "The domains pattern only works if it is built on a reliable core. We may need to rethink
 domains, instead of trying to preserve it as is." This answers M3 (e) in
@@ -233,7 +234,9 @@ published subpaths is breaking. So the cuts and the move to 4.x are one major:
 2. Publish 4.0.0 ("Publish @lokascript/domains", dry run first).
 3. This repo: mcp-server's domains range `^3.0.1` → `^4.0.0`; its jsx tools go (D6: `feedback-tools.ts`,
    `training-data.ts`, the registry integration test); `framework/scripts/domain-probes.ts` drops the retired
-   domains. lokascript-learn and lokascript-examples pin 2.x and are untouched.
+   domains. lokascript-learn and lokascript-examples pin 2.x and are untouched. **Done: #1521** (framework's and
+   server-bridge's devDependencies moved too, one lock entry; 8 domains, 32 tools, 102 defined / 97 listed). The
+   probe on 4.0.0: round trips 891/957, 58/60 commands accept leftover input, learn vs semantic 74/135.
 4. lokascript-lessons: archive the repo (owner's action).
 
 **Phase 2 — the domain gate** (lokascript-domains).
@@ -246,6 +249,45 @@ published subpaths is breaking. So the cuts and the move to 4.x are one major:
    `--allow-new`; in the repo's CI.
 4. A parse snapshot (the `parse-parity.ts` idea): every gate input's parse hashed, `--save` / `--check`, so each
    later change shows what it moved.
+
+**Done 2026-10-15** (lokascript-domains #23: steps 1–3; #24: step 4), in the aggregate `packages/domains`, on its
+built dist: `gate/round-trip.ts`, `gate/values.ts`, `src/__tests__/round-trip.test.ts` and `parse-snapshot.test.ts`,
+`baselines/round-trip.json` and `parse-snapshot.json`, `npm run gate:regen` (`--allow-new`, `--report`). Two
+departures, both measured before they were made:
+
+- **The oracle is the compiled code, not only the node** (every domain but learn, which compiles to a sentence
+  per language): a round trip passes on the same node, or on the same code as the English reference. bdd's
+  parser keeps the translated word (ja `#box0 が 表示 前提` reads `state: 表示`) and its generator normalizes it,
+  so a node comparison called it silent; comparing code found the real loss among those (zh `当 点击 #box1`
+  compiles to `page.locator('')`).
+- **Realistic values, and every fixed word**, not `v0x`: selectors, URLs, durations and quoted strings, and each
+  role that takes fixed words gets every word the domain's renderer and generator know (bdd's 8 states, 12
+  actions and 5 assertions, behaviorspec's 10 interactions and 14 assertions, voice's scroll and zoom words,
+  flow's formats), in every language. Placeholders never reached those paths (behaviorspec compiled every
+  command to `// When: v0x`), and hid the URL family (learn cannot read its own English `fetch /api` or
+  `go /home`; voice ja/ko/tr refuse `/home`).
+
+Leftover input runs in every language, not English only, and the snapshot stores readable parses
+(`action role:type=value`) rather than hashes, so its diff is the review (135 KB).
+
+Measured on framework/semantic/intent 4.5.0 (the domains lockfile):
+
+| domain       | round trip    | refused | silent | leftover accepted |
+| ------------ | ------------- | ------- | ------ | ----------------- |
+| bdd          | 265/344       | 35      | 44     | 309/309           |
+| behaviorspec | 372/448       | 76      | 0      | 372/372           |
+| flow         | 298/308       | 3       | 7      | 305/305           |
+| learn        | 188/210       | 21      | 1      | 189/189           |
+| llm          | 61/66         | 5       | 0      | 61/61             |
+| sql          | 99/99         | 0       | 0      | 99/99             |
+| todo         | 55/55         | 0       | 0      | 55/55             |
+| voice        | 354/363       | 9       | 0      | 354/354           |
+| **total**    | 1,692/1,893   | 149     | 52     | 1,744/1,744       |
+
+The queue (`gate:regen -- --report`): behaviorspec's SOV `when`/`expect` (ja, ko, tr cannot read their own
+render), bdd's hyphenated words (`doble-clic` reads `doble`), zh's lost target and tr's `then`, flow's `enter`
+(the marker read as its source in 7 languages), learn's URLs. `domain-probes.ts` here keeps its placeholders and
+node comparison, so its numbers differ from the gate's; the gate is the one that counts.
 
 **Phase 3 — refusal in today's factory** (this repo, framework minor; if D5 says yes).
 
@@ -299,7 +341,8 @@ delete `core/pattern-matching/` and the old `createMultilingualDSL` path, by the
 ## Exit metrics
 
 - One matcher: framework's old 1,630-line copy deleted.
-- Domain round trip: every pair `pass` or a listed refusal; 0 silent; 0 leftover input accepted.
+- Domain round trip: every pair `pass` or a listed refusal; 0 silent; 0 leftover input accepted (at Phase 2:
+  52 silent, 1,744/1,744 accepted).
 - learn: 135/135 commanding sentences read by the product as the source.
 - Semantic: parse-parity 0 differences through Phase 4; no hyperscript gate worse.
 - Domain packages: 16 → 7 DSLs; lokascript-learn on the current line.
