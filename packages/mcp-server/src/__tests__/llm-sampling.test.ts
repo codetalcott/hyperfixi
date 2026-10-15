@@ -362,6 +362,25 @@ describe('execute_llm pipeline', () => {
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain('registry');
   });
+
+  it('refuses an unquoted multi-word question with how to write it, without sampling', async () => {
+    const mockServer = {
+      createMessage: () => {
+        throw new Error('should not be called');
+      },
+    };
+    const result = await handleSamplingTool(
+      'execute_llm',
+      { command: 'ask what is 2+2' },
+      mockServer as any,
+      createDomainRegistry()
+    );
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toMatch(/unread/);
+    expect(result.content[0].text).toContain(
+      'A question of several words is quoted: ask "what is 2+2".'
+    );
+  });
 });
 
 // =============================================================================
