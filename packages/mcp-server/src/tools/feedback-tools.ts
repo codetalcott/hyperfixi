@@ -28,7 +28,7 @@ export const feedbackTools: Tool[] = [
         domain: {
           type: 'string',
           description:
-            'Domain to validate against (flow, sql, bdd, llm, jsx, todo, behaviorspec, voice)',
+            'Domain to validate against (flow, sql, bdd, llm, todo, behaviorspec, voice)',
         },
       },
       required: ['input'],
@@ -278,8 +278,6 @@ async function loadDomainSchemas(domain: string): Promise<readonly CommandSchema
         return (await import('@lokascript/domains/bdd')).allSchemas;
       case 'llm':
         return (await import('@lokascript/domains/llm')).allSchemas;
-      case 'jsx':
-        return (await import('@lokascript/domains/jsx')).allSchemas;
       case 'todo':
         return (await import('@lokascript/domains/todo')).allSchemas;
       case 'behaviorspec':

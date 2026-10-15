@@ -15,23 +15,7 @@
  */
 import * as semantic from '@lokascript/semantic';
 
-const DOMAINS = [
-  'animation',
-  'bdd',
-  'behaviorspec',
-  'control',
-  'events',
-  'flow',
-  'html',
-  'hypermedia',
-  'jsx',
-  'learn',
-  'llm',
-  'sprites',
-  'sql',
-  'todo',
-  'voice',
-];
+const DOMAINS = ['bdd', 'behaviorspec', 'flow', 'learn', 'llm', 'sql', 'todo', 'voice'];
 
 type Roles = Record<string, string>;
 interface Schema {

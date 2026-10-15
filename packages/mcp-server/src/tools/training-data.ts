@@ -18,7 +18,7 @@ export const trainingDataTools: Tool[] = [
         domain: {
           type: 'string',
           description:
-            'Domain to generate training data for (flow, sql, bdd, llm, jsx, todo, behaviorspec, voice)',
+            'Domain to generate training data for (flow, sql, bdd, llm, todo, behaviorspec, voice)',
         },
         max_per_command: {
           type: 'number',
@@ -71,7 +71,7 @@ export async function handleTrainingDataTool(
         content: [
           {
             type: 'text',
-            text: `No schemas found for domain: ${domain}. Available: flow, sql, bdd, llm, jsx, todo, behaviorspec, voice`,
+            text: `No schemas found for domain: ${domain}. Available: flow, sql, bdd, llm, todo, behaviorspec, voice`,
           },
         ],
         isError: true,
@@ -128,8 +128,6 @@ async function loadDomainSchemas(
         return (await import('@lokascript/domains/bdd')).allSchemas;
       case 'llm':
         return (await import('@lokascript/domains/llm')).allSchemas;
-      case 'jsx':
-        return (await import('@lokascript/domains/jsx')).allSchemas;
       case 'todo':
         return (await import('@lokascript/domains/todo')).allSchemas;
       case 'behaviorspec':

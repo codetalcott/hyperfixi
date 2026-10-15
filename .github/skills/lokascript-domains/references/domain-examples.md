@@ -22,16 +22,6 @@ compile_bdd({ scenario: "when I click #submit then #result is visible", language
   => Multi-step Playwright test
 ```
 
-## JSX
-
-```
-compile_jsx({ code: "element button with class primary", language: "en" })
-  => <button className="primary" />
-
-compile_jsx({ code: "component Counter with state count", language: "en" })
-  => Full React component with useState
-```
-
 ## Todo
 
 ```
