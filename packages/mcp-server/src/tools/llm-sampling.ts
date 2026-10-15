@@ -411,8 +411,13 @@ async function handleExecuteLLM(
   const result = dsl.compile(command, language);
   if (!result.ok || !result.code) {
     const errors = result.errors?.join(', ') || 'Unknown compilation error';
+    // llm reads an unquoted question as one word, and leaves the rest unread: say how to write it.
+    const hint =
+      result.errorCode === 'unread-input'
+        ? ' A question of several words is quoted: ask "what is 2+2".'
+        : '';
     return {
-      content: [{ type: 'text', text: `Compilation failed: ${errors}` }],
+      content: [{ type: 'text', text: `Compilation failed: ${errors}.${hint}` }],
       isError: true,
     };
   }
