@@ -757,6 +757,14 @@ If the unread text belongs to a role, that role stops too early: a value that ru
 input (a SQL condition, `age > 18`) needs `greedy: true`. Before this refusal the trailing words were
 dropped without a word.
 
+**`TranslationReadBackError: translation en → ja does not read back as the source (…)`.**
+`translate` reads its own output in the target language and requires the source command back: the
+same action and role values, or, when the DSL has a code generator, the same compiled code (so a value
+your renderer translates and your generator normalizes, bdd's `visible` → ja `表示`, is fine). The
+error carries the output (`partial`), what it reads as (`reading`, null when it does not parse) and
+why (`role lost`, `reads as …`). Fix the renderer or the schema so the two agree; a caller that wants
+the output regardless passes `{ lossy: 'allow' }`, as with semantic's `translate`.
+
 **Parsing fails in SOV languages but works in SVO.**
 Check that your tokenizer's `keywordExtras` includes `{ native: '...', normalized: 'english_keyword' }` for every non-Latin keyword. The pattern matcher compares stop markers against both `token.value` (native) and `token.normalized` (English) — if normalization is missing, the matcher can't recognize when to stop consuming tokens.
 

@@ -33,6 +33,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   cases better, 62 worse, every one `pass → refused` (a value such as `click`'s that the generator
   ignored, now refused as unread rather than dropped); no case became silent, and no accepted parse
   changed its reading. A multi-word llm question is quoted: `ask "what is 2+2"`.
+- **`@lokascript/framework`: a domain DSL's `translate` refuses a rendering that does not read
+  back.** It reads its output in the target language and requires the source command: the same
+  action and role values, or the same compiled code. Otherwise it throws `TranslationReadBackError`
+  (exported; the text under `partial`, what it reads as under `reading`), unless `{ lossy: 'allow' }`,
+  as semantic's `translate`. `DomainRegistry`'s tools (the MCP `parse_` / `compile_` / `validate_` /
+  `translate_<domain>` tools) report refusals as `ok: false` with an `UNREAD_INPUT` or
+  `TRANSLATION_DOES_NOT_READ_BACK` diagnostic instead of a generic tool error, and `translate_<domain>`
+  reads its own rendering back the same way. Translating every domain gate command from English: 46
+  renders that used to be returned are now refused (45 do not parse in the target language).
 
 ### Fixed
 

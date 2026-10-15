@@ -43,7 +43,7 @@ ONLY for a deliberate contract change, and note it in DOMAIN_AUTHOR_GUIDE.md.
 - `parse: (input: string, language: string) => SemanticNode`
 - `parseWithConfidence: (input: string, language: string) => { node: SemanticNode; confidence: number; }`
 - `render?: (node: SemanticNode, language: string) => string | null`
-- `translate: (input: string, fromLanguage: string, toLanguage: string) => string`
+- `translate: (input: string, fromLanguage: string, toLanguage: string, options?: TranslateOptions) => string`
 - `validate: (input: string, language: string) => ValidationResult`
 
 ## DomainExtension

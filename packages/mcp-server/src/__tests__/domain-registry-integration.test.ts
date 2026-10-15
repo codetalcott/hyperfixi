@@ -107,6 +107,32 @@ describe('DomainRegistry Integration', () => {
     expect(data.ok).toBe(true);
   });
 
+  // Phase 3 of the domains rethink: a parse that leaves input unread, and a translation that does not
+  // read back as its source, are refused with a diagnostic rather than answered.
+  it('compile_sql refuses a trailing word with an UNREAD_INPUT diagnostic', async () => {
+    const registry = createDomainRegistry();
+    const result = await registry.handleToolCall('compile_sql', {
+      query: 'select name from users banana',
+      language: 'en',
+    });
+    const data = JSON.parse(result!.content[0].text);
+    expect(data.ok).toBe(false);
+    expect(data.diagnostics[0].code).toBe('UNREAD_INPUT');
+  });
+
+  it('translate_sql answers ok when the rendering reads back as the source', async () => {
+    const registry = createDomainRegistry();
+    const result = await registry.handleToolCall('translate_sql', {
+      query: 'select name from users',
+      from: 'en',
+      to: 'es',
+    });
+    expect(result!.isError).toBeUndefined();
+    const data = JSON.parse(result!.content[0].text);
+    expect(data.ok).toBe(true);
+    expect(data.rendered.language).toBe('es');
+  });
+
   it('returns null for unknown domain tools', async () => {
     const registry = createDomainRegistry();
     const result = await registry.handleToolCall('parse_unknown', { input: 'test' });
