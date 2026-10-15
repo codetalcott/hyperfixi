@@ -14,6 +14,7 @@ import {
   BaseTokenizer,
   getDefaultExtractors,
   UnreadInputError,
+  TranslationReadBackError,
   type SemanticNode,
 } from '../index';
 
@@ -154,6 +155,35 @@ function createBilingualTestDSL() {
         patternProfile: spanishProfile,
       },
     ],
+  });
+}
+
+/** The bilingual DSL with a custom renderer (and, optionally, a code generator). */
+function createBilingualTestDSLWith(
+  renderer: (node: SemanticNode, language: string) => string | null,
+  codeGenerator?: { generate(node: SemanticNode): string }
+) {
+  return createMultilingualDSL({
+    name: 'TestSQL-rendered',
+    schemas: [selectSchema, insertSchema],
+    languages: [
+      {
+        code: 'en',
+        name: 'English',
+        nativeName: 'English',
+        tokenizer: new EnglishTestTokenizer(),
+        patternProfile: englishProfile,
+      },
+      {
+        code: 'es',
+        name: 'Spanish',
+        nativeName: 'Español',
+        tokenizer: new SpanishTestTokenizer(),
+        patternProfile: spanishProfile,
+      },
+    ],
+    renderer,
+    ...(codeGenerator ? { codeGenerator } : {}),
   });
 }
 
@@ -431,6 +461,52 @@ describe('MultilingualDSL: Explicit Syntax Support', () => {
       const dsl = createBilingualTestDSL();
       expect(() => dsl.translate('select name from users banana', 'en', 'es')).toThrow(
         UnreadInputError
+      );
+    });
+
+    it('a translation that does not read back is refused, unless { lossy: "allow" }', () => {
+      // A renderer that drops the required source: the Spanish does not parse at all.
+      const dropsSource = createBilingualTestDSLWith(node =>
+        node.action === 'select' ? 'seleccionar nombre' : null
+      );
+      let error: unknown;
+      try {
+        dropsSource.translate('select nombre from users', 'en', 'es');
+      } catch (e) {
+        error = e;
+      }
+      expect(error).toBeInstanceOf(TranslationReadBackError);
+      const refusal = error as TranslationReadBackError;
+      expect(refusal.code).toBe('translation-does-not-read-back');
+      expect(refusal.partial).toBe('seleccionar nombre');
+      expect(refusal.reading).toBeNull();
+      expect(
+        dropsSource.translate('select nombre from users', 'en', 'es', { lossy: 'allow' })
+      ).toBe('seleccionar nombre');
+    });
+
+    it('a translation that reads with a value changed is refused, naming the role', () => {
+      const changesSource = createBilingualTestDSLWith(node =>
+        node.action === 'select' ? 'seleccionar nombre de clientes' : null
+      );
+      expect(() => changesSource.translate('select nombre from users', 'en', 'es')).toThrow(
+        /source: users → clientes/
+      );
+    });
+
+    it('a difference the code generator normalizes still reads back', () => {
+      // Upper case in the render, lower case in the generator: the nodes differ, the code does not.
+      const shouts = createBilingualTestDSLWith(
+        node => (node.action === 'select' ? 'seleccionar NOMBRE de USERS' : null),
+        {
+          generate: node =>
+            `${node.action} ${[...node.roles.values()]
+              .map(v => String((v as { raw?: unknown }).raw ?? '').toLowerCase())
+              .join(' ')}`,
+        }
+      );
+      expect(shouts.translate('select nombre from users', 'en', 'es')).toBe(
+        'seleccionar NOMBRE de USERS'
       );
     });
 

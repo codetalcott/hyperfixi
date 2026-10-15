@@ -21,6 +21,7 @@ import {
   InMemoryProfileProvider,
 } from '../interfaces';
 import { isExplicitSyntax, parseExplicit } from '../ir';
+import { readingDifference } from './reading';
 import type { SchemaLookup } from '../ir';
 
 /**
@@ -182,6 +183,8 @@ export interface ValidationResult {
   readonly valid: boolean;
   readonly node?: SemanticNode;
   readonly errors?: string[];
+  /** Set when the input was refused for a known reason: `'unread-input'` (`UnreadInputError`). */
+  readonly errorCode?: string;
 }
 
 /**
@@ -191,6 +194,8 @@ export interface CompileResult {
   readonly ok: boolean;
   readonly code?: string;
   readonly errors?: string[];
+  /** Set when the input was refused for a known reason: `'unread-input'` (`UnreadInputError`). */
+  readonly errorCode?: string;
   readonly node?: SemanticNode;
   readonly metadata?: {
     readonly parser: string;
@@ -217,6 +222,36 @@ export class UnreadInputError extends Error {
   }
 }
 
+/** Options for `translate`. */
+export interface TranslateOptions {
+  /**
+   * `'allow'` returns a translation that does not read back as the source instead of throwing
+   * `TranslationReadBackError`, as semantic's `translate` does with the same option.
+   */
+  readonly lossy?: 'allow' | 'refuse';
+}
+
+/**
+ * Thrown by `translate` when its output, read in the target language, is not the source command:
+ * it does not read at all, or reads as another command, or with a role lost or changed. `partial` is
+ * what `translate` would have returned; `reading` what it reads as (null when it does not read).
+ */
+export class TranslationReadBackError extends Error {
+  readonly code = 'translation-does-not-read-back';
+
+  constructor(
+    readonly partial: string,
+    readonly from: string,
+    readonly to: string,
+    readonly source: SemanticNode,
+    readonly reading: SemanticNode | null,
+    readonly why: string
+  ) {
+    super(`translation ${from} → ${to} does not read back as the source (${why}): "${partial}"`);
+    this.name = 'TranslationReadBackError';
+  }
+}
+
 /**
  * Main multilingual DSL interface.
  */
@@ -232,7 +267,17 @@ export interface MultilingualDSL {
   compile(input: string, language: string): CompileResult;
 
   // Translation
-  translate(input: string, fromLanguage: string, toLanguage: string): string;
+  /**
+   * Parse in one language, render in another. The output must read back as the source command
+   * (the same action and role values, or the same compiled code); when it does not,
+   * `TranslationReadBackError`, unless `{ lossy: 'allow' }`.
+   */
+  translate(
+    input: string,
+    fromLanguage: string,
+    toLanguage: string,
+    options?: TranslateOptions
+  ): string;
 
   /**
    * Render a parsed node back to natural language.
@@ -461,11 +506,17 @@ class MultilingualDSLImpl implements MultilingualDSL {
       return {
         valid: false,
         errors: [error instanceof Error ? error.message : String(error)],
+        ...(error instanceof UnreadInputError ? { errorCode: error.code } : {}),
       };
     }
   }
 
-  translate(input: string, fromLanguage: string, toLanguage: string): string {
+  translate(
+    input: string,
+    fromLanguage: string,
+    toLanguage: string,
+    options?: TranslateOptions
+  ): string {
     // Explicit syntax is language-agnostic — return unchanged
     if (isExplicitSyntax(input)) return input;
 
@@ -492,12 +543,18 @@ class MultilingualDSLImpl implements MultilingualDSL {
     const rendered = this.registry.getSupportedLanguages().includes(toLanguage)
       ? this.render(node, toLanguage)
       : null;
-    if (rendered != null) return rendered;
+    if (rendered != null) return this.readsBack(rendered, node, fromLanguage, toLanguage, options);
 
     // render() covered nothing for this action/language pair; fall back to the
     // grammar transformer when profiles exist, otherwise name both remedies.
     if (this.hasGrammarProfile(fromLanguage) && this.hasGrammarProfile(toLanguage)) {
-      return this.transformer.transform(input, fromLanguage, toLanguage);
+      return this.readsBack(
+        this.transformer.transform(input, fromLanguage, toLanguage),
+        node,
+        fromLanguage,
+        toLanguage,
+        options
+      );
     }
     throw new Error(
       `translate() could not render action "${node.action}" in language "${toLanguage}": no ` +
@@ -506,6 +563,40 @@ class MultilingualDSLImpl implements MultilingualDSL {
         `the DSL's languages/renderer, or set 'grammarProfile' on its LanguageConfig in ` +
         `createMultilingualDSL() (parse/validate/compile do not need it).`
     );
+  }
+
+  /**
+   * `rendered`, read in `to`, must be `source`: the same action and role values, or, when the DSL
+   * compiles, the same code (a parser may keep a translated word its generator normalizes: bdd ja
+   * `表示` is `visible`). The rule is the domain gate's (lokascript-domains). A translation used to be
+   * returned whatever it read as: ja/ko bdd `select` dropped its value, and nothing said so.
+   */
+  private readsBack(
+    rendered: string,
+    source: SemanticNode,
+    from: string,
+    to: string,
+    options?: TranslateOptions
+  ): string {
+    if (options?.lossy === 'allow') return rendered;
+    let back: SemanticNode;
+    try {
+      back = this.parseWithConfidence(rendered, to).node;
+    } catch (error) {
+      const why = error instanceof Error ? error.message : String(error);
+      throw new TranslationReadBackError(rendered, from, to, source, null, why);
+    }
+    const difference = readingDifference(source, back);
+    if (!difference) return rendered;
+    if (this.codeGenerator) {
+      try {
+        if (this.codeGenerator.generate(back) === this.codeGenerator.generate(source))
+          return rendered;
+      } catch {
+        // a generator that cannot compile one of them does not vouch for either
+      }
+    }
+    throw new TranslationReadBackError(rendered, from, to, source, back, difference);
   }
 
   private hasGrammarProfile(language: string): boolean {
@@ -537,6 +628,7 @@ class MultilingualDSLImpl implements MultilingualDSL {
       return {
         ok: false,
         errors: [error instanceof Error ? error.message : String(error)],
+        ...(error instanceof UnreadInputError ? { errorCode: error.code } : {}),
       };
     }
   }
