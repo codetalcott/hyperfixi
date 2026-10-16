@@ -382,7 +382,15 @@ counts in each PR.
    refused, same kinds and losses), parse-parity 0. Bundles: semantic's browser bundles +~300 bytes
    gzipped (browser-en 133,219 → 133,453; 132,612 before step 2).
 6. The round-trip gate kit into `packages/framework/src/testing/`, with toolkit's lint rules; the domain gate
-   switches to it.
+   switches to it. **Done in this repo 2026-10-16:** `packages/framework/src/testing/gate/`, exported as
+   `@lokascript/framework/testing/gate` (no vitest, so the regen tool imports it): the domain gate's
+   `round-trip.ts` made grammar-neutral (`runRoundTrip(name, dsl, schemas, fixture)`, `compare`,
+   `listingOf`, `countsOf`, the parse snapshot) and domain-toolkit's linter (`lintDomain`, R1–R10); R1/R2
+   take the validator as `validateSchema` (the domains pass semantic's `validateCommandSchema`). Measured
+   against the domains repo at 4.0.1: the kit reads 3,488 of 3,488 cases exactly as `gate/round-trip.ts`
+   does, 0 drift from `baselines/round-trip.json`; the linter's result on sql is identical to the
+   toolkit's. The domains' switch (their gate and eight lint tests import the kit; domain-toolkit and the
+   gate's copy go) needs this framework on npm: it is the first domains PR after the next release.
 7. The stock value readers, `greedy` among them, each with tests; a new factory on the core beside
    `createMultilingualDSL` (its name chosen in step 2's design).
 

@@ -56,6 +56,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   collision rule (`verified-render`) stays in semantic. Every translation of every command-shape case
   in all 24 languages is unchanged, rendered (27,240) and with refusals on (704 refused, the same
   kinds and losses).
+- **`@lokascript/framework/testing/gate`: the round-trip gate kit and the grammar linter** (domains
+  rethink Phase 4.6), moved from lokascript-domains: `runRoundTrip` renders every command of a
+  grammar in each of its languages and reads it back (`pass` / `refused` / `silent`, plus each render
+  with an unknown word after it, which must be refused); `compare` / `listingOf` / `countsOf` keep a
+  shrink-only baseline and `snapshotOf` / `snapshotChanges` a parse snapshot; `lintDomain` runs the
+  domain-toolkit rules R1–R10, its schema-structure rule on the validator the input passes
+  (`validateSchema`; framework cannot import semantic). No test runner needed. On the 8 domains, with
+  their own fixtures, it reads 3,488 of 3,488 cases as the domains' gate does, with no drift from
+  their baseline.
 
 ## [4.6.0] - 2026-10-15
 

@@ -340,6 +340,36 @@ describe('domain-myapi', () => {
 });
 ```
 
+Then the round trip of every command in every language, and the lint rules, from
+`@lokascript/framework/testing/gate` (no test runner needed, so a regen tool can call it too):
+
+```typescript
+import { runRoundTrip, countsOf, lintDomain } from '@lokascript/framework/testing/gate';
+import { validateCommandSchema } from '@lokascript/semantic';
+
+// Each command rendered in each language and read back: `pass`, `refused` (the caller is told)
+// or `silent` (it reads as something else); and each render plus an unknown word, which must be refused.
+const results = runRoundTrip('myapi', createMyapiDSL(), allSchemas, {
+  oracle: 'compile', // or 'node' when the compiled output depends on the language
+  values: { 'create.type': ['database', 'table'] }, // fixed words; other roles get `v0x`
+});
+expect(countsOf(results).roundTrip.silent).toBe(0);
+
+// Profile ↔ tokenizer ↔ schema ↔ renderer agreement (R1–R10); R1/R2 run the validator you pass.
+const lint = lintDomain({
+  name: 'myapi',
+  schemas,
+  profiles,
+  tokenizers,
+  validateSchema: validateCommandSchema,
+});
+expect(lint.errorCount).toBe(0);
+```
+
+A gate that only shrinks keeps a baseline (`listingOf`, `countsOf`) and fails on `compare`'s `worse`
+and `better` lists; `snapshotOf` / `snapshotChanges` show every parse a change moved. The
+lokascript-domains gate is the worked example.
+
 ### 7. Run
 
 ```bash
