@@ -9,7 +9,8 @@ layout: layout.njk
 > Aimed at maintainers of [hyperscript.org](https://hyperscript.org) and any
 > other vanilla `_hyperscript` site that wants to let visitors author in their
 > native language. Render this page on lokascript.org so the live demo lives
-> next to the docs.
+> next to the docs. (Refreshed against 4.1.0 on 2026-10-06: sizes measured
+> from the published tarball, examples are the renderer's own output.)
 
 `_hyperscript` is more readable than nearly any other DOM-scripting library —
 it reads like English. The natural next question: _what about the people who
@@ -18,7 +19,7 @@ don't read English?_
 `@hyperscript-tools/multilingual` is a runtime plugin that translates `_=`
 attributes from any of **24 languages** to English **before** `_hyperscript`'s
 parser sees them. The runtime is unchanged. No fork, no monkey-patches, no
-AST rewriting — just a single override on `runtime.getScript()`.
+AST rewriting: it uses `_hyperscript`'s own `addBeforeProcessHook`.
 
 `@hyperscript-tools/i18n` is the build-time companion: take an English source
 file, produce per-language HTML with translated `_=` attributes, ship them
@@ -28,7 +29,7 @@ Both packages are MIT-licensed, namespace-neutral wrappers over the
 LokaScript runtime (also MIT). The adapter logic lives at
 `@lokascript/hyperscript-adapter`; the `@hyperscript-tools/*` wrappers exist
 so CDN URLs and integration code stay neutral. No HyperFixi runtime is
-involved.
+involved, and the CDN bundles are self-contained.
 
 ---
 
@@ -40,10 +41,10 @@ Drop two `<script>` tags. Single language, single file:
 <script src="https://unpkg.com/hyperscript.org"></script>
 <script src="https://unpkg.com/@hyperscript-tools/multilingual/dist/hyperscript-i18n-es.global.js"></script>
 
-<button _="on click alternar .active on me">Alternar</button>
+<button _="al clic alternar .active">Alternar</button>
 ```
 
-That's it. The plugin auto-registers with `_hyperscript` on load.
+That's it. The plugin registers with `_hyperscript` on load.
 
 ### All 24 languages at once
 
@@ -51,14 +52,14 @@ That's it. The plugin auto-registers with `_hyperscript` on load.
 <script src="https://unpkg.com/hyperscript.org"></script>
 <script src="https://unpkg.com/@hyperscript-tools/multilingual/dist/hyperscript-i18n.global.js"></script>
 
-<button _="on click alternar .active on me" data-hyperscript-lang="es">ES</button>
-<button _="on click 切り替え .active on me" data-hyperscript-lang="ja">JA</button>
-<button _="on click 토글 .active on me" data-hyperscript-lang="ko">KO</button>
-<button _="on click 切换 .active on me" data-hyperscript-lang="zh">ZH</button>
+<button _="al clic alternar .active" lang="es">ES</button>
+<button _="クリック を で .active を 切り替え" lang="ja">JA</button>
+<button _="클릭 할 때 .active 을 토글" lang="ko">KO</button>
+<button _="一 点击 就 切换 .active" lang="zh">ZH</button>
 ```
 
-`data-hyperscript-lang` cascades up the DOM tree, so set it once on `<html>`
-or `<body>` and every descendant inherits.
+An element's language is its `data-lang`, else the nearest `data-hyperscript-lang`,
+else the nearest `lang` attribute, so `<html lang="ja">` sets it for the whole page.
 
 ### npm / bundler
 
@@ -73,24 +74,25 @@ import { hyperscriptI18n, preprocess } from '@hyperscript-tools/multilingual';
 _hyperscript.use(hyperscriptI18n({ defaultLanguage: 'es' }));
 
 // Standalone: preprocess on demand
-const english = preprocess('alternar .active', 'es'); // → 'toggle .active'
-_hyperscript(english);
+const english = preprocess('al clic alternar .active', 'es'); // → 'on click toggle .active'
 ```
 
 ---
 
-## Bundle size table
+## Bundle sizes
 
-| Bundle                         | URL suffix                                        | Size    | Languages                         |
-| ------------------------------ | ------------------------------------------------- | ------- | --------------------------------- |
-| All 24                         | `dist/hyperscript-i18n.global.js`                 | ~720 KB | every supported language          |
-| Western                        | `dist/hyperscript-i18n-western.global.js`         | ~190 KB | en, es, pt, fr, de                |
-| East Asian                     | `dist/hyperscript-i18n-east-asian.global.js`      | ~186 KB | ja, ko, zh                        |
-| South Asian                    | `dist/hyperscript-i18n-south-asian.global.js`     | ~160 KB | hi, bn                            |
-| Southeast Asian                | `dist/hyperscript-i18n-southeast-asian.global.js` | ~183 KB | id, ms, th, tl, vi                |
-| Slavic                         | `dist/hyperscript-i18n-slavic.global.js`          | ~195 KB | pl, ru, uk                        |
-| Single language (e.g. Spanish) | `dist/hyperscript-i18n-es.global.js`              | ~140 KB | es                                |
-| Lite (BYO semantic)            | `dist/hyperscript-i18n-lite.global.js`            | ~2 KB   | requires external semantic bundle |
+Measured from `@hyperscript-tools/multilingual@4.1.0`. Every bundle also reads English.
+
+| Bundle                         | URL suffix                                        | Raw    | Gzipped | Languages                           |
+| ------------------------------ | ------------------------------------------------- | ------ | ------- | ----------------------------------- |
+| All 24                         | `dist/hyperscript-i18n.global.js`                 | 1.2 MB | 258 KB  | every supported language            |
+| Western                        | `dist/hyperscript-i18n-western.global.js`         | 555 KB | 142 KB  | es, pt, fr, de                      |
+| East Asian                     | `dist/hyperscript-i18n-east-asian.global.js`      | 538 KB | 139 KB  | ja, ko, zh                          |
+| South Asian                    | `dist/hyperscript-i18n-south-asian.global.js`     | 510 KB | 129 KB  | hi, bn                              |
+| Southeast Asian                | `dist/hyperscript-i18n-southeast-asian.global.js` | 564 KB | 136 KB  | id, ms, th, tl, vi                  |
+| Slavic                         | `dist/hyperscript-i18n-slavic.global.js`          | 571 KB | 141 KB  | pl, ru, uk                          |
+| Single language (e.g. Spanish) | `dist/hyperscript-i18n-es.global.js`              | 455 KB | 119 KB  | es                                  |
+| Lite (bring your own semantic) | `dist/hyperscript-i18n-lite.global.js`            | 3 KB   | 1 KB    | requires a separate semantic bundle |
 
 Pick the smallest bundle that covers your audience.
 
@@ -125,10 +127,10 @@ Pick the smallest bundle that covers your audience.
 | sw   | Swahili    | SVO        |     |
 | qu   | Quechua    | SOV        |     |
 
-Word order matters: SVO languages (Spanish, Chinese) match English's structure
-and translate with high confidence. SOV (Japanese, Korean, Turkish) and VSO
-(Arabic, Hebrew) require semantic reordering, so per-language confidence
-thresholds are tuned to compensate.
+Word order matters: each language is written in its own order (Japanese puts
+the verb last, Arabic first), and the semantic parser reorders it into
+English. It scores its confidence as it parses; a script below the plugin's
+threshold is left exactly as written.
 
 ---
 
@@ -144,7 +146,8 @@ npx @hyperscript-tools/i18n translate src/page.html --langs ja,es,ko --out dist/
 ```
 
 The CLI scans every `_="..."` attribute and rewrites it for each target
-language. Other markup is preserved.
+language. Other markup is preserved. `--check` parses the English on
+hyperscript.org's own parser and fails the run if any attribute is invalid.
 
 ### Programmatic API
 
@@ -178,7 +181,7 @@ Then in templates:
 {# Get every translation as a map #}
 {% set variants = "toggle .active" | translateHsAll(["ja","es","ko"]) %}
 {% for lang, code in variants %}
-  <code data-hyperscript-lang="{{ lang }}">{{ code }}</code>
+  <code lang="{{ lang }}">{{ code }}</code>
 {% endfor %}
 
 {# Rewrite every _="..." attribute in an HTML fragment #}
@@ -189,46 +192,44 @@ Then in templates:
 
 ## How it works
 
-1. The plugin overrides `_hyperscript`'s `runtime.getScript()` — the
-   single function that reads `_=` attributes and returns raw strings.
-2. The override calls a semantic parser to analyze the input. If parse
-   confidence clears the per-language threshold, the parser emits a
-   language-neutral semantic node.
-3. A deterministic English renderer turns the semantic node back into
-   English `_hyperscript` text.
-4. `_hyperscript`'s standard lexer + parser see English and execute normally.
+1. `_hyperscript` calls the plugin's `addBeforeProcessHook` before it reads a
+   subtree's scripts (`_=`, `script`, `data-script`, and
+   `<script type="text/hyperscript">` bodies).
+2. For each non-English script, a semantic parser builds a language-neutral
+   node and scores its confidence. Below the threshold, the script is left
+   as written.
+3. A deterministic English renderer turns the node back into English
+   `_hyperscript` text.
+4. The plugin asks `_hyperscript.parse()` whether that English parses. If it
+   doesn't, the author's text stays, so any error names code they wrote.
+5. The plugin rewrites the script in place, and `_hyperscript`'s standard
+   lexer and parser run it. (In devtools the attribute then shows the
+   English.)
 
-Below-threshold input falls through unchanged, so a low-confidence guess
-never replaces what the author wrote.
-
-The whole plugin is a few hundred lines on top of a precomputed semantic
-pattern catalog. The runtime path is `getScript()` → `preprocess()` → English
-text → standard lexer.
+The plugin is a few hundred lines on top of the semantic parser.
 
 ---
 
 ## Known limitations
 
-- **Standalone expressions** (boolean expressions outside a command body)
-  don't translate. Only command bodies do.
-- **Feature keywords** `def` and `worker` must stay English. `behavior` is
-  fully supported.
-- **SOV/VSO confidence** is lower than SVO out of the box because the word
-  order requires more reordering. Per-language thresholds compensate, but
-  edge-case constructions in Japanese, Korean, Turkish, Arabic may need
-  manual help.
-- **Programmatic `_hyperscript(string)`** calls bypass `getScript()` — call
-  `preprocess(text, lang)` first if you need translation in that path.
+- **`def` and `worker`.** The `def` keyword stays English (its body
+  translates). `worker` isn't covered: it needs `_hyperscript`'s worker
+  extension.
+- **Naturalness.** Translations follow each language's word order, but not
+  all read naturally yet: some English words remain (some loop forms, event
+  modifiers such as `debounced at`), and a few constructions read stiffly.
+  Native-speaker review is ongoing.
+- **Programmatic `_hyperscript(string)`** calls don't pass through the hook.
+  Call `preprocess(text, lang)` first if you need translation in that path.
 
 ---
 
 ## Live demo
 
 [lokascript.org/patterns](https://lokascript.org/patterns) — every pattern
-in the browser is shown in your chosen language, courtesy of the same
-`@hyperscript-tools/multilingual` plugin documented above. Click a language
-chip; the page flips. Toggle "Live execution" and the patterns become
-runnable in the chosen language.
+in the browser is shown in your chosen language by the same adapter this
+plugin wraps. Click a language chip; the page flips. Toggle "Live execution"
+and the patterns become runnable in the chosen language.
 
 ---
 
