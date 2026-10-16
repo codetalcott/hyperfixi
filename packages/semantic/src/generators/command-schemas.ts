@@ -139,12 +139,9 @@ export type HyperscriptSchemaIsGrammarNeutral = AssertAssignable<
 >;
 type AssertAssignable<T extends U, U> = T;
 
-/** The schema without its variant-only roles: what every pattern but a required-role variant is built from. */
-export function withoutVariantOnlyRoles(schema: CommandSchema): CommandSchema {
-  return schema.roles.some(r => r.variantOnly)
-    ? { ...schema, roles: schema.roles.filter(r => !r.variantOnly) }
-    : schema;
-}
+// The schema without its variant-only roles: framework's, with the pattern
+// generator it serves (domains rethink Phase 4.4).
+export { withoutVariantOnlyRoles } from '@lokascript/framework';
 
 /**
  * Extraction entry for the optional destination slot of event-handler
