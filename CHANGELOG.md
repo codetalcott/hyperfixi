@@ -20,6 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   builder and error docs read (`ast`, `errorCodes`, `preconditions`, `recoveryHints`). One field keeps two
   meanings for now: framework's generator sorts `svoPosition` / `sovPosition` descending (higher =
   earlier), semantic's ascending; the field doc says so.
+- **`@lokascript/semantic`: the pattern matcher reads every value through a seam** (domains rethink
+  Phase 4.2). The matcher is now a grammar-neutral skeleton (`parser/match-skeleton.ts`: literals,
+  groups and their rollback, the speculative skip of an optional slot, spans, ranking, confidence) and
+  hyperscript's `HyperscriptValueReader`, which reads each role slot and answers the skeleton's grammar
+  hooks (`parser/value-reader.ts`). `PatternMatcher` keeps its constructor, methods and import path. Every
+  parse is unchanged (27,194 checked).
 
 ## [4.6.0] - 2026-10-15
 

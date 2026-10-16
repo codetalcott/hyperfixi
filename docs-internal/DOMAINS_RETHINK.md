@@ -344,7 +344,14 @@ counts in each PR.
    framework's code takes. `svoPosition`/`sovPosition` keep two directions (framework descending,
    semantic ascending), documented on the field: step 4 makes the direction the generator's hook.
 2. The value-reader seam inside semantic's matcher, not moved yet: every value capture goes through an interface;
-   hyperscript's reader is today's code behind it.
+   hyperscript's reader is today's code behind it. **Done 2026-10-16:** `parser/value-reader.ts` (`ValueReader`,
+   `MatchView`), `parser/match-skeleton.ts` (`MatchSkeleton`, 616 lines: pattern walk, literals, groups and
+   rollback, the speculative skip, spans, memoized ranking, confidence, extraction rules) and
+   `HyperscriptValueReader` (the rest of `pattern-matcher.ts`). Beyond `readRole`, the skeleton asks the
+   reader five grammar facts: `beginPattern` (the reader owns the profile), `maySkipSlot`, `atClauseEnd`,
+   `skipLeading` (Arabic proclitics) and `beforePatternToken` (an event head's source clause), plus
+   `resultFields` (`eventSource`). Framework's and semantic's pattern types (`LanguagePattern`,
+   `PatternToken`, `PatternMatchResult`) forked too, so step 3 unifies them as step 1 did the schemas.
 3. Move the matcher skeleton to framework (`core/matching/`); semantic imports it and passes its reader.
 4. Move semantic's pattern generator to framework behind grammar hooks.
 5. Move the schema-driven renderer core and the generic half of `explicit/lossy.ts` (unread input, read-back) to
