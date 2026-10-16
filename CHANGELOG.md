@@ -45,6 +45,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `legacyMarkerAlternatives`. semantic's `generatePattern` / `generatePatternVariants` / … keep their
   names and signatures over it; its fused event-handler patterns stay in semantic. Every generated
   pattern in all 24 languages is byte-identical (5,899), and every parse unchanged (27,194).
+- **`@lokascript/framework`: rendering through patterns, and the translation-loss checks** (domains
+  rethink Phase 4.5), moved from `@lokascript/semantic`. `selectRenderPattern` scores a language's
+  patterns for a node (role coverage, values a pattern pins) and `renderPattern` walks the chosen one;
+  a grammar's preferences and its value writing are `PatternRenderHooks`. `findTranslationLoss` runs
+  the fail-loud checks in order (unread input, forms nothing writes, a read-back that does not read or
+  differs, verbatim values) with a grammar's `TranslationLossRules`; `LossyTranslationError`,
+  `TranslationLoss` and `unconsumedSpans` moved with it (semantic re-exports them, so `instanceof`
+  holds). semantic's renderer and `translate` run them with hyperscript's hooks and rules; its
+  collision rule (`verified-render`) stays in semantic. Every translation of every command-shape case
+  in all 24 languages is unchanged, rendered (27,240) and with refusals on (704 refused, the same
+  kinds and losses).
 
 ## [4.6.0] - 2026-10-15
 
