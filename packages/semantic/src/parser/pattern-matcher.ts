@@ -78,8 +78,8 @@ import { endsClauseAt } from './end-words';
 import { foldNakedNamedArgsRaw } from './naked-args-fold';
 import { tokenValue } from './token-value';
 import type { ConfidenceModel } from './confidence-model';
-import { MatchSkeleton } from './match-skeleton';
-import type { MatchView, RoleSlot, ValueReader } from './value-reader';
+import { defaultConfidenceModel } from './confidence-model';
+import { MatchSkeleton, type MatchView, type ValueReader } from '@lokascript/framework';
 
 /**
  * Body-bearing command keywords that front their own block (`bareKeyword` schemas:
@@ -116,17 +116,20 @@ function isEventSlot(pt: PatternToken | undefined): boolean {
 }
 
 /**
- * Hyperscript's value reading: what the matcher's skeleton (`match-skeleton.ts`)
- * asks of every role slot, and hyperscript's answers to the skeleton's grammar
- * hooks (`value-reader.ts`). The language profile and the commands of the
+ * Hyperscript's value reading: what the matcher's skeleton (framework's
+ * `MatchSkeleton`) asks of every role slot, and hyperscript's answers to the skeleton's grammar
+ * hooks (framework's `ValueReader`). The language profile and the commands of the
  * pattern being matched are the reader's, set by `beginPattern`.
  */
 export class HyperscriptValueReader implements ValueReader {
   constructor(private readonly view: MatchView) {}
 
-  /** The pattern tokens still owed after the slot being read (the skeleton's). */
+  /**
+   * The pattern tokens still owed after the slot being read (the skeleton's).
+   * The skeleton walks hyperscript's own patterns, so they are hyperscript's tokens.
+   */
   private get patternRest(): readonly PatternToken[] {
-    return this.view.patternRest();
+    return this.view.patternRest() as readonly PatternToken[];
   }
 
   /** Whether the slot being read directly follows a literal the pattern matched. */
@@ -149,7 +152,7 @@ export class HyperscriptValueReader implements ValueReader {
 
   readRole(
     tokens: TokenStream,
-    slot: RoleSlot,
+    slot: PatternToken & { type: 'role' },
     captured: Map<SemanticRole, SemanticValue>,
     next: PatternToken | undefined
   ): boolean {
@@ -4014,12 +4017,27 @@ export class HyperscriptValueReader implements ValueReader {
 }
 
 /**
- * Hyperscript's pattern matcher: the skeleton (`match-skeleton.ts`) reading its
- * values with `HyperscriptValueReader`.
+ * Hyperscript's pattern matcher: framework's skeleton (`MatchSkeleton`) reading
+ * its values with `HyperscriptValueReader`, scored by `DefaultConfidenceModel`
+ * unless a model is given.
  */
 export class PatternMatcher extends MatchSkeleton {
   constructor(confidenceModel?: ConfidenceModel) {
-    super(view => new HyperscriptValueReader(view), confidenceModel);
+    super(view => new HyperscriptValueReader(view), confidenceModel ?? defaultConfidenceModel);
+  }
+
+  /**
+   * Try to match a single pattern against the token stream.
+   * Returns the match result or null if no match. (The skeleton's, typed with
+   * hyperscript's names: every value in it came from hyperscript's reader.)
+   */
+  override matchPattern(tokens: TokenStream, pattern: LanguagePattern): PatternMatchResult | null {
+    return super.matchPattern(tokens, pattern) as PatternMatchResult | null;
+  }
+
+  /** Try to match multiple patterns, return the best match (the skeleton's, typed as above). */
+  override matchBest(tokens: TokenStream, patterns: LanguagePattern[]): PatternMatchResult | null {
+    return super.matchBest(tokens, patterns) as PatternMatchResult | null;
   }
 
   /** The word this language joins two pick-range endpoints with. */

@@ -352,7 +352,13 @@ counts in each PR.
    `skipLeading` (Arabic proclitics) and `beforePatternToken` (an event head's source clause), plus
    `resultFields` (`eventSource`). Framework's and semantic's pattern types (`LanguagePattern`,
    `PatternToken`, `PatternMatchResult`) forked too, so step 3 unifies them as step 1 did the schemas.
-3. Move the matcher skeleton to framework (`core/matching/`); semantic imports it and passes its reader.
+3. Move the matcher skeleton to framework (`core/matching/`); semantic imports it and passes its reader. **Done 2026-10-16:**
+   `packages/framework/src/core/matching/` (`MatchSkeleton`, `ValueReader`, `MatchView`, the
+   `ConfidenceModel` interfaces; exported). framework's pattern types took semantic's six extra fields;
+   semantic's stay narrower (its action and role names), and its `PatternMatcher` subclass types the
+   skeleton's results with them. The skeleton takes its confidence model as a required argument: semantic's
+   `DefaultConfidenceModel` reads hyperscript's schemas, so it stays in semantic. Bundles: semantic's
+   browser bundles +~950 bytes raw, ~150 gzipped (the seam, not a duplicate).
 4. Move semantic's pattern generator to framework behind grammar hooks.
 5. Move the schema-driven renderer core and the generic half of `explicit/lossy.ts` (unread input, read-back) to
    framework; semantic keeps its verbatim-value list and `verified-render`'s collision rule as grammar hooks.

@@ -26,6 +26,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   hyperscript's `HyperscriptValueReader`, which reads each role slot and answers the skeleton's grammar
   hooks (`parser/value-reader.ts`). `PatternMatcher` keeps its constructor, methods and import path. Every
   parse is unchanged (27,194 checked).
+- **`@lokascript/framework`: the matcher's skeleton, `MatchSkeleton`** (domains rethink Phase 4.3), with
+  its seam (`ValueReader`, `MatchView`, `RoleSlot`) and the `ConfidenceModel` / `ConfidenceContext` /
+  `ConfidenceBreakdown` interfaces, all exported. It is the skeleton semantic's hyperscript matcher runs:
+  `@lokascript/semantic`'s `PatternMatcher` now extends it and passes `HyperscriptValueReader`, and its
+  confidence types are framework's narrowed to hyperscript's names. Framework's pattern types take the
+  fields semantic's carried alone (`LanguagePattern.parseOnly`, `LiteralPatternToken.renderSuppress`,
+  `RolePatternToken.valueShape`, `GroupPatternToken.renderRequired`, `ExtractionRule.valueIsExpression`,
+  `PatternMatchResult.roleStarts` / `eventSource`). `createMultilingualDSL` still uses its own matcher.
+  Every hyperscript parse is unchanged (27,194 checked); semantic's browser bundles grew ~150 bytes
+  gzipped.
 
 ## [4.6.0] - 2026-10-15
 
