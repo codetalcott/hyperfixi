@@ -75,16 +75,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   moved: `createMultilingualDSL`'s matcher calls them, and the domain gate on this build moves no case
   and no parse. `createSchemaPatternGenerator` also takes a domain schema's `greedy`, its
   post-verb `sovSlot` and its `markerPosition` (hyperscript's patterns: unchanged, 5,899).
-- **`@lokascript/framework`: `createGrammarDSL`, a domain DSL on the core** (domains rethink Phase
-  4.7b): the same config and the same `MultilingualDSL` as `createMultilingualDSL`, read by the core
-  semantic's hyperscript parser runs: patterns from `createSchemaPatternGenerator` (positions
-  descending), matched by `MatchSkeleton` with the stock reader and confidence model, and rendered
-  through those patterns where the domain's own renderer declines. Parsing's whole-input rule, the
-  refusals, translation's read-back, compile, explicit syntax and extensions are shared with
-  `createMultilingualDSL`, which is unchanged. The stock reader also gives a required slot back the
-  value an optional, marker-less slot just before it read (the old matcher's backtrack). Measured on the
-  8 domains with their factories swapped to it (the domain gate on a packed build): 0 cases worse, 30
-  better (behaviorspec 306 → 336 round trips), no case silent that was not before.
+- **`@lokascript/framework`: `engine: 'core'`, a domain DSL on the core** (domains rethink Phase 4.7b):
+  a `DSLConfig` option. `createMultilingualDSL({ ...config, engine: 'core' })` returns the same
+  `MultilingualDSL`, read by the core semantic's hyperscript parser runs: patterns from
+  `createSchemaPatternGenerator` (positions descending), matched by `MatchSkeleton` with the stock
+  reader and confidence model, and rendered through those patterns where the domain's own renderer
+  declines. Parsing's whole-input rule, the refusals, translation's read-back, compile, explicit syntax
+  and extensions are shared with the default, `engine: 'classic'`, which is unchanged; any other engine
+  name throws. The stock reader also gives a required slot back the value an optional, marker-less slot
+  just before it read (the old matcher's backtrack). Measured on the 8 domains, each on the core
+  (the domain gate on a packed build): 0 cases worse, 30 better (behaviorspec 306 → 336
+  round trips), no case silent that was not before.
 
 ## [4.6.0] - 2026-10-15
 

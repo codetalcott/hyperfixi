@@ -402,11 +402,12 @@ counts in each PR.
    (steps 2–7a) moves 0 cases and 0 parses. The generator takes `greedy`, `sovSlot: 'postVerb'` and
    `markerPosition` (hyperscript unchanged). The old matcher's own walk (its optional-role backtracking, its
    group scan) is not ported: the skeleton's groups and skip stand in for it, and 7b measures the difference
-   per domain. **7b done 2026-10-16:** `createGrammarDSL(config)` in `api/create-dsl.ts`, beside
-   `createMultilingualDSL`: one implementation, two engines (`firstEngine`: the old generator, matcher and schema
-   renderer; `coreEngine`: the schema-pattern generator descending, the skeleton with the stock reader and
-   confidence, the pattern renderer as `render()`'s last resort). Name chosen here (step 2 did not): the owner
-   may rename it before release. Measured with every domain's factory swapped to the core (a packed framework
+   per domain. **7b done 2026-10-16:** `DSLConfig.engine` in `api/create-dsl.ts`: one factory,
+   `createMultilingualDSL`, two engines (`'classic'`, the default: the old generator, matcher and schema renderer;
+   `'core'`: the schema-pattern generator descending, the skeleton with the stock reader and confidence, the
+   pattern renderer as `render()`'s last resort). It merged as a second factory, `createGrammarDSL` (#1540); before
+   the release the owner chose the option instead (2026-10-16), so the factory and its docs keep their name when
+   `'classic'` goes, and a domain's switch is one line of config. Measured with every domain's factory swapped to the core (a packed framework
    whose `createMultilingualDSL` ran `coreEngine`, through `gate:upstream`): first 58 worse (behaviorspec's
    `when` with an action word ×50, flow SOV `capture` ×3, learn ja ×5: all an optional marker-less slot taking
    the value of the required slot after it); with the old matcher's backtrack in the stock reader, **0 worse, 30 better**
@@ -422,8 +423,9 @@ via `pack-smoke.sh UPSTREAM_TARBALLS` until it is published).
 4. Downstream: lokascript-learn from 2.x to the current line, checking its pages on the live site after the bump;
    lokascript-examples' apps, if kept; the docs-site llm generator.
 
-**Phase 6 — delete the old matcher** (this repo, framework major). When no kept domain uses the old factory:
-delete `core/pattern-matching/` and the old `createMultilingualDSL` path, by the renumber-only major procedure
+**Phase 6 — delete the old matcher** (this repo, framework major). When no kept domain uses `engine: 'classic'`:
+delete `core/pattern-matching/` and the `'classic'` engine (`engine: 'core'` stays accepted, so the domains
+build unchanged), by the renumber-only major procedure
 (pack, prove domains, domains patch peering `^old || ^new`, bump the range here, publish). Close M3 (e).
 
 ## Gates per phase
