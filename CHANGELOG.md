@@ -7,25 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
+## [4.7.0] - 2026-10-16
 
-- **`@lokascript/intent`: one schema type for every grammar** (domains rethink Phase 4.1). `RoleSpec` and
-  `CommandSchema` now hold the fields hyperscript's schemas use as well as the domains' (`valueShape`,
-  `variantOnly`, `markerOptional`, `markerLegacy`, `valuePrefixLiteral`; `bareKeyword`, `structuralOnly`
-  and the `omitRoleVariants` / `widenTypeVariants` / `rolePrefixLiteralVariants` / `requiredRoleVariants`
-  lists), each documented with the code that reads it, and take type parameters for a grammar's action,
-  role, value and category names. The parameters default to today's types, so a domain schema reads as
-  before; framework's `docs/API_SURFACE.md` prints them spelled out. `@lokascript/semantic`'s `RoleSpec`
-  is this type with hyperscript's names, and its `CommandSchema` extends it with the fields only its AST
-  builder and error docs read (`ast`, `errorCodes`, `preconditions`, `recoveryHints`). One field keeps two
-  meanings for now: framework's generator sorts `svoPosition` / `sovPosition` descending (higher =
-  earlier), semantic's ascending; the field doc says so.
-- **`@lokascript/semantic`: the pattern matcher reads every value through a seam** (domains rethink
-  Phase 4.2). The matcher is now a grammar-neutral skeleton (`parser/match-skeleton.ts`: literals,
-  groups and their rollback, the speculative skip of an optional slot, spans, ranking, confidence) and
-  hyperscript's `HyperscriptValueReader`, which reads each role slot and answers the skeleton's grammar
-  hooks (`parser/value-reader.ts`). `PatternMatcher` keeps its constructor, methods and import path. Every
-  parse is unchanged (27,194 checked).
+### Added
+
 - **`@lokascript/framework`: the matcher's skeleton, `MatchSkeleton`** (domains rethink Phase 4.3), with
   its seam (`ValueReader`, `MatchView`, `RoleSlot`) and the `ConfidenceModel` / `ConfidenceContext` /
   `ConfidenceBreakdown` interfaces, all exported. It is the skeleton semantic's hyperscript matcher runs:
@@ -86,6 +71,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   just before it read (the old matcher's backtrack). Measured on the 8 domains, each on the core
   (the domain gate on a packed build): 0 cases worse, 30 better (behaviorspec 306 → 336
   round trips), no case silent that was not before.
+
+### Changed
+
+- **`@lokascript/intent`: one schema type for every grammar** (domains rethink Phase 4.1). `RoleSpec` and
+  `CommandSchema` now hold the fields hyperscript's schemas use as well as the domains' (`valueShape`,
+  `variantOnly`, `markerOptional`, `markerLegacy`, `valuePrefixLiteral`; `bareKeyword`, `structuralOnly`
+  and the `omitRoleVariants` / `widenTypeVariants` / `rolePrefixLiteralVariants` / `requiredRoleVariants`
+  lists), each documented with the code that reads it, and take type parameters for a grammar's action,
+  role, value and category names. The parameters default to today's types, so a domain schema reads as
+  before; framework's `docs/API_SURFACE.md` prints them spelled out. `@lokascript/semantic`'s `RoleSpec`
+  is this type with hyperscript's names, and its `CommandSchema` extends it with the fields only its AST
+  builder and error docs read (`ast`, `errorCodes`, `preconditions`, `recoveryHints`). One field keeps two
+  meanings for now: framework's generator sorts `svoPosition` / `sovPosition` descending (higher =
+  earlier), semantic's ascending; the field doc says so.
+- **`@lokascript/semantic`: the pattern matcher reads every value through a seam** (domains rethink
+  Phase 4.2). The matcher is now a grammar-neutral skeleton (`parser/match-skeleton.ts`: literals,
+  groups and their rollback, the speculative skip of an optional slot, spans, ranking, confidence) and
+  hyperscript's `HyperscriptValueReader`, which reads each role slot and answers the skeleton's grammar
+  hooks (`parser/value-reader.ts`). `PatternMatcher` keeps its constructor, methods and import path. Every
+  parse is unchanged (27,194 checked).
 
 ## [4.6.0] - 2026-10-15
 
@@ -1816,7 +1821,8 @@ _Synchronized version release. See git history for details._
 - npm access token stored in GitHub Secrets
 - 2FA recommended for npm organization
 
-[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v4.6.0...HEAD
+[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v4.7.0...HEAD
+[4.7.0]: https://github.com/codetalcott/hyperfixi/compare/v4.6.0...v4.7.0
 [4.6.0]: https://github.com/codetalcott/hyperfixi/compare/v4.5.0...v4.6.0
 [4.5.0]: https://github.com/codetalcott/hyperfixi/compare/v4.4.0...v4.5.0
 [4.4.0]: https://github.com/codetalcott/hyperfixi/compare/v4.3.0...v4.4.0
