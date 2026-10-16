@@ -183,6 +183,20 @@ export interface DSLConfig {
 
   /** Custom patterns to supplement generated ones */
   readonly customPatterns?: LanguagePattern[];
+
+  /**
+   * What reads and writes the DSL (domains rethink Phase 4.7). `'classic'`, the
+   * default: framework's first pattern generator, matcher and schema renderer.
+   * `'core'`: the core semantic's hyperscript parser runs — patterns from
+   * `createSchemaPatternGenerator` (positions descending, as a domain's schemas
+   * read), matched by `MatchSkeleton` with the stock reader and confidence
+   * model, and rendered through those patterns where the domain's own renderer
+   * declines. Parsing's whole-input rule, the refusals, translation's
+   * read-back, compile, explicit syntax and extensions are the same on both.
+   * The domains move to `'core'` one at a time against their gate (Phase 5);
+   * `'classic'` is removed in a later major, once no domain uses it.
+   */
+  readonly engine?: 'classic' | 'core';
 }
 
 /**
@@ -836,7 +850,7 @@ export function createMultilingualDSL(config: DSLConfig): MultilingualDSL {
   });
 
   // Create registry and implementation
-  const engine = firstEngine();
+  const engine = engineFor(config);
   const registry = new DSLRegistry(effectiveConfig, extensionActions, engine.generate);
   return new MultilingualDSLImpl(effectiveConfig, registry, transformer, profileProvider, engine);
 }
@@ -846,7 +860,7 @@ export function createMultilingualDSL(config: DSLConfig): MultilingualDSL {
 // =============================================================================
 
 /**
- * What differs between `createMultilingualDSL` and `createGrammarDSL`: how each
+ * What differs between the engines {@link DSLConfig.engine} names: how each
  * command's pattern is generated, how input is matched against it, and the
  * renderer `render()` falls back to. Parsing's whole-input rule, refusals,
  * translation's read-back, compile, explicit syntax and extensions are shared.
@@ -857,8 +871,20 @@ interface DSLEngine {
   fallbackRenderer(config: DSLConfig, registry: DSLRegistry): DomainRenderFn;
 }
 
-/** framework's first generator and matcher, and its schema renderer (`createMultilingualDSL`). */
-function firstEngine(): DSLEngine {
+/**
+ * The engine `config.engine` names. An unknown name throws rather than reading
+ * with the default: a domain that misspells `'core'` would otherwise measure
+ * the classic engine against its gate and take the result for the core's.
+ */
+function engineFor(config: DSLConfig): DSLEngine {
+  const name = config.engine ?? 'classic';
+  if (name === 'classic') return classicEngine();
+  if (name === 'core') return coreEngine();
+  throw new Error(`Unknown DSL engine "${String(name)}" (expected "classic" or "core")`);
+}
+
+/** framework's first generator and matcher, and its schema renderer (`engine: 'classic'`). */
+function classicEngine(): DSLEngine {
   const matcher = new PatternMatcher();
   return {
     generate: (schema, profile) => generatePattern(schema, profile),
@@ -893,7 +919,10 @@ function schemaProfileOf(profile: PatternGenLanguageProfile): SchemaPatternProfi
   };
 }
 
-/** The core (domains rethink Phase 4): the schema-pattern generator, the skeleton, the stock reader. */
+/**
+ * The core (domains rethink Phase 4, `engine: 'core'`): the schema-pattern
+ * generator, the skeleton, the stock reader.
+ */
 function coreEngine(): DSLEngine {
   const generator = createSchemaPatternGenerator({ positionOrder: 'descending' });
   const matcher = new MatchSkeleton(createStockReader(), stockConfidenceModel);
@@ -926,27 +955,4 @@ function coreEngine(): DSLEngine {
       };
     },
   };
-}
-
-/**
- * Create a multilingual DSL on the core (domains rethink Phase 4.7): the same
- * config and the same `MultilingualDSL` as `createMultilingualDSL`, read and
- * written by the core semantic's hyperscript parser runs — patterns from
- * `createSchemaPatternGenerator` (positions descending, as a domain's schemas
- * read), matched by `MatchSkeleton` with the stock reader and confidence model,
- * and, where the domain's own renderer declines, rendered through those
- * patterns (`selectRenderPattern` / `renderPattern`). A domain moves to it by
- * swapping the factory (Phase 5, one domain at a time, against the domain
- * gate); `createMultilingualDSL` stays until no domain uses it.
- */
-export function createGrammarDSL(config: DSLConfig): MultilingualDSL {
-  const effectiveConfig = applyExtensions(config);
-  const extensionActions = new Set((config.extensions ?? []).map(e => e.schema.action));
-  const dictionary = effectiveConfig.dictionary ?? createDefaultDictionary(effectiveConfig);
-  const profileProvider =
-    effectiveConfig.profileProvider ?? createDefaultProfileProvider(effectiveConfig);
-  const transformer = new GrammarTransformer({ dictionary, profileProvider });
-  const engine = coreEngine();
-  const registry = new DSLRegistry(effectiveConfig, extensionActions, engine.generate);
-  return new MultilingualDSLImpl(effectiveConfig, registry, transformer, profileProvider, engine);
 }
