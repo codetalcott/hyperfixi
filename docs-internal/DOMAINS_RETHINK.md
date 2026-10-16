@@ -392,7 +392,15 @@ counts in each PR.
    toolkit's. The domains' switch (their gate and eight lint tests import the kit; domain-toolkit and the
    gate's copy go) needs this framework on npm: it is the first domains PR after the next release.
 7. The stock value readers, `greedy` among them, each with tests; a new factory on the core beside
-   `createMultilingualDSL` (its name chosen in step 2's design).
+   `createMultilingualDSL` (its name chosen in step 2's design). **7a done 2026-10-16** (two PRs: 7a the readers, 7b the
+   factory): `core/matching/stock-reading.ts` (the old matcher's value reading, moved: `readRoleValue` and its
+   multi-token forms), `stock-reader.ts` (`StockValueReader`: greedy to the next owed marker, the required-slot
+   marker guard, the optional skip), `stock-confidence.ts` (`stockConfidenceModel`, the old matcher's scoring,
+   moved). The old matcher calls the moved code, so the domains read as before: the gate on the packed build
+   (steps 2–7a) moves 0 cases and 0 parses. The generator takes `greedy`, `sovSlot: 'postVerb'` and
+   `markerPosition` (hyperscript unchanged). The old matcher's own walk (its optional-role backtracking, its
+   group scan) is not ported: the skeleton's groups and skip stand in for it, and 7b measures the difference
+   per domain.
 
 **Phase 5 — the kept domains on the core** (lokascript-domains, one PR per domain; packed tarballs from this repo
 via `pack-smoke.sh UPSTREAM_TARBALLS` until it is published).
