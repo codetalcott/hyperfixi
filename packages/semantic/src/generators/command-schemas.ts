@@ -5,7 +5,11 @@
  * Used by the pattern generator to create language-specific patterns.
  */
 
-import type { SemanticRole, ActionType, SemanticValue, ExpectedType, PatternToken } from '../types';
+import type {
+  CommandSchema as GrammarCommandSchema,
+  RoleSpec as GrammarRoleSpec,
+} from '@lokascript/framework';
+import type { SemanticRole, ActionType, SemanticValue, PatternToken } from '../types';
 import type { RoleMarker } from './profiles/types';
 import {
   ELEMENT_TARGET_TYPES,
@@ -33,171 +37,11 @@ import {
 // =============================================================================
 
 /**
- * A role specification in a command schema.
+ * A role specification in a command schema: the one schema type every grammar
+ * shares (`@lokascript/intent`, through framework), with hyperscript's role and
+ * value types. Its field docs say which grammar's code reads each field.
  */
-export interface RoleSpec {
-  /** The semantic role */
-  readonly role: SemanticRole;
-  /** Description of what this role represents */
-  readonly description: string;
-  /** Whether this role is required */
-  readonly required: boolean;
-  /**
-   * The role belongs only to the `requiredRoleVariants` patterns, never to the
-   * main, simple, omit or widened patterns, nor to a handler's fused patterns
-   * (`variantOnlyRoles` strips it). For a slot that exists only beside another
-   * role's marker: scroll's bare element before `by` (`scroll #box by 200px`).
-   * In the main pattern an optional bare slot before the destination took the
-   * destination's own marker (th `ใน`, tl `sa`) on the fused path, and a fused
-   * SOV head made it the command's primary slot.
-   */
-  readonly variantOnly?: boolean;
-  /** Expected value types */
-  readonly expectedTypes: Array<ExpectedType>;
-  /** Default value if not provided */
-  readonly default?: SemanticValue;
-  /**
-   * Position hint for SVO languages. **1-based ascending: lower = earlier**
-   * (position 1 = first), matching semantic's own sorter
-   * (`parser/utils/role-positioning.ts`, `a - b`).
-   *
-   * WARNING: the `@lokascript/framework` pattern generator sorts the OPPOSITE
-   * way (descending, higher = earlier). Reusing these schemas in a
-   * framework-based domain requires inverting positions — see
-   * `packages/domain-voice/src/schemas/behavior.ts` `invertRolePositions`.
-   */
-  readonly svoPosition?: number;
-  /** Position hint for SOV languages (1-based ascending: lower = earlier). See {@link svoPosition}. */
-  readonly sovPosition?: number;
-  /**
-   * Override the default role marker for this command.
-   * Maps language code to the marker to use (e.g., { en: 'to', es: 'a' }).
-   * If not specified, uses the language profile's default roleMarker.
-   */
-  readonly markerOverride?: Record<string, string>;
-  /**
-   * Mark this role as SHAPE-ANCHORED: its surface form is unambiguous on its
-   * own, so the slot needs no marker to be safe. The kinds:
-   *
-   * - `'time'` — a unit-suffixed time literal (`2s`, `500ms`, `1.5s`).
-   * - `'reference'` — a CLOSED-CLASS context reference (`me`, `it`, `you` and
-   *   their per-language equivalents). Closed-class is the whole argument: the
-   *   tokenizer already classifies these as references, so a reference-typed
-   *   slot cannot swallow a selector or a literal.
-   * - `'keyword'` — a FIXED keyword phrase behind a required multi-word marker
-   *   (`using view transition` on swap/process). The marker literals must all
-   *   match before the slot can capture anything, so the slot is guarded by
-   *   construction: nothing else in the grammar can land in it, and its absence
-   *   says only that the caller didn't ask for the flag.
-   * - `'clause'` — an expression behind its own marker word (`when <condition>`
-   *   on add/remove/hide/show). The marker must match before the slot captures
-   *   anything, so, as with a keyword phrase, an absent clause says only that
-   *   none was written. Without it the slot cost every add/remove/hide/show
-   *   parse a quarter of its confidence (hi `click पर .a को जोड़ें`: 1.0 →
-   *   0.67). The confidence model is the only reader of this kind.
-   * - `'list'` — a clause whose value is a LIST, items separated by commas
-   *   (toggle's `between 'a', 'b' and 'c'`). The value extent reads each item
-   *   as one expression (`readsAsValueList`); otherwise as `'clause'`.
-   *
-   * Enforced in the CONFIDENCE model (`scoreRoleCoverage`): a shape-anchored
-   * role counts toward a pattern's score only when captured, so an uncaptured
-   * optional slot carries no evidence against the pattern.
-   *
-   * This is the lever that makes a MARKER-LESS optional slot safe. Without it,
-   * toggle's trailing `[{duration}]` weighed into every toggle pattern's
-   * denominator, dropping `toggle-*-generated` from 1.0 to 0.69 on inputs with
-   * no duration at all — so the same-priority hand pattern (0.82, wrong
-   * destination markers) won and es/pl/vi silently lost the second toggle's
-   * positional destination on `toggle-aria-expanded` (`next .panel` became
-   * `me`). Only the R1 role-set flip ratchet sees that class.
-   *
-   * A matcher-side token guard (refuse non-time tokens at capture) was built,
-   * probed and REMOVED: no constructible input fires it — `expectedTypes`
-   * plus the positional assembler's own next-token gating already refuse every
-   * non-time capture into the slot, and an unfireable branch is unverifiable.
-   * If a future shape (an `omitRoleVariants` clone, a required slot) makes
-   * spurious capture possible again, reinstate it THERE with a failing test
-   * first.
-   */
-  readonly valueShape?: 'time' | 'reference' | 'keyword' | 'object' | 'clause' | 'list';
-  /**
-   * Make this role's object marker OPTIONAL in the generated pattern (wrapped in
-   * an optional group), per language, so both the marked and unmarked surface forms
-   * parse. Used for roles whose value is sometimes an unmarked expression — e.g.
-   * `call`'s function-call patient, which the transformer leaves unmarked in a
-   * multi-command body but marks (את / 把) elsewhere. Scoped per language (only the
-   * langs that need it) so it doesn't relax marking — and role typing — everywhere.
-   * Independent of `profile.markersOptional` (which applies the same to every command).
-   */
-  readonly markerOptional?: Record<string, boolean>;
-  /**
-   * Which side of its value this role's marker goes on, per language, where it
-   * is not the side the profile's markers take (intent's field of the same
-   * name): zh's `之间` follows the pair it names (`切换 .a 和 .b 之间`), as no zh
-   * preposition does.
-   */
-  readonly markerPositionOverride?: Record<string, 'before' | 'after'>;
-  /**
-   * Additional alternate marker keywords for this role, beyond {@link markerOverride}.
-   * Used by schema-driven role inference (e.g., from `@lokascript/intent`) to
-   * recognize any of the listed markers as signaling this role, AND — since the
-   * marker code paths were unified — merged into every generated pattern as
-   * marker alternatives, on both the override and profile-default branches
-   * (`schemaMarkerAlternatives` in `parser/utils/marker-resolution.ts`).
-   *
-   * **Unless the role sets {@link methodCarrier}.** There the variants are not
-   * synonyms but distinct command shapes recorded into another role (`put`'s
-   * `into|before|after` → `method`), and merging them as synonyms swallowed
-   * `put-before`/`put-after` in 23 languages at once. That flag is the only
-   * discriminator, so setting it is a decision, not a detail —
-   * `schema-consistency.test.ts` pins every role that declares this field.
-   */
-  readonly markerVariants?: Record<string, readonly string[]>;
-  /**
-   * Markers a previous release rendered for this role: still ACCEPTED when
-   * parsing, never rendered. Correcting a {@link markerOverride} would otherwise
-   * stop the old marker parsing at all, making every marker fix a breaking
-   * change for source already written.
-   *
-   * Distinct from {@link markerVariants} only in intent: a legacy marker means
-   * the same thing as the current one and is merely spelled the way an older
-   * release spelled it, whereas a variant may carry meaning of its own (see
-   * that field). Both are merged as alternatives by the same helper, so the
-   * choice between them is documentation for the next reader, not behaviour —
-   * except when {@link methodCarrier} is set, which holds variants out.
-   */
-  readonly markerLegacy?: Record<string, readonly string[]>;
-  /**
-   * Override the rendering preposition for this role, separate from the parsing marker.
-   * Used when the parsing grammar differs from the rendered output
-   * (e.g., "go to /home" parses with 'to' but renders as "go /home").
-   * Maps language code to the rendering preposition.
-   */
-  readonly renderOverride?: Record<string, string>;
-
-  /**
-   * Restricts which selector subtypes are valid for this role (v1.2).
-   * Only meaningful when expectedTypes includes 'selector'.
-   * If omitted, all selector kinds are accepted.
-   */
-  readonly selectorKinds?: ReadonlyArray<'id' | 'class' | 'attribute' | 'element' | 'complex'>;
-
-  /**
-   * When this role's marker has alternates (via {@link markerVariants}), the
-   * matched marker keyword is recorded as a literal in the role named here.
-   * Used by `put` to expose `into|before|after` as the `method` role.
-   */
-  readonly methodCarrier?: SemanticRole;
-  /**
-   * Literal keyword required IMMEDIATELY before this role's VALUE, independent
-   * of the role marker's side (a preposition stays before it, a postposed
-   * particle stays after the value): `a url "/page"`, `url "/page" তে`. Set
-   * only on schema clones built by the pattern generator's
-   * `rolePrefixLiteralVariants` expansion — never on a base schema, so base
-   * patterns stay byte-identical.
-   */
-  readonly valuePrefixLiteral?: Record<string, string>;
-}
+export type RoleSpec = GrammarRoleSpec<SemanticRole, SemanticValue>;
 
 /**
  * How a command's semantic roles map onto its AST shape.
@@ -252,15 +96,17 @@ export interface CommandPrecondition {
 }
 
 /**
- * A command schema defines the semantic structure of a command.
+ * A command schema defines the semantic structure of a command: the shared
+ * schema type (`@lokascript/intent`) with hyperscript's action, role and
+ * category names, plus the fields only hyperscript's AST builder and its error
+ * docs read.
  */
-export interface CommandSchema {
-  /** The action type (command name) */
-  readonly action: ActionType;
-  /** Human-readable description */
-  readonly description: string;
-  /** Roles this command accepts */
-  readonly roles: RoleSpec[];
+export interface CommandSchema extends GrammarCommandSchema<
+  ActionType,
+  SemanticRole,
+  SemanticValue,
+  CommandCategory
+> {
   /**
    * Declarative semantic-roles → AST mapping. When present, the AST builder
    * uses it instead of a hand-written mapper. Absent means this action either
@@ -269,128 +115,6 @@ export interface CommandSchema {
    * `ASTBuilder.buildGenericCommand`'s blanket role mapping.
    */
   readonly ast?: AstShape;
-  /** The primary role (what the command acts on) */
-  readonly primaryRole: SemanticRole;
-  /** Category for grouping */
-  readonly category: CommandCategory;
-  /** Whether this command typically has a body (like event handlers) */
-  readonly hasBody?: boolean;
-  /**
-   * Generate a bare keyword pattern even when the command has no roles.
-   * Normally `getDefinedSchemas` only emits patterns for schemas with at least
-   * one role (a roleless keyword like `compound`/`else`/`async` would otherwise
-   * match greedily and mis-parse). Block keywords that legitimately stand alone
-   * before a body — `live <body> end` — opt in here so a `[keyword]` pattern is
-   * generated and the construct parses (body handled like other block bodies).
-   */
-  readonly bareKeyword?: boolean;
-  /**
-   * Parsed by the structural feature-block layer (`tryParseFeatureBlock`), never
-   * by a generated pattern: excluded from `getDefinedSchemas`, so no command
-   * pattern and no fused event-handler pattern is emitted for it in any
-   * language. For a head whose shape the generator cannot express — the reactive
-   * `when <expr> changes`, where the REQUIRED trailing `changes` literal is what
-   * bounds the multi-token watched expression and what keeps the reactive head
-   * apart from the temporal `when {event}` handler patterns (a generated `when
-   * {condition}` command pattern would collide with them in every language that
-   * has one). Registered all the same so the schema stays the documented role
-   * contract: the R1 reference, the adapter's syntax table, the validators.
-   */
-  readonly structuralOnly?: boolean;
-  /**
-   * Generate an EXTRA, lower-priority pattern variant per listed role with
-   * that role (and its marker phrase) omitted entirely. For a REQUIRED role
-   * whose phrase is legitimately absent in valid hyperscript (`transition
-   * *max-height over 300ms` — no `to {goal}`): making the role optional
-   * inside the main pattern wraps its marker group as skippable and the bare
-   * value re-binds by particle metadata (verified regression, see the
-   * transition goal NOTE); a separate variant has no skippable group at all.
-   */
-  readonly omitRoleVariants?: ReadonlyArray<SemanticRole>;
-  /**
-   * Generate an EXTRA, LOWER-priority pattern variant whose named role accepts a
-   * wider set of value types than the schema declares.
-   *
-   * `onSchema.event` is the case: a handler's event is `literal` for the ~60
-   * names the dictionaries localize (`click` → `クリック`, a keyword token), but a
-   * CUSTOM event passes through untranslated and tokenizes as an identifier, so
-   * `on message …` bound nothing in ar/ja/ko/tr — the three whose handler
-   * patterns come from this generator rather than from a handcrafted head.
-   *
-   * Widening the MAIN pattern instead was measured and rejected: ko renders
-   * `transition opacity to 0` as `opacity 을 에 0`, the same `<x> 을 에` shape as
-   * its handler head, so at equal priority the widened `on` pattern claimed the
-   * transition and three corpus rows flipped. A lower-priority variant is inert
-   * wherever a real command pattern can match the span.
-   */
-  readonly widenTypeVariants?: ReadonlyArray<{
-    readonly role: SemanticRole;
-    readonly types: ReadonlyArray<ExpectedType>;
-    readonly idSuffix: string;
-    /** Subtracted from `basePriority`. Default 15 — below every command pattern. */
-    readonly priorityDelta?: number;
-    /**
-     * Languages that do NOT get the variant, with the measured reason. ko is the
-     * one: its on-marker `에` is also its destination marker, and its event-role
-     * marker `을` is also its patient marker, so `<x> 을 에 <value>` is BOTH a
-     * handler head and the shape ko renders `transition opacity to 0` in
-     * (`opacity 을 에 0 300ms 트랜지션`). With the variant, that bare transition
-     * reads as a handler named `opacity`. No other language has both collisions
-     * — ja's on-marker is `で` while its transition marks the goal with `に`.
-     */
-    readonly excludeLanguages?: ReadonlyArray<string>;
-  }>;
-  /**
-   * Generate an EXTRA, higher-priority pattern variant per entry, with a
-   * REQUIRED literal keyword inserted immediately before the named role's
-   * value token (`go [to] url {destination}` beside `go [to] {destination}`).
-   * Because the literal is required, the variant is inert unless the keyword
-   * is present — the base patterns are untouched, so forms that ride on them
-   * (`go back`) cannot regress. The matched keyword is recorded as a
-   * fixed-value literal in `methodCarrier` (mirroring {@link RoleSpec.methodCarrier}).
-   */
-  readonly rolePrefixLiteralVariants?: ReadonlyArray<{
-    readonly role: SemanticRole;
-    /** Per-language keyword (e.g. URL_MARKER_ALL_LANGS). Languages absent from the map get no variant. */
-    readonly literal: Record<string, string>;
-    /** Pattern id suffix, e.g. 'url' → `<action>-<lang>-generated-url`. */
-    readonly idSuffix: string;
-    /** Priority delta over the counterpart pattern (default +5). */
-    readonly priorityDelta?: number;
-    /** Record the matched keyword as this role (fixed-value extraction). */
-    readonly methodCarrier?: SemanticRole;
-  }>;
-  /**
-   * Generate an EXTRA pattern variant per entry in which an optional `role` is
-   * REQUIRED, with `omit` roles removed and `widen` given more value types. Its
-   * marker must match, so the variant is inert without it and may outrank the
-   * command's other patterns: a hand-crafted `toggle {patient}` otherwise wins
-   * `toggle $x between 1 and 2` by reading `$x` and stranding the rest.
-   */
-  readonly requiredRoleVariants?: ReadonlyArray<{
-    readonly role: SemanticRole;
-    readonly omit?: ReadonlyArray<SemanticRole>;
-    readonly widen?: { readonly role: SemanticRole; readonly types: ReadonlyArray<ExpectedType> };
-    /** Pattern id suffix: `<action>-<lang>-generated-<idSuffix>`. */
-    readonly idSuffix: string;
-    /** Added to `basePriority`. Default +5. */
-    readonly priorityDelta?: number;
-  }>;
-  /** Notes about special handling */
-  readonly notes?: string;
-  /**
-   * Identifier tokens that may appear in the core parser's positional `args`
-   * but are not bound to any role — e.g., scroll's `top|bottom|smoothly`.
-   * These are skipped when scanning args for role values during schema-driven
-   * role inference.
-   */
-  readonly argSkipTokens?: ReadonlyArray<string>;
-  /**
-   * Which role consumes the core parser's `target` field (the trailing
-   * `on X` / `to X` / `from X` captured separately from args). Defaults to
-   * `'destination'`. Set to `'source'` for commands like `remove .x from #y`.
-   */
-  readonly targetRole?: SemanticRole;
 
   // Runtime error documentation (optional for backward compatibility)
 
@@ -401,6 +125,19 @@ export interface CommandSchema {
   /** Recovery hints mapping error code to suggestion */
   readonly recoveryHints?: Readonly<Record<string, string>>;
 }
+
+/**
+ * A compile-time check, used nowhere: every hyperscript schema is also a domain
+ * DSL's schema as it stands (role and action names as plain strings, intent's
+ * value type), so the grammar-neutral generator, matcher and renderer take
+ * semantic's schemas without a cast. A field whose type here outgrows the shared
+ * one fails this line.
+ */
+export type HyperscriptSchemaIsGrammarNeutral = AssertAssignable<
+  CommandSchema,
+  GrammarCommandSchema
+>;
+type AssertAssignable<T extends U, U> = T;
 
 /** The schema without its variant-only roles: what every pattern but a required-role variant is built from. */
 export function withoutVariantOnlyRoles(schema: CommandSchema): CommandSchema {
