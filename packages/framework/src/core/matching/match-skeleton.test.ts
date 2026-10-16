@@ -2,13 +2,13 @@
  * The matcher's skeleton with a reader that knows no hyperscript: every role
  * slot takes one token. What the skeleton does on its own — literals, group
  * rollback, the speculative skip, spans, ranking — and that every value comes
- * from the reader (domains rethink Phase 4.2).
+ * from the reader (domains rethink Phase 4.2-4.3).
  */
 import { describe, expect, it } from 'vitest';
-import { MatchSkeleton } from '../src/parser/match-skeleton';
-import type { MatchView, RoleSlot, ValueReader } from '../src/parser/value-reader';
-import type { ConfidenceModel } from '../src/parser/confidence-model';
-import { TokenStreamImpl } from '../src/tokenizers';
+import { MatchSkeleton } from './match-skeleton';
+import type { MatchView, RoleSlot, ValueReader } from './value-reader';
+import type { ConfidenceContext, ConfidenceModel } from './confidence-model';
+import { TokenStreamImpl } from '../tokenization/token-utils';
 import type {
   LanguagePattern,
   LanguageToken,
@@ -17,7 +17,7 @@ import type {
   SemanticRole,
   SemanticValue,
   TokenStream,
-} from '../src/types';
+} from '../types';
 
 class OneTokenReader implements ValueReader {
   readonly began: string[] = [];
@@ -57,7 +57,20 @@ class OneTokenReader implements ValueReader {
   }
 }
 
-const flat: ConfidenceModel = { calculate: () => 1 };
+function model(score: (ctx: ConfidenceContext) => number): ConfidenceModel {
+  return {
+    calculate: score,
+    calculateWithBreakdown: ctx => ({
+      roleCoverage: score(ctx),
+      stemPenalty: 0,
+      languageBoost: 0,
+      languageAdjustment: 0,
+      final: score(ctx),
+    }),
+  };
+}
+
+const flat = model(() => 1);
 
 function matcher(confidence: ConfidenceModel = flat): {
   skeleton: MatchSkeleton;
@@ -98,7 +111,7 @@ function pattern(id: string, tokens: PatternToken[], priority = 100): LanguagePa
   return {
     id,
     language: 'xx',
-    command: 'go' as LanguagePattern['command'],
+    command: 'go',
     priority,
     template: { format: id, tokens },
     extraction: {},
@@ -153,7 +166,7 @@ describe('MatchSkeleton', () => {
   });
 
   it('ranks matches by priority, then confidence', () => {
-    const byId: ConfidenceModel = { calculate: ctx => (ctx.pattern.id === 'high' ? 0.9 : 0.5) };
+    const byId = model(ctx => (ctx.pattern.id === 'high' ? 0.9 : 0.5));
     const { skeleton } = matcher(byId);
     const tokens = [lit('go'), role('x')];
     const best = skeleton.matchBest(stream('go home'), [

@@ -7,56 +7,34 @@
  * Users can extend DefaultConfidenceModel to customize scoring for their domain.
  */
 
+import type {
+  ConfidenceBreakdown,
+  ConfidenceContext as GrammarConfidenceContext,
+  ConfidenceModel as GrammarConfidenceModel,
+} from '@lokascript/framework';
 import type { LanguagePattern, SemanticRole, SemanticValue } from '../types';
 import { commandSchemas, type CommandSchema } from '../generators/command-schemas';
 
 /**
- * Context passed to confidence model methods.
+ * Context passed to confidence model methods: framework's (`@lokascript/framework`
+ * holds the interfaces since the matcher's skeleton moved there, domains rethink
+ * Phase 4.3), with hyperscript's pattern and role names.
  */
-export interface ConfidenceContext {
+export interface ConfidenceContext extends GrammarConfidenceContext {
   /** The pattern being matched */
   readonly pattern: LanguagePattern;
   /** Captured semantic roles */
   readonly captured: ReadonlyMap<SemanticRole, SemanticValue>;
-  /** Number of stem (morphological) keyword matches */
-  readonly stemMatchCount: number;
-  /** Total keyword matches attempted */
-  readonly totalKeywordMatches: number;
 }
 
-/**
- * Breakdown of confidence scoring factors (for diagnostics/debugging).
- */
-export interface ConfidenceBreakdown {
-  /** Role coverage score (0-1) */
-  readonly roleCoverage: number;
-  /** Stem match penalty applied (0 to -0.15) */
-  readonly stemPenalty: number;
-  /** Language-specific boost (e.g., VSO verb-first) */
-  readonly languageBoost: number;
-  /** Language-specific adjustment (e.g., preposition disambiguation) */
-  readonly languageAdjustment: number;
-  /** Final clamped confidence (0-1) */
-  readonly final: number;
-}
+export type { ConfidenceBreakdown };
 
 /**
- * Injectable confidence scoring model.
- *
- * Each method computes one factor of the confidence score.
- * Override individual methods to customize scoring without rewriting the pipeline.
+ * Injectable confidence scoring model: framework's, taking hyperscript's
+ * context. The skeleton calls `calculate` once per matched pattern.
  */
-export interface ConfidenceModel {
-  /**
-   * Calculate the full confidence score.
-   * Default implementation calls each factor method and combines them.
-   */
+export interface ConfidenceModel extends GrammarConfidenceModel {
   calculate(ctx: ConfidenceContext): number;
-
-  /**
-   * Calculate confidence with a detailed breakdown.
-   * Useful for diagnostics and debugging.
-   */
   calculateWithBreakdown(ctx: ConfidenceContext): ConfidenceBreakdown;
 }
 
@@ -200,7 +178,9 @@ export class DefaultConfidenceModel implements ConfidenceModel {
     // in ar/ja/ko/tl/tr — the toggle-es class described above, one pattern
     // family over.
     const wrappedAction =
-      pattern.command === 'on' ? (pattern.extraction?.action?.value as string | undefined) : undefined;
+      pattern.command === 'on'
+        ? (pattern.extraction?.action?.value as string | undefined)
+        : undefined;
     const schemaRoles = (commandSchemas as Record<string, CommandSchema | undefined>)[
       wrappedAction ?? pattern.command
     ]?.roles;

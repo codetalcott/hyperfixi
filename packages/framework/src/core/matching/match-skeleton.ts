@@ -1,6 +1,6 @@
 /**
- * The pattern matcher's skeleton: the grammar-neutral half of the matcher
- * (domains rethink Phase 4.2, `docs-internal/DOMAINS_RETHINK.md`).
+ * The pattern matcher's skeleton: the grammar-neutral half of semantic's matcher
+ * (domains rethink Phase 4.2-4.3, `docs-internal/DOMAINS_RETHINK.md`).
  *
  * It walks a pattern's literals, groups and role slots against the token
  * stream: literal matching (exact, normalized, stem, case- and
@@ -9,7 +9,8 @@
  * speculative skip of an optional slot, role spans, memoized ranking by
  * priority then confidence, the confidence model, and the extraction rules.
  * Every value is read by the grammar's `ValueReader` (`value-reader.ts`);
- * hyperscript's is `HyperscriptValueReader` (`pattern-matcher.ts`).
+ * hyperscript's is `@lokascript/semantic`'s `HyperscriptValueReader`, and its
+ * confidence model semantic's `DefaultConfidenceModel`.
  */
 
 import type {
@@ -21,9 +22,8 @@ import type {
   TokenStream,
   LanguageToken,
 } from '../types';
-import { stripOptionalDiacritics } from '@lokascript/framework';
+import { stripOptionalDiacritics } from '../tokenization/token-utils';
 import type { ConfidenceModel } from './confidence-model';
-import { defaultConfidenceModel } from './confidence-model';
 import type { MatchView, ValueReader } from './value-reader';
 
 /** Whether a group binds a role, at any depth. */
@@ -68,8 +68,8 @@ export class MatchSkeleton {
    * @param makeReader - builds the grammar's reader, handed this matcher's view
    *   of the match in progress (one reader per matcher).
    */
-  constructor(makeReader: (view: MatchView) => ValueReader, confidenceModel?: ConfidenceModel) {
-    this.confidenceModel = confidenceModel ?? defaultConfidenceModel;
+  constructor(makeReader: (view: MatchView) => ValueReader, confidenceModel: ConfidenceModel) {
+    this.confidenceModel = confidenceModel;
     this.reader = makeReader({
       patternRest: () => this.patternRest,
       slotAfterLiteral: () => this.slotAfterLiteral,
@@ -602,7 +602,12 @@ export class MatchSkeleton {
         // Copied, never aliased (the rule's default object is shared across
         // parses), and tagged implicit: materialized from the default, not
         // captured from source text — renderers suppress implicit values only.
-        captured.set(role as SemanticRole, { ...rule.default, implicit: true });
+        // (`implicit` is semantic's value field; intent's value type has none.)
+        const implicitDefault: SemanticValue & { readonly implicit: true } = {
+          ...rule.default,
+          implicit: true,
+        };
+        captured.set(role as SemanticRole, implicitDefault);
       }
     }
   }

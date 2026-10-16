@@ -1,13 +1,13 @@
 /**
  * The seam between the pattern matcher's skeleton and a grammar's value
- * reading (domains rethink Phase 4.2, `docs-internal/DOMAINS_RETHINK.md`).
+ * reading (domains rethink Phase 4.2-4.3, `docs-internal/DOMAINS_RETHINK.md`).
  *
  * The skeleton (`match-skeleton.ts`) walks a pattern: its literals, groups and
  * role slots, with rollback, ranking, spans, memoization and the confidence
  * model. It knows nothing of what a VALUE is in the grammar, nor of the
  * grammar's language profiles: each role slot is read through `readRole`, and
  * the few places the walk needs a grammar fact go through the hooks below.
- * Hyperscript's reader is `HyperscriptValueReader` (`pattern-matcher.ts`).
+ * Hyperscript's reader is `@lokascript/semantic`'s `HyperscriptValueReader`.
  */
 
 import type {
