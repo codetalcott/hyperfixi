@@ -13,6 +13,7 @@ import {
   getDefaultExtractors,
   type SemanticNode,
   type MultilingualDSL,
+  type DSLConfig,
 } from '../../index';
 
 // =============================================================================
@@ -168,7 +169,12 @@ function generateSQL(node: SemanticNode): string {
 // =============================================================================
 
 export function createSQLDSL(): MultilingualDSL {
-  return createMultilingualDSL({
+  return createMultilingualDSL(sqlDSLConfig());
+}
+
+/** The fixture's config, for a test that builds the DSL with another factory. */
+export function sqlDSLConfig(): DSLConfig {
+  return {
     name: 'SQL DSL Test Fixture',
     schemas: [selectCommand],
     languages: [
@@ -190,7 +196,7 @@ export function createSQLDSL(): MultilingualDSL {
     codeGenerator: {
       generate: generateSQL,
     },
-  });
+  };
 }
 
 // =============================================================================

@@ -144,3 +144,38 @@ describe('the marker guard and the optional skip', () => {
     });
   });
 });
+
+describe('a required slot takes back the optional slot before it', () => {
+  it('when the optional slot took its value (behaviorspec `when clicks`)', () => {
+    const when = pattern([lit('when'), group(slot('actor', { optional: true })), slot('action')]);
+    expect(read(when, ['when', 'keyword'], ['clicks', 'identifier'])).toEqual({
+      action: { type: 'expression', raw: 'clicks' },
+    });
+    expect(
+      read(when, ['when', 'keyword'], ['user', 'identifier'], ['clicks', 'identifier'])
+    ).toEqual({
+      actor: { type: 'expression', raw: 'user' },
+      action: { type: 'expression', raw: 'clicks' },
+    });
+  });
+
+  it('when it stands at its own marker (flow `orders として 取得変数`)', () => {
+    const capture = pattern(
+      [
+        group(slot('patient', { optional: true })),
+        slot('destination'),
+        lit('として'),
+        lit('取得変数'),
+      ],
+      'ja'
+    );
+    expect(
+      read(capture, ['orders', 'identifier'], ['として', 'particle'], ['取得変数', 'keyword'])
+    ).toEqual({ destination: { type: 'expression', raw: 'orders' } });
+  });
+
+  it('not when something was read between them', () => {
+    const p = pattern([group(slot('a', { optional: true })), lit('to'), slot('b')]);
+    expect(read(p, ['x', 'identifier'], ['to', 'keyword'])).toBeNull();
+  });
+});

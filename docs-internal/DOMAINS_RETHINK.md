@@ -2,8 +2,10 @@
 
 Plan, 2026-10-13. Decisions D1–D6 taken 2026-10-14 (all as recommended; D1's open rows below). Phase 1 done
 2026-10-15 (lokascript-domains #21 = 4.0.0, this repo #1521); Phase 2 done 2026-10-15 (lokascript-domains #23,
-#24, corrected by #25); Phase 3 merged 2026-10-15 (#1524, #1525; domains readiness #26, #28), unreleased. Next:
-the framework minor release (owner), then the domains relock and re-baseline, then Phase 4.
+#24, corrected by #25); Phase 3 released in 4.6.0 (2026-10-15; #1524, #1525; domains readiness #26, #28), the
+domains relocked and re-baselined on it (#29) and released as 4.0.1 (#30). Phase 4 done 2026-10-16 (#1533–#1540:
+steps 1–7, 7 in two), unreleased. Next: the framework minor release (owner), then the domains'
+switch to the gate kit (step 6) and Phase 5.
 
 Owner, 2026-10-13: "The domains pattern only works if it is built on a reliable core. We may need to rethink
 domains, instead of trying to preserve it as is." This answers M3 (e) in
@@ -400,7 +402,15 @@ counts in each PR.
    (steps 2–7a) moves 0 cases and 0 parses. The generator takes `greedy`, `sovSlot: 'postVerb'` and
    `markerPosition` (hyperscript unchanged). The old matcher's own walk (its optional-role backtracking, its
    group scan) is not ported: the skeleton's groups and skip stand in for it, and 7b measures the difference
-   per domain.
+   per domain. **7b done 2026-10-16:** `createGrammarDSL(config)` in `api/create-dsl.ts`, beside
+   `createMultilingualDSL`: one implementation, two engines (`firstEngine`: the old generator, matcher and schema
+   renderer; `coreEngine`: the schema-pattern generator descending, the skeleton with the stock reader and
+   confidence, the pattern renderer as `render()`'s last resort). Name chosen here (step 2 did not): the owner
+   may rename it before release. Measured with every domain's factory swapped to the core (a packed framework
+   whose `createMultilingualDSL` ran `coreEngine`, through `gate:upstream`): first 58 worse (behaviorspec's
+   `when` with an action word ×50, flow SOV `capture` ×3, learn ja ×5: all an optional marker-less slot taking
+   the value of the required slot after it); with the old matcher's backtrack in the stock reader, **0 worse, 30 better**
+   (behaviorspec 306 → 336), the other seven domains case for case as before. Phase 5 starts from there.
 
 **Phase 5 — the kept domains on the core** (lokascript-domains, one PR per domain; packed tarballs from this repo
 via `pack-smoke.sh UPSTREAM_TARBALLS` until it is published).
