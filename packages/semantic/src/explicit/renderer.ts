@@ -25,7 +25,8 @@ import type {
   PatternToken,
   ReferenceValue,
   PropertyPathValue,
-  ExtractionRule,
+  RolePatternToken,
+  GroupPatternToken,
 } from '../types';
 import { createCommandNode, createSelector, isBlockCommand } from '../types';
 
@@ -139,15 +140,12 @@ import {
 } from './value-lexicon';
 import { expressionNames, isVariableName } from './expression-variables';
 import { OF_PHRASE, convertedAt, ofPhraseProperties } from './of-phrases';
-import { renderExplicit as renderExplicitBase } from '@lokascript/framework';
-
-/**
- * Score a role slot nested inside an OPTIONAL group. Lower than the top-level
- * bonus on purpose: it must break a tie between two patterns that are otherwise
- * equal (the handcrafted `toggle-{L}-full` versus the generated pattern that
- * also carries `[{duration}]`) without ever outweighing a top-level difference.
- */
-const NESTED_ROLE_BONUS = 5;
+import {
+  renderExplicit as renderExplicitBase,
+  renderPattern,
+  selectRenderPattern,
+  type PatternRenderHooks,
+} from '@lokascript/framework';
 
 /** A reference value's name (`me`), or undefined for any other value. */
 function referenceOf(value: SemanticValue | undefined): string | undefined {
@@ -160,27 +158,6 @@ function hasOtherRealRole(node: SemanticNode, role: SemanticRole): boolean {
     if (name !== role && !(value as { implicit?: unknown }).implicit) return true;
   }
   return false;
-}
-
-/**
- * Score against a pattern that has no slot for a role the node carries. Larger
- * than any priority gap between a command's patterns (80–100), so rendering
- * the role always beats a more idiomatic form that drops it.
- */
-const UNCOVERED_ROLE_PENALTY = 30;
-
-/**
- * The literal a pattern pins a role to, normalized for comparison: an
- * extraction default, or a fixed value the pattern records when it matches.
- * The second is how `go`'s url variant says what it means (`go url /page`
- * records `method: 'url'`); reading only defaults let that variant render every
- * `go`, so `go back` came out as `go url back`: a navigation to a page named
- * "back" in every language.
- */
-function pinnedLiteral(rule: ExtractionRule | undefined): string | undefined {
-  if (rule?.default?.type === 'literal') return String(rule.default.value).trim().toLowerCase();
-  if (rule?.value !== undefined) return String(rule.value).trim().toLowerCase();
-  return undefined;
 }
 
 /**
@@ -872,7 +849,13 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    * native idiom patterns (e.g., "when clicked") because standard patterns
    * are more recognizable and closer to the original hyperscript syntax.
    */
-  private findBestPattern(node: SemanticNode, patterns: LanguagePattern[]): LanguagePattern | null {
+  /**
+   * Hyperscript's part of rendering a command through a pattern: framework's
+   * `selectRenderPattern` and `renderPattern` (domains rethink Phase 4.5) call
+   * these. `renderWithPattern` adds the per-call two (`beforeToken`,
+   * `afterToken`).
+   */
+  private readonly patternHooks: PatternRenderHooks<SemanticNode> = {
     // Event-handler nodes carry their commands in `body`, never in roles. The
     // 'on' pattern set also contains fused `<command>-event-*` patterns (e.g.
     // `toggle-event-ko-sov-simple`, template `<event> 할 때 토글`) that exist to
@@ -883,165 +866,38 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     // candidates to pure event-trigger patterns (ids without the `-event-`
     // fused-command segment: `on-*`, `event-*`, `event-handler-*`). The fused
     // patterns stay available for parsing.
-    let candidates = patterns.filter(pattern => !pattern.parseOnly);
-    if (candidates.length === 0) candidates = patterns;
-    if (node.kind === 'event-handler') {
-      const triggers = candidates.filter(pattern => !/-event-/i.test(pattern.id));
-      if (triggers.length > 0) candidates = triggers;
-    }
-
-    // Which literal values does the candidate set pin, per role? A value that is
-    // pinned by SOME candidate is a real alternative the pattern set distinguishes
-    // (put's manner: before / after / at end of), so choosing a pattern pinned to a
-    // different one would silently change meaning. A value nothing pins is not an
-    // alternative — it is just the value that came out of the parse — and must not
-    // disqualify anything. That distinction is what keeps `repeat until event X`
-    // renderable: a zh parse yields loopType `until` while the English pattern that
-    // carries the event pins `until-event`, and nothing pins bare `until`.
-    const pinnedValues = new Map<string, Set<string>>();
-    for (const pattern of candidates) {
-      for (const [role, rule] of Object.entries(pattern.extraction ?? {})) {
-        const key = pinnedLiteral(rule);
-        if (key === undefined) continue;
-        const set = pinnedValues.get(role) ?? new Set<string>();
-        set.add(key);
-        pinnedValues.set(role, set);
-      }
-    }
-
-    // Score patterns by how well they match our roles
-    const scored = candidates.map(pattern => {
-      let score = pattern.priority;
-
-      // Check each role token in the pattern, INCLUDING the ones nested inside
-      // optional groups. Scoring only the top level made a slot the pattern
-      // really has invisible: every `[for {duration}]` / `[with {style}]` group
-      // lives one level down, so a handcrafted pattern without the slot tied
-      // with the generated one that has it and won on order — `toggle .loading
-      // for 2s` rendered as `alternar .loading` in es/it/pl/ru/uk/vi/zh, the
-      // duration dropped in silence.
-      //
-      // A role inside a group is scored as PRESENT-only: its absence is what
-      // "optional" means, and the group's own role tokens are not consistently
-      // flagged `optional` (a handcrafted `[en {destination}]` writes the role
-      // bare), so reading the flag there would apply the missing-role penalty to
-      // a slot that is optional by construction.
-      // An implicit REFERENCE role (`destination: me, implicit: true`) is a
-      // matcher-injected default, not something the author wrote — scoring it
-      // as present picked hi's `{patient} को {destination} पर टॉगल` for a node
-      // whose only real roles were patient + duration, and the duration
-      // dropped in silence (toggle-class-temporary hi/qu). Treat it as absent
-      // for selection; a pattern that REQUIRES the role then takes the
-      // missing-role penalty, exactly as if the parse had never injected the
-      // default. Scoped to reference values: an implicit LITERAL (repeat's
-      // `loopType:"forever"`) is structural — the loop variant the surface
-      // means — and discounting it un-selects every pattern that renders the
-      // loop word (measured: repeat-forever went unparseable in 22 languages).
-      // An implicit `quantity` (increment's default 1) is absent too: scored as
-      // present, it picked de's `erhöhe {patient} um {quantity}` and wrote a
-      // `um 1` the author never did.
-      const hasRealRole = (role: string): boolean => {
-        const val = node.roles.get(role as SemanticRole) as
-          { implicit?: unknown; type?: string } | undefined;
-        return (
-          val !== undefined &&
-          !(val.implicit === true && (val.type === 'reference' || role === 'quantity'))
-        );
-      };
-      const scoreTokens = (tokens: readonly PatternToken[], inGroup: boolean): void => {
-        for (const token of tokens) {
-          if (token.type === 'group') {
-            scoreTokens(token.tokens, true);
-          } else if (token.type === 'role') {
-            if (hasRealRole(token.role)) {
-              // Bonus for patterns that use roles we have. A nested slot scores
-              // LESS than a top-level one, so carrying an extra optional slot
-              // breaks a tie without ever outweighing a top-level difference —
-              // measured: at equal weight it also re-ordered the pl behavior
-              // handler and three qu positional rows.
-              score += inGroup ? NESTED_ROLE_BONUS : 10;
-            } else if (!inGroup && !token.optional) {
-              // Heavy penalty for patterns that require roles we DON'T have
-              // This prevents selecting "source" patterns when there's no source
-              score -= 50;
-            }
-          }
-        }
-      };
-      scoreTokens(pattern.template.tokens, false);
-
-      // A pattern with no slot for a role the node really carries drops it in
-      // silence, so it loses to one that renders it. The bonuses above only
-      // reward coverage, which let a slot-less pattern win on a top-level-vs-
-      // nested difference: once show's patient became optional, zh `显示
-      // {patient}` beat the generated `显示 [把 {patient}] [用 {style}]` and
-      // `show #modal with *opacity` rendered without its strategy (bn/hi/zh).
-      const slots = new Set<string>();
-      const collectSlots = (tokens: readonly PatternToken[]): void => {
-        for (const token of tokens) {
-          if (token.type === 'group') collectSlots(token.tokens);
-          else if (token.type === 'role') slots.add(token.role);
-        }
-      };
-      collectSlots(pattern.template.tokens);
-      for (const role of node.roles.keys()) {
-        if (hasRealRole(role) && !slots.has(role)) score -= UNCOVERED_ROLE_PENALTY;
-      }
-
-      // Value-pinned variants. A positional pattern (`put X before Y`, `at end
-      // of`, `after`) carries its position as a baked-in literal plus an
-      // extraction default that records which value it means:
-      //   put-es-before -> extraction.manner.default = 'before'
-      //   put-es-at-end -> extraction.manner.default = 'at end of'
-      // while the neutral `put-es-full` pins nothing. So the pattern set already
-      // says which surface each value selects; scoring just has to read it.
-      //
-      // The rule: a pattern that pins a role to a literal may be chosen ONLY when
-      // the node carries that exact value. Matching is a strong preference (the
-      // pinned form is the whole reason the value exists); mismatching — or the
-      // node not carrying the role at all — disqualifies it, so a plain
-      // `put X into Y` can never render as `poner X en fin de Y`.
-      //
-      // This replaces an id-regex that penalized every `-at-end|-before|-after`
-      // pattern unconditionally. That kept plain puts safe but made the positional
-      // forms unreachable: `put "<p>" before me` rendered with the into-pattern in
-      // all 23 languages, losing the distinction the source drew.
-      for (const [role, rule] of Object.entries(pattern.extraction ?? {})) {
-        const pinnedKey = pinnedLiteral(rule);
-        if (pinnedKey === undefined) continue;
-        const actual = node.roles.get(role as SemanticRole);
-        // The value as the pattern would produce it: a literal, or an
-        // expression where the rule says so (`go back`).
-        const actualKey =
-          actual?.type === (rule.valueIsExpression ? 'expression' : 'literal')
-            ? String(
-                actual.type === 'expression'
-                  ? (actual as { raw?: unknown }).raw
-                  : (actual as { value?: unknown }).value
-              )
-                .trim()
-                .toLowerCase()
-            : undefined;
-
-        if (actualKey === pinnedKey) {
-          // The pinned form is the whole reason this value exists — prefer it
-          // decisively over the neutral pattern, whatever the parse priorities say.
-          score += 60;
-        } else if (actualKey === undefined || pinnedValues.get(role)?.has(actualKey)) {
-          // Either the node has no such value (so this pattern would invent one:
-          // a plain `put X into Y` must never render as `put X at end of Y`), or it
-          // has a DIFFERENT value that the pattern set treats as an alternative.
-          // Both are wrong surfaces; disqualify.
-          score -= 200;
-        }
-        // Otherwise the node's value is not one of the pinned alternatives, so this
-        // pattern is still the best available carrier for it — leave the score alone
-        // and let priority and role coverage decide.
-      }
-
-      // For English rendering, prefer "standard" patterns over "native idiom" patterns
-      // This ensures "on click" is preferred over "when clicked" for English output
-      // Only apply this boost for English - other languages should use their native idioms
+    candidates: (node: SemanticNode, patterns: readonly LanguagePattern[]) => {
+      if (node.kind !== 'event-handler') return patterns;
+      const triggers = patterns.filter(pattern => !/-event-/i.test(pattern.id));
+      return triggers.length > 0 ? triggers : patterns;
+    },
+    // An implicit REFERENCE role (`destination: me, implicit: true`) is a
+    // matcher-injected default, not something the author wrote — scoring it
+    // as present picked hi's `{patient} को {destination} पर टॉगल` for a node
+    // whose only real roles were patient + duration, and the duration
+    // dropped in silence (toggle-class-temporary hi/qu). Treat it as absent
+    // for selection; a pattern that REQUIRES the role then takes the
+    // missing-role penalty, exactly as if the parse had never injected the
+    // default. Scoped to reference values: an implicit LITERAL (repeat's
+    // `loopType:"forever"`) is structural — the loop variant the surface
+    // means — and discounting it un-selects every pattern that renders the
+    // loop word (measured: repeat-forever went unparseable in 22 languages).
+    // An implicit `quantity` (increment's default 1) is absent too: scored as
+    // present, it picked de's `erhöhe {patient} um {quantity}` and wrote a
+    // `um 1` the author never did.
+    hasRealRole: (node: SemanticNode, role: string) => {
+      const val = node.roles.get(role as SemanticRole) as
+        { implicit?: unknown; type?: string } | undefined;
+      return (
+        val !== undefined &&
+        !(val.implicit === true && (val.type === 'reference' || role === 'quantity'))
+      );
+    },
+    // For English rendering, prefer "standard" patterns over "native idiom" patterns
+    // This ensures "on click" is preferred over "when clicked" for English output
+    // Only apply this boost for English - other languages should use their native idioms
+    adjustScore: (pattern: LanguagePattern) => {
+      let score = 0;
       if (pattern.language === 'en') {
         if (pattern.id.includes('standard') || pattern.id.includes('en-source')) {
           score += 20; // Boost standard patterns for English rendering
@@ -1051,13 +907,34 @@ export class SemanticRendererImpl implements ISemanticRenderer {
           score -= 15;
         }
       }
+      return score;
+    },
+    span: (
+      tokens: readonly PatternToken[],
+      i: number,
+      node: SemanticNode,
+      language: string,
+      topLevel: boolean
+    ) => this.obliqueAt(tokens, i, node, language, topLevel),
+    writeRole: (token: RolePatternToken, node: SemanticNode, language: string) =>
+      this.renderRoleToken(token, node, language),
+    writeGroup: (token: GroupPatternToken, node: SemanticNode) => this.writesGroup(token, node),
+    pushPart: (
+      parts: string[],
+      text: string,
+      token: PatternToken,
+      previous: PatternToken | undefined,
+      node: SemanticNode,
+      language: string
+    ) => this.pushPart(parts, text, token, previous, node, language),
+  };
 
-      return { pattern, score };
-    });
-
-    scored.sort((a, b) => b.score - a.score);
-
-    return scored.length > 0 ? scored[0].pattern : null;
+  /**
+   * The pattern to render `node` with: framework's `selectRenderPattern`
+   * (role coverage, pinned values) with hyperscript's hooks.
+   */
+  private findBestPattern(node: SemanticNode, patterns: LanguagePattern[]): LanguagePattern | null {
+    return selectRenderPattern(node, patterns, this.patternHooks) as LanguagePattern | null;
   }
 
   /**
@@ -1201,38 +1078,32 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    * Render a semantic node using a specific pattern.
    */
   private renderWithPattern(node: SemanticNode, pattern: LanguagePattern): string {
-    const parts: string[] = [];
     const language = pattern.language;
     let eventPart = -1;
 
     const tokens = pattern.template.tokens;
     // `scroll #box down by 200px`: the direction in the language's word before
     // the amount's phrase (grammar-words.ts), where readNativeDirection reads it.
-    const direction = node.action === 'scroll' ? (node as CommandSemanticNode).scrollDirection : undefined;
+    const direction =
+      node.action === 'scroll' ? (node as CommandSemanticNode).scrollDirection : undefined;
     // The phrase starts at its marker, a literal just before the slot (`by`).
     let directionAt = direction ? tokens.findIndex(t => mentionsRole(t, 'quantity')) : -1;
     while (directionAt > 1 && tokens[directionAt - 1]!.type === 'literal') directionAt--;
-    for (let i = 0; i < tokens.length; i++) {
-      if (i === directionAt) parts.push(grammarWord(language, direction!));
-      const oblique = this.obliqueAt(tokens, i, node, language, true);
-      if (oblique !== undefined) {
-        parts.push(oblique.text);
-        i += oblique.tokens - 1;
-        continue;
-      }
-      const token = tokens[i]!;
-      const rendered = this.renderPatternToken(token, node, language);
-      if (rendered !== null) {
-        this.pushPart(parts, rendered, token, tokens[i - 1], node, language);
-        // A marker-less wait renders its event through the duration slot.
+    const parts = renderPattern(node, pattern, {
+      ...this.patternHooks,
+      beforeToken: (_tokens, i, written) => {
+        if (i === directionAt) written.push(grammarWord(language, direction!));
+      },
+      // A marker-less wait renders its event through the duration slot.
+      afterToken: (token, part) => {
         if (
           token.type === 'role' &&
           (token.role === 'event' || (token.role === 'duration' && node.action === 'wait'))
         ) {
-          eventPart = parts.length - 1;
+          eventPart = part;
         }
-      }
-    }
+      },
+    });
 
     if (node.action === 'wait' && node.kind === 'command') {
       this.spliceWaitAlternatives(node as CommandSemanticNode, parts, eventPart, language);
@@ -1503,251 +1374,198 @@ export class SemanticRendererImpl implements ISemanticRenderer {
   }
 
   /**
-   * Render a single pattern token.
+   * A role slot's text (framework's `PatternRenderHooks.writeRole`); null
+   * writes nothing.
    */
-  private renderPatternToken(token: any, node: SemanticNode, language: string): string | null {
-    switch (token.type) {
-      case 'literal':
-        // Parse-only markers (renderSuppress) consume input but never render —
-        // e.g. fetch's `from`, which parses `fetch from /api` yet must be absent
-        // from output (`fetch from "/api"` is invalid canonical _hyperscript).
-        return token.renderSuppress ? null : token.value;
-
-      case 'role': {
-        const value = node.roles.get(token.role);
-        if (!value) {
-          // `wait` has ONE slot in its schema — `duration`, described as
-          // "Duration or event to wait for" — and the parser re-types a known
-          // event name out of it into `event` (normalizeCommandRoles, gated on
-          // WAITABLE_EVENT_WORDS) so the waitMapper can emit the runtime's
-          // `modifiers.for` wait. Only the English `wait-en-for-event` head
-          // declares an `event` slot, so in the other 23 languages the
-          // generated `wait {duration}` pattern found nothing to put in its one
-          // slot and the event vanished: `wait for transitionend` rendered as
-          // bare `esperar` / `待つ` / `ждать`, which does not even re-parse.
-          //
-          // Route it back through the duration slot — the exact inverse of the
-          // parse-side relabel, which is why the round trip closes: every
-          // target parser recovers `wait.event` from the marker-less surface
-          // (`esperar transitionend`), including a LOCALIZED name, since
-          // eventNameTranslations normalizes `carga` / `ロード` back to `load`
-          // before the relabel runs. en is untouched — its `event`-slotted head
-          // outscores this pattern and never reaches here.
-          if (token.role === 'duration' && node.action === 'wait') {
-            const event = node.roles.get('event');
-            if (event) {
-              const name = this.renderEventName(event, language);
-              // A name no event table knows takes the language's `event` word
-              // before it (`esperar evento foo`, OPEN_ITEMS P52): bare, every
-              // reader took it for a time wait (`wait foo`). A known event
-              // keeps the marker-less form the relabel reads.
-              const word = tryGetProfile(language)?.keywords?.event?.primary;
-              return word && this.isCustomWaitEvent(name, language) ? `${word} ${name}` : name;
-            }
-          }
-          if (token.optional) return null;
-          // Use default if available
-          return null;
+  private renderRoleToken(
+    token: RolePatternToken,
+    node: SemanticNode,
+    language: string
+  ): string | null {
+    const value = node.roles.get(token.role);
+    if (!value) {
+      // `wait` has ONE slot in its schema — `duration`, described as
+      // "Duration or event to wait for" — and the parser re-types a known
+      // event name out of it into `event` (normalizeCommandRoles, gated on
+      // WAITABLE_EVENT_WORDS) so the waitMapper can emit the runtime's
+      // `modifiers.for` wait. Only the English `wait-en-for-event` head
+      // declares an `event` slot, so in the other 23 languages the
+      // generated `wait {duration}` pattern found nothing to put in its one
+      // slot and the event vanished: `wait for transitionend` rendered as
+      // bare `esperar` / `待つ` / `ждать`, which does not even re-parse.
+      //
+      // Route it back through the duration slot — the exact inverse of the
+      // parse-side relabel, which is why the round trip closes: every
+      // target parser recovers `wait.event` from the marker-less surface
+      // (`esperar transitionend`), including a LOCALIZED name, since
+      // eventNameTranslations normalizes `carga` / `ロード` back to `load`
+      // before the relabel runs. en is untouched — its `event`-slotted head
+      // outscores this pattern and never reaches here.
+      if (token.role === 'duration' && node.action === 'wait') {
+        const event = node.roles.get('event');
+        if (event) {
+          const name = this.renderEventName(event, language);
+          // A name no event table knows takes the language's `event` word
+          // before it (`esperar evento foo`, OPEN_ITEMS P52): bare, every
+          // reader took it for a time wait (`wait foo`). A known event
+          // keeps the marker-less form the relabel reads.
+          const word = tryGetProfile(language)?.keywords?.event?.primary;
+          return word && this.isCustomWaitEvent(name, language) ? `${word} ${name}` : name;
         }
-        // An `event` role names a DOM event — always a bare identifier, never a
-        // quoted string. Render it via renderEventName (localizes for the target
-        // language; identity for en) so `wait for transitionend` / `send click`
-        // stay unquoted. A known DOM event name arrives as a string `literal`
-        // (renderEventName strips the quotes); expression/namespaced events fall
-        // through unchanged. Previously scoped to event-handler nodes only, which
-        // left `wait for {event}` rendering the quoted `wait for "transitionend"`
-        // the canonical parser rejects.
-        if (token.role === 'event') {
-          return this.renderEventName(value, language);
-        }
-        // A go/scroll position renders just before its element, in English in
-        // every language, where tryScrollModifiers reads it back: `go top of #d1`.
-        const scrollPosition = (node as CommandSemanticNode).scrollPosition;
-        if (
-          scrollPosition &&
-          token.role === 'destination' &&
-          (node.action === 'go' || node.action === 'scroll')
-        ) {
-          return `${scrollPosition} of ${this.valueToNaturalString(value, language)}`;
-        }
-        // `halt` takes an idiomatic article in canonical hyperscript — `halt the
-        // event` (`halt event` is rejected). The parser strips the leaked article
-        // (skipNoiseWords) so the value is the bare `event` reference; re-add `the`
-        // at render. Scoped to en (the article is English syntax); other languages
-        // render the reference alone.
-        if (
-          language === 'en' &&
-          node.action === 'halt' &&
-          token.role === 'patient' &&
-          value.type === 'reference' &&
-          value.value === 'event'
-        ) {
-          return `the ${this.valueToNaturalString(value, language)}`;
-        }
-        // `render <tmpl> with <named-args>` takes a bare `key: value` list, not a
-        // braced object literal — `render #row with {row:$data}` is rejected but
-        // `render #row with row: $data` is valid. The parser captures the args as
-        // an object-literal expression; strip the outer braces for render's `with`
-        // (style) role. NOT applied to fetch's `with {…}`, whose braced options
-        // object IS canonical (different command, so scoped by action).
-        if (node.action === 'render' && token.role === 'style' && value.type === 'expression') {
-          const raw = value.raw.trim();
-          if (raw.startsWith('{') && raw.endsWith('}')) {
-            return raw.slice(1, -1).trim();
-          }
-        }
-        // A `js` body is raw JavaScript, not vocabulary. `localizeValueInterior`
-        // rewrites the words it recognizes, which inside a js block means the
-        // CODE gets translated: `js(me) …` came out as de `js (ich) …`, tr
-        // `js (ben) …` — the argument list renamed, and any `window`/`true`/…
-        // in the body with it. That is the one role whose value must survive a
-        // translation untouched, and it is why every non-English
-        // behavior-removable row differed from its own English round-trip while
-        // scoring 1.0 on every fidelity metric.
-        if (node.action === 'js' && value.type === 'expression') return value.raw;
-        // A fixed keyword phrase (`using view transition`, `in new window`) is
-        // English in every language: its marker is, so its value is too.
-        // `window` is a reference, which renderReference localizes (es
-        // `ventana`), and `in new ventana` is a phrase in no language.
-        if (token.valueShape === 'keyword') {
-          if (value.type === 'reference') return value.value;
-          if (value.type === 'expression') return value.raw;
-          if (value.type === 'literal' && value.dataType !== 'string') return String(value.value);
-        }
-        // A fetch's response type (`as text`, `as html`) names a format core
-        // reads, not a word: localized through the value lexicon (ms `teks`,
-        // ru `текст`, th `ข้อความ`), no parser read it back, and on the direct
-        // path the fetch threw before its request. It is English in every
-        // language, as `json` (which no lexicon translates) already was.
-        if (
-          node.action === 'fetch' &&
-          token.role === 'responseType' &&
-          value.type === 'expression'
-        ) {
-          return value.raw;
-        }
-        // `pick characters 0 to 5 of #note` captures its range as ONE canonical
-        // English expression, and the renderer emitted it verbatim — so the
-        // separator stayed English while every other word localized. The parser
-        // wants the language's OWN joiner (`PICK_RANGE_SEPARATORS_BY_LANG`);
-        // twenty-two languages happened to accept English `to` as well, but pl's
-        // `to` tokenizes as the PRONOUN `it`, so the range and the source were
-        // both lost and the whole `pick` action dropped (pl pick-text-range).
-        if (node.action === 'pick' && token.role === 'patient' && value.type === 'expression') {
-          const separator = PatternMatcher.rangeSeparatorFor(language);
-          if (separator) return value.raw.replace(/(?<=\s)to(?=\s)/g, separator);
-        }
-        return this.valueToNaturalString(value, language);
       }
-
-      case 'group': {
-        // Check if we have all required roles in the group
-        const hasRequired = token.tokens
-          .filter((t: any) => t.type === 'role' && !t.optional)
-          .every((t: any) => node.roles.has(t.role));
-
-        if (!hasRequired && token.optional) {
-          return null;
-        }
-
-        // Skip an optional group whose destination/source/patient role is the
-        // implicit `me` default (the parser injects it when unspecified). This
-        // avoids the redundant `on me` / `to me` / `from me` / `of me` — `add
-        // .active`, not `add .active to me`; `remove me`, not `remove me from me`;
-        // `measure my x`, not `measure my x of me`. The `on` event-source renders
-        // via its own path, so it is untouched here.
-        //
-        // A bare `show` / `settle` stays bare for the same reason, and one place
-        // it is not redundant: inside a `tell`, a bare `show` shows the told
-        // element, and upstream reads a written `show me` as the handler's own.
-        if (token.optional) {
-          for (const roleName of ['destination', 'source', 'patient'] as const) {
-            const roleToken = token.tokens.find(
-              (t: any) => t.type === 'role' && t.role === roleName
-            );
-            if (!roleToken) continue;
-            const roleValue = node.roles.get(roleName);
-            if (roleValue?.type !== 'reference' || roleValue.value !== 'me') continue;
-            // Only the matcher-materialized default is redundant. An AUTHORED
-            // `to me` / `from me` (qu `noqa man`, zh `给 我`) must survive the
-            // round-trip — dropping it made `add .active to me` and bare
-            // `add .active` render identically (#874's qu deferral blocker).
-            if (!roleValue.implicit) continue;
-            // Keep an explicit destination when the patient is string content —
-            // canonical `add "<p>Line</p>" to me` requires it (`add "<p>Line</p>"`
-            // alone is rejected: `add` expects a class/attribute reference). A
-            // class/attribute patient defaults to `me` fine, so it stays suppressed.
-            if (roleName === 'destination') {
-              const patient = node.roles.get('patient');
-              if (patient?.type === 'literal' && patient.dataType === 'string') continue;
-            }
-            // Keep the implicit patient when another role follows it: a verb
-            // followed directly by its marker (`show with *opacity`) is read as
-            // verb + object by the fused handler patterns — ms `tunjuk dengan
-            // *opacity` took `dengan` as the patient, hi `*opacity से दिखाएं`
-            // bound `से` (from) as the handler's source (hi/ms/th/tl/vi).
-            if (roleName === 'patient' && hasOtherRealRole(node, 'patient')) continue;
-            return null; // Skip rendering the implicit "me" destination/source/patient
-          }
-        }
-
-        // For optional groups with a `quantity` role, skip the default the
-        // parser injected (`quantity: 1, implicit`) for increment/decrement when
-        // none was written: rendering it produces a "by 1" the author never wrote
-        // — harmless in most languages but a real bug in vi, where the quantity
-        // marker `thêm` is also the `add` keyword, so `tăng :count thêm 1`
-        // re-parses as increment + a phantom `add`. A WRITTEN `by 1` stays: a
-        // translation keeps what the author wrote, and a value it drops reads as
-        // lost (explicit/lossy.ts).
-        if (token.optional) {
-          const qtyToken = token.tokens.find(
-            (t: any) => t.type === 'role' && t.role === 'quantity'
-          );
-          if (qtyToken) {
-            const qtyValue = node.roles.get('quantity') as { implicit?: unknown } | undefined;
-            if (qtyValue?.implicit === true) {
-              return null; // Skip rendering the default quantity of 1
-            }
-          }
-        }
-
-        const groupParts: string[] = [];
-        let hasRoleValue = false;
-        for (let i = 0; i < token.tokens.length; i++) {
-          const oblique = this.obliqueAt(token.tokens, i, node, language);
-          if (oblique !== undefined) {
-            groupParts.push(oblique.text);
-            hasRoleValue = true;
-            i += oblique.tokens - 1;
-            continue;
-          }
-          const subToken = token.tokens[i];
-          const rendered = this.renderPatternToken(subToken, node, language);
-          if (rendered !== null) {
-            this.pushPart(groupParts, rendered, subToken, token.tokens[i - 1], node, language);
-            if (subToken.type === 'role') hasRoleValue = true;
-          }
-        }
-
-        // Don't emit an optional group that DECLARES a role slot and did not
-        // fill it — e.g. don't emit a dangling "with" when the style role is
-        // absent from "hide #output".
-        //
-        // …unless the group is `renderRequired`: a MARKER wrapped on its own by
-        // `profile.markersOptional` (tr, where the case suffix may be dropped
-        // colloquially, so the parse side has to accept both forms). Dropping
-        // those cost tr every role marker in every rendered command —
-        // `add .selected to #item` came out `#item .selected ekle` where the
-        // corpus has `#item e .selected i ekle`, and the marker-less surface
-        // re-parses as a one-role `add` with the destination defaulted to `me`.
-        if (token.optional && !hasRoleValue && !token.renderRequired) return null;
-
-        return groupParts.length > 0 ? groupParts.join(' ') : null;
-      }
-
-      default:
-        return null;
+      if (token.optional) return null;
+      // Use default if available
+      return null;
     }
+    // An `event` role names a DOM event — always a bare identifier, never a
+    // quoted string. Render it via renderEventName (localizes for the target
+    // language; identity for en) so `wait for transitionend` / `send click`
+    // stay unquoted. A known DOM event name arrives as a string `literal`
+    // (renderEventName strips the quotes); expression/namespaced events fall
+    // through unchanged. Previously scoped to event-handler nodes only, which
+    // left `wait for {event}` rendering the quoted `wait for "transitionend"`
+    // the canonical parser rejects.
+    if (token.role === 'event') {
+      return this.renderEventName(value, language);
+    }
+    // A go/scroll position renders just before its element, in English in
+    // every language, where tryScrollModifiers reads it back: `go top of #d1`.
+    const scrollPosition = (node as CommandSemanticNode).scrollPosition;
+    if (
+      scrollPosition &&
+      token.role === 'destination' &&
+      (node.action === 'go' || node.action === 'scroll')
+    ) {
+      return `${scrollPosition} of ${this.valueToNaturalString(value, language)}`;
+    }
+    // `halt` takes an idiomatic article in canonical hyperscript — `halt the
+    // event` (`halt event` is rejected). The parser strips the leaked article
+    // (skipNoiseWords) so the value is the bare `event` reference; re-add `the`
+    // at render. Scoped to en (the article is English syntax); other languages
+    // render the reference alone.
+    if (
+      language === 'en' &&
+      node.action === 'halt' &&
+      token.role === 'patient' &&
+      value.type === 'reference' &&
+      value.value === 'event'
+    ) {
+      return `the ${this.valueToNaturalString(value, language)}`;
+    }
+    // `render <tmpl> with <named-args>` takes a bare `key: value` list, not a
+    // braced object literal — `render #row with {row:$data}` is rejected but
+    // `render #row with row: $data` is valid. The parser captures the args as
+    // an object-literal expression; strip the outer braces for render's `with`
+    // (style) role. NOT applied to fetch's `with {…}`, whose braced options
+    // object IS canonical (different command, so scoped by action).
+    if (node.action === 'render' && token.role === 'style' && value.type === 'expression') {
+      const raw = value.raw.trim();
+      if (raw.startsWith('{') && raw.endsWith('}')) {
+        return raw.slice(1, -1).trim();
+      }
+    }
+    // A `js` body is raw JavaScript, not vocabulary. `localizeValueInterior`
+    // rewrites the words it recognizes, which inside a js block means the
+    // CODE gets translated: `js(me) …` came out as de `js (ich) …`, tr
+    // `js (ben) …` — the argument list renamed, and any `window`/`true`/…
+    // in the body with it. That is the one role whose value must survive a
+    // translation untouched, and it is why every non-English
+    // behavior-removable row differed from its own English round-trip while
+    // scoring 1.0 on every fidelity metric.
+    if (node.action === 'js' && value.type === 'expression') return value.raw;
+    // A fixed keyword phrase (`using view transition`, `in new window`) is
+    // English in every language: its marker is, so its value is too.
+    // `window` is a reference, which renderReference localizes (es
+    // `ventana`), and `in new ventana` is a phrase in no language.
+    if (token.valueShape === 'keyword') {
+      if (value.type === 'reference') return value.value;
+      if (value.type === 'expression') return value.raw;
+      if (value.type === 'literal' && value.dataType !== 'string') return String(value.value);
+    }
+    // A fetch's response type (`as text`, `as html`) names a format core
+    // reads, not a word: localized through the value lexicon (ms `teks`,
+    // ru `текст`, th `ข้อความ`), no parser read it back, and on the direct
+    // path the fetch threw before its request. It is English in every
+    // language, as `json` (which no lexicon translates) already was.
+    if (node.action === 'fetch' && token.role === 'responseType' && value.type === 'expression') {
+      return value.raw;
+    }
+    // `pick characters 0 to 5 of #note` captures its range as ONE canonical
+    // English expression, and the renderer emitted it verbatim — so the
+    // separator stayed English while every other word localized. The parser
+    // wants the language's OWN joiner (`PICK_RANGE_SEPARATORS_BY_LANG`);
+    // twenty-two languages happened to accept English `to` as well, but pl's
+    // `to` tokenizes as the PRONOUN `it`, so the range and the source were
+    // both lost and the whole `pick` action dropped (pl pick-text-range).
+    if (node.action === 'pick' && token.role === 'patient' && value.type === 'expression') {
+      const separator = PatternMatcher.rangeSeparatorFor(language);
+      if (separator) return value.raw.replace(/(?<=\s)to(?=\s)/g, separator);
+    }
+    return this.valueToNaturalString(value, language);
+  }
+
+  /**
+   * Whether an optional group whose required roles the node carries is written
+   * (framework's `PatternRenderHooks.writeGroup`).
+   */
+  private writesGroup(token: GroupPatternToken, node: SemanticNode): boolean {
+    // Skip an optional group whose destination/source/patient role is the
+    // implicit `me` default (the parser injects it when unspecified). This
+    // avoids the redundant `on me` / `to me` / `from me` / `of me` — `add
+    // .active`, not `add .active to me`; `remove me`, not `remove me from me`;
+    // `measure my x`, not `measure my x of me`. The `on` event-source renders
+    // via its own path, so it is untouched here.
+    //
+    // A bare `show` / `settle` stays bare for the same reason, and one place
+    // it is not redundant: inside a `tell`, a bare `show` shows the told
+    // element, and upstream reads a written `show me` as the handler's own.
+    if (token.optional) {
+      for (const roleName of ['destination', 'source', 'patient'] as const) {
+        const roleToken = token.tokens.find((t: any) => t.type === 'role' && t.role === roleName);
+        if (!roleToken) continue;
+        const roleValue = node.roles.get(roleName);
+        if (roleValue?.type !== 'reference' || roleValue.value !== 'me') continue;
+        // Only the matcher-materialized default is redundant. An AUTHORED
+        // `to me` / `from me` (qu `noqa man`, zh `给 我`) must survive the
+        // round-trip — dropping it made `add .active to me` and bare
+        // `add .active` render identically (#874's qu deferral blocker).
+        if (!roleValue.implicit) continue;
+        // Keep an explicit destination when the patient is string content —
+        // canonical `add "<p>Line</p>" to me` requires it (`add "<p>Line</p>"`
+        // alone is rejected: `add` expects a class/attribute reference). A
+        // class/attribute patient defaults to `me` fine, so it stays suppressed.
+        if (roleName === 'destination') {
+          const patient = node.roles.get('patient');
+          if (patient?.type === 'literal' && patient.dataType === 'string') continue;
+        }
+        // Keep the implicit patient when another role follows it: a verb
+        // followed directly by its marker (`show with *opacity`) is read as
+        // verb + object by the fused handler patterns — ms `tunjuk dengan
+        // *opacity` took `dengan` as the patient, hi `*opacity से दिखाएं`
+        // bound `से` (from) as the handler's source (hi/ms/th/tl/vi).
+        if (roleName === 'patient' && hasOtherRealRole(node, 'patient')) continue;
+        return false; // Skip rendering the implicit "me" destination/source/patient
+      }
+    }
+
+    // For optional groups with a `quantity` role, skip the default the
+    // parser injected (`quantity: 1, implicit`) for increment/decrement when
+    // none was written: rendering it produces a "by 1" the author never wrote
+    // — harmless in most languages but a real bug in vi, where the quantity
+    // marker `thêm` is also the `add` keyword, so `tăng :count thêm 1`
+    // re-parses as increment + a phantom `add`. A WRITTEN `by 1` stays: a
+    // translation keeps what the author wrote, and a value it drops reads as
+    // lost (explicit/lossy.ts).
+    if (token.optional) {
+      const qtyToken = token.tokens.find((t: any) => t.type === 'role' && t.role === 'quantity');
+      if (qtyToken) {
+        const qtyValue = node.roles.get('quantity') as { implicit?: unknown } | undefined;
+        if (qtyValue?.implicit === true) {
+          return false; // Skip rendering the default quantity of 1
+        }
+      }
+    }
+    return true;
   }
 
   /**

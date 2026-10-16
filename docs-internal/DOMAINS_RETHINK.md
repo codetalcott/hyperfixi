@@ -370,7 +370,17 @@ counts in each PR.
    new generator: the domains' `greedy` capture and `sovSlot: 'postVerb'` (framework's old generator has
    both); step 7 adds them with the domain factory.
 5. Move the schema-driven renderer core and the generic half of `explicit/lossy.ts` (unread input, read-back) to
-   framework; semantic keeps its verbatim-value list and `verified-render`'s collision rule as grammar hooks.
+   framework; semantic keeps its verbatim-value list and `verified-render`'s collision rule as grammar hooks. **Done
+   2026-10-16:** framework's `generation/pattern-render.ts` (`selectRenderPattern`, `renderPattern`,
+   `PatternRenderHooks`, generic over the grammar's node type) and `api/translation-loss.ts`
+   (`findTranslationLoss` + `TranslationLossRules`, `LossyTranslationError`, `unconsumedSpans`). The core is
+   small (selection scoring and the token walk); hyperscript's hooks carry the rest: the trigger-only
+   handler candidates, implicit-role scoring, English pattern preferences, oblique spans, attached markers,
+   implicit `me` and default quantities, every role's text. `verified-render` stays semantic's whole: a
+   domain's value is refused through the read-back rather than rewritten. Oracles: every command-shape
+   case's translation into each language and back (27,240) unchanged, with refusals off and on (704
+   refused, same kinds and losses), parse-parity 0. Bundles: semantic's browser bundles +~300 bytes
+   gzipped (browser-en 133,219 → 133,453; 132,612 before step 2).
 6. The round-trip gate kit into `packages/framework/src/testing/`, with toolkit's lint rules; the domain gate
    switches to it.
 7. The stock value readers, `greedy` among them, each with tests; a new factory on the core beside
