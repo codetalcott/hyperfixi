@@ -23,7 +23,6 @@ import {
   isValidReference,
   withPosition,
 } from '../types';
-import { stripOptionalDiacritics } from '@lokascript/framework';
 import { isTypeCompatible } from './utils/type-validation';
 import { ROLE_MARKER_CONCEPTS } from './utils/marker-resolution';
 import { commandSchemas, type CommandSchema } from '../generators/command-schemas';
@@ -79,7 +78,8 @@ import { endsClauseAt } from './end-words';
 import { foldNakedNamedArgsRaw } from './naked-args-fold';
 import { tokenValue } from './token-value';
 import type { ConfidenceModel } from './confidence-model';
-import { defaultConfidenceModel } from './confidence-model';
+import { MatchSkeleton } from './match-skeleton';
+import type { MatchView, RoleSlot, ValueReader } from './value-reader';
 
 /**
  * Body-bearing command keywords that front their own block (`bareKeyword` schemas:
@@ -110,12 +110,107 @@ function isSigilProperty(value: string): boolean {
   return value.startsWith('*') || value.startsWith('@');
 }
 
-/** Whether a group binds a role, at any depth. */
-function groupHasRole(group: PatternToken & { type: 'group' }): boolean {
-  return group.tokens.some(t => t.type === 'role' || (t.type === 'group' && groupHasRole(t)));
+/** An `event` role slot. */
+function isEventSlot(pt: PatternToken | undefined): boolean {
+  return pt?.type === 'role' && pt.role === 'event';
 }
 
-export class PatternMatcher {
+/**
+ * Hyperscript's value reading: what the matcher's skeleton (`match-skeleton.ts`)
+ * asks of every role slot, and hyperscript's answers to the skeleton's grammar
+ * hooks (`value-reader.ts`). The language profile and the commands of the
+ * pattern being matched are the reader's, set by `beginPattern`.
+ */
+export class HyperscriptValueReader implements ValueReader {
+  constructor(private readonly view: MatchView) {}
+
+  /** The pattern tokens still owed after the slot being read (the skeleton's). */
+  private get patternRest(): readonly PatternToken[] {
+    return this.view.patternRest();
+  }
+
+  /** Whether the slot being read directly follows a literal the pattern matched. */
+  private get slotAfterLiteral(): boolean {
+    return this.view.slotAfterLiteral();
+  }
+
+  /** Whether a pattern token would match the stream token (the skeleton's literal matching). */
+  private patternTokenWouldMatch(pt: PatternToken | undefined, token: LanguageToken): boolean {
+    return this.view.wouldMatch(pt, token);
+  }
+
+  beginPattern(pattern: LanguagePattern): void {
+    // Get language profile for possessive keyword lookup
+    this.currentProfile = tryGetProfile(pattern.language);
+    this.currentPatternCommand = pattern.command;
+    this.currentRoleCommand = pattern.extraction?.action?.value ?? pattern.command;
+    this.eventSource = undefined;
+  }
+
+  readRole(
+    tokens: TokenStream,
+    slot: RoleSlot,
+    captured: Map<SemanticRole, SemanticValue>,
+    next: PatternToken | undefined
+  ): boolean {
+    return this.matchRoleToken(tokens, slot, captured, next);
+  }
+
+  /** A marker-less optional slot never eats a command verb the pattern does not want next. */
+  maySkipSlot(
+    patternToken: PatternToken,
+    token: LanguageToken | null,
+    next: PatternToken | undefined
+  ): boolean {
+    return maySkipVerbSlot(patternToken, token, next, this.wouldMatch);
+  }
+
+  /**
+   * Skip leading conjunctions for Arabic (proclitics: و, ف, ول, وب, etc.)
+   * BUT NOT if the pattern explicitly expects a conjunction (proclitic patterns)
+   */
+  skipLeading(tokens: TokenStream, sequence: readonly PatternToken[]): void {
+    const firstPatternToken = sequence[0];
+    const patternExpectsConjunction =
+      firstPatternToken?.type === 'literal' &&
+      (firstPatternToken.value === 'and' ||
+        firstPatternToken.value === 'then' ||
+        firstPatternToken.alternatives?.includes('and') ||
+        firstPatternToken.alternatives?.includes('then'));
+
+    if (this.currentProfile?.code === 'ar' && !patternExpectsConjunction) {
+      while (tokens.peek()?.kind === 'conjunction') {
+        tokens.advance();
+      }
+    }
+  }
+
+  /**
+   * Source-clause window: after the event role matches, the next 1–2 pattern
+   * tokens may be preceded in the stream by a source clause the fused
+   * patterns have no slot for — `gdy keydown[…] z .modal jeśli …` (marker
+   * BEFORE: pl z / uk з / zh 从) or `keydown[…] de .modal den eğer …`
+   * (marker AFTER: ja から / ko 에서 / bn থেকে / hi से / tr den). The window
+   * spans 2 pattern tokens because SOV emissions put the clause after the
+   * event-marker literal, not directly after the event. See
+   * tryConsumeEventSourceClause for the guards.
+   */
+  beforePatternToken(
+    tokens: TokenStream,
+    sequence: readonly PatternToken[],
+    index: number,
+    captured: Map<SemanticRole, SemanticValue>
+  ): void {
+    const patternToken = sequence[index];
+    if (patternToken?.type !== 'literal') return;
+    if (!isEventSlot(sequence[index - 1]) && !isEventSlot(sequence[index - 2])) return;
+    this.tryConsumeEventSourceClause(tokens, captured, patternToken);
+  }
+
+  resultFields(): Partial<PatternMatchResult> {
+    return this.eventSource ? { eventSource: this.eventSource } : {};
+  }
+
   /** Current language profile for the pattern being matched */
   private currentProfile: LanguageProfile | undefined;
   /**
@@ -132,33 +227,9 @@ export class PatternMatcher {
    * `extraction.action.value` — their `patient` slot is `<cmd>`'s patient.
    */
   private currentRoleCommand: string | undefined;
-  /**
-   * The pattern tokens still to match after the one being matched, through
-   * every enclosing group: a value stops at any marker the pattern still owes.
-   */
-  private patternRest: PatternToken[] = [];
-  /**
-   * Whether the role slot being matched directly follows a literal the pattern
-   * matched: its marker (`[por {quantity}]`), or the command's verb.
-   */
-  private slotAfterLiteral = false;
   /** `patternTokenWouldMatch`, bound once for the SlotContexts the captures build. */
   private readonly wouldMatch = (pt: PatternToken | undefined, token: LanguageToken): boolean =>
     this.patternTokenWouldMatch(pt, token);
-  /** Injectable confidence scoring model (Phase 3.3) */
-  private readonly confidenceModel: ConfidenceModel;
-  /**
-   * Selective memoization cache (Phase 6.1).
-   * Caches pattern match results keyed by `tokenPosition:patternId`.
-   * Cleared before each top-level matchBest() call.
-   */
-  private matchCache = new Map<string, PatternMatchResult | null>();
-  /**
-   * Stream index where each role's capture began, for the current
-   * `matchPattern` call. Rebuilt per call, written on the same success path as
-   * `captured` — see `PatternMatchResult.roleStarts`.
-   */
-  private roleStarts = new Map<SemanticRole, number>();
   /**
    * A source phrase found in the event HEAD (`from #btn` right after the event,
    * `#btn から` before the next head literal) by the two head-tolerance sites
@@ -168,241 +239,6 @@ export class PatternMatcher {
    * that way). The parser decides whose it is — see PatternMatchResult.eventSource.
    */
   private eventSource: SemanticValue | undefined;
-
-  constructor(confidenceModel?: ConfidenceModel) {
-    this.confidenceModel = confidenceModel ?? defaultConfidenceModel;
-  }
-
-  /**
-   * Try to match a single pattern against the token stream.
-   * Returns the match result or null if no match.
-   */
-  matchPattern(tokens: TokenStream, pattern: LanguagePattern): PatternMatchResult | null {
-    const mark = tokens.mark();
-    const captured = new Map<SemanticRole, SemanticValue>();
-
-    // Get language profile for possessive keyword lookup
-    this.currentProfile = tryGetProfile(pattern.language);
-    this.currentPatternCommand = pattern.command;
-    this.currentRoleCommand = pattern.extraction?.action?.value ?? pattern.command;
-
-    // Reset match counters for this pattern
-    this.stemMatchCount = 0;
-    this.totalKeywordMatches = 0;
-    this.roleStarts = new Map();
-    this.eventSource = undefined;
-
-    this.patternRest = [];
-    const success = this.matchTokenSequence(tokens, pattern.template.tokens, captured);
-
-    if (!success) {
-      tokens.reset(mark);
-      return null;
-    }
-
-    // Calculate confidence BEFORE applying defaults
-    // This ensures defaulted roles don't artificially inflate confidence
-    const confidence = this.confidenceModel.calculate({
-      pattern,
-      captured,
-      stemMatchCount: this.stemMatchCount,
-      totalKeywordMatches: this.totalKeywordMatches,
-    });
-
-    // Apply extraction rules to fill in any missing roles with defaults
-    this.applyExtractionRules(pattern, captured);
-
-    return {
-      pattern,
-      captured,
-      consumedTokens: tokens.position() - mark.position,
-      confidence,
-      roleStarts: this.roleStarts,
-      ...(this.eventSource ? { eventSource: this.eventSource } : {}),
-    };
-  }
-
-  /**
-   * Try to match multiple patterns, return the best match.
-   */
-  matchBest(tokens: TokenStream, patterns: LanguagePattern[]): PatternMatchResult | null {
-    // Clear memoization cache for this matching round (Phase 6.1)
-    this.matchCache.clear();
-
-    const matches: PatternMatchResult[] = [];
-    const startPos = tokens.position();
-
-    for (const pattern of patterns) {
-      const mark = tokens.mark();
-
-      // Check memoization cache (Phase 6.1)
-      const cacheKey = `${startPos}:${pattern.id}`;
-      let result: PatternMatchResult | null;
-
-      if (this.matchCache.has(cacheKey)) {
-        result = this.matchCache.get(cacheKey)!;
-      } else {
-        result = this.matchPattern(tokens, pattern);
-        this.matchCache.set(cacheKey, result);
-      }
-
-      if (result) {
-        matches.push(result);
-      }
-
-      tokens.reset(mark);
-    }
-
-    if (matches.length === 0) {
-      return null;
-    }
-
-    // Sort by confidence and priority
-    matches.sort((a, b) => {
-      // First by priority
-      const priorityDiff = b.pattern.priority - a.pattern.priority;
-      if (priorityDiff !== 0) return priorityDiff;
-
-      // Then by confidence
-      return b.confidence - a.confidence;
-    });
-
-    // Re-consume tokens for the best match
-    const best = matches[0];
-    this.matchPattern(tokens, best.pattern);
-
-    return best;
-  }
-
-  /**
-   * Match a sequence of pattern tokens against the token stream.
-   */
-  private matchTokenSequence(
-    tokens: TokenStream,
-    patternTokens: PatternToken[],
-    captured: Map<SemanticRole, SemanticValue>,
-    // What follows the sequence itself — a GROUP's last inner token must see the
-    // token after the group as its `next` (the trailing-slot verb guard in
-    // matchRoleToken keys on nextPatternToken === undefined meaning "pattern
-    // truly ends here", and a mid-pattern single-token group is not the end).
-    nextAfterSequence?: PatternToken
-  ): boolean {
-    // Skip leading conjunctions for Arabic (proclitics: و, ف, ول, وب, etc.)
-    // BUT NOT if the pattern explicitly expects a conjunction (proclitic patterns)
-    const firstPatternToken = patternTokens[0];
-    const patternExpectsConjunction =
-      firstPatternToken?.type === 'literal' &&
-      (firstPatternToken.value === 'and' ||
-        firstPatternToken.value === 'then' ||
-        firstPatternToken.alternatives?.includes('and') ||
-        firstPatternToken.alternatives?.includes('then'));
-
-    if (this.currentProfile?.code === 'ar' && !patternExpectsConjunction) {
-      while (tokens.peek()?.kind === 'conjunction') {
-        tokens.advance();
-      }
-    }
-
-    // Source-clause window: after the event role matches, the next 1–2 pattern
-    // tokens may be preceded in the stream by a source clause the fused
-    // patterns have no slot for — `gdy keydown[…] z .modal jeśli …` (marker
-    // BEFORE: pl z / uk з / zh 从) or `keydown[…] de .modal den eğer …`
-    // (marker AFTER: ja から / ko 에서 / bn থেকে / hi से / tr den). The window
-    // spans 2 pattern tokens because SOV emissions put the clause after the
-    // event-marker literal, not directly after the event. See
-    // tryConsumeEventSourceClause for the guards.
-    let sourceWindow = 0;
-
-    for (let i = 0; i < patternTokens.length; i++) {
-      const patternToken = patternTokens[i];
-
-      if (sourceWindow > 0 && patternToken.type === 'literal') {
-        this.tryConsumeEventSourceClause(tokens, captured, patternToken);
-      }
-
-      // Marker-less optional slot about to eat a command VERB, mid-pattern.
-      //
-      // The guard in matchRoleToken skips such a slot only when the pattern's
-      // very next token is a literal the verb itself satisfies. Where an
-      // OPTIONAL group sits between the slot and the verb literal
-      // (`[{method}] [using view {manner}] 交換`) that test looks at the
-      // group's first token, sees no match, and lets the slot swallow the verb
-      // — so `swap #a with #b` rendered SOV (`#a に #b を 交換`) did not parse
-      // at all in bn/hi/ja/ko/qu/tr.
-      //
-      // Widening that test to look THROUGH skippable groups was measured to
-      // work and to BREAK the ja goal-reclaim lock: the no-goal transition
-      // variant's mid-pattern slot must keep capturing 遷移 and failing, so the
-      // verb-anchoring fallback can reclaim goal+duration. Both shapes are
-      // structurally identical at the slot, so no per-slot test can separate
-      // them.
-      //
-      // What separates them is the OUTCOME. Skipping the slot lets swap's
-      // pattern consume its clause ENTIRELY (`#a に #b を 交換` → end), while
-      // the ja no-goal variant completes having eaten only `opacity を 遷移`
-      // and STRANDS `0 に 300ms` — the sloppy match the lock exists to prevent.
-      // So: speculatively skip, match the rest of THIS pattern, and adopt the
-      // skip only when it consumes the whole clause. A stranded tail falls
-      // through to the capture-and-fail below, unchanged.
-      //
-      // Bounded: fires only on an optional marker-less role slot facing a
-      // command-verb keyword the next pattern token does not want, and recurses
-      // on a strictly shorter token list — never a re-run of other patterns
-      // (the abandoned last-resort retry in matchBest, which compounded).
-      if (
-        maySkipVerbSlot(
-          patternToken,
-          tokens.peek(),
-          patternTokens[i + 1] ?? nextAfterSequence,
-          this.wouldMatch
-        )
-      ) {
-        const skipMark = tokens.mark();
-        const speculative = new Map(captured);
-        if (
-          this.matchTokenSequence(
-            tokens,
-            patternTokens.slice(i + 1),
-            speculative,
-            nextAfterSequence
-          ) &&
-          this.atClauseEnd(tokens)
-        ) {
-          captured.clear();
-          for (const [role, value] of speculative) captured.set(role, value);
-          return true;
-        }
-        tokens.reset(skipMark);
-      }
-
-      const outerRest = this.patternRest;
-      this.patternRest = [...patternTokens.slice(i + 1), ...outerRest];
-      this.slotAfterLiteral =
-        patternToken.type === 'role' && patternTokens[i - 1]?.type === 'literal';
-      const matched = this.matchPatternToken(
-        tokens,
-        patternToken,
-        captured,
-        patternTokens[i + 1] ?? nextAfterSequence
-      );
-      this.patternRest = outerRest;
-
-      sourceWindow =
-        patternToken.type === 'role' && patternToken.role === 'event'
-          ? 2
-          : Math.max(0, sourceWindow - 1);
-
-      if (!matched) {
-        // If token is optional, continue
-        if (this.isOptional(patternToken)) {
-          continue;
-        }
-        return false;
-      }
-    }
-
-    return true;
-  }
 
   /**
    * Consume a source clause (`<marker> <selector>` or `<selector> <marker>`,
@@ -479,94 +315,6 @@ export class PatternMatcher {
   }
 
   /**
-   * Match a single pattern token against the current position in the stream.
-   */
-  private matchPatternToken(
-    tokens: TokenStream,
-    patternToken: PatternToken,
-    captured: Map<SemanticRole, SemanticValue>,
-    nextPatternToken?: PatternToken
-  ): boolean {
-    switch (patternToken.type) {
-      case 'literal':
-        return this.matchLiteralToken(tokens, patternToken);
-
-      case 'role': {
-        // Record where this slot's own span begins, but only once it actually
-        // captured — an optional role that matched nothing must not claim a
-        // position. See `PatternMatchResult.roleStarts`.
-        const roleStart = tokens.position();
-        const matchedRole = this.matchRoleToken(tokens, patternToken, captured, nextPatternToken);
-        if (matchedRole && captured.has(patternToken.role)) {
-          this.roleStarts.set(patternToken.role, roleStart);
-        }
-        return matchedRole;
-      }
-
-      case 'group':
-        return this.matchGroupToken(tokens, patternToken, captured, nextPatternToken);
-
-      default:
-        return false;
-    }
-  }
-
-  /**
-   * Match a literal pattern token (keyword or particle).
-   */
-  private matchLiteralToken(
-    tokens: TokenStream,
-    patternToken: PatternToken & { type: 'literal' }
-  ): boolean {
-    const token = tokens.peek();
-    if (!token) return false;
-
-    // Check main value
-    const matchType = this.getMatchType(token, patternToken.value);
-    if (matchType !== 'none') {
-      this.totalKeywordMatches++;
-      if (matchType === 'stem') {
-        this.stemMatchCount++;
-      }
-      tokens.advance();
-      return true;
-    }
-
-    // Check alternatives
-    if (patternToken.alternatives) {
-      for (const alt of patternToken.alternatives) {
-        const altMatchType = this.getMatchType(token, alt);
-        if (altMatchType !== 'none') {
-          this.totalKeywordMatches++;
-          if (altMatchType === 'stem') {
-            this.stemMatchCount++;
-          }
-          tokens.advance();
-          return true;
-        }
-      }
-    }
-
-    // Hyphen/underscore-compound fold: many keyword translations are compounds
-    // (ms `titik-henti`, es `punto-interrupción`, ru `по_умолчанию`,
-    // qu `ñawpaq_kaq`) that the tokenizers shatter into word/sep/word runs —
-    // and a segment can be ANOTHER command's keyword (ms `henti` → halt,
-    // qu `ñawpaq` → first), so the run mis-anchors that command instead.
-    // Join the run and compare it to any separator-bearing expected value;
-    // only fires after every single-token match above has failed.
-    for (const value of [patternToken.value, ...(patternToken.alternatives ?? [])]) {
-      for (const sep of ['-', '_'] as const) {
-        if (value.includes(sep) && this.tryMatchShatteredCompound(tokens, value, sep)) {
-          this.totalKeywordMatches++;
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
-  /**
    * Fold a shattered hyphen-compound run into a command action for an {action}
    * role: join `word (- word)+`, look the joined form up among the current
    * profile's command keywords (primary or alternatives, case-insensitive),
@@ -605,45 +353,6 @@ export class PatternMatcher {
     }
     tokens.reset(mark);
     return null;
-  }
-
-  /**
-   * Match a compound keyword (`titik-henti`, `по_умолчанию`) against a
-   * shattered token run (`titik` `-` `henti` / `по` `_` `умолчанию`): word
-   * segments must be identifier/keyword/particle tokens equal to the expected
-   * segments (case-insensitive; particle because prepositions like ru `по` /
-   * uk `за` lead some underscore compounds), separators lone `sep` tokens.
-   * Consumes the run on success, resets the stream on failure.
-   */
-  private tryMatchShatteredCompound(
-    tokens: TokenStream,
-    expected: string,
-    sep: '-' | '_'
-  ): boolean {
-    const segments = expected.split(sep);
-    if (segments.length < 2 || segments.some(s => s.length === 0)) return false;
-    const mark = tokens.mark();
-    for (let i = 0; i < segments.length; i++) {
-      if (i > 0) {
-        const sepToken = tokens.peek();
-        if (!sepToken || sepToken.value !== sep) {
-          tokens.reset(mark);
-          return false;
-        }
-        tokens.advance();
-      }
-      const word = tokens.peek();
-      if (
-        !word ||
-        (word.kind !== 'identifier' && word.kind !== 'keyword' && word.kind !== 'particle') ||
-        word.value.toLowerCase() !== segments[i]!.toLowerCase()
-      ) {
-        tokens.reset(mark);
-        return false;
-      }
-      tokens.advance();
-    }
-    return true;
   }
 
   /**
@@ -688,7 +397,7 @@ export class PatternMatcher {
       patternToken.role === 'method' &&
       !patternToken.optional &&
       captured.get(patternToken.role) !== before &&
-      !PatternMatcher.SWAP_STRATEGIES.has(
+      !HyperscriptValueReader.SWAP_STRATEGIES.has(
         String(
           (captured.get(patternToken.role) as { value?: unknown; raw?: unknown }).value ??
             (captured.get(patternToken.role) as { raw?: unknown }).raw ??
@@ -783,7 +492,7 @@ export class PatternMatcher {
     // A list runs on to the longest run that reads as one, whatever follows it
     // (a fused handler puts toggle's unmarked duration slot after it).
     const ends =
-      PatternMatcher.boundedByMarker(nextPatternToken) || patternToken.valueShape === 'list'
+      HyperscriptValueReader.boundedByMarker(nextPatternToken) || patternToken.valueShape === 'list'
         ? valueTailEnds(tokens.tokens, tokens.position(), this.extentContext())
         : possessiveLinkEnds(tokens.tokens, tokens.position(), this.currentProfile);
     // A style is one token, read from itself: the `the` before it (`toggle the
@@ -1011,12 +720,12 @@ export class PatternMatcher {
     const inLoop = this.currentPatternCommand === 'repeat';
     if (!inLoop && (nextPatternToken !== undefined || this.currentPatternCommand !== 'on')) return;
 
-    const words = PatternMatcher.CONDITION_OPERATOR_WORDS;
+    const words = HyperscriptValueReader.CONDITION_OPERATOR_WORDS;
     const isOperator = (t: LanguageToken): boolean => {
       const normalized = (t.normalized ?? '').toLowerCase();
       const value = t.value.toLowerCase();
       if (words.has(normalized) || words.has(value)) return true;
-      const loopOps = PatternMatcher.LOOP_CONDITION_OPERATORS;
+      const loopOps = HyperscriptValueReader.LOOP_CONDITION_OPERATORS;
       return inLoop && (loopOps.has(value) || loopOps.has(normalized));
     };
     const isOperand = (t: LanguageToken | null): t is LanguageToken =>
@@ -1286,7 +995,7 @@ export class PatternMatcher {
     // whose patient role legitimately captures it). See
     // docs-internal/HANDOFF-sov-event-anchor.md.
     if (patternToken.role === 'event' && this.currentPatternCommand === 'on') {
-      if (!PatternMatcher.tokenLooksLikeEvent(token)) {
+      if (!HyperscriptValueReader.tokenLooksLikeEvent(token)) {
         return patternToken.optional || false;
       }
       // R1 cluster C (the surviving tail of the #508 guard): a fronted
@@ -1300,14 +1009,14 @@ export class PatternMatcher {
       // legitimately captures the fronted phrase — the same fall-through
       // contract as tokenLooksLikeEvent.
       const evNorm = (token.normalized ?? token.value).toLowerCase();
-      if (PatternMatcher.POSITIONAL_OR_SCOPE_KEYWORDS.has(evNorm)) {
+      if (HyperscriptValueReader.POSITIONAL_OR_SCOPE_KEYWORDS.has(evNorm)) {
         return patternToken.optional || false;
       }
       // A hide/show strategy is never an event either. ja marks both with
       // `で`, so a bare `自分 を opacity で 隠す` (hide me with opacity) is also
       // the shape of its patient-first handler (`#x を click で 隠す`, on click
       // hide #x), and read `on opacity hide me`.
-      if (PatternMatcher.VISIBILITY_STRATEGIES.has(evNorm)) {
+      if (HyperscriptValueReader.VISIBILITY_STRATEGIES.has(evNorm)) {
         return patternToken.optional || false;
       }
       if (
@@ -1338,7 +1047,7 @@ export class PatternMatcher {
     // deliberately NOT listed — `trigger init` is a legitimate corpus event.
     if (patternToken.role === 'event') {
       const evStructNorm = (token.normalized ?? token.value).toLowerCase();
-      if (PatternMatcher.STRUCTURAL_NEVER_EVENT.has(evStructNorm)) {
+      if (HyperscriptValueReader.STRUCTURAL_NEVER_EVENT.has(evStructNorm)) {
         return patternToken.optional || false;
       }
     }
@@ -1361,7 +1070,7 @@ export class PatternMatcher {
     // `literal` (same type as `2s`), so this keyword guard is the disambiguator.
     if (patternToken.role === 'duration') {
       const norm = (token.normalized ?? token.value).toLowerCase();
-      if (PatternMatcher.POSITIONAL_OR_SCOPE_KEYWORDS.has(norm)) {
+      if (HyperscriptValueReader.POSITIONAL_OR_SCOPE_KEYWORDS.has(norm)) {
         return patternToken.optional || false;
       }
     }
@@ -1596,7 +1305,7 @@ export class PatternMatcher {
     //    the faithful path; the header's params are read separately by parseHeader.
     const skipBareCall =
       (patternToken.role === 'event' && this.currentPatternCommand === 'on') ||
-      PatternMatcher.DECLARATION_COMMANDS.has(this.currentPatternCommand ?? '') ||
+      HyperscriptValueReader.DECLARATION_COMMANDS.has(this.currentPatternCommand ?? '') ||
       this.isWrittenTarget(patternToken);
     const bareCallValue = skipBareCall ? null : this.tryMatchBareCallExpression(tokens);
     if (bareCallValue) {
@@ -1887,25 +1596,8 @@ export class PatternMatcher {
    * boundary token that belongs to the NEXT clause rather than this pattern
    * (endsClauseAt: a conjunction, `then`, or an end word that closes a block).
    */
-  private atClauseEnd(tokens: TokenStream): boolean {
+  atClauseEnd(tokens: TokenStream): boolean {
     return endsClauseAt(tokens.tokens, tokens.position(), this.currentProfile?.code ?? '');
-  }
-
-  /**
-   * Whether a pattern token (literal, or a group starting with a literal) would
-   * match the given stream token. Used to keep the event-head source-clause
-   * consumption from stealing a marker the pattern explicitly expects.
-   */
-  private patternTokenWouldMatch(pt: PatternToken | undefined, token: LanguageToken): boolean {
-    if (!pt) return false;
-    if (pt.type === 'literal') {
-      if (this.getMatchType(token, pt.value) !== 'none') return true;
-      return !!pt.alternatives?.some(a => this.getMatchType(token, a) !== 'none');
-    }
-    if (pt.type === 'group') {
-      return this.patternTokenWouldMatch(pt.tokens?.[0], token);
-    }
-    return false;
   }
 
   // POSITIONAL_KEYWORDS moved to utils/expression-lexicon (exported): the
@@ -2130,7 +1822,7 @@ export class PatternMatcher {
       words.push(word);
       prevText = word;
     }
-    for (const [phrase, follows] of PatternMatcher.RUN_PHRASES) {
+    for (const [phrase, follows] of HyperscriptValueReader.RUN_PHRASES) {
       if (phrase.every((word, i) => words[i] === word)) {
         for (let i = 0; i < phrase.length; i++) tokens.advance();
         return follows;
@@ -2241,7 +1933,7 @@ export class PatternMatcher {
    */
   private tryMatchHyphenatedWord(tokens: TokenStream): SemanticValue | null {
     const head = tokens.peek();
-    if (!PatternMatcher.isBareWordToken(head)) return null;
+    if (!HyperscriptValueReader.isBareWordToken(head)) return null;
 
     let ahead = 1;
     const parts: string[] = [head!.value];
@@ -2251,7 +1943,7 @@ export class PatternMatcher {
       if (
         !hyphen ||
         hyphen.value !== '-' ||
-        !PatternMatcher.isBareWordToken(word) ||
+        !HyperscriptValueReader.isBareWordToken(word) ||
         !tokensAdjacent(tokens.peek(ahead - 1), hyphen) ||
         !tokensAdjacent(hyphen, word)
       ) {
@@ -2378,7 +2070,7 @@ export class PatternMatcher {
 
   /** The word this language joins two pick-range endpoints with. */
   static rangeSeparatorFor(language: string): string | undefined {
-    const [first] = PatternMatcher.PICK_RANGE_SEPARATORS_BY_LANG[language] ?? [];
+    const [first] = HyperscriptValueReader.PICK_RANGE_SEPARATORS_BY_LANG[language] ?? [];
     return first;
   }
 
@@ -2391,11 +2083,12 @@ export class PatternMatcher {
    */
   private isPickRangeSeparator(token: LanguageToken): boolean {
     const norm = (token.normalized ?? token.value).toLowerCase();
-    if (PatternMatcher.PICK_RANGE_SEPARATORS.has(norm)) return true;
+    if (HyperscriptValueReader.PICK_RANGE_SEPARATORS.has(norm)) return true;
     const lang = this.currentProfile?.code;
     if (!lang) return false;
     return (
-      PatternMatcher.PICK_RANGE_SEPARATORS_BY_LANG[lang]?.has(token.value.toLowerCase()) ?? false
+      HyperscriptValueReader.PICK_RANGE_SEPARATORS_BY_LANG[lang]?.has(token.value.toLowerCase()) ??
+      false
     );
   }
   /** Trailing range-mode keywords: `pick characters 0 to 5 inclusive of #note`. */
@@ -2436,7 +2129,7 @@ export class PatternMatcher {
     const mode = tokens.peek();
     if (
       mode &&
-      PatternMatcher.PICK_RANGE_MODES.has((mode.normalized ?? mode.value).toLowerCase())
+      HyperscriptValueReader.PICK_RANGE_MODES.has((mode.normalized ?? mode.value).toLowerCase())
     ) {
       tokens.advance();
     }
@@ -3000,14 +2693,16 @@ export class PatternMatcher {
         // carry no normalized) keeps its reference behavior byte-identical.
         !(
           propertyToken.normalized &&
-          PatternMatcher.COMMAND_ACTION_KEYWORDS.has(propertyToken.normalized.toLowerCase())
+          HyperscriptValueReader.COMMAND_ACTION_KEYWORDS.has(propertyToken.normalized.toLowerCase())
         ) &&
         // Nor is a condition operator: where the pronoun `it` also heads a
         // possessive (qu `chay`, ms `ia`), `chay tupan .doh` (it matches .doh)
         // read as `it`'s property `tupan`, in a command's `when` condition.
         !(
           propertyToken.normalized &&
-          PatternMatcher.CONDITION_OPERATOR_WORDS.has(propertyToken.normalized.toLowerCase())
+          HyperscriptValueReader.CONDITION_OPERATOR_WORDS.has(
+            propertyToken.normalized.toLowerCase()
+          )
         )) ||
       (propertyToken.kind === 'selector' && propertyToken.value.startsWith('*')) ||
       (propertyToken.kind === 'selector' && propertyToken.value.startsWith('@')) ||
@@ -3092,7 +2787,7 @@ export class PatternMatcher {
         let call = '';
         let depth = 0;
         let guard = 0;
-        while (!tokens.isAtEnd() && guard++ < PatternMatcher.MAX_METHOD_ARGS + 2) {
+        while (!tokens.isAtEnd() && guard++ < HyperscriptValueReader.MAX_METHOD_ARGS + 2) {
           const t = tokens.peek();
           if (!t) break;
           call += t.value;
@@ -3345,7 +3040,7 @@ export class PatternMatcher {
     if (text.endsWith(':') || tokens.peek()?.value === ':') {
       if (!text.endsWith(':')) {
         const colon = tokens.advance()!;
-        if (!PatternMatcher.abuts(prev, colon)) {
+        if (!HyperscriptValueReader.abuts(prev, colon)) {
           tokens.reset(mark);
           return null;
         }
@@ -3363,7 +3058,7 @@ export class PatternMatcher {
       tokens.reset(mark);
       return null;
     }
-    for (let t = tokens.peek(); t && PatternMatcher.abuts(prev, t); t = tokens.peek()) {
+    for (let t = tokens.peek(); t && HyperscriptValueReader.abuts(prev, t); t = tokens.peek()) {
       text += t.value;
       prev = t;
       tokens.advance();
@@ -3398,7 +3093,7 @@ export class PatternMatcher {
     let prevEnd = open.position.end;
     let depth = 1;
     let guard = 0;
-    while (!tokens.isAtEnd() && guard++ < PatternMatcher.MAX_BRACE_RUN_TOKENS) {
+    while (!tokens.isAtEnd() && guard++ < HyperscriptValueReader.MAX_BRACE_RUN_TOKENS) {
       const t = tokens.advance();
       if (!t) break;
       if (t.position.start > prevEnd) text += ' ';
@@ -3437,7 +3132,7 @@ export class PatternMatcher {
     let prevEnd = -1;
     let depth = 0;
     let guard = 0;
-    while (!tokens.isAtEnd() && guard++ < PatternMatcher.MAX_BRACE_RUN_TOKENS) {
+    while (!tokens.isAtEnd() && guard++ < HyperscriptValueReader.MAX_BRACE_RUN_TOKENS) {
       const t = tokens.advance();
       if (!t) break;
       if (prevEnd >= 0 && t.position.start > prevEnd) {
@@ -3490,7 +3185,7 @@ export class PatternMatcher {
     let prevEnd = openParen.position?.end;
     let closed = false;
     let guard = 0;
-    while (!tokens.isAtEnd() && guard++ < PatternMatcher.MAX_METHOD_ARGS + 2) {
+    while (!tokens.isAtEnd() && guard++ < HyperscriptValueReader.MAX_METHOD_ARGS + 2) {
       const argToken = tokens.peek();
       if (!argToken) break;
       if (argToken.value === ')') {
@@ -3548,7 +3243,7 @@ export class PatternMatcher {
 
     // Consume arguments until we find ) (with depth limit for security)
     const args: string[] = [];
-    while (!tokens.isAtEnd() && args.length < PatternMatcher.MAX_METHOD_ARGS) {
+    while (!tokens.isAtEnd() && args.length < HyperscriptValueReader.MAX_METHOD_ARGS) {
       const argToken = tokens.peek();
       if (!argToken) break;
       if (argToken.kind === 'punctuation' && argToken.value === ')') {
@@ -3586,7 +3281,7 @@ export class PatternMatcher {
     const inner: LanguageToken[] = [];
     tokens.advance();
     let depth = 1;
-    while (!tokens.isAtEnd() && inner.length <= PatternMatcher.MAX_METHOD_ARGS * 4) {
+    while (!tokens.isAtEnd() && inner.length <= HyperscriptValueReader.MAX_METHOD_ARGS * 4) {
       const t = tokens.peek()!;
       tokens.advance();
       if (t.value === '(') depth++;
@@ -3601,14 +3296,14 @@ export class PatternMatcher {
       !method ||
       method.kind !== 'selector' ||
       !/^\.[A-Za-z_$][\w$]*$/.test(method.value) ||
-      !PatternMatcher.abuts(closer, method)
+      !HyperscriptValueReader.abuts(closer, method)
     ) {
       tokens.reset(mark);
       return null;
     }
     tokens.advance();
     const argsOpen = tokens.peek();
-    if (argsOpen?.value !== '(' || !PatternMatcher.abuts(method, argsOpen)) {
+    if (argsOpen?.value !== '(' || !HyperscriptValueReader.abuts(method, argsOpen)) {
       tokens.reset(mark);
       return null;
     }
@@ -3658,7 +3353,8 @@ export class PatternMatcher {
       !!next &&
       (next.value === "'" ||
         RUN_OPERATORS.has(next.value) ||
-        (PatternMatcher.abuts(closer, next) && (next.value.startsWith('.') || next.value === '(')));
+        (HyperscriptValueReader.abuts(closer, next) &&
+          (next.value.startsWith('.') || next.value === '(')));
     if (depth !== 0 || inner.length === 0 || continues) {
       tokens.reset(mark);
       return null;
@@ -3689,7 +3385,7 @@ export class PatternMatcher {
     while (!tokens.isAtEnd()) {
       const t = tokens.peek();
       if (!t) break;
-      text += (prev && !PatternMatcher.abuts(prev, t) ? ' ' : '') + t.value;
+      text += (prev && !HyperscriptValueReader.abuts(prev, t) ? ' ' : '') + t.value;
       prev = t;
       tokens.advance();
       if (t.value === '(') parenDepth++;
@@ -3732,7 +3428,8 @@ export class PatternMatcher {
     // is a variable and a class (`set :x to .item`, which it/pl/ru/uk render
     // with the value unmarked after the variable).
     if (
-      (token.kind === 'identifier' || PatternMatcher.PROPERTY_ACCESS_BASES.has(baseLower)) &&
+      (token.kind === 'identifier' ||
+        HyperscriptValueReader.PROPERTY_ACCESS_BASES.has(baseLower)) &&
       fusedFirst &&
       fusedFirst.kind === 'selector' &&
       /^\.[a-zA-Z_]/.test(fusedFirst.value) &&
@@ -3741,7 +3438,7 @@ export class PatternMatcher {
       let fusedChain = token.value;
       const fusedProps: string[] = [];
       let fusedDepth = 0;
-      while (fusedDepth < PatternMatcher.MAX_PROPERTY_DEPTH) {
+      while (fusedDepth < HyperscriptValueReader.MAX_PROPERTY_DEPTH) {
         const prop = tokens.peek();
         if (prop && prop.kind === 'selector' && /^\.[a-zA-Z_]/.test(prop.value)) {
           fusedChain += `.${prop.value.slice(1)}`;
@@ -3766,7 +3463,7 @@ export class PatternMatcher {
       const fusedIsMethodCall =
         !!fusedTrailing &&
         fusedTrailing.value.startsWith('(') &&
-        (PatternMatcher.abuts(tokens.tokens[tokens.position() - 1], fusedTrailing) ||
+        (HyperscriptValueReader.abuts(tokens.tokens[tokens.position() - 1], fusedTrailing) ||
           this.patternRest[0]?.type !== 'role');
       if (
         allowPropertyPath &&
@@ -3808,7 +3505,7 @@ export class PatternMatcher {
 
     // Continue for nested property access (e.g., userData.address.city)
     // With depth limit for security
-    while (!tokens.isAtEnd() && depth < PatternMatcher.MAX_PROPERTY_DEPTH) {
+    while (!tokens.isAtEnd() && depth < HyperscriptValueReader.MAX_PROPERTY_DEPTH) {
       const nextDot = tokens.peek();
       if (!nextDot || nextDot.kind !== 'operator' || nextDot.value !== '.') {
         break;
@@ -3835,7 +3532,7 @@ export class PatternMatcher {
       // Collect arguments (comma-separated values)
       const args: string[] = [];
       let argDepth = 0; // Track nested parentheses
-      while (!tokens.isAtEnd() && args.length < PatternMatcher.MAX_METHOD_ARGS) {
+      while (!tokens.isAtEnd() && args.length < HyperscriptValueReader.MAX_METHOD_ARGS) {
         const argToken = tokens.peek();
         if (!argToken) break;
 
@@ -4068,7 +3765,7 @@ export class PatternMatcher {
       next &&
       next.kind === 'selector' &&
       /^\.[a-zA-Z_]/.test(next.value) &&
-      chain.length < PatternMatcher.MAX_PROPERTY_DEPTH;
+      chain.length < HyperscriptValueReader.MAX_PROPERTY_DEPTH;
       next = tokens.peek()
     ) {
       chain.push(next.value.slice(1));
@@ -4083,7 +3780,7 @@ export class PatternMatcher {
     // GLUED `(` is an argument list: a spaced one is the next operand
     // (it/pl/ru/uk render `set` as `impostare in #total.innerText ( … ) * …`).
     const openParen = tokens.peek();
-    if (openParen?.value === '(' && PatternMatcher.abuts(last, openParen)) {
+    if (openParen?.value === '(' && HyperscriptValueReader.abuts(last, openParen)) {
       const args = this.consumeCallParens(tokens);
       if (args !== null) {
         return {
@@ -4096,158 +3793,6 @@ export class PatternMatcher {
     // Create property-path: #output.innerText, #d1.value.length
     return createPropertyPath(createSelector(token.value), chain.join('.'), 'dot');
   }
-
-  /**
-   * Match a group pattern token (optional sequence).
-   */
-  private matchGroupToken(
-    tokens: TokenStream,
-    patternToken: PatternToken & { type: 'group' },
-    captured: Map<SemanticRole, SemanticValue>,
-    nextPatternToken?: PatternToken
-  ): boolean {
-    const mark = tokens.mark();
-
-    // Snapshot the captured roles' VALUES, not just their keys. Clearing only
-    // the newly-added keys leaves an OVERWRITE by a failed group in place.
-    //
-    // 90 shipped patterns bind one role in TWO optional groups — every
-    // `<cmd>-event-<lang>-sov` has a pre-verb `[{destination} <marker>]` and a
-    // post-verb one, because the transformer emits the to-phrase on either side
-    // depending on the command. When the trailing group speculatively captures
-    // the next token into that role and then fails on its marker, the token
-    // stream rolls back but the corrupted value survives: ja
-    // `クリック で #panel に .active を トグル ゴミ` returned
-    // `destination="ゴミ"` with the real `#panel` captured and discarded.
-    const capturedBefore = new Map(captured);
-
-    let success = this.matchTokenSequence(tokens, patternToken.tokens, captured, nextPatternToken);
-
-    // A group that read its marker and bound no role (`take .foo from .div for
-    // #d3`: `for` matched, and the recipient slot declined `#d3`) took a word
-    // that now stands for nothing, and the clause after it lost its head.
-    if (
-      success &&
-      tokens.position() > mark.position &&
-      groupHasRole(patternToken) &&
-      [...captured].every(([role, value]) => capturedBefore.get(role) === value) &&
-      captured.size === capturedBefore.size
-    ) {
-      success = false;
-    }
-
-    // A postpositional marker group ([{destination} [e]]) can "succeed" by
-    // capturing ONLY the role: the role is optional-in-group, the trailing
-    // marker sub-group is optional too, so `.loading i 2s değiştir` binds
-    // `.loading` as the DESTINATION and the pattern then dies on `patient` —
-    // with no backtracking, the whole (correct) parse is lost. A role captured
-    // without its own marker is indistinguishable from the next slot's value,
-    // so require the marker: if this group added a role capture but none of
-    // the tokens it consumed matched a `renderRequired` marker sub-group's
-    // literal, fail the group and roll back — the value stays available for
-    // the slot that really owns it. Scoped to groups that carry a
-    // renderRequired literal-only sub-group (the generated postpositional
-    // shape); prepositional groups ([จาก {source}]) fail fast on their leading
-    // literal and never reach this.
-    //
-    // The marker is the group's LAST token: the sub-group follows the role. A
-    // marker word inside the role's own run is the value's, not the role's
-    // marker: tr `in` is also the operator (`2 dir in arr`), `a` the article
-    // (`id dir a Number`), `nin` the possessive (`length nin textContent nin
-    // #a < 4`). Counted anywhere, they let the unmarked destination take an
-    // `if` condition's tail, so `if 2 is in arr add .a end` read `if 2 add .a
-    // to is in arr end` (P54).
-    if (success) {
-      const markerLiterals: string[] = [];
-      for (const inner of patternToken.tokens) {
-        if (inner.type === 'group' && (inner as { renderRequired?: boolean }).renderRequired) {
-          for (const t of inner.tokens) {
-            if (t.type === 'literal') markerLiterals.push(t.value, ...(t.alternatives ?? []));
-          }
-        }
-      }
-      if (markerLiterals.length > 0) {
-        const addedRole = [...captured.keys()].some(role => !capturedBefore.has(role));
-        if (addedRole) {
-          const last = tokens.tokens[tokens.position() - 1] as LanguageToken | undefined;
-          const markerSeen =
-            last !== undefined &&
-            tokens.position() > mark.position &&
-            markerLiterals.some(lit => this.getMatchType(last, lit) !== 'none');
-          if (!markerSeen) success = false;
-        }
-      }
-    }
-
-    if (!success) {
-      tokens.reset(mark);
-      // Restore the pre-group capture state exactly: drop roles the failed group
-      // added, and put back the values it overwrote.
-      for (const role of captured.keys()) {
-        if (!capturedBefore.has(role)) {
-          captured.delete(role);
-        }
-      }
-      for (const [role, value] of capturedBefore) {
-        if (captured.get(role) !== value) {
-          captured.set(role, value);
-        }
-      }
-      return patternToken.optional || false;
-    }
-
-    return true;
-  }
-
-  /**
-   * Get the type of match for a token against a value.
-   * Used for confidence calculation.
-   */
-  private getMatchType(
-    token: LanguageToken,
-    value: string
-  ): 'exact' | 'normalized' | 'stem' | 'case-insensitive' | 'none' {
-    // Exact match (highest confidence)
-    if (token.value === value) return 'exact';
-
-    // Explicit keyword map normalized match (high confidence)
-    if (token.normalized === value) return 'normalized';
-
-    // Morphologically normalized stem match (medium-high confidence)
-    // Only accept if stem confidence is reasonable
-    if (token.stem === value && token.stemConfidence !== undefined && token.stemConfidence >= 0.7) {
-      return 'stem';
-    }
-
-    // Case-insensitive match for keywords (medium confidence)
-    if (token.kind === 'keyword' && token.value.toLowerCase() === value.toLowerCase()) {
-      return 'case-insensitive';
-    }
-
-    // Diacritic-insensitive match for keywords (medium confidence). Arabic
-    // harakat are OPTIONAL in the script — `بدّل` and `بَدِّل` are the same word,
-    // and a pattern literal carries whichever spelling the profile declared. The
-    // keyword map is queried diacritic-insensitively, so the token is correctly
-    // recognized; without this the surface still fails to match its own literal
-    // here, one layer later. Restricted to keywords, and `stripOptionalDiacritics`
-    // touches only Arabic-exclusive codepoints, so it is inert for every other
-    // script (Latin accents are meaning-bearing and must never be stripped).
-    if (token.kind === 'keyword') {
-      const strippedToken = stripOptionalDiacritics(token.value).toLowerCase();
-      if (strippedToken && strippedToken === stripOptionalDiacritics(value).toLowerCase()) {
-        return 'case-insensitive';
-      }
-    }
-
-    return 'none';
-  }
-
-  /**
-   * Track stem matches for confidence calculation.
-   * This is set during matching and read during confidence calculation.
-   */
-  private stemMatchCount: number = 0;
-  private totalKeywordMatches: number = 0;
 
   // ==========================================================================
   // Depth Limits for Expression Parsing (security hardening)
@@ -4303,61 +3848,13 @@ export class PatternMatcher {
    * as unwritable.
    */
   private isWrittenTarget(patternToken: PatternToken & { type: 'role' }): boolean {
-    return PatternMatcher.WRITTEN_ROLE[this.currentRoleCommand ?? ''] === patternToken.role;
+    return HyperscriptValueReader.WRITTEN_ROLE[this.currentRoleCommand ?? ''] === patternToken.role;
   }
 
   /** A lone token's value (token-value.ts). */
   private tokenToSemanticValue(token: LanguageToken): SemanticValue | null {
     return tokenValue(token);
   }
-
-  /**
-   * Apply extraction rules to fill in static values and defaults for missing
-   * roles, and re-shape captured roles that declare a `transform` (the
-   * ExtractionRule field was documented but unwired — go-qu-url-dest is the
-   * first consumer: it re-types the marker-bound capture to the expression
-   * shape the en reference produces).
-   */
-  private applyExtractionRules(
-    pattern: LanguagePattern,
-    captured: Map<SemanticRole, SemanticValue>
-  ): void {
-    for (const [role, rule] of Object.entries(pattern.extraction)) {
-      const existing = captured.get(role as SemanticRole);
-      if (existing) {
-        if (rule.transform) {
-          const raw =
-            existing.type === 'literal'
-              ? String(existing.value)
-              : String((existing as { raw?: unknown }).raw ?? '');
-          captured.set(role as SemanticRole, rule.transform(raw));
-        }
-      } else if (rule.value !== undefined) {
-        // Static value extraction (e.g., action: { value: "toggle" })
-        captured.set(
-          role as SemanticRole,
-          rule.valueIsExpression
-            ? { type: 'expression', raw: rule.value }
-            : { type: 'literal', value: rule.value }
-        );
-      } else if (rule.default) {
-        // Copied, never aliased (the rule's default object is shared across
-        // parses), and tagged implicit: materialized from the default, not
-        // captured from source text — renderers suppress implicit values only.
-        captured.set(role as SemanticRole, { ...rule.default, implicit: true });
-      }
-    }
-  }
-
-  /**
-   * Check if a pattern token is optional.
-   */
-  private isOptional(patternToken: PatternToken): boolean {
-    return patternToken.type !== 'literal' && patternToken.optional === true;
-  }
-
-  // Confidence scoring delegated to ConfidenceModel (Phase 3.3)
-  // See confidence-model.ts for DefaultConfidenceModel implementation
 
   // ===========================================================================
   // English Idiom Support - Noise Word Handling
@@ -4387,7 +3884,7 @@ export class PatternMatcher {
     const tokenLower = token.value.toLowerCase();
 
     // Check if current token is a noise word (like "the")
-    if (PatternMatcher.ENGLISH_NOISE_WORDS.has(tokenLower)) {
+    if (HyperscriptValueReader.ENGLISH_NOISE_WORDS.has(tokenLower)) {
       // `a`/`an` before an operator or the next marker is a variable (C1, C2).
       if (articleIsVariable(this.slotAt(tokens, patternToken, nextPatternToken))) return;
       // Look ahead to see if the next token is a selector or identifier
@@ -4423,7 +3920,7 @@ export class PatternMatcher {
       // positional-phrase heads, which tokenize as keywords/literals — skip it
       // so tryMatchPositionalExpression sees the positional keyword first.
       const nextNorm = nextToken ? (nextToken.normalized ?? nextToken.value).toLowerCase() : '';
-      if (nextToken && PatternMatcher.POSITIONAL_OR_SCOPE_KEYWORDS.has(nextNorm)) {
+      if (nextToken && HyperscriptValueReader.POSITIONAL_OR_SCOPE_KEYWORDS.has(nextNorm)) {
         return;
       }
 
@@ -4465,11 +3962,11 @@ export class PatternMatcher {
       // gate originally protected).
       const verbBoundary =
         this.currentProfile?.wordOrder !== 'SOV' &&
-        PatternMatcher.COMMAND_ACTION_KEYWORDS.has(afterRefNorm);
+        HyperscriptValueReader.COMMAND_ACTION_KEYWORDS.has(afterRefNorm);
       const refNounFollowedByBoundary =
         !afterRefNoun ||
         afterRefNoun.kind === 'particle' ||
-        PatternMatcher.CLAUSE_BOUNDARY_KEYWORDS.has(afterRefNorm) ||
+        HyperscriptValueReader.CLAUSE_BOUNDARY_KEYWORDS.has(afterRefNorm) ||
         verbBoundary;
       if (
         nextToken &&
@@ -4513,6 +4010,21 @@ export class PatternMatcher {
       // Skip "class" as it's just noise after a class selector
       tokens.advance();
     }
+  }
+}
+
+/**
+ * Hyperscript's pattern matcher: the skeleton (`match-skeleton.ts`) reading its
+ * values with `HyperscriptValueReader`.
+ */
+export class PatternMatcher extends MatchSkeleton {
+  constructor(confidenceModel?: ConfidenceModel) {
+    super(view => new HyperscriptValueReader(view), confidenceModel);
+  }
+
+  /** The word this language joins two pick-range endpoints with. */
+  static rangeSeparatorFor(language: string): string | undefined {
+    return HyperscriptValueReader.rangeSeparatorFor(language);
   }
 
   /**
