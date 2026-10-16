@@ -65,6 +65,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`validateSchema`; framework cannot import semantic). No test runner needed. On the 8 domains, with
   their own fixtures, it reads 3,488 of 3,488 cases as the domains' gate does, with no drift from
   their baseline.
+- **`@lokascript/framework`: the stock value reader and confidence model for domain grammars** (domains
+  rethink Phase 4.7a). `createStockReader()` (`StockValueReader`) is a `ValueReader` for the matcher's
+  skeleton: a greedy slot reads up to the next marker its pattern owes (`readGreedy`,
+  `greedyStopMarkers`), any other slot one value (`readRoleValue`: a selector, a quoted string, a number,
+  a boolean, a duration, a URL, an identifier, or a dotted or called form, checked against the slot's
+  types), a required slot never takes the marker its pattern wants next, and an optional one may be
+  skipped for it. `stockConfidenceModel` scores as the old matcher did. Both are the old matcher's code,
+  moved: `createMultilingualDSL`'s matcher calls them, and the domain gate on this build moves no case
+  and no parse. `createSchemaPatternGenerator` also takes a domain schema's `greedy`, its
+  post-verb `sovSlot` and its `markerPosition` (hyperscript's patterns: unchanged, 5,899).
 
 ## [4.6.0] - 2026-10-15
 

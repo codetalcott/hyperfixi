@@ -562,8 +562,20 @@ function buildTokens(
     ? { type: 'literal', value: keyword.primary, alternatives: keyword.alternatives }
     : { type: 'literal', value: keyword.primary };
 
-  // Get role tokens sorted by position
-  const roleTokens = buildRoleTokens(grammar, schema, profile);
+  // Get role tokens sorted by position. In SOV a role with `sovSlot: 'postVerb'`
+  // follows the verb (a domain's summarize format: `content 要約 として format`).
+  const postVerbRoles =
+    profile.wordOrder === 'SOV' ? schema.roles.filter(r => r.sovSlot === 'postVerb') : [];
+  const roleTokens = buildRoleTokens(
+    grammar,
+    postVerbRoles.length
+      ? { ...schema, roles: schema.roles.filter(r => r.sovSlot !== 'postVerb') }
+      : schema,
+    profile
+  );
+  const postVerbTokens = postVerbRoles.length
+    ? buildRoleTokens(grammar, { ...schema, roles: postVerbRoles }, profile)
+    : [];
 
   // Arrange based on word order
   switch (profile.wordOrder) {
@@ -577,6 +589,7 @@ function buildTokens(
       // Roles first (reversed for SOV), then verb
       tokens.push(...roleTokens);
       tokens.push(verbToken);
+      tokens.push(...postVerbTokens);
       break;
 
     case 'VSO':
@@ -684,6 +697,9 @@ function buildRoleToken(roleSpec: RoleSpec, profile: SchemaPatternProfile): Patt
     // keyword phrase (`using view transition`) and must not be skipped by the
     // trailing-slot verb guard.
     ...(roleSpec.valueShape !== undefined ? { valueShape: roleSpec.valueShape } : {}),
+    // A greedy role reads up to the next marker the pattern owes (a domain's
+    // SQL condition); its value reader does the reading.
+    ...(roleSpec.greedy ? { greedy: true } : {}),
   };
 
   // Required literal immediately before the role VALUE (rolePrefixLiteralVariants
@@ -717,6 +733,7 @@ function buildRoleToken(roleSpec: RoleSpec, profile: SchemaPatternProfile): Patt
       overrideMarker !== undefined && overrideMarker === roleSpec.markerOverride?.en;
     const position =
       roleSpec.markerPositionOverride?.[profile.code] ??
+      roleSpec.markerPosition ??
       defaultMarker?.position ??
       (profile.wordOrder === 'SOV' && !isPassthroughOverride ? 'after' : 'before');
     const optionalMarker = roleSpec.markerOptional?.[profile.code] === true;
@@ -786,7 +803,8 @@ function buildRoleToken(roleSpec: RoleSpec, profile: SchemaPatternProfile): Patt
         tokens: [marker],
       });
     };
-    if (defaultMarker.position === 'before') {
+    // A schema's own side for the role (a domain's `markerPosition`) outranks the profile's.
+    if ((roleSpec.markerPosition ?? defaultMarker.position) === 'before') {
       // Preposition: "on #button"
       if (defaultMarker.primary) {
         pushMarker(asMarker());

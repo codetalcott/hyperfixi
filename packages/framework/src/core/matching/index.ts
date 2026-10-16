@@ -7,3 +7,6 @@
 export { MatchSkeleton } from './match-skeleton';
 export type { MatchView, RoleSlot, ValueReader } from './value-reader';
 export type { ConfidenceBreakdown, ConfidenceContext, ConfidenceModel } from './confidence-model';
+export { StockValueReader, createStockReader, greedyStopMarkers, readGreedy } from './stock-reader';
+export { readRoleValue, type ReadingProfile } from './stock-reading';
+export { stockConfidenceModel } from './stock-confidence';
