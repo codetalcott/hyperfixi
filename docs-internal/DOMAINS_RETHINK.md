@@ -5,8 +5,8 @@ Plan, 2026-10-13. Decisions D1–D6 taken 2026-10-14 (all as recommended; D1's o
 #24, corrected by #25); Phase 3 released in 4.6.0 (2026-10-15; #1524, #1525; domains readiness #26, #28), the
 domains relocked and re-baselined on it (#29) and released as 4.0.1 (#30). Phase 4 released in 4.7.0 (2026-10-16;
 #1533–#1541, steps 1–7, 7 in two). The domains' gate runs on the kit (lokascript-domains #31); Phase 5 step 1 done
-2026-10-16 for six of the seven DSLs (lokascript-domains #32–#37), unreleased in the domains. Next: bdd into
-behaviorspec, learn on semantic (step 2), a domains release, mcp-server (step 3).
+2026-10-16 for six of the seven DSLs (lokascript-domains #32–#37), released in domains 4.1.0 (#38; this repo
+locks it, #1545). Next: bdd into behaviorspec, learn on semantic (step 2), mcp-server (step 3).
 
 Owner, 2026-10-13: "The domains pattern only works if it is built on a reliable core. We may need to rethink
 domains, instead of trying to preserve it as is." This answers M3 (e) in
