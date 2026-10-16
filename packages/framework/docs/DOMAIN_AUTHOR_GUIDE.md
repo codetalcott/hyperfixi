@@ -141,6 +141,13 @@ export const createSchema = defineCommand({
 - `argSkipTokens` (CommandSchema, optional) — identifier tokens that may appear in the parser's positional `args` but aren't bound to any role (e.g., scroll's `top|bottom|smoothly`). Schema-driven role inference skips these when scanning for a role's value.
 - `targetRole` (CommandSchema, optional) — which role consumes the parser's trailing `target` field (the `on X` / `from X` / etc. captured separately from args). Defaults to `'destination'`. Set to `'source'` for commands like `remove`.
 
+`RoleSpec` and `CommandSchema` are the one schema type every grammar shares: hyperscript's
+schemas in `@lokascript/semantic` are the same type, narrowed by its type parameters
+(`CommandSchema<Action, Role, Value, Category>`, each defaulting to the plain type a domain uses, which
+`docs/API_SURFACE.md` now prints spelled out). It also carries the fields only semantic's generator and
+matcher read today (`valueShape`, `variantOnly`, `markerOptional`, `markerLegacy`, the
+`*Variants` lists); in a domain schema they do nothing yet, and each field's doc says which code reads it.
+
 ### 3. Fill In Language Profiles
 
 Profiles define **how commands appear** in each language — keyword translations and role markers.

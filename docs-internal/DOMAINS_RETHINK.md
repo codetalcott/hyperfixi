@@ -336,7 +336,13 @@ parse-parity oracle (`packages/semantic/scripts/parse-parity.ts --check`, 27,194
 counts in each PR.
 
 1. One schema type in intent: the union of both `RoleSpec`s and `CommandSchema`s; semantic's and framework's
-   schemas typecheck against it; semantic's local types alias it.
+   schemas typecheck against it; semantic's local types alias it. **Done 2026-10-16:** intent's types take
+   `<Action, Role, Value, Category>` parameters (defaults: the plain types a domain uses); semantic's
+   `RoleSpec` is an alias, its `CommandSchema` extends the shared one with the four fields only its AST
+   builder and error docs read (`ast`, `errorCodes`, `preconditions`, `recoveryHints`), and a compile-time
+   check (`HyperscriptSchemaIsGrammarNeutral`) holds semantic's schemas assignable to the plain type
+   framework's code takes. `svoPosition`/`sovPosition` keep two directions (framework descending,
+   semantic ascending), documented on the field: step 4 makes the direction the generator's hook.
 2. The value-reader seam inside semantic's matcher, not moved yet: every value capture goes through an interface;
    hyperscript's reader is today's code behind it.
 3. Move the matcher skeleton to framework (`core/matching/`); semantic imports it and passes its reader.

@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`@lokascript/intent`: one schema type for every grammar** (domains rethink Phase 4.1). `RoleSpec` and
+  `CommandSchema` now hold the fields hyperscript's schemas use as well as the domains' (`valueShape`,
+  `variantOnly`, `markerOptional`, `markerLegacy`, `valuePrefixLiteral`; `bareKeyword`, `structuralOnly`
+  and the `omitRoleVariants` / `widenTypeVariants` / `rolePrefixLiteralVariants` / `requiredRoleVariants`
+  lists), each documented with the code that reads it, and take type parameters for a grammar's action,
+  role, value and category names. The parameters default to today's types, so a domain schema reads as
+  before; framework's `docs/API_SURFACE.md` prints them spelled out. `@lokascript/semantic`'s `RoleSpec`
+  is this type with hyperscript's names, and its `CommandSchema` extends it with the fields only its AST
+  builder and error docs read (`ast`, `errorCodes`, `preconditions`, `recoveryHints`). One field keeps two
+  meanings for now: framework's generator sorts `svoPosition` / `sovPosition` descending (higher =
+  earlier), semantic's ascending; the field doc says so.
+
 ## [4.6.0] - 2026-10-15
 
 ### Added
