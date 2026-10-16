@@ -7,11 +7,20 @@ import type {
   LanguageTokenizer,
   LanguagePattern,
   PatternMatchResult,
+  RolePatternToken,
+  TokenStream,
 } from '../core/types';
+import { extractRoleValue } from '../core/types';
 import type { CommandSchema } from '../schema';
-import { PatternMatcher, type PatternMatcherProfile } from '../core/pattern-matching';
+import { PatternMatcher } from '../core/pattern-matching';
+import { MatchSkeleton, createStockReader, stockConfidenceModel } from '../core/matching';
 import { generatePattern, type PatternGenLanguageProfile } from '../generation/pattern-generator';
 import { createDomainRenderer, type DomainRenderFn } from '../generation/renderer';
+import {
+  createSchemaPatternGenerator,
+  type SchemaPatternProfile,
+} from '../generation/schema-patterns';
+import { renderPattern, selectRenderPattern } from '../generation/pattern-render';
 import { GrammarTransformer, type LanguageProfile as GrammarProfile } from '../grammar';
 import {
   type Dictionary,
@@ -308,7 +317,11 @@ class DSLRegistry {
    *   subset of the DSL's languages. A built-in command missing a keyword stays
    *   an error, since that is a domain-authoring mistake.
    */
-  constructor(config: DSLConfig, partiallyTranslatedActions: ReadonlySet<string> = new Set()) {
+  constructor(
+    config: DSLConfig,
+    partiallyTranslatedActions: ReadonlySet<string>,
+    private readonly generate: DSLEngine['generate']
+  ) {
     this.schemas = config.schemas;
     this.partiallyTranslatedActions = partiallyTranslatedActions;
 
@@ -331,7 +344,7 @@ class DSLRegistry {
       ) {
         continue; // this extension command was not translated into this language
       }
-      const pattern = generatePattern(schema, lang.patternProfile);
+      const pattern = this.generate(schema, lang.patternProfile);
       patterns.push(pattern);
     }
 
@@ -356,7 +369,7 @@ class DSLRegistry {
  */
 class MultilingualDSLImpl implements MultilingualDSL {
   private registry: DSLRegistry;
-  private matcher: PatternMatcher;
+  private match: DSLEngine['match'];
   private transformer: GrammarTransformer;
   private profileProvider: ProfileProvider;
   private codeGenerator?: CodeGenerator;
@@ -369,10 +382,11 @@ class MultilingualDSLImpl implements MultilingualDSL {
     config: DSLConfig,
     registry: DSLRegistry,
     transformer: GrammarTransformer,
-    profileProvider: ProfileProvider
+    profileProvider: ProfileProvider,
+    engine: DSLEngine
   ) {
     this.registry = registry;
-    this.matcher = new PatternMatcher();
+    this.match = engine.match;
     this.transformer = transformer;
     this.profileProvider = profileProvider;
     if (config.codeGenerator) {
@@ -390,10 +404,7 @@ class MultilingualDSLImpl implements MultilingualDSL {
     // Last resort for render(): covers extension commands with no custom
     // renderer, and any built-in action the domain renderer declines. Lazy, so
     // a DSL that never renders pays nothing.
-    this.schemaFallbackRenderer = createDomainRenderer({
-      schemas: config.schemas,
-      profiles: config.languages.map(l => l.patternProfile),
-    });
+    this.schemaFallbackRenderer = engine.fallbackRenderer(config, registry);
 
     // Build SchemaLookup from config schemas for explicit syntax validation
     const schemaMap = new Map(config.schemas.map(s => [s.action, s]));
@@ -430,11 +441,6 @@ class MultilingualDSLImpl implements MultilingualDSL {
     // Get patterns for language
     const patterns = this.registry.getPatterns(language);
 
-    // Create profile for matcher
-    const profile: PatternMatcherProfile = {
-      code: language,
-    };
-
     // Every pattern is tried, and only a match that reads the WHOLE input counts; of those, the
     // highest priority wins, then the highest confidence, then the earliest pattern. The first match
     // used to win however much it read, so a trailing word was dropped without a word (the domain
@@ -445,7 +451,7 @@ class MultilingualDSLImpl implements MultilingualDSL {
     let longestPartial: PatternMatchResult | null = null;
     for (const pattern of patterns) {
       const mark = tokens.mark();
-      const match = this.matcher.matchPattern(tokens, pattern, profile);
+      const match = this.match(tokens, pattern, language);
       tokens.reset(mark);
       if (!match) continue;
       if (match.consumedTokens < total) {
@@ -830,6 +836,117 @@ export function createMultilingualDSL(config: DSLConfig): MultilingualDSL {
   });
 
   // Create registry and implementation
-  const registry = new DSLRegistry(effectiveConfig, extensionActions);
-  return new MultilingualDSLImpl(effectiveConfig, registry, transformer, profileProvider);
+  const engine = firstEngine();
+  const registry = new DSLRegistry(effectiveConfig, extensionActions, engine.generate);
+  return new MultilingualDSLImpl(effectiveConfig, registry, transformer, profileProvider, engine);
+}
+
+// =============================================================================
+// The engines: how a DSL turns its schemas into patterns and reads with them
+// =============================================================================
+
+/**
+ * What differs between `createMultilingualDSL` and `createGrammarDSL`: how each
+ * command's pattern is generated, how input is matched against it, and the
+ * renderer `render()` falls back to. Parsing's whole-input rule, refusals,
+ * translation's read-back, compile, explicit syntax and extensions are shared.
+ */
+interface DSLEngine {
+  generate(schema: CommandSchema, profile: PatternGenLanguageProfile): LanguagePattern;
+  match(tokens: TokenStream, pattern: LanguagePattern, language: string): PatternMatchResult | null;
+  fallbackRenderer(config: DSLConfig, registry: DSLRegistry): DomainRenderFn;
+}
+
+/** framework's first generator and matcher, and its schema renderer (`createMultilingualDSL`). */
+function firstEngine(): DSLEngine {
+  const matcher = new PatternMatcher();
+  return {
+    generate: (schema, profile) => generatePattern(schema, profile),
+    match: (tokens, pattern, language) => matcher.matchPattern(tokens, pattern, { code: language }),
+    fallbackRenderer: config =>
+      createDomainRenderer({
+        schemas: config.schemas,
+        profiles: config.languages.map(l => l.patternProfile),
+      }),
+  };
+}
+
+/**
+ * A domain profile as the schema-pattern generator reads it: every role marker
+ * with a side (the word order's default where the profile names none).
+ */
+function schemaProfileOf(profile: PatternGenLanguageProfile): SchemaPatternProfile {
+  const side = profile.wordOrder === 'SOV' ? 'after' : 'before';
+  const roleMarkers: Record<string, NonNullable<SchemaPatternProfile['roleMarkers'][string]>> = {};
+  for (const [role, marker] of Object.entries(profile.roleMarkers ?? {})) {
+    roleMarkers[role] = {
+      primary: marker.primary,
+      ...(marker.alternatives ? { alternatives: marker.alternatives } : {}),
+      position: marker.position ?? side,
+    };
+  }
+  return {
+    code: profile.code,
+    wordOrder: profile.wordOrder,
+    keywords: profile.keywords,
+    roleMarkers,
+  };
+}
+
+/** The core (domains rethink Phase 4): the schema-pattern generator, the skeleton, the stock reader. */
+function coreEngine(): DSLEngine {
+  const generator = createSchemaPatternGenerator({ positionOrder: 'descending' });
+  const matcher = new MatchSkeleton(createStockReader(), stockConfidenceModel);
+  return {
+    generate: (schema, profile) => generator.generatePattern(schema, schemaProfileOf(profile)),
+    match: (tokens, pattern) => matcher.matchPattern(tokens, pattern),
+    fallbackRenderer: (config, registry) => {
+      const schemas = new Map(config.schemas.map(s => [s.action, s]));
+      const hooks = {
+        hasRealRole: (node: SemanticNode, role: string) => {
+          const value = node.roles.get(role) as { implicit?: unknown } | undefined;
+          return value !== undefined && value.implicit !== true;
+        },
+        writeRole: (token: RolePatternToken, node: SemanticNode) => {
+          if (!node.roles.has(token.role)) return null;
+          let value = extractRoleValue(node, token.role);
+          const spec = schemas.get(node.action)?.roles.find(r => r.role === token.role);
+          if (spec?.quoteMultiword && /\s/.test(value) && !/^(["']).*\1$/.test(value)) {
+            value = `"${value}"`;
+          }
+          return value || null;
+        },
+      };
+      return (node, language) => {
+        const patterns = registry.getPatterns(language).filter(p => p.command === node.action);
+        const pattern = selectRenderPattern(node, patterns, hooks);
+        if (!pattern) return null;
+        const text = renderPattern(node, pattern, hooks).join(' ');
+        return text || null;
+      };
+    },
+  };
+}
+
+/**
+ * Create a multilingual DSL on the core (domains rethink Phase 4.7): the same
+ * config and the same `MultilingualDSL` as `createMultilingualDSL`, read and
+ * written by the core semantic's hyperscript parser runs — patterns from
+ * `createSchemaPatternGenerator` (positions descending, as a domain's schemas
+ * read), matched by `MatchSkeleton` with the stock reader and confidence model,
+ * and, where the domain's own renderer declines, rendered through those
+ * patterns (`selectRenderPattern` / `renderPattern`). A domain moves to it by
+ * swapping the factory (Phase 5, one domain at a time, against the domain
+ * gate); `createMultilingualDSL` stays until no domain uses it.
+ */
+export function createGrammarDSL(config: DSLConfig): MultilingualDSL {
+  const effectiveConfig = applyExtensions(config);
+  const extensionActions = new Set((config.extensions ?? []).map(e => e.schema.action));
+  const dictionary = effectiveConfig.dictionary ?? createDefaultDictionary(effectiveConfig);
+  const profileProvider =
+    effectiveConfig.profileProvider ?? createDefaultProfileProvider(effectiveConfig);
+  const transformer = new GrammarTransformer({ dictionary, profileProvider });
+  const engine = coreEngine();
+  const registry = new DSLRegistry(effectiveConfig, extensionActions, engine.generate);
+  return new MultilingualDSLImpl(effectiveConfig, registry, transformer, profileProvider, engine);
 }

@@ -13,12 +13,18 @@
  *   `#dialog.showModal()`), checked against the slot's expected types.
  * - A **required** slot reads nothing where the stream is at the marker the
  *   pattern wants next (the old matcher's guard against an SOV marker taken as
- *   a value).
+ *   a value). Where a required slot finds nothing to read, and the optional,
+ *   marker-less slot just before it read a value with nothing read since, that
+ *   value is given back and the required slot reads again (the old matcher's
+ *   backtrack: behaviorspec `when clicks`, where the optional actor took
+ *   `clicks`; flow `orders として 取得変数`, where the optional patient took
+ *   `orders`).
  * - An **optional** slot may be skipped for a token the pattern wants next, the
  *   skip kept only when the rest of the pattern then reads to the end.
  */
 
 import type {
+  StreamMark,
   LanguagePattern,
   LanguageToken,
   PatternToken,
@@ -85,6 +91,8 @@ export function readGreedy(
 /** The stock reader, for a matcher whose profiles it may consult (possessive words). */
 export class StockValueReader implements ValueReader {
   private profile: ReadingProfile | undefined;
+  /** The last optional, marker-less slot that read a value: what a failing required slot may take back. */
+  private lastOptional: { role: SemanticRole; start: StreamMark; end: number } | undefined;
 
   constructor(
     private readonly view: MatchView,
@@ -93,6 +101,7 @@ export class StockValueReader implements ValueReader {
 
   beginPattern(pattern: LanguagePattern): void {
     this.profile = this.profiles[pattern.language] ?? { code: pattern.language };
+    this.lastOptional = undefined;
   }
 
   readRole(
@@ -101,9 +110,40 @@ export class StockValueReader implements ValueReader {
     captured: Map<SemanticRole, SemanticValue>,
     next: PatternToken | undefined
   ): boolean {
+    const start = tokens.mark();
+    if (this.readOnce(tokens, slot, captured, next, true)) {
+      if (!slot.optional) {
+        this.lastOptional = undefined;
+      } else if (
+        captured.has(slot.role) &&
+        tokens.position() > start.position &&
+        !this.view.slotAfterLiteral() &&
+        next?.type !== 'literal'
+      ) {
+        this.lastOptional = { role: slot.role, start, end: tokens.position() };
+      }
+      return true;
+    }
+    const before = this.lastOptional;
+    if (slot.optional || !before || before.end !== tokens.position()) return false;
+    // Give the optional slot's value back and read this one from there.
+    this.lastOptional = undefined;
+    tokens.reset(before.start);
+    captured.delete(before.role);
+    return this.readOnce(tokens, slot, captured, next, false);
+  }
+
+  /** One read of `slot`; `guard` refuses a required slot the marker the pattern wants next. */
+  private readOnce(
+    tokens: TokenStream,
+    slot: RoleSlot,
+    captured: Map<SemanticRole, SemanticValue>,
+    next: PatternToken | undefined,
+    guard: boolean
+  ): boolean {
     // A required slot never takes the marker the pattern wants next as its
     // value (`v0x を 実行`: `を` is the marker, not the patient).
-    if (!slot.optional && next?.type === 'literal') {
+    if (guard && !slot.optional && next?.type === 'literal') {
       const token = tokens.peek();
       if (token && this.view.wouldMatch(next, token)) return false;
     }
