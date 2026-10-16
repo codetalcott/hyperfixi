@@ -3,9 +3,10 @@
 Plan, 2026-10-13. Decisions D1–D6 taken 2026-10-14 (all as recommended; D1's open rows below). Phase 1 done
 2026-10-15 (lokascript-domains #21 = 4.0.0, this repo #1521); Phase 2 done 2026-10-15 (lokascript-domains #23,
 #24, corrected by #25); Phase 3 released in 4.6.0 (2026-10-15; #1524, #1525; domains readiness #26, #28), the
-domains relocked and re-baselined on it (#29) and released as 4.0.1 (#30). Phase 4 done 2026-10-16 (#1533–#1540:
-steps 1–7, 7 in two), unreleased. Next: the framework minor release (owner), then the domains'
-switch to the gate kit (step 6) and Phase 5.
+domains relocked and re-baselined on it (#29) and released as 4.0.1 (#30). Phase 4 released in 4.7.0 (2026-10-16;
+#1533–#1541, steps 1–7, 7 in two). The domains' gate runs on the kit (lokascript-domains #31); Phase 5 step 1 done
+2026-10-16 for six of the seven DSLs (lokascript-domains #32–#37), unreleased in the domains. Next: bdd into
+behaviorspec, learn on semantic (step 2), a domains release, mcp-server (step 3).
 
 Owner, 2026-10-13: "The domains pattern only works if it is built on a reliable core. We may need to rethink
 domains, instead of trying to preserve it as is." This answers M3 (e) in
@@ -391,8 +392,8 @@ counts in each PR.
    take the validator as `validateSchema` (the domains pass semantic's `validateCommandSchema`). Measured
    against the domains repo at 4.0.1: the kit reads 3,488 of 3,488 cases exactly as `gate/round-trip.ts`
    does, 0 drift from `baselines/round-trip.json`; the linter's result on sql is identical to the
-   toolkit's. The domains' switch (their gate and eight lint tests import the kit; domain-toolkit and the
-   gate's copy go) needs this framework on npm: it is the first domains PR after the next release.
+   toolkit's. **The domains' switch done 2026-10-16** (lokascript-domains #31, on 4.7.0): their gate (440 → 109
+   lines) and eight lint tests import the kit, domain-toolkit is deleted; 0 cases and 0 parses moved.
 7. The stock value readers, `greedy` among them, each with tests; a new factory on the core beside
    `createMultilingualDSL` (its name chosen in step 2's design). **7a done 2026-10-16** (two PRs: 7a the readers, 7b the
    factory): `core/matching/stock-reading.ts` (the old matcher's value reading, moved: `readRoleValue` and its
@@ -417,7 +418,20 @@ counts in each PR.
 via `pack-smoke.sh UPSTREAM_TARBALLS` until it is published).
 
 1. sql first, then llm, flow, behaviorspec (absorbing bdd's commands and tests), voice and todo. No gate pair may get worse; the target is every pair `pass` or a listed refusal with a
-   reason; the snapshot shows each domain's changed parses for review.
+   reason; the snapshot shows each domain's changed parses for review. **Done 2026-10-16 except bdd**
+   (lokascript-domains #32 sql, #33 llm, #34 flow, #35 voice, #36 todo, #37 behaviorspec; one line each,
+   `engine: 'core'`, framework `^4.7.0`, the aggregate's framework peer `^4.7.0`). Gate on 4.7.0: 0 worse anywhere;
+   sql, llm, flow, voice and todo case for case and parse for parse as before; behaviorspec 30 better (306 → 336:
+   `when <action>` with no actor in ja, ko, tr). Each domain's golden pattern test now pins the patterns its DSL
+   reads with (from its registry), not `generatePatternVariants`: they differ in the template's bracket notation,
+   in optional marker-less roles wrapped in an optional group, and in voice's ar `renderOverride: ''` markers
+   (`renderSuppress`). The switch found two truncations the classic engine's marker scan hid (it skipped words
+   on its way to a marker and counted them read, so Phase 3's whole-input rule passed): behaviorspec `when user
+   types 'hello' into #search` compiled to `fill('')`, and todo `add buy milk to groceries` added `buy`. The core
+   refuses both; the typed text is `target` (`types on 'hello'`), a multi-word item is quoted. Left: bdd into
+   behaviorspec; the 164 accepted leftover cases in open-text roles (unchanged; owner's rule); whether todo's
+   item and behaviorspec's typed text read unmarked (owner). Re-check in lokascript-domains: `npm run build &&
+   npm run gate:regen --prefix packages/domains` prints each domain's counts and the drift from the baseline.
 2. learn on semantic (D2): the commanding form from `render`, learn's narrating forms and glosses around it.
 3. mcp-server's tools follow (D6), in this repo.
 4. Downstream: lokascript-learn from 2.x to the current line, checking its pages on the live site after the bump;
