@@ -36,6 +36,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `PatternMatchResult.roleStarts` / `eventSource`). `createMultilingualDSL` still uses its own matcher.
   Every hyperscript parse is unchanged (27,194 checked); semantic's browser bundles grew ~150 bytes
   gzipped.
+- **`@lokascript/framework`: `createSchemaPatternGenerator`** (domains rethink Phase 4.4), the pattern
+  generator semantic's hyperscript parser runs, moved from `@lokascript/semantic`: the main pattern per
+  command and language and its variants (simple, omit-role, widened-type, required-role, SOV verb-first,
+  value-prefix-literal), with the grammar's hook `positionOrder` (`'ascending'`: hyperscript's 1-based
+  positions; `'descending'`: a domain's, as framework's `generatePattern` reads them). Also exported:
+  `withoutVariantOnlyRoles`, `resolveMarkerForRole`, `schemaMarkerAlternatives`,
+  `legacyMarkerAlternatives`. semantic's `generatePattern` / `generatePatternVariants` / … keep their
+  names and signatures over it; its fused event-handler patterns stay in semantic. Every generated
+  pattern in all 24 languages is byte-identical (5,899), and every parse unchanged (27,194).
 
 ## [4.6.0] - 2026-10-15
 

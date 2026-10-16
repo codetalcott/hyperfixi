@@ -359,7 +359,16 @@ counts in each PR.
    skeleton's results with them. The skeleton takes its confidence model as a required argument: semantic's
    `DefaultConfidenceModel` reads hyperscript's schemas, so it stays in semantic. Bundles: semantic's
    browser bundles +~950 bytes raw, ~150 gzipped (the seam, not a duplicate).
-4. Move semantic's pattern generator to framework behind grammar hooks.
+4. Move semantic's pattern generator to framework behind grammar hooks. **Done 2026-10-16:** framework's
+   `generation/schema-patterns.ts`, `createSchemaPatternGenerator({ positionOrder })`: the one hook so far
+   is the position direction (`'ascending'` for hyperscript, `'descending'` for a domain, each with its old
+   missing-position rule). Profiles are read through `SchemaPatternProfile` (code, word order, keywords,
+   role markers, `markersOptional`), which both semantic's and a domain's profile satisfy. Hyperscript's
+   fused event-handler patterns (`event-handlers-sov/vso.ts`, 1,900 lines) stay in semantic. A second
+   oracle beside parse-parity hashes every pattern each language's parser uses (`getPatternsForLanguage`
+   × 24, `generateAllPatterns`: 5,899): 0 differ, and 25/25 when the direction is flipped. Not yet in the
+   new generator: the domains' `greedy` capture and `sovSlot: 'postVerb'` (framework's old generator has
+   both); step 7 adds them with the domain factory.
 5. Move the schema-driven renderer core and the generic half of `explicit/lossy.ts` (unread input, read-back) to
    framework; semantic keeps its verbatim-value list and `verified-render`'s collision rule as grammar hooks.
 6. The round-trip gate kit into `packages/framework/src/testing/`, with toolkit's lint rules; the domain gate
