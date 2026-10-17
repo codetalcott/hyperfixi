@@ -175,6 +175,11 @@ export interface RolePatternToken {
   readonly expectedTypes?: Array<ExpectedType>;
   readonly greedy?: boolean;
   /**
+   * The words the slot reads, from the schema's `RoleSpec.words` for the pattern's language (its
+   * `'*'` list and the language's own): the stock reader reads the slot only from one of them.
+   */
+  readonly words?: readonly string[];
+  /**
    * Mirrors the schema's `RoleSpec.valueShape`: the slot's surface form is
    * unambiguous on its own. Carried onto the pattern token because the value
    * reader needs it too, not just the confidence model (hyperscript's

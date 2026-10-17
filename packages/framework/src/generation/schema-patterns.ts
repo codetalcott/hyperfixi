@@ -382,11 +382,13 @@ function generateVerbFirstPattern(
   // verb-first, which is exactly this shape (trailing particle tolerated).
   const roleTokens: PatternToken[] = requiredRoles.flatMap(r => {
     const prefix = r.valuePrefixLiteral?.[profile.code];
+    const words = wordsFor(r, profile.code);
     const roleToken: PatternToken = {
       type: 'role',
       role: r.role,
       optional: false,
       expectedTypes: r.expectedTypes,
+      ...(words ? { words } : {}),
     };
     return prefix ? [{ type: 'literal', value: prefix } as PatternToken, roleToken] : [roleToken];
   });
@@ -673,6 +675,13 @@ function buildRoleTokens(
  * use — a hand-rolled copy there is what let the two drift apart in the first
  * place (see `appendRemainingOptionalRoles` in event-handlers-sov.ts).
  */
+/** The words a role reads in `language` (`RoleSpec.words`: its `'*'` list and the language's own). */
+function wordsFor(roleSpec: RoleSpec, language: string): readonly string[] | undefined {
+  if (!roleSpec.words) return undefined;
+  const words = [...(roleSpec.words['*'] ?? []), ...(roleSpec.words[language] ?? [])];
+  return words.length > 0 ? words : undefined;
+}
+
 function buildRoleToken(roleSpec: RoleSpec, profile: SchemaPatternProfile): PatternToken[] {
   const tokens: PatternToken[] = [];
 
@@ -686,6 +695,7 @@ function buildRoleToken(roleSpec: RoleSpec, profile: SchemaPatternProfile): Patt
   // `fetch "/api"`). Tag the emitted marker literal so the renderer skips it;
   // the pattern matcher ignores the flag, so parsing is unchanged.
   const suppressMarker = roleSpec.renderOverride?.[profile.code] === '';
+  const words = wordsFor(roleSpec, profile.code);
 
   // Role value token
   const roleValueToken: PatternToken = {
@@ -700,6 +710,8 @@ function buildRoleToken(roleSpec: RoleSpec, profile: SchemaPatternProfile): Patt
     // A greedy role reads up to the next marker the pattern owes (a domain's
     // SQL condition); its value reader does the reading.
     ...(roleSpec.greedy ? { greedy: true } : {}),
+    // A role with a word list reads only one of its words.
+    ...(words ? { words } : {}),
   };
 
   // Required literal immediately before the role VALUE (rolePrefixLiteralVariants

@@ -221,6 +221,14 @@ export interface RoleSpec<Role extends string = SemanticRole, Value = SemanticVa
    */
   readonly greedy?: boolean;
   /**
+   * The words this role reads, per language: `'*'` lists the words every language reads, and a
+   * language's own list adds to it. A slot with a list reads only one of its words (compared
+   * lower-cased), so a word the grammar does not know is left unread, and the input refused, rather
+   * than read as the value: behaviorspec's interaction word (`when clicks zzqx` is not actor
+   * `clicks`, action `zzqx`), voice's thing to close. (framework's core engine.)
+   */
+  readonly words?: Readonly<Record<string, readonly string[]>>;
+  /**
    * Restricts which selector subtypes are valid for this role.
    * Only meaningful when expectedTypes includes 'selector'.
    * If omitted, all selector kinds are accepted.
