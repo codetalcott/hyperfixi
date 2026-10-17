@@ -234,7 +234,7 @@ The **93** tools below, plus the **5** GRAIL tools above, total **98** defined. 
 
 ### Domain DSL Tools (28)
 
-Each of the 7 domains exposes `parse_`, `compile_`, `validate_`, and `translate_` tools (7 × 4 = 28). bdd's tools left with domains 4.2.0: behaviorspec reads its preconditions, actions and assertions. Language coverage comes in three tiers:
+Each of the 7 domains exposes `parse_`, `compile_`, `validate_`, and `translate_` tools (7 × 4 = 28). bdd's tools left with domains 4.2.0 and bdd itself with domains 5.0.0: behaviorspec reads its preconditions, actions and assertions. Language coverage comes in three tiers:
 
 - **Bridge (11):** en, es, ja, ar, ko, zh, tr, fr, de, pt, ru
 - **Classic (8):** en, es, ja, ar, ko, zh, tr, fr

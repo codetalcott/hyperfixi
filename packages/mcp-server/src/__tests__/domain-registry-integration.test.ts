@@ -10,7 +10,7 @@ import {
 // =============================================================================
 
 describe('DomainRegistry Integration', () => {
-  it('registers 7 domains: bdd is left out, behaviorspec reads its forms (domains 4.2.0)', () => {
+  it('registers 7 domains: bdd is gone, behaviorspec reads its forms (domains 5.0.0)', () => {
     const registry = createDomainRegistry();
     const names = registry.getDomainNames().sort();
     expect(names).toEqual(['behaviorspec', 'flow', 'learn', 'llm', 'sql', 'todo', 'voice']);

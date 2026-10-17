@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`@hyperfixi/mcp-server`: on `@lokascript/domains` 5.0.0** (domains rethink Phase 6), which deletes
+  bdd and peers framework, semantic and intent `^5.0.0`. The server registers every domain (no
+  `omit`); the same seven domains and 28 domain tools as 5.0.0. framework's and server-bridge's
+  dev dependency follows (`^5.0.0`).
+
 ## [5.0.0] - 2026-10-17
 
 A renumber for everything but `@lokascript/framework`, whose classic DSL engine is removed: every

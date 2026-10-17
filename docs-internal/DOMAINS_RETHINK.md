@@ -524,7 +524,8 @@ via `pack-smoke.sh UPSTREAM_TARBALLS` until it is published).
 delete `core/pattern-matching/` and the `'classic'` engine (`engine: 'core'` stays accepted, so the domains
 build unchanged), by the renumber-only major procedure
 (pack, prove domains, domains patch peering `^old || ^new`, bump the range here, publish). Close M3 (e).
-**Merged 2026-10-17, unreleased** (#1552; lokascript-domains #47):
+**Released 2026-10-17**: hyperfixi 5.0.0 (#1552; changelog #1556, bump #1558) and domains 5.0.0
+(lokascript-domains #47, #51):
 - framework (5.0, breaking): the classic matcher (`PatternMatcher`, `matchPattern`, `matchBest`, the
   `./core/pattern-matching` subpath), the classic generator (`generatePattern`, `generatePatternVariants`) and
   `engine: 'classic'` (throws, naming the core) are gone; the core is the default. **The schema renderer stays**
@@ -536,9 +537,17 @@ build unchanged), by the renumber-only major procedure
   peers framework `^4.8.0 || ^5.0.0`, intent/semantic `^4.0.0 || ^5.0.0`. Proven on framework/semantic/intent
   packed at 5.0.0: every domains suite (3096) and typecheck with only the 5.0.0 copies installed, `pack:smoke`,
   `gate:upstream` 0 worse / 0 better / 0 moved.
-- Release order (owner): domains 4.2.1 (the bridge) → this repo relocks mcp-server on it → hyperfixi 5.0.0
-  (`check-domains-peer-major` holds it until the relock) → domains 5.0.0 deletes bdd (its major tracks
-  framework's; `validate-versions`).
+- Released in this order: domains 4.2.1 (the bridge; #48) → this repo relocked mcp-server on it (#1555) →
+  hyperfixi 5.0.0 (the peer guard passed on 4.2.1's `^4.8.0 || ^5.0.0`; smoke green) → domains 5.0.0 (#51:
+  bdd deleted, peers `^5.0.0`; the gate on framework 5.0.0 moved 0 parses) → this repo on domains `^5.0.0`
+  without `omit: ['bdd']`. With bdd gone no domain has a silent round trip.
+- Between them, domains 4.3.0 (#49, #50) fixed a silent bug the gate could not see: voice compared a
+  direction with its English name only, so every non-English `scroll up` scrolled down and `zoom menos`
+  zoomed in (the gate's values are English words, which the renderer wrote untranslated). Directions are
+  now read and written in each language, zoom's is optional (ar/ko/tr/fr "zoom in" verbs read alone), and
+  ko navigate reads `으로`. Also: server-bridge reads upstream's `with {method:'POST'}` (#1554);
+  lokascript-learn and lokascript-examples are on domains 4.3.0 (learn's narrating `set` was "the system
+  sets to 10 :count" on 4.2.0).
 
 ## Gates per phase
 
