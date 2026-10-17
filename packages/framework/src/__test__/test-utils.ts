@@ -15,7 +15,7 @@ import type {
   PatternMatchResult,
 } from '../core/types';
 import type { CommandSchema, RoleSpec } from '../schema';
-import type { PatternGenLanguageProfile } from '../generation/pattern-generator';
+import type { PatternGenLanguageProfile } from '../generation/profile';
 import type { LanguageConfig, MultilingualDSL } from '../api';
 import { TokenStreamImpl, createToken, createPosition } from '../core/tokenization';
 import { createMultilingualDSL } from '../api';

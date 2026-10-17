@@ -5,7 +5,7 @@
  * Used by pattern-matcher to validate captured role values.
  */
 
-import type { SemanticValue } from '../../types';
+import type { SemanticValue } from '../types';
 
 /**
  * Semantic value type strings.

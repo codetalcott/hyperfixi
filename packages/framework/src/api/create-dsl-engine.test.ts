@@ -1,9 +1,8 @@
 /**
- * `engine: 'core'` (domains rethink Phase 4.7): the same config and DSL as the
- * classic engine, read by the core. framework's SQL fixture reads, compiles and
- * translates as it does on the classic engine, refuses what it does not read,
- * and renders through its own patterns where no renderer is configured. A role
- * with a word list reads only its words.
+ * The core engine (domains rethink Phase 4.7), the only engine since 5.0. framework's SQL fixture
+ * reads, compiles and translates as the classic engine did (its readings and translations below
+ * were taken from the classic engine on 4.8), refuses what it does not read, and renders through
+ * its own patterns where no renderer is configured. A role with a word list reads only its words.
  */
 import { describe, expect, it, vi } from 'vitest';
 import { createMultilingualDSL, UnreadInputError, type DSLConfig } from './create-dsl';
@@ -11,22 +10,15 @@ import { defineCommand, defineRole } from '../schema';
 import { BaseTokenizer, getDefaultExtractors } from '../index';
 import { sqlDSLConfig, testQueries, expectedSQL } from '../__test__/fixtures/sql-dsl';
 import type { SemanticNode } from '../core/types';
-import { generatePattern } from '../generation/pattern-generator';
 import { createSchemaPatternGenerator } from '../generation/schema-patterns';
 
-// Pass-through spies. On the SQL fixture the two engines read, compile and render alike, so
-// these are what show which engine a DSL was built on.
-vi.mock('../generation/pattern-generator', async importOriginal => {
-  const actual = await importOriginal<typeof import('../generation/pattern-generator')>();
-  return { ...actual, generatePattern: vi.fn(actual.generatePattern) };
-});
+// A pass-through spy: what shows a DSL was built on the core.
 vi.mock('../generation/schema-patterns', async importOriginal => {
   const actual = await importOriginal<typeof import('../generation/schema-patterns')>();
   return { ...actual, createSchemaPatternGenerator: vi.fn(actual.createSchemaPatternGenerator) };
 });
 
-const core = createMultilingualDSL({ ...sqlDSLConfig(), engine: 'core' });
-const classic = createMultilingualDSL(sqlDSLConfig());
+const core = createMultilingualDSL(sqlDSLConfig());
 
 const reading = (node: SemanticNode) =>
   [
@@ -37,23 +29,54 @@ const reading = (node: SemanticNode) =>
     ),
   ].join(' ');
 
-describe("createMultilingualDSL with engine: 'core'", () => {
+describe('createMultilingualDSL on the core engine', () => {
+  // [language, input, SQL, reading, translation] — the reading and translation the classic engine gave.
   const queries = [
-    ['en', testQueries.english.simple, expectedSQL.simple],
-    ['en', testQueries.english.withWhere, expectedSQL.withWhere],
-    ['es', testQueries.spanish.simple, 'SELECT nombre FROM usuarios'],
-    ['es', testQueries.spanish.withWhere, 'SELECT nombre FROM usuarios WHERE edad > 18'],
+    [
+      'en',
+      testQueries.english.simple,
+      expectedSQL.simple,
+      'select columns=name source=users',
+      'seleccionar name de users',
+    ],
+    [
+      'en',
+      testQueries.english.withWhere,
+      expectedSQL.withWhere,
+      'select columns=name source=users condition=age > 18',
+      'seleccionar name de users donde age > 18',
+    ],
+    [
+      'es',
+      testQueries.spanish.simple,
+      'SELECT nombre FROM usuarios',
+      'select columns=nombre source=usuarios',
+      'select nombre from usuarios',
+    ],
+    [
+      'es',
+      testQueries.spanish.withWhere,
+      'SELECT nombre FROM usuarios WHERE edad > 18',
+      'select columns=nombre source=usuarios condition=edad > 18',
+      'select nombre from usuarios where edad > 18',
+    ],
   ] as const;
 
-  it.each(queries)('reads and compiles %s `%s` as the classic engine does', (lang, input, sql) => {
-    expect(reading(core.parse(input, lang))).toBe(reading(classic.parse(input, lang)));
-    expect(core.compile(input, lang).code).toBe(sql);
-  });
+  it.each(queries)(
+    'reads and compiles %s `%s` as the classic engine did',
+    (lang, input, sql, read) => {
+      expect(reading(core.parse(input, lang))).toBe(read);
+      expect(core.compile(input, lang).code).toBe(sql);
+    }
+  );
 
-  it.each(queries)('translates %s `%s` as the classic engine does', (lang, input) => {
-    const to = lang === 'en' ? 'es' : 'en';
-    expect(core.translate(input, lang, to)).toBe(classic.translate(input, lang, to));
-  });
+  it.each(queries)(
+    'translates %s `%s` as the classic engine did',
+    (lang, input, _sql, _read, translated) => {
+      const to = lang === 'en' ? 'es' : 'en';
+      expect(core.translate(input, lang, to)).toBe(translated);
+    }
+  );
 
   it('refuses input it does not read', () => {
     expect(() => core.parse('select name from users banana', 'en')).toThrow(UnreadInputError);
@@ -71,18 +94,20 @@ describe("createMultilingualDSL with engine: 'core'", () => {
   });
 
   it.each([
-    ['core', { engine: 'core' }],
-    ['classic', { engine: 'classic' }],
-    ['classic', {}],
-  ] as const)('builds on the %s engine with %o', (expected, option) => {
-    vi.mocked(generatePattern).mockClear();
+    ['no engine option', {}],
+    ["engine: 'core'", { engine: 'core' }],
+  ] as const)('builds on the core with %s', (_label, option) => {
     vi.mocked(createSchemaPatternGenerator).mockClear();
     createMultilingualDSL({ ...sqlDSLConfig(), ...option }).parse(testQueries.english.simple, 'en');
-    expect(vi.mocked(createSchemaPatternGenerator).mock.calls.length > 0).toBe(expected === 'core');
-    expect(vi.mocked(generatePattern).mock.calls.length > 0).toBe(expected === 'classic');
+    expect(vi.mocked(createSchemaPatternGenerator).mock.calls.length).toBeGreaterThan(0);
   });
 
-  it('throws on an engine it does not know, rather than reading with the classic one', () => {
+  it("refuses engine: 'classic', removed in 5.0, and says what replaced it", () => {
+    const classic = { ...sqlDSLConfig(), engine: 'classic' } as unknown as DSLConfig;
+    expect(() => createMultilingualDSL(classic)).toThrow(/removed in @lokascript\/framework 5\.0/);
+  });
+
+  it('throws on an engine it does not know, rather than reading with the default', () => {
     const misspelled = { ...sqlDSLConfig(), engine: 'cor' } as unknown as DSLConfig;
     expect(() => createMultilingualDSL(misspelled)).toThrow('Unknown DSL engine "cor"');
   });

@@ -14,9 +14,9 @@ import {
   deriveRoleMarkers,
 } from './builders';
 import type { GrammarProfileSlice, DomainVocabulary } from './types';
-import { generatePattern } from '../generation/pattern-generator';
 import { defineCommand, defineRole } from '../schema';
 import { createMultilingualDSL } from '../api/create-dsl';
+import { extractValue } from '../core/types';
 
 // =============================================================================
 // Fixture slices (mirror the shape of semantic KNOWN_PROFILES entries)
@@ -189,7 +189,7 @@ describe('buildPatternProfile', () => {
     expect(profile.keywords.select.alternatives).toEqual([...alternatives]);
   });
 
-  describe('generatePattern integration', () => {
+  describe('a DSL built from the profile (the core engine)', () => {
     const moveSchema = defineCommand({
       action: 'move',
       description: 'Move a thing',
@@ -212,37 +212,45 @@ describe('buildPatternProfile', () => {
         }),
       ],
     });
+    const dsl = createMultilingualDSL({
+      name: 'Move',
+      schemas: [moveSchema],
+      languages: [
+        buildLanguageConfig(EN_SLICE, { keywords: { move: { primary: 'move' } } }),
+        buildLanguageConfig(JA_SLICE, { keywords: { move: { primary: '移動' } } }),
+        buildLanguageConfig(AR_SLICE, { keywords: { move: { primary: 'انقل' } } }),
+      ],
+    });
+    const roles = (input: string, language: string) => {
+      const node = dsl.parse(input, language);
+      return [
+        node.action,
+        ...[...node.roles].map(([role, value]) => `${role}=${extractValue(value)}`),
+      ];
+    };
 
     it('SVO (en-like): keyword first, prepositional marker before its role', () => {
-      const vocab: DomainVocabulary = { keywords: { move: { primary: 'move' } } };
-      const pattern = generatePattern(moveSchema, buildPatternProfile(EN_SLICE, vocab));
-
-      expect(pattern.template.tokens).toEqual([
-        { type: 'literal', value: 'move' },
-        { type: 'role', role: 'patient', optional: false, expectedTypes: ['expression'] },
-        { type: 'literal', value: 'into' },
-        { type: 'role', role: 'destination', optional: false, expectedTypes: ['expression'] },
+      expect(roles('move box into shelf', 'en')).toEqual([
+        'move',
+        'patient=box',
+        'destination=shelf',
       ]);
     });
 
     it('SOV (ja-like): particles after their roles, verb last', () => {
-      const vocab: DomainVocabulary = { keywords: { move: { primary: '移動' } } };
-      const pattern = generatePattern(moveSchema, buildPatternProfile(JA_SLICE, vocab));
-
-      expect(pattern.template.tokens).toEqual([
-        { type: 'role', role: 'patient', optional: false, expectedTypes: ['expression'] },
-        { type: 'literal', value: 'を' },
-        { type: 'role', role: 'destination', optional: false, expectedTypes: ['expression'] },
-        { type: 'literal', value: 'に' },
-        { type: 'literal', value: '移動' },
+      expect(roles('box を shelf に 移動', 'ja')).toEqual([
+        'move',
+        'patient=box',
+        'destination=shelf',
       ]);
     });
 
     it('VSO (ar-like): verb first', () => {
-      const vocab: DomainVocabulary = { keywords: { move: { primary: 'انقل' } } };
-      const pattern = generatePattern(moveSchema, buildPatternProfile(AR_SLICE, vocab));
-
-      expect(pattern.template.tokens[0]).toEqual({ type: 'literal', value: 'انقل' });
+      expect(roles('انقل box في shelf', 'ar')).toEqual([
+        'move',
+        'patient=box',
+        'destination=shelf',
+      ]);
     });
   });
 });

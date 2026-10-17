@@ -24,10 +24,6 @@
       "types": "./dist/core/tokenization/index.d.ts",
       "import": "./dist/core/tokenization/index.js"
     },
-    "./core/pattern-matching": {
-      "types": "./dist/core/pattern-matching/index.d.ts",
-      "import": "./dist/core/pattern-matching/index.js"
-    },
     "./multilingual": {
       "types": "./dist/multilingual/index.d.ts",
       "import": "./dist/multilingual/index.js"
@@ -77,7 +73,6 @@
     "test:coverage": "vitest run --coverage",
     "test:unit": "vitest run src/core/**/*.test.ts src/generation/**/*.test.ts",
     "test:integration": "vitest run src/__test__/**/*.test.ts src/api/**/*.test.ts",
-    "test:pattern-matcher": "vitest run src/core/pattern-matching",
     "test:tokenizer": "vitest run src/core/tokenization",
     "typecheck": "tsc --noEmit",
     "create-domain": "npx tsx scripts/create-domain.ts"

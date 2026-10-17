@@ -4,7 +4,7 @@
 
 import type { CommandSchema } from '../../../schema';
 import type { LanguageTokenizer } from '../../../core/types';
-import type { PatternGenLanguageProfile } from '../../../generation/pattern-generator';
+import type { PatternGenLanguageProfile } from '../../../generation/profile';
 
 export type Severity = 'error' | 'warning' | 'note';
 

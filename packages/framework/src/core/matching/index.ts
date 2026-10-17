@@ -10,3 +10,5 @@ export type { ConfidenceBreakdown, ConfidenceContext, ConfidenceModel } from './
 export { StockValueReader, createStockReader, greedyStopMarkers, readGreedy } from './stock-reader';
 export { readRoleValue, type ReadingProfile } from './stock-reading';
 export { stockConfidenceModel } from './stock-confidence';
+export * from './type-validation';
+export * from './possessive-keywords';

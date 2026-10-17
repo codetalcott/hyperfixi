@@ -1,8 +1,8 @@
 /**
  * Patterns from command schemas: the generator semantic's hyperscript parser
  * runs (domains rethink Phase 4.4, `docs-internal/DOMAINS_RETHINK.md`), moved
- * here from `@lokascript/semantic` beside the domains' own `generatePattern`
- * (`pattern-generator.ts`), which `createMultilingualDSL` still uses.
+ * here from `@lokascript/semantic`; `createMultilingualDSL` generates every
+ * domain's patterns with it (the classic generator went in 5.0, Phase 6).
  *
  * Per command and language it builds the main pattern and its variants: the
  * simple variant (required roles only), the omit-role, widened-type and
@@ -21,7 +21,7 @@ export interface SchemaPatternGrammar {
   /**
    * How `svoPosition` / `sovPosition` sort: `'ascending'` puts the lowest first
    * (hyperscript's schemas, 1-based), `'descending'` the highest (a domain's
-   * schemas, as framework's `generatePattern` reads them).
+   * schemas, as `sortRolesByWordOrder` and the schema renderer read them).
    */
   readonly positionOrder: 'ascending' | 'descending';
 }

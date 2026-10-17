@@ -13,10 +13,9 @@ import type {
 } from '../core/types';
 import { extractRoleValue } from '../core/types';
 import type { CommandSchema } from '../schema';
-import { PatternMatcher } from '../core/pattern-matching';
 import { MatchSkeleton, createStockReader, stockConfidenceModel } from '../core/matching';
-import { generatePattern, type PatternGenLanguageProfile } from '../generation/pattern-generator';
-import { createDomainRenderer, type DomainRenderFn } from '../generation/renderer';
+import type { PatternGenLanguageProfile } from '../generation/profile';
+import type { DomainRenderFn } from '../generation/renderer';
 import {
   createSchemaPatternGenerator,
   type SchemaPatternProfile,
@@ -186,18 +185,17 @@ export interface DSLConfig {
   readonly customPatterns?: LanguagePattern[];
 
   /**
-   * What reads and writes the DSL (domains rethink Phase 4.7). `'classic'`, the
-   * default: framework's first pattern generator, matcher and schema renderer.
-   * `'core'`: the core semantic's hyperscript parser runs — patterns from
+   * What reads and writes the DSL. `'core'`, the only engine (and the
+   * default): the core semantic's hyperscript parser runs — patterns from
    * `createSchemaPatternGenerator` (positions descending, as a domain's schemas
    * read), matched by `MatchSkeleton` with the stock reader and confidence
    * model, and rendered through those patterns where the domain's own renderer
-   * declines. Parsing's whole-input rule, the refusals, translation's
-   * read-back, compile, explicit syntax and extensions are the same on both.
-   * The domains move to `'core'` one at a time against their gate (Phase 5);
-   * `'classic'` is removed in a later major, once no domain uses it.
+   * declines. The option stays so a config written for framework 4.7–4.8
+   * (`engine: 'core'`) builds unchanged; `'classic'`, framework's first
+   * generator and matcher, was removed in 5.0 (domains rethink Phase 6) and
+   * throws.
    */
-  readonly engine?: 'classic' | 'core';
+  readonly engine?: 'core';
 }
 
 /**
@@ -888,10 +886,10 @@ export function createMultilingualDSL(config: DSLConfig): MultilingualDSL {
 // =============================================================================
 
 /**
- * What differs between the engines {@link DSLConfig.engine} names: how each
- * command's pattern is generated, how input is matched against it, and the
- * renderer `render()` falls back to. Parsing's whole-input rule, refusals,
- * translation's read-back, compile, explicit syntax and extensions are shared.
+ * What reads and writes a DSL: how each command's pattern is generated, how
+ * input is matched against it, and the renderer `render()` falls back to.
+ * Parsing's whole-input rule, refusals, translation's read-back, compile,
+ * explicit syntax and extensions sit above it.
  */
 interface DSLEngine {
   generate(schema: CommandSchema, profile: PatternGenLanguageProfile): LanguagePattern;
@@ -900,29 +898,20 @@ interface DSLEngine {
 }
 
 /**
- * The engine `config.engine` names. An unknown name throws rather than reading
- * with the default: a domain that misspells `'core'` would otherwise measure
- * the classic engine against its gate and take the result for the core's.
+ * The engine `config.engine` names: the core, the only one since 5.0. An
+ * unknown name throws rather than reading with the default, and `'classic'`
+ * says what replaced it.
  */
 function engineFor(config: DSLConfig): DSLEngine {
-  const name = config.engine ?? 'classic';
-  if (name === 'classic') return classicEngine();
+  const name: string = config.engine ?? 'core';
   if (name === 'core') return coreEngine();
-  throw new Error(`Unknown DSL engine "${String(name)}" (expected "classic" or "core")`);
-}
-
-/** framework's first generator and matcher, and its schema renderer (`engine: 'classic'`). */
-function classicEngine(): DSLEngine {
-  const matcher = new PatternMatcher();
-  return {
-    generate: (schema, profile) => generatePattern(schema, profile),
-    match: (tokens, pattern, language) => matcher.matchPattern(tokens, pattern, { code: language }),
-    fallbackRenderer: config =>
-      createDomainRenderer({
-        schemas: config.schemas,
-        profiles: config.languages.map(l => l.patternProfile),
-      }),
-  };
+  if (name === 'classic') {
+    throw new Error(
+      'The "classic" DSL engine was removed in @lokascript/framework 5.0. ' +
+        'Omit `engine` (or pass "core"): every domain reads on the core.'
+    );
+  }
+  throw new Error(`Unknown DSL engine "${name}" (expected "core")`);
 }
 
 /**
