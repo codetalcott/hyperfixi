@@ -11,7 +11,7 @@ import type { KeywordTable, MarkerTable } from './renderer';
 import type { SemanticNode } from '../core/types';
 import type { CommandSchema } from '../schema';
 import { defineCommand, defineRole } from '../schema';
-import type { PatternGenLanguageProfile } from './pattern-generator';
+import type { PatternGenLanguageProfile } from './profile';
 
 // =============================================================================
 // Test Data

@@ -15,7 +15,6 @@ export default defineConfig([
       'core/index': 'src/core/index.ts',
       'core/types': 'src/core/types.ts',
       'core/tokenization/index': 'src/core/tokenization/index.ts',
-      'core/pattern-matching/index': 'src/core/pattern-matching/index.ts',
       'multilingual/index': 'src/multilingual/index.ts',
       'schema/index': 'src/schema/index.ts',
       'parsing/index': 'src/parsing/index.ts',

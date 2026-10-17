@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed (BREAKING — the next release is 5.0.0)
+
+- **`@lokascript/framework`: the classic DSL engine** (domains rethink Phase 6; M3 (e): one
+  matcher). Every DSL reads on the core engine, which every kept domain has used since domains 4.2.0
+  (bdd's own suite and its gate read the same on it, 0 cases moved). Gone: `PatternMatcher`,
+  `patternMatcher`, `matchPattern`, `matchBest` and the `./core/pattern-matching` subpath (and
+  `PatternMatcher` from `./parsing`); the classic generator, `generatePattern`,
+  `generatePatternVariants` and `GeneratorConfig`. `createMultilingualDSL` defaults to the core;
+  `engine: 'core'` is still accepted and changes nothing, so the domains build unchanged, while
+  `engine: 'classic'` throws, naming what replaced it. Kept: the schema renderer
+  (`createDomainRenderer`, `createSchemaRenderer`, the domains' renderer kit), `PatternGenLanguageProfile`
+  and `sortRolesByWordOrder` (now in `generation/profile.ts`), and the value helpers the stock reader
+  uses (`isTypeCompatible`, `getPossessiveReference` & co., now in `core/matching`, still exported
+  from the root).
+
 ### Changed
 
 - **`@hyperfixi/mcp-server`: on `@lokascript/domains` 4.2.0, without bdd's tools** (domains rethink

@@ -1,8 +1,7 @@
 /**
- * The stock confidence model: how framework's old matcher scored a domain
- * pattern's match (`core/pattern-matching/`), moved here as a `ConfidenceModel`
- * for the matcher's skeleton (domains rethink Phase 4.7); the old matcher calls
- * it too until Phase 6.
+ * The stock confidence model: how framework's first matcher scored a domain
+ * pattern's match, moved here as a `ConfidenceModel` for the matcher's
+ * skeleton (domains rethink Phase 4.7).
  *
  * Role coverage (a required slot 1, an optional one 0.8, an absent optional one
  * with a default 60% of that), a stem-match penalty (up to 15%, floor 0.5), and

@@ -13,11 +13,11 @@ Build a multilingual DSL in ~500 lines using `@lokascript/framework`.
 > accidental change fail loudly. Deliberate changes regenerate the snapshot
 > (`npx tsx scripts/api-surface-report.ts`) and get a note here.
 >
-> **On the core.** `createMultilingualDSL({ ...config, engine: 'core' })` returns the same
-> `MultilingualDSL`, read by the core semantic's hyperscript parser runs (the schema-pattern
-> generator, the matcher's skeleton with the stock value reader, rendering through the patterns).
-> The domains move to it one at a time against their gate; the default, `engine: 'classic'`,
-> stays until none uses it. An engine name other than these two throws.
+> **On the core.** `createMultilingualDSL(config)` reads every DSL with the core semantic's
+> hyperscript parser runs (the schema-pattern generator, the matcher's skeleton with the stock
+> value reader, rendering through the patterns where your renderer declines). `engine: 'core'`
+> is still accepted and changes nothing; `engine: 'classic'`, framework's first generator and
+> matcher, was removed in 5.0 and throws, as does any other name.
 
 ## What You Get
 
