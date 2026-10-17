@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import { createDomainRegistry } from '../tools/domain-registry-setup.js';
-import { isMultiStepBDD, handleBDDMultiStep } from '../tools/bdd-extras.js';
 import {
   isMultiLineBehaviorSpec,
   handleBehaviorSpecMultiLine,
@@ -11,23 +10,23 @@ import {
 // =============================================================================
 
 describe('DomainRegistry Integration', () => {
-  it('registers all 8 domains', () => {
+  it('registers 7 domains: bdd is left out, behaviorspec reads its forms (domains 4.2.0)', () => {
     const registry = createDomainRegistry();
     const names = registry.getDomainNames().sort();
-    expect(names).toEqual(['bdd', 'behaviorspec', 'flow', 'learn', 'llm', 'sql', 'todo', 'voice']);
+    expect(names).toEqual(['behaviorspec', 'flow', 'learn', 'llm', 'sql', 'todo', 'voice']);
   });
 
-  it('generates 32 tool definitions (4 per domain)', () => {
+  it('generates 28 tool definitions (4 per domain)', () => {
     const registry = createDomainRegistry();
     const tools = registry.getToolDefinitions();
-    expect(tools).toHaveLength(32);
+    expect(tools).toHaveLength(28);
 
     const toolNames = tools.map(t => t.name).sort();
     expect(toolNames).toContain('parse_sql');
     expect(toolNames).toContain('compile_sql');
     expect(toolNames).toContain('validate_sql');
     expect(toolNames).toContain('translate_sql');
-    expect(toolNames).toContain('parse_bdd');
+    expect(toolNames).not.toContain('parse_bdd');
     expect(toolNames).toContain('parse_behaviorspec');
     expect(toolNames).toContain('parse_learn');
   });
@@ -53,9 +52,6 @@ describe('DomainRegistry Integration', () => {
     const parseSql = tools.find(t => t.name === 'parse_sql')!;
     expect(parseSql.inputSchema.required).toContain('query');
 
-    const parseBdd = tools.find(t => t.name === 'parse_bdd')!;
-    expect(parseBdd.inputSchema.required).toContain('scenario');
-
     const parseFlow = tools.find(t => t.name === 'parse_flow')!;
     expect(parseFlow.inputSchema.required).toContain('pipeline');
 
@@ -66,7 +62,7 @@ describe('DomainRegistry Integration', () => {
   it('canHandle returns true for registered domain tools', () => {
     const registry = createDomainRegistry();
     expect(registry.canHandle('parse_sql')).toBe(true);
-    expect(registry.canHandle('compile_bdd')).toBe(true);
+    expect(registry.canHandle('compile_bdd')).toBe(false);
     expect(registry.canHandle('validate_todo')).toBe(true);
     expect(registry.canHandle('translate_behaviorspec')).toBe(true);
   });
@@ -182,29 +178,6 @@ describe('DomainRegistry Integration', () => {
 // Multi-Step Detection Tests
 // =============================================================================
 
-describe('BDD Multi-Step Detection', () => {
-  it('detects comma-separated steps as multi-step', () => {
-    expect(isMultiStepBDD({ scenario: 'given #button is exists, when click on #button' })).toBe(
-      true
-    );
-  });
-
-  it('detects newline-separated steps as multi-step', () => {
-    expect(isMultiStepBDD({ scenario: 'given #button is exists\nwhen click on #button' })).toBe(
-      true
-    );
-  });
-
-  it('detects single step as not multi-step', () => {
-    expect(isMultiStepBDD({ scenario: 'given #button is exists' })).toBe(false);
-  });
-
-  it('returns false for empty scenario', () => {
-    expect(isMultiStepBDD({ scenario: '' })).toBe(false);
-    expect(isMultiStepBDD({})).toBe(false);
-  });
-});
-
 describe('BehaviorSpec Multi-Line Detection', () => {
   it('detects multi-line input', () => {
     expect(isMultiLineBehaviorSpec({ scenario: 'test "Login"\n  given page /login' })).toBe(true);
@@ -223,25 +196,6 @@ describe('BehaviorSpec Multi-Line Detection', () => {
 // =============================================================================
 // Multi-Step Handler Tests
 // =============================================================================
-
-describe('BDD Multi-Step Handler', () => {
-  it('parses multi-step BDD scenario', async () => {
-    const result = await handleBDDMultiStep('parse_bdd', {
-      scenario: 'given #button is exists, when click on #button, then #button has .active',
-      language: 'en',
-    });
-
-    expect(result.isError).toBeUndefined();
-    const data = JSON.parse(result.content[0].text);
-    expect(data.type).toBe('scenario');
-    expect(data.stepCount).toBeGreaterThan(0);
-  });
-
-  it('returns error for missing scenario', async () => {
-    const result = await handleBDDMultiStep('parse_bdd', {});
-    expect(result.isError).toBe(true);
-  });
-});
 
 describe('BehaviorSpec Multi-Line Handler', () => {
   it('parses multi-line BehaviorSpec', async () => {
