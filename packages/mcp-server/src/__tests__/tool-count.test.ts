@@ -74,9 +74,9 @@ describe('Tool count guard', () => {
   const definedCount = staticCount + domainToolCount + samplingTools.length;
   const defaultListedCount = definedCount - samplingTools.length;
 
-  it('defines 102 tools and lists 97 by default', () => {
-    expect(definedCount).toBe(102);
-    expect(defaultListedCount).toBe(97);
+  it('defines 98 tools and lists 93 by default', () => {
+    expect(definedCount).toBe(98);
+    expect(defaultListedCount).toBe(93);
   });
 
   it('every tool name is unique', () => {

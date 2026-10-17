@@ -57,7 +57,7 @@ export const lseCorrectionTools: Tool[] = [
         domain: {
           type: 'string',
           description:
-            'Optional command domain for schema validation: hyperscript, flow, sql, bdd, voice, etc.',
+            'Optional command domain for schema validation: hyperscript, flow, sql, behaviorspec, voice, etc.',
         },
         round: {
           type: 'number',

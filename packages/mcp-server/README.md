@@ -1,6 +1,6 @@
 # @hyperfixi/mcp-server
 
-MCP (Model Context Protocol) server for hyperscript and multilingual DSL development. Provides **97 tools** by default (**102** defined — the 5 MCP-sampling tools are opt-in and hidden unless `LOKASCRIPT_MCP_LLM_TOOLS=1`), **9 resources**, and **9 prompts** spanning: GRAIL workflow orchestration, validation, compilation, analysis, patterns, LSP bridge, language profiles, code generation, route extraction, 8 domain DSLs, IR conversion, cross-domain dispatch, MCP sampling (opt-in), AI-assisted debugging, template inventory, and the LSE round-trip pipeline.
+MCP (Model Context Protocol) server for hyperscript and multilingual DSL development. Provides **93 tools** by default (**98** defined — the 5 MCP-sampling tools are opt-in and hidden unless `LOKASCRIPT_MCP_LLM_TOOLS=1`), **9 resources**, and **9 prompts** spanning: GRAIL workflow orchestration, validation, compilation, analysis, patterns, LSP bridge, language profiles, code generation, route extraction, 7 domain DSLs, IR conversion, cross-domain dispatch, MCP sampling (opt-in), AI-assisted debugging, template inventory, and the LSE round-trip pipeline.
 
 ## The agent loop
 
@@ -80,7 +80,7 @@ See **[GRAIL.md](GRAIL.md)** for full documentation, schema reference, and examp
 
 ## Available Tools
 
-The **97** tools below, plus the **5** GRAIL tools above, total **102** defined. The 5 MCP-sampling tools among them are hidden from `tools/list` unless `LOKASCRIPT_MCP_LLM_TOOLS=1`, so a default connection sees **97**.
+The **93** tools below, plus the **5** GRAIL tools above, total **98** defined. The 5 MCP-sampling tools among them are hidden from `tools/list` unless `LOKASCRIPT_MCP_LLM_TOOLS=1`, so a default connection sees **93**.
 
 ### Validation & Semantic Tools (8)
 
@@ -232,24 +232,23 @@ The **97** tools below, plus the **5** GRAIL tools above, total **102** defined.
 | ------------------------------ | --------------------------------------------------------------- |
 | `lse_generate_with_correction` | Stateless LSE generation + self-correction loop (prompt/schema) |
 
-### Domain DSL Tools (32)
+### Domain DSL Tools (28)
 
-Each of the 8 domains exposes `parse_`, `compile_`, `validate_`, and `translate_` tools (8 × 4 = 32). Language coverage comes in three tiers:
+Each of the 7 domains exposes `parse_`, `compile_`, `validate_`, and `translate_` tools (7 × 4 = 28). bdd's tools left with domains 4.2.0: behaviorspec reads its preconditions, actions and assertions. Language coverage comes in three tiers:
 
 - **Bridge (11):** en, es, ja, ar, ko, zh, tr, fr, de, pt, ru
 - **Classic (8):** en, es, ja, ar, ko, zh, tr, fr
 - **Learn (10):** Bridge minus ru
 
-| Domain         | Languages   | compile Output                    |
-| -------------- | ----------- | --------------------------------- |
-| `sql`          | Bridge (11) | SQL query string                  |
-| `bdd`          | Classic (8) | Playwright test (Given/When/Then) |
-| `todo`         | Bridge (11) | Structured operation object       |
-| `behaviorspec` | Classic (8) | Playwright interaction test       |
-| `llm`          | Bridge (11) | LLMPromptSpec JSON                |
-| `flow`         | Bridge (11) | Reactive data flow JS             |
-| `voice`        | Bridge (11) | DOM interaction command           |
-| `learn`        | Learn (10)  | Rendered sentence w/ morphology   |
+| Domain         | Languages   | compile Output                  |
+| -------------- | ----------- | ------------------------------- |
+| `sql`          | Bridge (11) | SQL query string                |
+| `todo`         | Bridge (11) | Structured operation object     |
+| `behaviorspec` | Classic (8) | Playwright interaction test     |
+| `llm`          | Bridge (11) | LLMPromptSpec JSON              |
+| `flow`         | Bridge (11) | Reactive data flow JS           |
+| `voice`        | Bridge (11) | DOM interaction command         |
+| `learn`        | Learn (10)  | Rendered sentence w/ morphology |
 
 ## Available Resources (5)
 

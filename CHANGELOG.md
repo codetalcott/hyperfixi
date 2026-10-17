@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`@hyperfixi/mcp-server`: on `@lokascript/domains` 4.2.0, without bdd's tools** (domains rethink
+  Phase 5, D6). `parse_bdd`, `compile_bdd`, `validate_bdd` and `translate_bdd` and the multi-step
+  bdd scenario handling are gone: behaviorspec reads bdd's preconditions, actions and assertions
+  (`given #button is visible`, `when user presses 'Enter'`, `expect #title text Welcome`), and the
+  server creates its registry with `createDomainRegistry({ omit: ['bdd'] })`. 98 tools defined, 93
+  listed by default (102 and 97). From domains 4.2.0 the domain tools also refuse what their DSL does
+  not read (no domain gate case accepts leftover input), and `parse_learn` & co. read and write
+  learn's commanding sentence with semantic.
+
 ## [4.8.0] - 2026-10-16
 
 ### Added
