@@ -1,7 +1,7 @@
 /**
  * The stock value reader on the matcher's skeleton (domains rethink Phase 4.7):
- * each kind of value it reads, a greedy slot's stop markers, the guard against a
- * marker read as a value, and the skip of an optional slot.
+ * each kind of value it reads, a greedy slot's stop markers, a slot's word list,
+ * the guard against a marker read as a value, and the skip of an optional slot.
  */
 import { describe, expect, it } from 'vitest';
 import { MatchSkeleton } from './match-skeleton';
@@ -29,7 +29,7 @@ const lit = (value: string, ...alternatives: string[]): PatternToken =>
   alternatives.length ? { type: 'literal', value, alternatives } : { type: 'literal', value };
 const slot = (
   role: string,
-  extra: { optional?: boolean; greedy?: boolean; expectedTypes?: string[] } = {}
+  extra: { optional?: boolean; greedy?: boolean; expectedTypes?: string[]; words?: string[] } = {}
 ): PatternToken => ({ type: 'role', role, ...extra }) as PatternToken;
 const group = (...tokens: PatternToken[]): PatternToken => ({
   type: 'group',
@@ -129,11 +129,95 @@ describe('a greedy slot', () => {
   });
 });
 
+describe('a slot with a word list', () => {
+  const click = pattern([lit('when'), slot('action', { words: ['clicks', 'クリック'] })]);
+
+  it('reads one of its words, in any case, by value or normalized form', () => {
+    expect(read(click, ['when', 'keyword'], ['Clicks', 'identifier'])).toEqual({
+      action: { type: 'expression', raw: 'Clicks' },
+    });
+    expect(read(click, ['when', 'keyword'], ['クリックする', 'identifier', 'クリック'])).toEqual({
+      action: { type: 'expression', raw: 'クリックする' },
+    });
+  });
+
+  it('leaves any other word unread', () => {
+    expect(read(click, ['when', 'keyword'], ['zzqx', 'identifier'])).toBeNull();
+  });
+
+  it('gives the word to the required slot when the optional slot before it took it (behaviorspec `when clicks zzqx`)', () => {
+    const when = pattern([
+      lit('when'),
+      group(slot('actor', { optional: true })),
+      slot('action', { words: ['clicks'] }),
+    ]);
+    const result = matcher().matchPattern(
+      stream(['when', 'keyword'], ['clicks', 'identifier'], ['zzqx', 'identifier']),
+      when
+    );
+    expect(result && Object.fromEntries(result.captured)).toEqual({
+      action: { type: 'expression', raw: 'clicks' },
+    });
+    // `zzqx` is left for the caller to refuse as unread.
+    expect(result?.consumedTokens).toBe(2);
+  });
+
+  it('an optional one is skipped for a word it does not list (voice `close zzqx`)', () => {
+    const close = pattern([lit('close'), slot('patient', { optional: true, words: ['tab'] })]);
+    expect(read(close, ['close', 'keyword'], ['tab', 'identifier'])).toEqual({
+      patient: { type: 'expression', raw: 'tab' },
+    });
+    const result = matcher().matchPattern(
+      stream(['close', 'keyword'], ['zzqx', 'identifier']),
+      close
+    );
+    expect(result && Object.fromEntries(result.captured)).toEqual({});
+    expect(result?.consumedTokens).toBe(1);
+  });
+});
+
 describe('the marker guard and the optional skip', () => {
   it('a required slot does not read the marker the pattern wants next', () => {
     // SOV `{patient} を 実行` given `を 実行`: the patient is missing, not `を`.
     const sov = pattern([slot('patient'), lit('を'), lit('実行')], 'ja');
     expect(read(sov, ['を', 'particle'], ['実行', 'keyword'])).toBeNull();
+  });
+
+  it('an optional slot does not read a marker the rest of the pattern owes, through its optional groups', () => {
+    // behaviorspec `when user types into #search`: the typed text is optional and has no marker.
+    const when = pattern([
+      lit('when'),
+      slot('action'),
+      group(slot('value', { optional: true })),
+      group(lit('on'), slot('target')),
+      group(lit('into'), slot('destination')),
+    ]);
+    expect(
+      read(
+        when,
+        ['when', 'keyword'],
+        ['types', 'identifier'],
+        ['into', 'keyword'],
+        ['#q', 'selector']
+      )
+    ).toEqual({
+      action: { type: 'expression', raw: 'types' },
+      destination: { type: 'selector', value: '#q' },
+    });
+    expect(
+      read(
+        when,
+        ['when', 'keyword'],
+        ['types', 'identifier'],
+        ["'hi'", 'literal'],
+        ['into', 'keyword'],
+        ['#q', 'selector']
+      )
+    ).toEqual({
+      action: { type: 'expression', raw: 'types' },
+      value: { type: 'literal', value: 'hi', dataType: 'string' },
+      destination: { type: 'selector', value: '#q' },
+    });
   });
 
   it('an optional slot is skipped for the literal the pattern wants next, when the rest then reads to the end', () => {

@@ -7,13 +7,18 @@
  * - A **greedy** slot (`RoleSpec.greedy`: a SQL condition, a column list) reads
  *   every token up to the next marker the pattern still owes, or the end, as
  *   one expression (`readGreedy`).
+ * - A slot with a **word list** (`RoleSpec.words`: behaviorspec's interaction,
+ *   voice's thing to close) reads only one of its words, compared lower-cased
+ *   by value or normalized form; any other word leaves the slot unread.
  * - Any other slot reads one value (`readRoleValue`, the old matcher's reading):
  *   a selector, a quoted string, a number, a boolean, a duration, a URL, an
  *   identifier, or one of the multi-token forms it knows (`user.name`,
  *   `#dialog.showModal()`), checked against the slot's expected types.
  * - A **required** slot reads nothing where the stream is at the marker the
  *   pattern wants next (the old matcher's guard against an SOV marker taken as
- *   a value). Where a required slot finds nothing to read, and the optional,
+ *   a value). An **optional** one reads nothing at any marker the rest of the
+ *   pattern owes, through its optional groups (behaviorspec `when user types
+ *   into #search`, whose typed text is optional and has no marker). Where a required slot finds nothing to read, and the optional,
  *   marker-less slot just before it read a value with nothing read since, that
  *   value is given back and the required slot reads again (the old matcher's
  *   backtrack: behaviorspec `when clicks`, where the optional actor took
@@ -89,6 +94,13 @@ export function readGreedy(
 }
 
 /** The stock reader, for a matcher whose profiles it may consult (possessive words). */
+/** Whether `token` is one of a slot's `words`, by value or normalized form, lower-cased. */
+export function isListedWord(token: LanguageToken | null, words: readonly string[]): boolean {
+  if (!token) return false;
+  const forms = [token.value, token.normalized].filter((f): f is string => typeof f === 'string');
+  return forms.some(form => words.some(word => word.toLowerCase() === form.toLowerCase()));
+}
+
 export class StockValueReader implements ValueReader {
   private profile: ReadingProfile | undefined;
   /** The last optional, marker-less slot that read a value: what a failing required slot may take back. */
@@ -146,6 +158,13 @@ export class StockValueReader implements ValueReader {
     if (guard && !slot.optional && next?.type === 'literal') {
       const token = tokens.peek();
       if (token && this.view.wouldMatch(next, token)) return false;
+    }
+    if (slot.words && !isListedWord(tokens.peek(), slot.words)) return slot.optional ?? false;
+    // Nor does an optional slot read a marker the rest of the pattern owes, through its optional
+    // groups (`when user types into #search`: `into` is the destination's, not the typed text).
+    if (slot.optional && !slot.greedy) {
+      const token = tokens.peek();
+      if (token && isStopMarker(token, greedyStopMarkers(this.view.patternRest()))) return true;
     }
     if (slot.greedy) {
       const value = readGreedy(tokens, greedyStopMarkers(this.view.patternRest()));
