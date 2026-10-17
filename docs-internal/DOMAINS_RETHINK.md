@@ -6,7 +6,9 @@ Plan, 2026-10-13. Decisions D1–D6 taken 2026-10-14 (all as recommended; D1's o
 domains relocked and re-baselined on it (#29) and released as 4.0.1 (#30). Phase 4 released in 4.7.0 (2026-10-16;
 #1533–#1541, steps 1–7, 7 in two). The domains' gate runs on the kit (lokascript-domains #31); Phase 5 step 1 done
 2026-10-16 for six of the seven DSLs (lokascript-domains #32–#37), released in domains 4.1.0 (#38; this repo
-locks it, #1545). Next: bdd into behaviorspec, learn on semantic (step 2), mcp-server (step 3).
+locks it, #1545). The owner's decisions on what was left taken 2026-10-16 (Phase 5 below); learn on semantic
+(step 2) in review (lokascript-domains #40). Next: framework 4.8.0 (#1546), then behaviorspec and voice on it and
+bdd's capabilities, domains 4.2.0, mcp-server (step 3).
 
 Owner, 2026-10-13: "The domains pattern only works if it is built on a reliable core. We may need to rethink
 domains, instead of trying to preserve it as is." This answers M3 (e) in
@@ -432,7 +434,41 @@ via `pack-smoke.sh UPSTREAM_TARBALLS` until it is published).
    behaviorspec; the 164 accepted leftover cases in open-text roles (unchanged; owner's rule); whether todo's
    item and behaviorspec's typed text read unmarked (owner). Re-check in lokascript-domains: `npm run build &&
    npm run gate:regen --prefix packages/domains` prints each domain's counts and the drift from the baseline.
+
+   **Owner decisions on what was left, 2026-10-16** (all as recommended):
+
+   - **The leftover rule.** A word the parse reads into a role is READ when the parse is the text's own with
+     the word in one role (an open-text role extended by it, sql `where active zzqx`; a role the text left
+     empty, todo `list zzqx`) and the word reaches the compiled code; otherwise the input is refused. Of the
+     164: 74 read (sql 32, help 11, todo 8, bdd `and` 5, behaviorspec `not` 8 and `given page` 10), 90 to
+     refuse at parse: behaviorspec `when clicks zzqx` (50, read actor `clicks`, action `zzqx`, compiled to
+     a comment), voice `back`/`forward zzqx` (22, quantity ignored) and `close zzqx` (8, target ignored),
+     behaviorspec `given viewport zzqx` (10: a viewport without a size compiled to
+     `setViewportSize({ width: , height:  })`). Framework 4.8.0 carries the rule in the gate kit
+     (leftover `pass`), a role's word list (`RoleSpec.words`, read only by the core engine), and the stock
+     reader's optional slot kept off a marker the rest of the pattern owes (#1546).
+   - **behaviorspec reads `when user types 'hello' into #search`** (the test-writer demo's form): the typed
+     text is `when`'s optional `value`, a quoted literal right after the action, written so too. todo's
+     multi-word item stays quoted (llm's rule, 2026-10-15: `add send report to boss` would read list
+     `boss`); the refusal now says `if "buy milk" is one value, quote it` (`UnreadInputError.hint`).
+   - **bdd merges by absorption.** behaviorspec takes bdd's capabilities in its own syntax (the 8 element
+     states as `given #x is visible`, press/check/uncheck/select/wait, the `text` assertion) in domains
+     4.2.0; bdd's syntax (`then`, `and`, comma-split Scenario steps) stays only in the deprecated `bdd`
+     subpath, deleted in domains 5.0.0 with Phase 6 (the aggregate's major is framework's); mcp-server's bdd
+     tools go when behaviorspec has them.
+   - **learn's commanding verb is semantic's** (D2 as written): `#boxに .activeを 追加`, not `追加して`;
+     learn's imperatives stay in its other functions.
+
+   In flight: #1546 (framework 4.8.0's half); lokascript-domains #39 (voice's quantity takes a number:
+   22 refused) and #40 (learn on semantic). After 4.8.0 is on npm: the domains relock with the rule (74
+   read), the word lists (behaviorspec's interaction, voice's close target), the typed text, behaviorspec's
+   `expect` reading its value without `saying` (the renderer writes it bare, so all 112 `expect … value`
+   round trips were refused; 448/448 with it), and bdd's capabilities; then domains 4.2.0.
 2. learn on semantic (D2): the commanding form from `render`, learn's narrating forms and glosses around it.
+   **In review 2026-10-16** (lokascript-domains #40): `createLearnDSL()` reads and writes with semantic (`parse`
+   accepts what semantic's `translate` carries whole, learn's fifteen verbs); the commanding sentence, its
+   gloss and `compile` are semantic's; `send.event`, `wait.duration`. 150 of 150 commanding sentences read
+   back as the command (74 of 135 before); learn's gate 200/200.
 3. mcp-server's tools follow (D6), in this repo.
 4. Downstream: lokascript-learn from 2.x to the current line, checking its pages on the live site after the bump;
    lokascript-examples' apps, if kept; the docs-site llm generator.
