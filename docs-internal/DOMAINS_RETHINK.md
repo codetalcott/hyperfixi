@@ -8,7 +8,8 @@ domains relocked and re-baselined on it (#29) and released as 4.0.1 (#30). Phase
 2026-10-16 for six of the seven DSLs (lokascript-domains #32–#37), released in domains 4.1.0 (#38; this repo
 locks it, #1545). The owner's decisions on what was left taken 2026-10-16 (Phase 5 below), released in 4.8.0
 (#1546, 2026-10-17) and domains 4.2.0 (lokascript-domains #39–#45): no domain accepts leftover input; learn on
-semantic (step 2); mcp-server without bdd's tools (step 3, #1550). Next: Phase 5 step 4 (downstream), then Phase 6.
+semantic (step 2); mcp-server without bdd's tools (step 3, #1550). Phase 5 step 4 (downstream) done 2026-10-17; Phase 6
+merged the same day (#1552, lokascript-domains #47), unreleased: its releases are the owner's (order under Phase 6).
 
 Owner, 2026-10-13: "The domains pattern only works if it is built on a reliable core. We may need to rethink
 domains, instead of trying to preserve it as is." This answers M3 (e) in
@@ -492,13 +493,52 @@ via `pack-smoke.sh UPSTREAM_TARBALLS` until it is published).
    `createDomainRegistry({ omit: ['bdd'] })`, so bdd's four tools and its multi-step handling leave (98 tools
    defined, 93 listed); learn's tools are semantic's through the DSL.
 4. Downstream: lokascript-learn from 2.x to the current line, checking its pages on the live site after the bump;
-   lokascript-examples' apps, if kept; the docs-site llm generator.
+   lokascript-examples' apps, if kept; the docs-site llm generator. **Done 2026-10-17** (owner: drop drills or
+   apps as recommended):
+   - **lokascript-learn** (#26, #27; merged, not yet deployed: its `Deploy` workflow is manual). jsx and sprites
+     drills and the sprites "Deployment Commands" curriculum dropped (#26). On domains 4.2.0 / semantic 4.8.0
+     (#27), learn's DSL is the app's one sentence renderer: the commanding sentence is semantic's command (D2),
+     201 of 220 hyperscript commanding sentences changed (`追加して` → `追加`), the other functions learn's
+     morphology. Measured 2.x bugs fixed on the way: `get`/`wait`/`fetch` sentences without their value in every
+     function; `set` written `set to :count 10` (learn's frame, fixed upstream in lokascript-domains #46); the
+     particle and error-correction drills replacing the marker string's first occurrence (`ag____rega`,
+     `/____bouta`): 24 of 88 drills, 0 now, the marker read from the sentence's gloss. events and hypermedia
+     drills are hyperscript translated by semantic (`on`/`trigger`/`send`; `fetch`/`put`/`morph` — the engine
+     has no `push url`); bdd's drills are behaviorspec's. The playground's `fetch /api/users from /api` example
+     was not hyperscript (2.x dropped `from /api`; 4.8 refuses it). Cost: playground.js 170 → 260 KB gzipped.
+   - **`_hyper_min`** (#141): the docs site's llm-equivalence generator on domains ^4.2.0; all four commands still
+     compile byte-identically in eight languages.
+   - **lokascript-examples** (#13): eight apps on hyperfixi 4.8 / domains 4.2 (cross-domain on six
+     domains, sql-explorer, test-writer, voice-navigator, flow-builder, flow-playground, llm-playground, todo);
+     about, notebook, llm-equivalence and domain-builder dropped (tag `archived/examples-pre-4.x-2026-10`). Each
+     page's hyperscript is upstream's (`fetch … via POST with values of me` → `fetch … as html with {method:'POST',
+     body: new FormData(me)} do not throw`; `the next <button/>` → `<button/> in me`); todo loads htmx 2 itself.
+     Example text 2.x truncated silently is quoted now (`complete "buy eggs"`, `when user clicks on #login`).
+     Every app typechecks, builds and passes a headless smoke; the three e2e suites pass in full (they failed on
+     2.x: 5/13, 9/15, 5/13). chat (not a domain app; deployed at lokascript-chat.fly.dev) stays on 2.x. Found:
+     `@hyperfixi/server-bridge` reads a fetch's method only from 2.x's `via METHOD`, so todo's generated route
+     stub says GET for an upstream `with {method:'POST'}` fetch.
 
 **Phase 6 — delete the old matcher** (this repo, framework major). When no kept domain uses `engine: 'classic'`
 (since domains 4.2.0 only bdd does, deprecated and deleted in the domains major that goes with this one):
 delete `core/pattern-matching/` and the `'classic'` engine (`engine: 'core'` stays accepted, so the domains
 build unchanged), by the renumber-only major procedure
 (pack, prove domains, domains patch peering `^old || ^new`, bump the range here, publish). Close M3 (e).
+**Merged 2026-10-17, unreleased** (#1552; lokascript-domains #47):
+- framework (5.0, breaking): the classic matcher (`PatternMatcher`, `matchPattern`, `matchBest`, the
+  `./core/pattern-matching` subpath), the classic generator (`generatePattern`, `generatePatternVariants`) and
+  `engine: 'classic'` (throws, naming the core) are gone; the core is the default. **The schema renderer stays**
+  (`createDomainRenderer`, `createSchemaRenderer`): all seven kept domains build their renderers on it, so it
+  is the domains' kit, not the classic engine's. The value helpers the stock reader uses moved to
+  `core/matching`. framework 981 → 939 tests (the deleted matcher's and generator's).
+- bdd on the core: its 264 tests pass and its 344 gate cases read the same (0 moved), so 5.0 is a renumber for
+  the domains. The bridge patch (#47) names bdd's engine, pins its golden patterns from the DSL's registry, and
+  peers framework `^4.8.0 || ^5.0.0`, intent/semantic `^4.0.0 || ^5.0.0`. Proven on framework/semantic/intent
+  packed at 5.0.0: every domains suite (3096) and typecheck with only the 5.0.0 copies installed, `pack:smoke`,
+  `gate:upstream` 0 worse / 0 better / 0 moved.
+- Release order (owner): domains 4.2.1 (the bridge) → this repo relocks mcp-server on it → hyperfixi 5.0.0
+  (`check-domains-peer-major` holds it until the relock) → domains 5.0.0 deletes bdd (its major tracks
+  framework's; `validate-versions`).
 
 ## Gates per phase
 
@@ -509,13 +549,13 @@ build unchanged), by the renumber-only major procedure
 
 ## Exit metrics
 
-- One matcher: framework's old 1,630-line copy deleted.
+- One matcher: framework's old 1,630-line copy deleted (#1552, with the classic generator).
 - Domain round trip: every pair `pass` or a listed refusal; 0 silent; 0 leftover input accepted (at Phase 2,
   corrected: 116 silent after #26, 1,748 accepted; with Phase 3's framework packed: 3 silent, 159 accepted; at
   domains 4.2.0: 2 silent, both bdd's, and 0 accepted).
 - learn: 135/135 commanding sentences read by the product as the source (150/150 with English, domains 4.2.0).
 - Semantic: parse-parity 0 differences through Phase 4; no hyperscript gate worse.
-- Domain packages: 16 → 7 DSLs; lokascript-learn on the current line.
+- Domain packages: 16 → 7 DSLs; lokascript-learn on the current line (#27, 2026-10-17).
 
 ## Traps
 
@@ -533,7 +573,9 @@ build unchanged), by the renumber-only major procedure
 - **The domains repo builds on the framework major its own major names** (`validate-versions`). Its gate measures
   the framework its lockfile holds: relock it (or pass `UPSTREAM_TARBALLS`) before reading a number against a
   framework change made here.
-- **lokascript-learn is live and two majors behind.** Its upgrade is its own project; nothing in Phases 1–4
-  reaches it until it moves.
+- **lokascript-learn renders its drills with its own morphology copy, not only the DSL** (found in step 4): only
+  glosses and lesson examples went through domain-learn on 2.x, so the bump moved those and not the drills, until
+  the app's renderer became the bridge (#27). Check which renderer a consumer actually calls before predicting
+  what a bump changes.
 - **The MCP server serves stale code after a rebuild** (`packages/mcp-server/src/freshness.ts`): reconnect it
   before probing tools.
