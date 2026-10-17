@@ -6,9 +6,9 @@ Plan, 2026-10-13. Decisions D1–D6 taken 2026-10-14 (all as recommended; D1's o
 domains relocked and re-baselined on it (#29) and released as 4.0.1 (#30). Phase 4 released in 4.7.0 (2026-10-16;
 #1533–#1541, steps 1–7, 7 in two). The domains' gate runs on the kit (lokascript-domains #31); Phase 5 step 1 done
 2026-10-16 for six of the seven DSLs (lokascript-domains #32–#37), released in domains 4.1.0 (#38; this repo
-locks it, #1545). The owner's decisions on what was left taken 2026-10-16 (Phase 5 below); learn on semantic
-(step 2) in review (lokascript-domains #40). Next: framework 4.8.0 (#1546), then behaviorspec and voice on it and
-bdd's capabilities, domains 4.2.0, mcp-server (step 3).
+locks it, #1545). The owner's decisions on what was left taken 2026-10-16 (Phase 5 below), released in 4.8.0
+(#1546, 2026-10-17) and domains 4.2.0 (lokascript-domains #39–#45): no domain accepts leftover input; learn on
+semantic (step 2); mcp-server without bdd's tools (step 3, #1550). Next: Phase 5 step 4 (downstream), then Phase 6.
 
 Owner, 2026-10-13: "The domains pattern only works if it is built on a reliable core. We may need to rethink
 domains, instead of trying to preserve it as is." This answers M3 (e) in
@@ -459,21 +459,43 @@ via `pack-smoke.sh UPSTREAM_TARBALLS` until it is published).
    - **learn's commanding verb is semantic's** (D2 as written): `#boxに .activeを 追加`, not `追加して`;
      learn's imperatives stay in its other functions.
 
-   In flight: #1546 (framework 4.8.0's half); lokascript-domains #39 (voice's quantity takes a number:
-   22 refused) and #40 (learn on semantic). After 4.8.0 is on npm: the domains relock with the rule (74
-   read), the word lists (behaviorspec's interaction, voice's close target), the typed text, behaviorspec's
-   `expect` reading its value without `saying` (the renderer writes it bare, so all 112 `expect … value`
-   round trips were refused; 448/448 with it), and bdd's capabilities; then domains 4.2.0.
+   **Released 2026-10-17**: framework 4.8.0 (#1546; changelog #1548, bump #1549) and domains 4.2.0
+   (lokascript-domains #45): #39 voice's quantity takes a number; #41 the relock, the rule, and the word lists
+   (behaviorspec's interaction, voice's close target); #42 the typed text; #43 behaviorspec's `expect` reads its
+   value without `saying` (the renderer wrote it bare, so all 112 `expect … value` round trips were refused) and
+   an assertion that takes no value refuses one; #44 bdd's capabilities, bdd deprecated, and
+   `createDomainRegistry({ omit })`. Measured on 4.8.0 (`gate:regen`):
+
+   | domain       | round trip | refused | silent | leftover accepted |
+   | ------------ | ---------- | ------- | ------ | ----------------- |
+   | bdd          | 226/344    | 116     | 2      | 0/228             |
+   | behaviorspec | 536/536    | 0       | 0      | 0/536             |
+   | flow         | 297/308    | 11      | 0      | 0/297             |
+   | learn        | 200/200    | 0       | 0      | 0/200             |
+   | llm          | 61/66      | 5       | 0      | 0/61              |
+   | sql          | 99/99      | 0       | 0      | 0/99              |
+   | todo         | 55/55      | 0       | 0      | 0/55              |
+   | voice        | 382/385    | 3       | 0      | 0/382             |
+
+   Leftover input accepted: 164 at domains 4.1.0, 0 now (74 of those words are read, into an open-text role
+   or one the text left empty, and reach the code; the rest are refused). bdd's 2 silent pairs stay with bdd,
+   which goes in domains 5.0.0. Found on the way: the classic matcher had read `types 'hello' into` by
+   skipping the text, the stock reader turns a keyword token into a literal (an optional literal slot just
+   before an SOV verb eats it; behaviorspec's typed text is first in SOV), and `given viewport` without a size
+   compiled to broken JavaScript.
 2. learn on semantic (D2): the commanding form from `render`, learn's narrating forms and glosses around it.
-   **In review 2026-10-16** (lokascript-domains #40): `createLearnDSL()` reads and writes with semantic (`parse`
+   **Done 2026-10-16** (lokascript-domains #40, released in domains 4.2.0): `createLearnDSL()` reads and writes with semantic (`parse`
    accepts what semantic's `translate` carries whole, learn's fifteen verbs); the commanding sentence, its
    gloss and `compile` are semantic's; `send.event`, `wait.duration`. 150 of 150 commanding sentences read
    back as the command (74 of 135 before); learn's gate 200/200.
-3. mcp-server's tools follow (D6), in this repo.
+3. mcp-server's tools follow (D6), in this repo. **Done 2026-10-17** (#1550): domains `^4.2.0`; the registry is
+   `createDomainRegistry({ omit: ['bdd'] })`, so bdd's four tools and its multi-step handling leave (98 tools
+   defined, 93 listed); learn's tools are semantic's through the DSL.
 4. Downstream: lokascript-learn from 2.x to the current line, checking its pages on the live site after the bump;
    lokascript-examples' apps, if kept; the docs-site llm generator.
 
-**Phase 6 — delete the old matcher** (this repo, framework major). When no kept domain uses `engine: 'classic'`:
+**Phase 6 — delete the old matcher** (this repo, framework major). When no kept domain uses `engine: 'classic'`
+(since domains 4.2.0 only bdd does, deprecated and deleted in the domains major that goes with this one):
 delete `core/pattern-matching/` and the `'classic'` engine (`engine: 'core'` stays accepted, so the domains
 build unchanged), by the renumber-only major procedure
 (pack, prove domains, domains patch peering `^old || ^new`, bump the range here, publish). Close M3 (e).
@@ -489,8 +511,9 @@ build unchanged), by the renumber-only major procedure
 
 - One matcher: framework's old 1,630-line copy deleted.
 - Domain round trip: every pair `pass` or a listed refusal; 0 silent; 0 leftover input accepted (at Phase 2,
-  corrected: 116 silent after #26, 1,748 accepted; with Phase 3's framework packed: 3 silent, 159 accepted).
-- learn: 135/135 commanding sentences read by the product as the source.
+  corrected: 116 silent after #26, 1,748 accepted; with Phase 3's framework packed: 3 silent, 159 accepted; at
+  domains 4.2.0: 2 silent, both bdd's, and 0 accepted).
+- learn: 135/135 commanding sentences read by the product as the source (150/150 with English, domains 4.2.0).
 - Semantic: parse-parity 0 differences through Phase 4; no hyperscript gate worse.
 - Domain packages: 16 → 7 DSLs; lokascript-learn on the current line.
 
