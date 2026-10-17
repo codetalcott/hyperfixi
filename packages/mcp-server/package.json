@@ -87,7 +87,7 @@
     "@lokascript/framework": "^5.0.0",
     "@lokascript/semantic": "^5.0.0",
     "@types/node": "^26.6.3",
-    "tsup": "^8.0.0",
+    "tsup": "^9.0.0",
     "tsx": "^4.23.15",
     "typescript": "^5.0.0",
     "vitest": "^5.0.2"
