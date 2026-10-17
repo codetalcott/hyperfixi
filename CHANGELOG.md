@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.8.0] - 2026-10-16
+
 ### Added
 
 - **`@lokascript/intent` / `@lokascript/framework`: a role's word list, `RoleSpec.words`** (domains
@@ -1852,7 +1854,8 @@ _Synchronized version release. See git history for details._
 - npm access token stored in GitHub Secrets
 - 2FA recommended for npm organization
 
-[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v4.7.0...HEAD
+[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v4.8.0...HEAD
+[4.8.0]: https://github.com/codetalcott/hyperfixi/compare/v4.7.0...v4.8.0
 [4.7.0]: https://github.com/codetalcott/hyperfixi/compare/v4.6.0...v4.7.0
 [4.6.0]: https://github.com/codetalcott/hyperfixi/compare/v4.5.0...v4.6.0
 [4.5.0]: https://github.com/codetalcott/hyperfixi/compare/v4.4.0...v4.5.0
