@@ -1,7 +1,7 @@
 /**
  * The schema-pattern generator semantic's hyperscript parser runs (domains
  * rethink Phase 4.4), on a schema of its own: the grammar's position order,
- * the variants, and a profile's optional markers.
+ * the variants, a profile's optional markers, and a role's word list.
  */
 import { describe, expect, it } from 'vitest';
 import { defineCommand, defineRole } from '../schema';
@@ -78,6 +78,46 @@ describe('createSchemaPatternGenerator', () => {
       ['send-tr-generated-simple', 95, '{patient} gönder'],
       ['send-tr-generated-verb-first', 80, 'gönder {patient}'],
     ]);
+  });
+
+  it("puts a role's word list for the pattern's language on its token, in every variant", () => {
+    const close = defineCommand({
+      action: 'send',
+      roles: [
+        defineRole({
+          role: 'patient',
+          required: true,
+          expectedTypes: ['expression'],
+          words: { '*': ['tab'], tr: ['sekme'] },
+        }),
+        defineRole({ role: 'destination', required: false, expectedTypes: ['selector'] }),
+      ],
+    });
+    const generator = createSchemaPatternGenerator({ positionOrder: 'ascending' });
+    const wordsOf = (tokens: readonly PatternToken[]): unknown[] =>
+      tokens.flatMap(t =>
+        t.type === 'role' ? [[t.role, t.words]] : t.type === 'group' ? wordsOf(t.tokens) : []
+      );
+    const at = (profile: SchemaPatternProfile) => {
+      const variants = generator.generatePatternVariants(close, profile, {
+        basePriority: 100,
+        generateSimpleVariants: true,
+      });
+      const roles = variants.flatMap(p => wordsOf(p.template.tokens)) as [string, unknown][];
+      return {
+        variants: variants.length,
+        patient: [
+          ...new Set(roles.filter(([r]) => r === 'patient').map(([, w]) => JSON.stringify(w))),
+        ],
+        destination: [
+          ...new Set(roles.filter(([r]) => r === 'destination').map(([, w]) => JSON.stringify(w))),
+        ],
+      };
+    };
+    expect(at(en)).toEqual({ variants: 2, patient: ['["tab"]'], destination: [undefined] });
+    expect(at(tr)).toEqual({ variants: 3, patient: ['["tab","sekme"]'], destination: [undefined] });
+    // No list, no field: the patterns of a grammar that lists no words are unchanged.
+    expect(JSON.stringify(generator.generatePattern(send, en))).not.toContain('words');
   });
 
   it('drops variant-only roles', () => {

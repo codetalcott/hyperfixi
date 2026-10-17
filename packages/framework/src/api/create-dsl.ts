@@ -4,6 +4,7 @@
 
 import type {
   SemanticNode,
+  LanguageToken,
   LanguageTokenizer,
   LanguagePattern,
   PatternMatchResult,
@@ -229,7 +230,9 @@ export interface CompileResult {
 /**
  * Thrown by `parse` (and so `compile`, `validate`, `translate`) when the input reads as a command
  * only by leaving some of it unread: `select name from users banana` is not `select name from users`.
- * `reading` is what the longest such match read, `unread` the text after it.
+ * `reading` is what the longest such match read, `unread` the text after it. `hint`, when there is
+ * one, says how the input might read: where a bare word read as a value is followed by another, the
+ * two may be one value written without quotes (todo `add buy milk to groceries`).
  */
 export class UnreadInputError extends Error {
   readonly code = 'unread-input';
@@ -238,9 +241,13 @@ export class UnreadInputError extends Error {
     readonly input: string,
     readonly language: string,
     readonly reading: SemanticNode,
-    readonly unread: string
+    readonly unread: string,
+    readonly hint?: string
   ) {
-    super(`"${input}" (${language}) reads as ${reading.action} only by leaving "${unread}" unread`);
+    super(
+      `"${input}" (${language}) reads as ${reading.action} only by leaving "${unread}" unread` +
+        (hint ? `; ${hint}` : '')
+    );
     this.name = 'UnreadInputError';
   }
 }
@@ -491,14 +498,35 @@ class MultilingualDSLImpl implements MultilingualDSL {
         .slice(longestPartial.consumedTokens)
         .map(t => t.value)
         .join(' ');
+      const hint = this.quoteHint(longestPartial, tokens.tokens);
       throw new UnreadInputError(
         input,
         language,
         this.nodeOf(longestPartial, input, language),
-        unread
+        unread,
+        ...(hint ? [hint] : [])
       );
     }
     throw new Error(`No pattern matched for input: ${input}`);
+  }
+
+  /**
+   * `if "buy milk" is one value, quote it`, where the last token a match read is a bare word it took
+   * as a role's value (a role with no word list) and the first it left is a bare word too.
+   */
+  private quoteHint(
+    match: PatternMatchResult,
+    tokens: readonly LanguageToken[]
+  ): string | undefined {
+    const last = tokens[match.consumedTokens - 1];
+    const next = tokens[match.consumedTokens];
+    if (last?.kind !== 'identifier' || next?.kind !== 'identifier') return undefined;
+    const schema = this.schemaLookup.getSchema(match.pattern.command);
+    const role = [...match.captured].find(
+      ([, v]) => (v as { raw?: unknown }).raw === last.value
+    )?.[0];
+    if (!role || schema?.roles.find(r => r.role === role)?.words) return undefined;
+    return `if "${last.value} ${next.value}" is one value, quote it`;
   }
 
   private nodeOf(match: PatternMatchResult, input: string, language: string): SemanticNode {

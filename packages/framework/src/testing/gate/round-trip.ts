@@ -13,8 +13,13 @@
  *   generator normalizes: bdd ja `#box0 が 表示 前提` is `visible`). English is a lane like the others.
  *   `refused` when the render is null or the parse throws: the caller is told. `silent` otherwise: it
  *   reads, or compiles to, something else.
- * - **leftover**: the same render plus one unknown word. `refused` is the expected outcome; a parse
- *   that returns accepted input it did not read (`silent`).
+ * - **leftover**: the same render plus one unknown word. `refused` is the expected outcome: the parse
+ *   throws, or the input does not compile. `pass` where the word is READ: the parse is the text's own
+ *   with the word in one role (an open-text role extended by it, `where active zzqx`, or a role the
+ *   text left empty, `list zzqx`), and the word is in the code (for a command that never compiles on
+ *   its own, `englishDoesNotCompile`, the parse alone). `silent` otherwise: the input is accepted and
+ *   read as something else (`when clicks zzqx`: actor `clicks`, action `zzqx`), or the word goes
+ *   nowhere (voice `back zzqx` compiles as `back`).
  *
  * The outcomes are the command-shape gate's (hyperfixi `testing-framework`). A baseline lists every
  * case that is not at its best outcome; `compare` reports a case worse than listed and one better than
@@ -93,7 +98,16 @@ export interface GateFixture {
   oracle: 'compile' | 'node';
   /** Keys are `<action>.<role>` or `<role>` (every action). The first value is the one the other cases use. */
   values: Record<string, string[]>;
-  /** Actions that do not compile on their own (a gate may check every other one does). */
+  /**
+   * Commands (bracket syntax) written besides the generated ones, where one role's value depends on
+   * another's and no single list fits both: behaviorspec's `[given subject:#box value:visible]` beside
+   * `[given subject:viewport value:1024x768]`.
+   */
+  commands?: string[];
+  /**
+   * Actions that do not compile on their own (a gate may check every other one does). Leftover input
+   * in such a command is judged by its parse alone.
+   */
   englishDoesNotCompile?: string[];
 }
 
@@ -132,6 +146,7 @@ export function commandsFor(schemas: readonly GateSchema[], fixture: GateFixture
       });
     }
   }
+  for (const command of fixture.commands ?? []) out.add(command);
   return [...out];
 }
 
@@ -180,6 +195,35 @@ function describeRead(want: Record<string, string>, ref: GateNode, back: GateNod
 }
 
 const message = (e: unknown) => String((e as Error)?.message ?? e).slice(0, 160);
+
+/** What `text` compiles to, or `undefined` when it does not compile. */
+function codeOf(dsl: GateDSL, text: string, lang: string): string | undefined {
+  try {
+    const c = dsl.compile(text, lang);
+    return c.ok && typeof c.code === 'string' ? c.code : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Whether `read`, the parse of a text plus `word`, is `back`, the text's own parse, with the word read
+ * into it: the same action and roles, except one role, whose value is its value in `back` followed by
+ * the word (an open-text role at the end: sql `where active zzqx`) or, where `back` has no such role,
+ * the word itself (todo `list zzqx`).
+ */
+export function readsWord(back: GateNode, read: GateNode, word: string): boolean {
+  if (read.action !== back.action) return false;
+  const was = roleValues(back);
+  const now = roleValues(read);
+  let changed = 0;
+  for (const role of new Set([...Object.keys(was), ...Object.keys(now)])) {
+    if (was[role] === now[role]) continue;
+    if (now[role] !== (role in was ? `${was[role]} ${word}` : word)) return false;
+    changed++;
+  }
+  return changed === 1;
+}
 
 /** What a command (bracket syntax) compiles to; null when it does not compile on its own. */
 export function referenceCode(dsl: GateDSL, source: string): string | null {
@@ -253,18 +297,39 @@ export function runRoundTrip(
 
       // Leftover input: only where the text itself reads, or a refusal would say nothing.
       const extended = `${text} ${UNKNOWN_WORD}`;
+      let read: GateNode;
       try {
-        const read = dsl.parse(extended, lang);
-        results.push({
-          ...at,
-          kind: 'leftover',
-          outcome: 'silent',
-          text: extended,
-          why: `accepted as ${read.action}`,
-        });
+        read = dsl.parse(extended, lang);
       } catch {
         results.push({ ...at, kind: 'leftover', outcome: 'refused', text: extended });
+        continue;
       }
+      // Read with the word, the word must reach the code. Where the input does not compile, compile
+      // tells the caller (`refused`), except for a command that never compiles on its own (bdd's
+      // `and`), where only the parse can say.
+      const kept = readsWord(back, read, UNKNOWN_WORD);
+      const code = kept ? codeOf(dsl, extended, lang) : undefined;
+      const alone = fixture.englishDoesNotCompile?.includes(read.action) ?? false;
+      const [left, leftWhy]: [Outcome, string | undefined] = !kept
+        ? [
+            'silent',
+            `accepted as ${read.action}; reads ${describeRead(roleValues(back), back, read)}`,
+          ]
+        : code !== undefined
+          ? code.includes(UNKNOWN_WORD)
+            ? ['pass', undefined]
+            : ['silent', `accepted as ${read.action}; the word does not reach the code`]
+          : alone
+            ? ['pass', undefined]
+            : ['refused', 'does not compile'];
+      results.push({
+        ...at,
+        kind: 'leftover',
+        outcome: left,
+        text: extended,
+        ...(leftWhy ? { why: leftWhy } : {}),
+        read: summarize(read),
+      });
     }
   }
   return results;

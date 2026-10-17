@@ -2,10 +2,13 @@
  * `engine: 'core'` (domains rethink Phase 4.7): the same config and DSL as the
  * classic engine, read by the core. framework's SQL fixture reads, compiles and
  * translates as it does on the classic engine, refuses what it does not read,
- * and renders through its own patterns where no renderer is configured.
+ * and renders through its own patterns where no renderer is configured. A role
+ * with a word list reads only its words.
  */
 import { describe, expect, it, vi } from 'vitest';
 import { createMultilingualDSL, UnreadInputError, type DSLConfig } from './create-dsl';
+import { defineCommand, defineRole } from '../schema';
+import { BaseTokenizer, getDefaultExtractors } from '../index';
 import { sqlDSLConfig, testQueries, expectedSQL } from '../__test__/fixtures/sql-dsl';
 import type { SemanticNode } from '../core/types';
 import { generatePattern } from '../generation/pattern-generator';
@@ -82,5 +85,66 @@ describe("createMultilingualDSL with engine: 'core'", () => {
   it('throws on an engine it does not know, rather than reading with the classic one', () => {
     const misspelled = { ...sqlDSLConfig(), engine: 'cor' } as unknown as DSLConfig;
     expect(() => createMultilingualDSL(misspelled)).toThrow('Unknown DSL engine "cor"');
+  });
+});
+
+describe('a role with a word list, on the core', () => {
+  class WordTokenizer extends BaseTokenizer {
+    readonly language = 'en';
+    readonly direction = 'ltr' as const;
+    constructor() {
+      super();
+      this.registerExtractors(getDefaultExtractors());
+    }
+    classifyToken(token: string): 'keyword' | 'identifier' {
+      return token.toLowerCase() === 'when' ? 'keyword' : 'identifier';
+    }
+  }
+  // behaviorspec's `when [actor] action`: both are bare words.
+  const when = defineCommand({
+    action: 'when',
+    primaryRole: 'action',
+    roles: [
+      defineRole({ role: 'actor', required: false, expectedTypes: ['expression'], svoPosition: 2 }),
+      defineRole({
+        role: 'action',
+        required: true,
+        expectedTypes: ['expression'],
+        svoPosition: 1,
+        words: { '*': ['clicks', 'types'] },
+      }),
+    ],
+  });
+  const dsl = createMultilingualDSL({
+    name: 'when',
+    schemas: [when],
+    languages: [
+      {
+        code: 'en',
+        name: 'English',
+        nativeName: 'English',
+        tokenizer: new WordTokenizer(),
+        patternProfile: {
+          code: 'en',
+          wordOrder: 'SVO',
+          keywords: { when: { primary: 'when' } },
+          roleMarkers: {},
+        },
+      },
+    ],
+    engine: 'core',
+  });
+
+  it('reads a listed word, with or without the optional role before it', () => {
+    expect(reading(dsl.parse('when clicks', 'en'))).toBe('when action=clicks');
+    expect(reading(dsl.parse('when user clicks', 'en'))).toBe('when actor=user action=clicks');
+  });
+
+  it('refuses a word it does not list, rather than reading the listed word as the role before it', () => {
+    // Without the list: actor `clicks`, action `zzqx`.
+    expect(() => dsl.parse('when clicks zzqx', 'en')).toThrow(UnreadInputError);
+    // A listed word is not part of a longer value, so the refusal does not say to quote it.
+    expect(() => dsl.parse('when clicks zzqx', 'en')).toThrow(/leaving "zzqx" unread$/);
+    expect(() => dsl.parse('when user frobs', 'en')).toThrow();
   });
 });

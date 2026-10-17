@@ -449,6 +449,13 @@ describe('MultilingualDSL: Explicit Syntax Support', () => {
       expect(refusal.message).toMatch(/leaving "banana" unread/);
     });
 
+    it('says when the bare word read last and the next may be one value, to be quoted', () => {
+      const dsl = createTestDSL();
+      expect(() => dsl.parse('select name from users banana', 'en')).toThrow(
+        /unread; if "users banana" is one value, quote it$/
+      );
+    });
+
     it('compile and validate report the refusal instead of compiling the shorter reading', () => {
       const dsl = createTestDSL();
       const compiled = dsl.compile('select name from users banana banana', 'en');

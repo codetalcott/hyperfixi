@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`@lokascript/intent` / `@lokascript/framework`: a role's word list, `RoleSpec.words`** (domains
+  rethink Phase 5). Per language, with `'*'` for every language; the core engine (`engine: 'core'`)
+  reads such a slot only from one of its words, compared lower-cased, so a word the grammar does not
+  know is left unread and the input refused, instead of read as the value. It is for a domain's fixed
+  words: behaviorspec's `when clicks zzqx` read actor `clicks`, action `zzqx`, and compiled to a
+  comment. The schema-pattern generator carries the pattern language's list on the role token
+  (`RolePatternToken.words`); a grammar that lists no words generates the same patterns. The classic
+  engine and semantic ignore it.
+- **`@lokascript/framework/testing/gate`: `GateFixture.commands`**, commands the gate writes besides
+  the generated ones, where one role's value depends on another's (behaviorspec's
+  `[given subject:#box value:visible]` beside `[given subject:viewport value:1024x768]`).
+- **`@lokascript/framework`: `UnreadInputError.hint`.** Where the last word a parse read as a value is
+  followed by another bare word, the refusal adds `if "buy milk" is one value, quote it` (todo's
+  `add buy milk to groceries`, whose item is quoted).
+
+### Changed
+
+- **`@lokascript/framework/testing/gate`: leftover input read into a role is `pass`.** An unknown word
+  after a command used to be `silent` wherever the parse accepted it. It is `pass` when the parse is
+  the text's own with the word in one role (an open-text role extended by it, sql's
+  `where active zzqx`, or a role the text left empty, todo's `list zzqx`) and the word reaches the
+  compiled code; `refused` when the input stops compiling; `silent` otherwise (read as something
+  else, or the word goes nowhere). `readsWord` is exported. On the domains (domains 4.1.0, this
+  framework packed): 74 leftover cases accepted → read, 0 worse, 0 parses moved.
+- **`@lokascript/framework`: the stock reader's optional slot does not read a marker the rest of the
+  pattern owes**, through its optional groups, as a required slot already does not read the marker
+  next to it (behaviorspec's `when user types into #search`, whose typed text is optional and has no
+  marker). No domain parse moves.
+
 ## [4.7.0] - 2026-10-16
 
 ### Added
