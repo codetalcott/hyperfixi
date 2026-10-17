@@ -204,6 +204,7 @@ A refused pair that starts to render can come out silent: the command-shape dry 
   and the domain family cut down and rebuilt on it, after the semantic work: [`DOMAINS_RETHINK.md`](DOMAINS_RETHINK.md).
   Its decisions D1–D6 were taken 2026-10-14; Phase 1 (domains 4.0.0: the cuts, and the family on framework 4.x)
   is lokascript-domains #21.
+  Closed by its Phase 6 (#1552, 2026-10-17): framework's copy and the classic engine deleted; ships in 5.0.0 (unreleased).
 
 **Exit metrics** (stamp them when the arc starts):
 
