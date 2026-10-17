@@ -45,6 +45,14 @@ describe('runRoundTrip', () => {
     ]);
   });
 
+  it("writes a fixture's own commands after the generated ones, once each", () => {
+    const own = '[select columns:email source:users condition:age]';
+    expect(
+      commandsFor([selectCommand], { ...fixture, commands: [own, '[select columns:id source:t]'] })
+    ).toEqual([...commandsFor([selectCommand], fixture), '[select columns:id source:t]']);
+    expect(commandsFor([selectCommand], fixture)).toContain(own);
+  });
+
   it('reads every render back, in every language, and tries each with an unknown word after it', () => {
     expect(countsOf(results)).toEqual({
       roundTrip: { cases: 8, pass: 8, refused: 0, silent: 0 },

@@ -99,6 +99,12 @@ export interface GateFixture {
   /** Keys are `<action>.<role>` or `<role>` (every action). The first value is the one the other cases use. */
   values: Record<string, string[]>;
   /**
+   * Commands (bracket syntax) written besides the generated ones, where one role's value depends on
+   * another's and no single list fits both: behaviorspec's `[given subject:#box value:visible]` beside
+   * `[given subject:viewport value:1024x768]`.
+   */
+  commands?: string[];
+  /**
    * Actions that do not compile on their own (a gate may check every other one does). Leftover input
    * in such a command is judged by its parse alone.
    */
@@ -140,6 +146,7 @@ export function commandsFor(schemas: readonly GateSchema[], fixture: GateFixture
       });
     }
   }
+  for (const command of fixture.commands ?? []) out.add(command);
   return [...out];
 }
 

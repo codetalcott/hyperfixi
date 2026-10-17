@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   comment. The schema-pattern generator carries the pattern language's list on the role token
   (`RolePatternToken.words`); a grammar that lists no words generates the same patterns. The classic
   engine and semantic ignore it.
+- **`@lokascript/framework/testing/gate`: `GateFixture.commands`**, commands the gate writes besides
+  the generated ones, where one role's value depends on another's (behaviorspec's
+  `[given subject:#box value:visible]` beside `[given subject:viewport value:1024x768]`).
 - **`@lokascript/framework`: `UnreadInputError.hint`.** Where the last word a parse read as a value is
   followed by another bare word, the refusal adds `if "buy milk" is one value, quote it` (todo's
   `add buy milk to groceries`, whose item is quoted).
