@@ -10,9 +10,9 @@ import { createDomainRegistry as createAggregateRegistry } from '@lokascript/dom
 import type { DomainRegistry } from '@lokascript/framework';
 
 /**
- * Every domain but bdd, which behaviorspec absorbed (domains 4.2.0; hyperfixi domains rethink, D6):
- * its tools leave the server while `@lokascript/domains/bdd` stays through domains 4.x.
+ * Every domain: domains 5.0.0 has seven (bdd, which behaviorspec absorbed in domains 4.2.0, was
+ * deleted; hyperfixi domains rethink, D6).
  */
 export function createDomainRegistry(): DomainRegistry {
-  return createAggregateRegistry({ omit: ['bdd'] });
+  return createAggregateRegistry();
 }
