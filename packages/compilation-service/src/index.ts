@@ -3,8 +3,9 @@
  *
  * Semantic service for LokaScript.
  * Validates and translates hyperscript from 24 languages, explicit syntax, or LLM JSON.
- * Generates behavior-level tests from semantic analysis.
- * Generates framework components (React, Vue, Svelte) from abstract operations.
+ * Generates behavior-level tests from semantic analysis (deprecated: removed in 6.0).
+ * Generates framework components (React, Vue, Svelte) from abstract operations (deprecated:
+ * removed in 6.0).
  */
 
 // Main service
@@ -75,11 +76,11 @@ export type {
   FidelityReport,
 } from './scoring/score.js';
 
-// Test renderers
+// Test renderers (deprecated: removed in 6.0 with `generateTests`)
 export { PlaywrightRenderer } from './renderers/playwright.js';
 export type { TestRenderer, TestRenderOptions, GeneratedTest } from './renderers/types.js';
 
-// Component renderers
+// Component renderers (deprecated: removed in 6.0 with `generateComponent`)
 export { ReactRenderer } from './renderers/react.js';
 export { VueRenderer } from './renderers/vue.js';
 export { SvelteRenderer } from './renderers/svelte.js';

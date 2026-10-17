@@ -74,6 +74,22 @@ function isLossyTranslation(error: unknown): error is LossyTranslation {
   );
 }
 
+/**
+ * The notice `generateTests` and `generateComponent` return until 6.0 removes them. Measured
+ * 2026-10-18 on the docs sites' 164 English patterns and lokascript-examples chat's five examples:
+ * 15 of 169 inputs gave a Playwright test that fails without the engine (103 were refused, 23
+ * tests pass with no engine at all, 26 fail on it), and 4 of 6 React components did not typecheck
+ * (every command aimed at another element).
+ */
+function deprecationNotice(operation: string): Diagnostic {
+  return {
+    severity: 'info',
+    code: 'DEPRECATED',
+    message: `${operation} is deprecated and is removed in @lokascript/compilation-service 6.0.`,
+    suggestion: 'validate, translate, scoreFidelity and diff stay.',
+  };
+}
+
 export class CompilationService {
   private confidenceThreshold: number;
   private translateFn: ((code: string, from: string, to: string) => string) | null = null;
@@ -108,6 +124,8 @@ export class CompilationService {
 
   /**
    * Register a test renderer for a given framework.
+   *
+   * @deprecated Removed in 6.0 with `generateTests`.
    */
   registerTestRenderer(framework: string, renderer: TestRenderer): void {
     this.testRenderers.set(framework, renderer);
@@ -115,6 +133,8 @@ export class CompilationService {
 
   /**
    * Register a component renderer for a given framework.
+   *
+   * @deprecated Removed in 6.0 with `generateComponent`.
    */
   registerComponentRenderer(framework: string, renderer: ComponentRenderer): void {
     this.componentRenderers.set(framework, renderer);
@@ -338,9 +358,12 @@ export class CompilationService {
    *
    * Parses the input, extracts abstract operations (what the behavior does),
    * and renders them as test code in the requested framework.
+   *
+   * @deprecated Removed in 6.0: most inputs are refused, and most tests it writes do not check
+   * the behavior (see `deprecationNotice`). The response carries a `DEPRECATED` info diagnostic.
    */
   generateTests(request: TestRequest): TestResponse {
-    const diagnostics: Diagnostic[] = [];
+    const diagnostics: Diagnostic[] = [deprecationNotice('generateTests')];
 
     // Step 1: Normalize input to SemanticNode (reuse existing pipeline)
     const normalized = normalize({
@@ -423,9 +446,12 @@ export class CompilationService {
    *
    * Parses the input, extracts abstract operations, and renders
    * them as a framework-specific component (React, Vue, or Svelte).
+   *
+   * @deprecated Removed in 6.0: a command aimed at another element renders a component that does
+   * not compile (see `deprecationNotice`). The response carries a `DEPRECATED` info diagnostic.
    */
   generateComponent(request: ComponentRequest): ComponentResponse {
-    const diagnostics: Diagnostic[] = [];
+    const diagnostics: Diagnostic[] = [deprecationNotice('generateComponent')];
 
     // Step 1: Normalize input to SemanticNode
     const normalized = normalize({
@@ -652,9 +678,9 @@ export class CompilationService {
    * validates it, and renders to the requested target format.
    *
    * Targets (`target` is required):
-   * - 'react'          — React component
-   * - 'vue'            — Vue component
-   * - 'svelte'         — Svelte component
+   * - 'react'          — React component (deprecated: removed in 6.0 with `generateComponent`)
+   * - 'vue'            — Vue component (deprecated, likewise)
+   * - 'svelte'         — Svelte component (deprecated, likewise)
    * - 'intent-element' — HTML snippet with embedded `<lse-intent>` JSON
    */
   async generate(request: GenerateRequest): Promise<GenerateResponse> {

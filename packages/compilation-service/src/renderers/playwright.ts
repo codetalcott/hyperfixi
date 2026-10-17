@@ -14,6 +14,7 @@ import { generateFixture } from './html-fixture.js';
 // Renderer
 // =============================================================================
 
+/** @deprecated Removed in @lokascript/compilation-service 6.0, with `generateTests`. */
 export class PlaywrightRenderer implements TestRenderer {
   readonly framework = 'playwright';
 

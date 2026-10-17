@@ -34,6 +34,7 @@ import {
 // Renderer
 // =============================================================================
 
+/** @deprecated Removed in @lokascript/compilation-service 6.0, with `generateComponent`. */
 export class VueRenderer implements ComponentRenderer {
   readonly framework = 'vue';
 

@@ -793,3 +793,49 @@ describe('CompilationService — generate() targets', () => {
     expect(result.diagnostics.some(d => d.code === 'UNKNOWN_TARGET')).toBe(true);
   });
 });
+
+// =============================================================================
+// Deprecations (removed in 6.0)
+// =============================================================================
+
+describe('deprecated generators', () => {
+  let service: CompilationService;
+
+  beforeAll(async () => {
+    service = await CompilationService.create();
+  }, 30000);
+
+  const isNotice = (d: { severity: string; code: string; message: string }) =>
+    d.severity === 'info' && d.code === 'DEPRECATED' && d.message.includes('6.0');
+
+  it('generateTests says it is deprecated, and still works', () => {
+    const r = service.generateTests({ code: 'on click toggle .active', language: 'en' });
+    expect(r.ok).toBe(true);
+    expect(r.diagnostics.filter(isNotice)).toHaveLength(1);
+  });
+
+  it('generateComponent says it is deprecated, and still works', () => {
+    const r = service.generateComponent({ code: 'on click toggle .active', language: 'en' });
+    expect(r.ok).toBe(true);
+    expect(r.diagnostics.filter(isNotice)).toHaveLength(1);
+  });
+
+  it("generate's component targets say so too; intent-element does not", async () => {
+    const react = await service.generate({ lse: '[toggle patient:.active]', target: 'react' });
+    expect(react.diagnostics.filter(isNotice)).toHaveLength(1);
+    const intent = await service.generate({
+      lse: '[toggle patient:.active]',
+      target: 'intent-element',
+    });
+    expect(intent.diagnostics.filter(isNotice)).toHaveLength(0);
+  });
+
+  it('a refused input still carries the notice', () => {
+    const r = service.generateComponent({
+      code: 'on click fetch /api/items as json then put it into #list',
+      language: 'en',
+    });
+    expect(r.ok).toBe(false);
+    expect(r.diagnostics.filter(isNotice)).toHaveLength(1);
+  });
+});
