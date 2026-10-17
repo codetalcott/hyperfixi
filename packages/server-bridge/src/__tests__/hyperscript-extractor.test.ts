@@ -27,6 +27,31 @@ describe('extractHyperscriptRoutes', () => {
     expect(routes[0].method).toBe('POST');
   });
 
+  it("reads upstream's method from the fetch options", () => {
+    const cases: Array<[string, string, string]> = [
+      [`fetch /api/users with {method:'POST'}`, 'POST', 'json'],
+      [`fetch /api/users with method:'PUT' as json`, 'PUT', 'json'],
+      [`fetch /api/users {method: 'DELETE'} as an html`, 'DELETE', 'html'],
+      [
+        `fetch '/api/todos' as html with {method:'POST', body: new FormData(me)} do not throw`,
+        'POST',
+        'html',
+      ],
+    ];
+    for (const [code, method, format] of cases) {
+      const routes = extractHyperscriptRoutes(`<form _="on submit ${code}">`, { file: FILE });
+      expect(routes, code).toHaveLength(1);
+      expect(routes[0].method, code).toBe(method);
+      expect(routes[0].responseFormat, code).toBe(format);
+    }
+  });
+
+  it("reads a method only from its own fetch's options", () => {
+    const html = `<button _="on click fetch /api/a then fetch /api/b with {method:'POST'}">`;
+    const routes = extractHyperscriptRoutes(html, { file: FILE });
+    expect(routes.map(r => `${r.method} ${r.path}`)).toEqual(['GET /api/a', 'POST /api/b']);
+  });
+
   it('extracts URL with path parameters', () => {
     const html = `<button _="on click fetch /api/users/:id as json">`;
     const routes = extractHyperscriptRoutes(html, { file: FILE });

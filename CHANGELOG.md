@@ -33,6 +33,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   not read (no domain gate case accepts leftover input), and `parse_learn` & co. read and write
   learn's commanding sentence with semantic.
 
+### Fixed
+
+- **`@hyperfixi/server-bridge` reads a fetch's method from upstream's options.** It read the method
+  only from 2.x's `via POST`, so a route written in the engine's syntax, such as
+  `fetch /api/x with {method:'POST'}`, was generated as GET. It now reads `with {method:'POST'}`,
+  `with method:'POST'` or a bare `{method:'POST'}`, with `as` before or after them (`as an html`
+  too); `via` is still read. Measured on lokascript-examples' cross-domain and flow-playground
+  pages: 3 POST routes read as GET, all POST now.
+
 ## [4.8.0] - 2026-10-16
 
 ### Added
