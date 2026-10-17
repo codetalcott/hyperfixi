@@ -7,7 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Removed (BREAKING — the next release is 5.0.0)
+## [5.0.0] - 2026-10-17
+
+A renumber for everything but `@lokascript/framework`, whose classic DSL engine is removed: every
+other package is unchanged in its API, and `@lokascript/domains` 4.2.1+ accepts 5.0.
+
+### Removed (BREAKING)
 
 - **`@lokascript/framework`: the classic DSL engine** (domains rethink Phase 6; M3 (e): one
   matcher). Every DSL reads on the core engine, which every kept domain has used since domains 4.2.0
@@ -24,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **`@hyperfixi/mcp-server`: on `@lokascript/domains` 4.2.0, without bdd's tools** (domains rethink
+- **`@hyperfixi/mcp-server`: on `@lokascript/domains` 4.2.1, without bdd's tools** (domains rethink
   Phase 5, D6). `parse_bdd`, `compile_bdd`, `validate_bdd` and `translate_bdd` and the multi-step
   bdd scenario handling are gone: behaviorspec reads bdd's preconditions, actions and assertions
   (`given #button is visible`, `when user presses 'Enter'`, `expect #title text Welcome`), and the
@@ -1889,7 +1894,8 @@ _Synchronized version release. See git history for details._
 - npm access token stored in GitHub Secrets
 - 2FA recommended for npm organization
 
-[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v4.8.0...HEAD
+[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v5.0.0...HEAD
+[5.0.0]: https://github.com/codetalcott/hyperfixi/compare/v4.8.0...v5.0.0
 [4.8.0]: https://github.com/codetalcott/hyperfixi/compare/v4.7.0...v4.8.0
 [4.7.0]: https://github.com/codetalcott/hyperfixi/compare/v4.6.0...v4.7.0
 [4.6.0]: https://github.com/codetalcott/hyperfixi/compare/v4.5.0...v4.6.0
