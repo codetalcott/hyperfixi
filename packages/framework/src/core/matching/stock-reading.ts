@@ -1,8 +1,8 @@
 /**
- * Reading a domain value at a role slot: the value reading framework's old
- * matcher (`core/pattern-matching/`) did, moved here so the stock reader on the
- * matcher's skeleton (`stock-reader.ts`, domains rethink Phase 4.7) and the old
- * matcher run the same code until Phase 6 deletes the old one.
+ * Reading a domain value at a role slot: the value reading framework's first
+ * matcher did, moved here for the stock reader on the matcher's skeleton
+ * (`stock-reader.ts`, domains rethink Phase 4.7). The first matcher was
+ * deleted in 5.0 (Phase 6).
  *
  * In order: an English noise word before a selector (`the`), then the
  * multi-token forms (a possessive, `my value`; a method call,
@@ -22,8 +22,8 @@ import type {
   LanguageToken,
 } from '../types';
 import { createSelector, createLiteral, createReference, createPropertyPath } from '../types';
-import { isTypeCompatible } from '../pattern-matching/utils/type-validation';
-import { getPossessiveReference } from '../pattern-matching/utils/possessive-keywords';
+import { isTypeCompatible } from './type-validation';
+import { getPossessiveReference } from './possessive-keywords';
 
 /** What value reading needs of a language profile: its code, and its possessive words. */
 export interface ReadingProfile {

@@ -10,7 +10,7 @@
  */
 
 import type { LanguageTokenizer } from '../core/types';
-import type { PatternGenLanguageProfile } from '../generation/pattern-generator';
+import type { PatternGenLanguageProfile } from '../generation/profile';
 import type { LanguageConfig } from '../api/create-dsl';
 import type { LanguageProfile as GrammarProfile } from '../grammar';
 import { createSimpleTokenizer, type TokenizerProfile } from '../core/tokenization/base-tokenizer';
@@ -51,8 +51,8 @@ function mergeRoleMarkers(
 
 /**
  * Build a pattern-generation profile: domain keywords + slice grammar
- * (word order, role markers). The result feeds `generatePattern` /
- * `generatePatternVariants` and `LanguageConfig.patternProfile`.
+ * (word order, role markers). The result feeds `LanguageConfig.patternProfile`
+ * and the schema renderer.
  */
 export function buildPatternProfile(
   slice: GrammarProfileSlice,

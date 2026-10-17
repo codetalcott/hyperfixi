@@ -2,7 +2,7 @@
  * Pattern generation, rendering, and diagnostics
  */
 
-export * from './pattern-generator';
+export * from './profile';
 export * from './renderer';
 export * from './diagnostics';
 export * from './schema-patterns';

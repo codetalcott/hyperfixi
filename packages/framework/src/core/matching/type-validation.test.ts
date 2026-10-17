@@ -1,7 +1,7 @@
 /**
  * Type Validation Tests
  *
- * Tests the type compatibility and validation utilities used by PatternMatcher.
+ * Tests the type compatibility and validation utilities the stock reader uses.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -17,7 +17,7 @@ import {
   isVariableRef,
   isBuiltInReference,
 } from './type-validation';
-import type { SemanticValue } from '../../types';
+import type { SemanticValue } from '../types';
 
 describe('Type Validation', () => {
   describe('isTypeCompatible', () => {

@@ -11,7 +11,7 @@
 import type { SemanticNode } from '../core/types';
 import { extractRoleValue, extractValue } from '../core/types';
 import type { CommandSchema } from '../schema';
-import { sortRolesByWordOrder, type PatternGenLanguageProfile } from './pattern-generator';
+import { sortRolesByWordOrder, type PatternGenLanguageProfile } from './profile';
 
 // =============================================================================
 // Renderer Interface

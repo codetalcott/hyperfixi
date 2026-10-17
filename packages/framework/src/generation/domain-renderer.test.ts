@@ -12,7 +12,7 @@ import { createDomainRenderer, createSchemaRenderer } from './renderer';
 import type { SemanticNode } from '../core/types';
 import type { CommandSchema } from '../schema';
 import { defineCommand, defineRole } from '../schema';
-import type { PatternGenLanguageProfile } from './pattern-generator';
+import type { PatternGenLanguageProfile } from './profile';
 
 function makeNode(action: string, roles: Record<string, string>): SemanticNode {
   const rolesMap = new Map<string, { type: 'expression'; raw: string }>();
