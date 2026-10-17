@@ -124,8 +124,9 @@ That attribute, `_="on click toggle .active on #panel"`, is the deliverable.
   (SQL, BDD, flow, and more) via `lse_validate_and_feedback`; the framework for
   defining your own is
   [`@lokascript/framework`](./packages/framework/docs/DOMAIN_AUTHOR_GUIDE.md).
-- **Test generation** — `generate_tests` emits Playwright assertions from the
-  same IR; `generate_component` emits React/Vue/Svelte components.
+- **Test and component generation** (`generate_tests`, `generate_component`) are
+  deprecated and removed in 6.0: most tests they write do not check the behavior,
+  and a component for a command aimed at another element does not compile.
 
 ## Known silent traps
 
