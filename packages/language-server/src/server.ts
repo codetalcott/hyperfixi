@@ -36,7 +36,7 @@ import {
   TextEdit,
   WorkspaceEdit,
   DocumentFormattingParams,
-} from 'vscode-languageserver/node.js';
+} from 'vscode-languageserver/node';
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
 
@@ -80,6 +80,12 @@ const semanticPackage: any = semanticImport;
  * Get all registered language codes except the current one from the semantic package.
  * Used for auto-detection, reverse keyword cache, and keyword variant lookups.
  */
+
+/** A diagnostic's message as text: LSP 3.18 lets it be MarkupContent too. */
+function messageText(diagnostic: { message: string | { value: string } }): string {
+  return typeof diagnostic.message === 'string' ? diagnostic.message : diagnostic.message.value;
+}
+
 function getOtherLanguages(): string[] {
   if (!semanticPackage?.getRegisteredLanguages) return [];
   return semanticPackage.getRegisteredLanguages().filter((l: string) => l !== 'en');
@@ -2088,7 +2094,7 @@ connection.onCodeAction((params: CodeActionParams): CodeAction[] => {
       });
     }
 
-    if (diagnostic.code === 'missing-role' && diagnostic.message.includes('toggle')) {
+    if (diagnostic.code === 'missing-role' && messageText(diagnostic).includes('toggle')) {
       actions.push({
         title: 'Add class target to toggle',
         kind: CodeActionKind.QuickFix,
@@ -2106,7 +2112,7 @@ connection.onCodeAction((params: CodeActionParams): CodeAction[] => {
       });
     }
 
-    if (diagnostic.code === 'missing-role' && diagnostic.message.includes('put')) {
+    if (diagnostic.code === 'missing-role' && messageText(diagnostic).includes('put')) {
       actions.push({
         title: 'Add destination to put command',
         kind: CodeActionKind.QuickFix,
