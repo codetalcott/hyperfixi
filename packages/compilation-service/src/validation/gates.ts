@@ -42,11 +42,16 @@ export interface GateResult {
 
 /**
  * Run all validation gates on a parsed semantic node.
+ *
+ * With `advisory`, a failing gate does not fail validation: its errors go through `advisory`
+ * (the service makes them warnings when the engine that runs the input reads it) and the later
+ * gates still run.
  */
 export function runValidationGates(
   node: unknown,
   confidence: number,
-  confidenceThreshold: number
+  confidenceThreshold: number,
+  advisory?: (diagnostic: Diagnostic) => Diagnostic
 ): GateResult {
   const diagnostics: Diagnostic[] = [];
   let adjustedConfidence = confidence;
@@ -63,13 +68,17 @@ export function runValidationGates(
 
   // Gate 2: Confidence threshold
   if (confidence < confidenceThreshold) {
-    diagnostics.push({
+    const low: Diagnostic = {
       severity: 'error',
       code: 'LOW_CONFIDENCE',
       message: `Parse confidence ${confidence.toFixed(2)} is below threshold ${confidenceThreshold.toFixed(2)}.`,
       suggestion: 'Try explicit syntax [command role:value ...] for unambiguous input.',
-    });
-    return { pass: false, diagnostics, adjustedConfidence: confidence };
+    };
+    if (!advisory) {
+      diagnostics.push(low);
+      return { pass: false, diagnostics, adjustedConfidence: confidence };
+    }
+    diagnostics.push(advisory(low));
   }
 
   // Gate 3: Schema validation
@@ -80,11 +89,8 @@ export function runValidationGates(
 
       // Convert errors
       for (const err of validation.errors) {
-        diagnostics.push({
-          severity: 'error',
-          code: err.code,
-          message: err.message,
-        });
+        const error: Diagnostic = { severity: 'error', code: err.code, message: err.message };
+        diagnostics.push(advisory ? advisory(error) : error);
       }
 
       // Convert warnings
@@ -108,7 +114,7 @@ export function runValidationGates(
       // Adjust confidence
       adjustedConfidence = Math.max(0, Math.min(1, confidence + validation.confidenceAdjustment));
 
-      if (!validation.valid) {
+      if (!validation.valid && !advisory) {
         return { pass: false, diagnostics, adjustedConfidence };
       }
     }
@@ -140,9 +146,11 @@ function nodeToParseResult(node: unknown): unknown {
 
   if (!n.action) return null;
 
-  // For event handlers, validate the body commands instead
-  const action = n.action === 'on' ? null : n.action;
-  if (!action) return null;
+  // Not checked against a command schema: an event handler (`on`), and a behavior, whose name
+  // and parameters are the node's own fields (`BehaviorNode.name`), never roles, so the
+  // schema's required name read as missing on every behavior.
+  if (n.action === 'on' || n.kind === 'behavior') return null;
+  const action = n.action;
 
   // Convert roles map to arguments array
   const args: unknown[] = [];

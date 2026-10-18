@@ -439,6 +439,65 @@ describe('CompilationService', () => {
       expect(spanish.diagnostics.some(d => d.code === 'ENGINE_PARSE_ERROR')).toBe(false);
     });
 
+    it('accepts behavior definitions: the name is the node’s own field, not a role', () => {
+      // The behavior schema requires its name as `patient`, but semantic's BehaviorNode keeps
+      // the name and parameters as fields with no roles, so every behavior read as missing it.
+      for (const [code, language] of [
+        ['behavior Foo(x) on click toggle .on end', 'en'],
+        ['振る舞い Foo(x)\n  クリックで .onを 切り替え\n  終わり\n終わり', 'ja'],
+      ]) {
+        const r = service.validate({ code, language });
+        expect(r.ok, code).toBe(true);
+        expect(r.semantic?.action, code).toBe('behavior');
+        expect(
+          r.diagnostics.filter(d => d.code === 'MISSING_REQUIRED_ROLE'),
+          code
+        ).toEqual([]);
+      }
+    });
+
+    it('lets the engine decide English it reads: semantic’s doubts are warnings', () => {
+      // `init` parses at a confidence under the default bar. The engine reads it, and the page
+      // runs English as written, so the gate's error becomes a warning saying why.
+      const init = service.validate({ code: "init set ^color to 'red'", language: 'en' });
+      expect(init.ok).toBe(true);
+      const low = init.diagnostics.find(d => d.code === 'LOW_CONFIDENCE');
+      expect(low?.severity).toBe('warning');
+      expect(low?.message).toContain('@hyperfixi/engine reads this code');
+      expect(init.semantic?.action).toBe('init');
+
+      // A quoted event name semantic does not read at all: ok, with no IR to show.
+      const quoted = service.validate({
+        code: 'on "refresh" put "Refreshed" into #output',
+        language: 'en',
+      });
+      expect(quoted.ok).toBe(true);
+      expect(quoted.semantic).toBeUndefined();
+      expect(quoted.diagnostics.every(d => d.severity !== 'error')).toBe(true);
+      expect(quoted.diagnostics.some(d => d.code === 'PARSE_FAILED')).toBe(true);
+
+      // English the engine rejects is still an error, beside semantic's own complaints.
+      const broken = service.validate({ code: 'on click toggle .active on', language: 'en' });
+      expect(broken.ok).toBe(false);
+      expect(broken.diagnostics.some(d => d.code === 'ENGINE_PARSE_ERROR')).toBe(true);
+    });
+
+    it('keeps semantic’s gates as errors for a set `confidence` and for foreign input', () => {
+      // A request that sets `confidence` asks semantic's reading to meet that bar.
+      const strict = service.validate({
+        code: "init set ^color to 'red'",
+        language: 'en',
+        confidence: 0.7,
+      });
+      expect(strict.ok).toBe(false);
+      expect(strict.diagnostics.find(d => d.code === 'LOW_CONFIDENCE')?.severity).toBe('error');
+
+      // Foreign input runs as semantic's translation, so semantic's doubt is about what runs.
+      const japanese = service.validate({ code: '隠す', language: 'ja' });
+      expect(japanese.ok).toBe(false);
+      expect(japanese.diagnostics.find(d => d.code === 'LOW_CONFIDENCE')?.severity).toBe('error');
+    });
+
     it('inert-shape gate stays quiet on correct phrasings', () => {
       // False positives teach agents to distrust warnings; these must be clean.
       for (const code of [

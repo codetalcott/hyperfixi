@@ -2,7 +2,7 @@
   "note": "Deterministic parse-vs-behavior verdicts for plausible phrasings. Regenerate with: tsx src/agent-bench/cli.ts probe-variants --json",
   "totals": {
     "phrasings": 37,
-    "parse": 20,
+    "parse": 21,
     "behaveCorrectly": 17,
     "warnedWrong": 1,
     "silentBand": 3,

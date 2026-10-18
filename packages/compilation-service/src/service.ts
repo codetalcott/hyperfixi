@@ -64,6 +64,18 @@ function isLossyTranslation(error: unknown): error is LossyTranslation {
   );
 }
 
+/** A semantic gate's error on English the engine reads: a warning, saying why. */
+function readByTheEngine(diagnostic: Diagnostic): Diagnostic {
+  if (diagnostic.severity !== 'error') return diagnostic;
+  return {
+    ...diagnostic,
+    severity: 'warning',
+    message:
+      `${diagnostic.message} @hyperfixi/engine reads this code, so it runs as written; ` +
+      "semantic's reading of it (the IR here, and a translation made from it) may leave part of it out.",
+  };
+}
+
 export class CompilationService {
   private confidenceThreshold: number;
   private translateFn: ((code: string, from: string, to: string) => string) | null = null;
@@ -142,8 +154,7 @@ export class CompilationService {
     normalized: NormalizeResult
   ): Diagnostic | null {
     if (!this.engineError || normalized.format !== 'natural' || !request.code) return null;
-    const language = request.language ?? 'en';
-    const english = language === 'en' || language.startsWith('en-');
+    const english = this.isEnglishAsWritten(request, normalized);
     let source = request.code;
     if (!english) {
       if (!this.renderFn || !normalized.node) return null;
@@ -167,13 +178,24 @@ export class CompilationService {
     };
   }
 
+  /** Natural-language English: the source as written is what the engine runs. */
+  private isEnglishAsWritten(request: CompileRequest, normalized: NormalizeResult): boolean {
+    const language = request.language ?? 'en';
+    return (
+      normalized.format === 'natural' &&
+      !!request.code &&
+      (language === 'en' || language.startsWith('en-'))
+    );
+  }
+
   // ===========================================================================
   // Public API
   // ===========================================================================
 
   /**
    * Validate input: semantic's parse and schemas, and (for natural-language input) the
-   * engine's parse of the English the page would run.
+   * engine's parse of the English the page would run. For English, the engine's parse decides
+   * `ok`, and semantic's own doubts are warnings, unless the request sets `confidence`.
    * Returns semantic representation and diagnostics.
    */
   validate(request: CompileRequest): ValidationResponse {
@@ -181,20 +203,45 @@ export class CompilationService {
 
     // Normalize
     const normalized = normalize(request);
-    diagnostics.push(...normalized.diagnostics);
+
+    // English as written is what the page runs, so for natural-language English the engine's
+    // parse decides. When it reads the code, semantic's doubts (no reading, a low confidence, a
+    // role its schema expects) are warnings: the code runs, but the IR may not show all of it.
+    // Measured on the command-shape cases (testing-framework): semantic's gates rejected 90 of
+    // the 1,128 the engine reads, and on the agent bench caught nothing the engine missed. Foreign
+    // input runs as semantic's translation, so its gates stay errors there, as they do when
+    // the request sets `confidence` (a bar for semantic's reading).
+    const engineDecides =
+      this.engineError !== null &&
+      request.confidence === undefined &&
+      this.isEnglishAsWritten(request, normalized);
+    const engineRejects = engineDecides ? this.engineDiagnostic(request, normalized) : null;
+    const advisory = engineDecides && !engineRejects ? readByTheEngine : undefined;
+
+    diagnostics.push(...(advisory ? normalized.diagnostics.map(advisory) : normalized.diagnostics));
 
     if (!normalized.node) {
-      return { ok: false, diagnostics };
+      if (engineRejects) diagnostics.push(engineRejects);
+      return { ok: advisory !== undefined, diagnostics };
     }
 
     // Validate
     const threshold = request.confidence ?? this.confidenceThreshold;
-    const gateResult = runValidationGates(normalized.node, normalized.confidence, threshold);
+    const gateResult = runValidationGates(
+      normalized.node,
+      normalized.confidence,
+      threshold,
+      advisory
+    );
     diagnostics.push(...gateResult.diagnostics);
 
-    const engineRejects = gateResult.pass ? this.engineDiagnostic(request, normalized) : null;
-    if (engineRejects) diagnostics.push(engineRejects);
-    const ok = gateResult.pass && !engineRejects;
+    const engineError = engineDecides
+      ? engineRejects
+      : gateResult.pass
+        ? this.engineDiagnostic(request, normalized)
+        : null;
+    if (engineError) diagnostics.push(engineError);
+    const ok = gateResult.pass && !engineError;
 
     const semanticJSON = ok ? nodeToSemanticJSON(normalized.node) : undefined;
 
