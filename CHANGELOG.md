@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`@lokascript/language-server` on `vscode-languageserver` 10** (protocol 3.18; replaces
+  Dependabot #1278), and the LokaScript VS Code extension on `vscode-languageclient` 10 (#1279),
+  which needs VS Code 1.91 (`engines.vscode` was `^1.85.0`). 10.x adds an exports map without
+  `./node.js`, so the server imports `vscode-languageserver/node`; a diagnostic's `message` may be
+  `MarkupContent` in 3.18, so the code actions read its text either way. Over stdio the server
+  answers as 6.1.0 does: the same capabilities, the engine's parse error at the same position,
+  hover and completion.
+
 ### Fixed
 
 - **`@hyperfixi/mcp-server`: a multi-line BehaviorSpec with a line it cannot read is refused,
