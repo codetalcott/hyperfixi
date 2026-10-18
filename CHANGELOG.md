@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`@hyperfixi/mcp-server`: on `@lokascript/domains` 5.0.1**, which peers framework, semantic and
+  intent `^5.0.0 || ^6.0.0` (lokascript-domains #52, #53): the bridge that lets 6.0.0 publish.
+
 ## [5.1.0] - 2026-10-18
 
 Deprecates `@lokascript/compilation-service`'s test and component generation, which 6.0 removes;
