@@ -101,7 +101,7 @@
     "@lokascript/domains": "^5.0.0",
     "@types/node": "^26.6.3",
     "@vitest/coverage-v8": "^5.0.0",
-    "tsup": "^8.0.0",
+    "tsup": "^9.0.0",
     "typescript": "^5.0.0",
     "vitest": "^5.0.2"
   },
