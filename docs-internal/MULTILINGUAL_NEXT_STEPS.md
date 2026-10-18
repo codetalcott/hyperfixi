@@ -30,7 +30,7 @@ What **no** gate measures (measured 2026-09-30 unless a row is dated):
 | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------ |
 | Commands outside every gate's input          | 36 filed parser items (2026-10-07); since 4.2.0 a translation that would lose part of a script is refused, so most are now loud     | P2–P55 |
 | User docs that match the product             | example pages pin i18n 2.3.0; a never-deployed docs app; no package chooser; README examples run only for the adapter (2026-10-06) | D5–D8  |
-| Shipping                                     | 4.3.0 on npm 2026-10-08 (`npm view @hyperfixi/core version`; unreleased: `git log v4.3.0..origin/main -- packages`)                | —      |
+| Shipping                                     | 6.0.0 on npm 2026-10-18 (`npm view @hyperfixi/core version`; unreleased: `git log v6.0.0..origin/main -- packages`)                | —      |
 
 ## 2. How we choose work now
 
@@ -204,7 +204,8 @@ A refused pair that starts to render can come out silent: the command-shape dry 
   and the domain family cut down and rebuilt on it, after the semantic work: [`DOMAINS_RETHINK.md`](DOMAINS_RETHINK.md).
   Its decisions D1–D6 were taken 2026-10-14; Phase 1 (domains 4.0.0: the cuts, and the family on framework 4.x)
   is lokascript-domains #21.
-  Closed by its Phase 6 (#1552, 2026-10-17): framework's copy and the classic engine deleted; ships in 5.0.0 (unreleased).
+  Closed by its Phase 6 (#1552, 2026-10-17): framework's copy and the classic engine deleted; released in 5.0.0
+  (2026-10-17). The rethink's plan is archived at `archived/domains-rethink-2026-10-18` (see [`ARCHIVE.md`](ARCHIVE.md)).
 
 **Exit metrics** (stamp them when the arc starts):
 

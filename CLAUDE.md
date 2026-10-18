@@ -752,8 +752,9 @@ committed copy — re-run `npm run populate` before any local gate/probe work.)
 > **If a release fails to land the bump, suspect `RELEASE_BUMP_TOKEN` first — it may just need
 > a refresh.** PATs expire, and an expired one is the cheapest explanation for a release that
 > published to npm but left `main` on the old version. Refreshing the secret is the first thing
-> to try before digging into the workflow. (Last refreshed **2026-07-28**.) Distinguish the two
-> failure shapes, because they need different fixes:
+> to try before digging into the workflow. (Last refreshed **2026-10-18**: a 90-day fine-grained PAT,
+> so it expires about **2027-01-16**; the dry run's "Verify RELEASE_BUMP_TOKEN can push" step proved
+> it.) Distinguish the two failure shapes, because they need different fixes:
 >
 > - **Auth failed / token invalid or expired** → refresh the secret with a new PAT.
 > - **`Permission to … denied to <user>`** → the token authenticated fine and is **not**
