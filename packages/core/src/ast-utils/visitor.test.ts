@@ -379,6 +379,8 @@ describe('Visitor Performance', () => {
     const endTime = Date.now();
 
     expect(visitCount).toBe(101); // root + 100 nested
-    expect(endTime - startTime).toBeLessThan(10); // Should be very fast
+    // A bound for a pathological walk, not a benchmark: 101 visits take 1–3 ms,
+    // and the 6.1.0 dry run failed at 13 ms against a bound of 10 (a runner stall).
+    expect(endTime - startTime).toBeLessThan(100);
   });
 });
