@@ -14,6 +14,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   semantic's finder suggests: the one check MCP `validate_hyperscript` made that `validate_and_compile`
   did not, with its wording and its confidence floor.
 
+### Deprecated
+
+- **`@hyperfixi/mcp-server`: `validate_hyperscript` and `translate_hyperscript`, removed in 7.0.**
+  Measured 2026-10-18 on 6.0.0, through the server:
+  - `translate_hyperscript` returns `translate_code`'s text on 471 of 471 pairs, with the same 21
+    refusals; `translate_code` adds a fidelity `verification` and `NAME_COLLISION` warnings.
+  - On 672 inputs `validate_hyperscript` caught nothing `validate_and_compile` missed, and every
+    warning only it gave was a false alarm (a fixed list of 34 event names; an if/end count). Its one
+    useful check, `NAME_COLLISION`, is in `validate_and_compile` now.
+
+  Both still work. Their descriptions start "Deprecated", and each result carries a second text block
+  naming the replacement. The skills, the mcp-server README, MIGRATION.md and the LLM-tool checklist
+  name only `validate_and_compile` and `translate_code`. The lokascript-multilingual skill had called
+  `translate_hyperscript` keyword substitution that does not reorder words, which was not true.
+
 ### Fixed
 
 - **`@lokascript/compilation-service`: `validate` (MCP `validate_and_compile`) no longer rejects
@@ -29,6 +44,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   keeps them as errors, as does foreign input, which runs as semantic's translation. On the agent
   bench every correct rejection was already the engine's (16 of 16), so none moved.
   testing-framework's `validate-agrees-with-engine.test.ts` holds the 1,128 at 0 rejected.
+
+- **`@hyperfixi/vite-plugin`: `region: 'slavic'` and `region: 'south-asian'` load their languages.**
+  Both were in the option's type and the README's language list, but the expansion had a
+  hand-written case per region and none for these two, so they loaded English alone. Regions now
+  expand from `REGIONS` itself, and the README's region table lists both. The debug size table
+  (`SEMANTIC_BUNDLE_SIZES`, January 2025) is re-measured by a new
+  `scripts/measure-semantic-sizes.ts`: semantic's core plus one language is ~163–175 KB gzipped,
+  not the ~14–20 KB it claimed (`all` ~383 KB, not ~61 KB).
 
 ## [6.0.0] - 2026-10-18
 
