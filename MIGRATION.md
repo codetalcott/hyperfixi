@@ -2,13 +2,14 @@
 
 ## Deprecated in 6.x, removed in 7.0
 
-Two MCP tools duplicate the ones the server tells agents to use. Both still work in 6.x; their
+Three MCP tools duplicate the ones the server tells agents to use. All still work in 6.x; their
 descriptions and results say they are deprecated.
 
 | Deprecated                  | Instead                                                                                                               |
 | --------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | MCP `validate_hyperscript`  | `validate_and_compile`: the engine's verdict, the semantic IR, and the same `NAME_COLLISION` warnings                 |
 | MCP `translate_hyperscript` | `translate_code`: the same text, plus a fidelity `verification` and `NAME_COLLISION` warnings (arguments `from`/`to`) |
+| MCP `parse_multilingual`    | `validate_and_compile`: the whole semantic IR (not only the top node) and, for English, the engine's verdict          |
 
 ## Migrating from 5.x to 6.0
 

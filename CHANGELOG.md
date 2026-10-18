@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`@hyperfixi/mcp-server`: `get_diagnostics` gives the engine's verdict for English, where it
+  stopped.** Measured on 672 inputs (the agent bench and the docs patterns, in en/ja/es/ar), it
+  flagged 6 of the 27 English inputs the engine rejects, none with a position; gave 9 false errors
+  on English the engine reads (8 of them a possessive `'s` read as an open quote); and warned 467
+  `possible-typo`s, 391 on ja/es/ar words checked against an English command list. Now: 27 of 27,
+  each at the token where the engine stopped; 0 false errors (semantic's doubts about English the
+  engine reads are warnings); and a "did you mean" only for the word the engine stopped on
+  (`toggel`, not `and`), never off English. Style advice (`wait` over `setTimeout`, `then` between
+  commands) stays.
+
 - **`@lokascript/semantic`: `lexicons/<code>` registers its vocabulary with `./core`.** Each
   lexicon file bundled a private copy of the lexicon registry, so a page that imported
   `@lokascript/semantic/core`, `languages/ja` and `lexicons/ja` registered the Japanese words in a
@@ -56,6 +66,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`@lokascript/semantic/core` exports `getAllTranslations` and `getAllTranslationsWithStatus`**,
   over the languages a page registered. lokascript-learn's playground imported the root entry, and
   with it all 24 languages, for this one function.
+
+### Deprecated
+
+- **`@hyperfixi/mcp-server`: `parse_multilingual`, removed in 7.0.** It returns only the top node
+  (every handler as `on` and its event) and reported success on 21 of the 27 English inputs the
+  engine rejects; `validate_and_compile` returns the whole IR and the engine's verdict. Its
+  description starts "Deprecated", and each result carries a second text block naming the
+  replacement.
 
 ## [6.1.0] - 2026-10-18
 
