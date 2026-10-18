@@ -12,16 +12,6 @@ validate_sql({ query: "select name from users where age > 18", language: "en" })
   => { valid: true, errors: [] }
 ```
 
-## BDD
-
-```
-compile_bdd({ scenario: "given #button exists", language: "en" })
-  => Playwright test with expect(locator).toBeVisible()
-
-compile_bdd({ scenario: "when I click #submit then #result is visible", language: "en" })
-  => Multi-step Playwright test
-```
-
 ## Todo
 
 ```
@@ -31,10 +21,19 @@ compile_todo({ command: "add buy groceries priority high", language: "en" })
 
 ## BehaviorSpec
 
+One step per line, under a `test "<name>"` header (bdd's `given #x exists` reads too):
+
 ```
-compile_behaviorspec({ spec: "given page /login when I type admin into #user then #submit is enabled", language: "en" })
-  => Playwright interaction test with page navigation
+compile_behaviorspec({ scenario: "test \"Login\"\n  given page /login\n  when user types 'admin' into #user\n  when user clicks on #submit\n  expect #result appears", language: "en" })
+  => test('Login', …): page.goto('/login'), fill('admin'), click(), expect(…).toBeVisible()
+
+compile_behaviorspec({ scenario: "given #button exists", language: "en" })
+  => await expect(page.locator('#button')).toBeAttached();
 ```
+
+Check the output has every step: in `@lokascript/domains` 5.0.1, a line of a multi-line spec that does not
+parse is dropped with `ok: true` (`then #result is visible`, `when I click #submit`), and `given page <url>`
+followed by more text on the same line reads that text as part of the URL.
 
 ## LLM Prompts
 
