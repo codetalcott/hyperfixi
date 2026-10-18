@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`@lokascript/compilation-service`: `validate` warns `NAME_COLLISION`** on foreign input whose
+  variable is spelled like a word of its own language (es `si` is also `if`), with the rename
+  semantic's finder suggests: the one check MCP `validate_hyperscript` made that `validate_and_compile`
+  did not, with its wording and its confidence floor.
+
 ### Fixed
 
 - **`@lokascript/compilation-service`: `validate` (MCP `validate_and_compile`) no longer rejects

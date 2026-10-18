@@ -36,17 +36,23 @@ import { extractOperations } from './operations/extract.js';
 // Service
 // =============================================================================
 
+/** A variable semantic finds spelled like a word of some language, as the service reads it. */
+interface CollisionFinding {
+  readonly name: string;
+  readonly occurrences: ReadonlyArray<unknown>;
+  readonly rename: string | undefined;
+  readonly message: string;
+}
+
 /** semantic's `findTranslationCollisions`, as the service calls it. */
 type TranslationCollisionsFn = (
   code: string,
   from: string,
   to: string
-) => ReadonlyArray<{
-  readonly name: string;
-  readonly occurrences: ReadonlyArray<unknown>;
-  readonly rename: string | undefined;
-  readonly message: string;
-}>;
+) => ReadonlyArray<CollisionFinding>;
+
+/** semantic's `findNameCollisions`: a variable spelled like a word of its own code's language. */
+type NameCollisionsFn = (code: string, language: string) => ReadonlyArray<CollisionFinding>;
 
 /** `@lokascript/semantic`'s refusal, by name (the service loads semantic dynamically). */
 interface LossyTranslation {
@@ -80,6 +86,7 @@ export class CompilationService {
   private confidenceThreshold: number;
   private translateFn: ((code: string, from: string, to: string) => string) | null = null;
   private translationCollisionsFn: TranslationCollisionsFn | null = null;
+  private nameCollisionsFn: NameCollisionsFn | null = null;
   /** semantic's `render`, for the English a translation runs as. */
   private renderFn: ((node: unknown, language: string) => string) | null = null;
   /**
@@ -121,6 +128,7 @@ export class CompilationService {
     // Store translate function
     service.translateFn = semantic.translate;
     service.translationCollisionsFn = semantic.findTranslationCollisions;
+    service.nameCollisionsFn = semantic.findNameCollisions;
     service.renderFn = semantic.render as (node: unknown, language: string) => string;
 
     // The engine the product runs (hyperfixi-hs.js), when it is installed. Natural-language
@@ -242,6 +250,7 @@ export class CompilationService {
         : null;
     if (engineError) diagnostics.push(engineError);
     const ok = gateResult.pass && !engineError;
+    diagnostics.push(...this.nameCollisions(request, normalized));
 
     const semanticJSON = ok ? nodeToSemanticJSON(normalized.node) : undefined;
 
@@ -251,6 +260,26 @@ export class CompilationService {
       confidence: gateResult.adjustedConfidence,
       diagnostics,
     };
+  }
+
+  /**
+   * A variable spelled like a word of the code's own language (es `si`, tr `i`): its readers
+   * tell the two apart only by where it stands, so the warning suggests a rename. Moved here
+   * from MCP `validate_hyperscript`, with its wording and its confidence floor.
+   */
+  private nameCollisions(request: CompileRequest, normalized: NormalizeResult): Diagnostic[] {
+    const language = request.language ?? 'en';
+    const english = language === 'en' || language.startsWith('en-');
+    if (normalized.format !== 'natural' || !request.code || english) return [];
+    if (!normalized.node || normalized.confidence < 0.5) return [];
+    return (this.nameCollisionsFn?.(request.code, language) ?? []).map(finding => ({
+      severity: 'warning' as const,
+      code: 'NAME_COLLISION',
+      message: finding.message,
+      suggestion: finding.rename
+        ? `Rename \`${finding.name}\` to \`${finding.rename}\` in the ${finding.occurrences.length} place(s) the parse reads it as the variable.`
+        : `Rename \`${finding.name}\`.`,
+    }));
   }
 
   /**
