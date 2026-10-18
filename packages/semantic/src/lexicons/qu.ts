@@ -6,7 +6,7 @@
  * bundle can drop it — see lexicon-registry.ts for why that separation exists.
  */
 import type { LanguageLexicon } from '../generators/profiles/types';
-import { registerLexicon } from '../lexicon-registry';
+import { registerLexicon } from '../core';
 
 export const quechuaLexicon: LanguageLexicon = {
   events: {
