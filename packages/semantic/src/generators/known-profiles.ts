@@ -43,29 +43,32 @@ import { ukrainianProfile } from './profiles/ukrainian';
 import { vietnameseProfile } from './profiles/vietnamese';
 import { chineseProfile } from './profiles/chinese';
 
-export const KNOWN_PROFILES: Readonly<Record<string, LanguageProfile>> = Object.freeze({
-  ar: arabicProfile,
-  bn: bengaliProfile,
-  de: germanProfile,
-  en: englishProfile,
-  es: spanishProfile,
-  fr: frenchProfile,
-  he: hebrewProfile,
-  hi: hindiProfile,
-  id: indonesianProfile,
-  it: italianProfile,
-  ja: japaneseProfile,
-  ko: koreanProfile,
-  ms: malayProfile,
-  pl: polishProfile,
-  pt: portugueseProfile,
-  qu: quechuaProfile,
-  ru: russianProfile,
-  sw: swahiliProfile,
-  th: thaiProfile,
-  tl: tagalogProfile,
-  tr: turkishProfile,
-  uk: ukrainianProfile,
-  vi: vietnameseProfile,
-  zh: chineseProfile,
-});
+// Pure: a bundler cannot prove `Object.freeze` has no side effects, so without the annotation
+// every `./core` consumer kept all 24 profiles (35 KB gz) for the one unused export.
+export const KNOWN_PROFILES: Readonly<Record<string, LanguageProfile>> =
+  /* @__PURE__ */ Object.freeze({
+    ar: arabicProfile,
+    bn: bengaliProfile,
+    de: germanProfile,
+    en: englishProfile,
+    es: spanishProfile,
+    fr: frenchProfile,
+    he: hebrewProfile,
+    hi: hindiProfile,
+    id: indonesianProfile,
+    it: italianProfile,
+    ja: japaneseProfile,
+    ko: koreanProfile,
+    ms: malayProfile,
+    pl: polishProfile,
+    pt: portugueseProfile,
+    qu: quechuaProfile,
+    ru: russianProfile,
+    sw: swahiliProfile,
+    th: thaiProfile,
+    tl: tagalogProfile,
+    tr: turkishProfile,
+    uk: ukrainianProfile,
+    vi: vietnameseProfile,
+    zh: chineseProfile,
+  });
