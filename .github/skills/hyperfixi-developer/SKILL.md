@@ -71,10 +71,11 @@ HyperFixi code goes in `_="..."` attributes:
 **ALWAYS validate your code** before returning it to the user:
 
 ```
-validate_hyperscript({ code: "on click toggle .active" })
+validate_and_compile({ code: "on click toggle .active", language: "en" })
 ```
 
-If validation fails, use `get_diagnostics` for detailed error locations.
+If it fails, apply the diagnostics and validate again (`get_code_fixes` maps an error code to a fix);
+`get_diagnostics` gives line and column positions.
 
 ## Quick Reference
 
@@ -108,14 +109,14 @@ core-only; `on click.prevent` now listens for an event named `click.prevent`.)
 1. **Using `click` on forms** -- use `submit` event instead
 2. **Forgetting `halt the event`** -- form submissions navigate away by default
 3. **Complex logic in attributes** -- if code exceeds 5 lines, consider JavaScript
-4. **Not validating code** -- always use `validate_hyperscript` before returning
+4. **Not validating code** -- always use `validate_and_compile` before returning
 5. **Missing selectors** -- verify `#id` and `.class` exist in DOM
 
 ## Debugging
 
 If code doesn't work:
 
-1. Use `validate_hyperscript` to check syntax
+1. Use `validate_and_compile` to check it (for English, the engine that runs it decides)
 2. Use `debug_explain_handler` to get a step-by-step breakdown
 3. Add `log` (`on click log me then toggle .active`) or `beep! x` (logs a value with its type), or `breakpoint`
 4. Check browser console for errors
@@ -136,7 +137,7 @@ With an execution state captured at a `breakpoint` command or from `log` output:
 | `suggest_command`      | Find the right command for a task             |
 | `get_examples`         | Get working code examples by task description |
 | `search_patterns`      | Search pattern database by keyword/category   |
-| `validate_hyperscript` | **Always use before returning code**          |
+| `validate_and_compile` | **Always use before returning code**          |
 | `get_diagnostics`      | Detailed errors with line/column positions    |
 | `get_code_fixes`       | Auto-fix suggestions for specific error codes |
 

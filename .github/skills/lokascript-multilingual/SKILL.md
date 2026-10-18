@@ -25,11 +25,10 @@ Translate HyperFixi/LokaScript code between 24 languages with native grammar tra
 
 ### 1. Choose the Right Translation Tool
 
-| Tool                    | Fidelity                                                  | Use When                                   |
-| ----------------------- | --------------------------------------------------------- | ------------------------------------------ |
-| `translate_code`        | **High** -- full semantic parsing, grammar transformation | Production translations, any language pair |
-| `translate_hyperscript` | Medium -- keyword substitution, preserves selectors       | Quick previews, keyword-level translation  |
-| `translate_to_english`  | **High** -- normalizes any language to English            | Processing non-English input               |
+| Tool                   | Fidelity                                                  | Use When                                   |
+| ---------------------- | --------------------------------------------------------- | ------------------------------------------ |
+| `translate_code`       | **High** -- full semantic parsing, grammar transformation | Production translations, any language pair |
+| `translate_to_english` | **High** -- normalizes any language to English            | Processing non-English input               |
 
 ### 2. Translate
 
@@ -67,7 +66,7 @@ translate_to_english({ code: "toggle .active", sourceLanguage: "en", getAllLangu
 
 ## Common Mistakes
 
-1. **Using `translate_hyperscript` for SOV/VSO languages** -- keyword substitution doesn't reorder words; use `translate_code` for correct grammar
+1. **Showing a refused translation** -- when `translate_code` returns `ok: false` with `LOSSY_TRANSLATION`, the text under `partial` drops part of the script; it is not the translation
 2. **Omitting `sourceLanguage`** -- auto-detection works but is less reliable for short inputs; always specify when known
 3. **Expecting perfect roundtrips** -- translating en->ja->en may produce slightly different (but semantically equivalent) output
 4. **Ignoring confidence scores** -- `translate_to_english` returns confidence; scores below 0.7 suggest ambiguous input
@@ -77,7 +76,6 @@ translate_to_english({ code: "toggle .active", sourceLanguage: "en", getAllLangu
 | Tool                        | Description                                                 |
 | --------------------------- | ----------------------------------------------------------- |
 | `translate_code`            | High-fidelity translation with grammar transformation       |
-| `translate_hyperscript`     | Quick keyword substitution (24 languages)                   |
 | `translate_to_english`      | Normalize non-English to English + explicit syntax          |
 | `get_keyword_translations`  | Get translations of a specific keyword across languages     |
 | `list_supported_languages`  | List all 24 languages with metadata                         |
