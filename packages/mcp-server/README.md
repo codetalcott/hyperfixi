@@ -84,16 +84,16 @@ The **91** tools below, plus the **5** GRAIL tools above, total **96** defined. 
 
 ### Validation & Semantic Tools (8)
 
-| Tool                   | Description                                                      |
-| ---------------------- | ---------------------------------------------------------------- |
-| `validate_hyperscript` | Deprecated (removed in 7.0): use `validate_and_compile`          |
-| `validate_schema`      | Validate internal command schema definitions (not user code)     |
-| `suggest_command`      | Suggest the best command for a task (multilingual)               |
-| `get_bundle_config`    | Get recommended bundle configuration based on usage              |
-| `parse_multilingual`   | Parse hyperscript in any of 24 languages with confidence scoring |
-| `translate_to_english` | Normalize non-English hyperscript to English + explicit syntax   |
-| `explain_in_language`  | Explain code with grammar rules, roles, and translations         |
-| `get_code_fixes`       | Get auto-fixes for specific error codes                          |
+| Tool                   | Description                                                    |
+| ---------------------- | -------------------------------------------------------------- |
+| `validate_hyperscript` | Deprecated (removed in 7.0): use `validate_and_compile`        |
+| `validate_schema`      | Validate internal command schema definitions (not user code)   |
+| `suggest_command`      | Suggest the best command for a task (multilingual)             |
+| `get_bundle_config`    | Get recommended bundle configuration based on usage            |
+| `parse_multilingual`   | Deprecated (removed in 7.0): use `validate_and_compile`        |
+| `translate_to_english` | Normalize non-English hyperscript to English + explicit syntax |
+| `explain_in_language`  | Explain code with grammar rules, roles, and translations       |
+| `get_code_fixes`       | Get auto-fixes for specific error codes                        |
 
 ### Compilation (4)
 

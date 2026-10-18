@@ -218,7 +218,7 @@ export const validationTools: Tool[] = [
   {
     name: 'parse_multilingual',
     description:
-      'Parse hyperscript in any supported language using semantic analysis. Returns parsed structure with confidence score and semantic roles.',
+      'Deprecated (removed in 7.0): use validate_and_compile, which returns the whole semantic IR and, for English, the verdict of the engine that runs the code; measured on 672 inputs, this tool returned only the top node (every handler as `on` and its event) and reported success on 21 of the 27 English inputs the engine rejects. Parse hyperscript in any supported language using semantic analysis. Returns parsed structure with confidence score and semantic roles.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -357,7 +357,12 @@ export async function handleValidationTool(
       case 'parse_multilingual': {
         const code = args.code as string;
         const language = args.language as string;
-        return parseMultilingual(code, language);
+        return withDeprecation(
+          parseMultilingual(code, language),
+          'parse_multilingual',
+          'validate_and_compile',
+          'the whole semantic IR and, for English, the verdict of the engine that runs the code.'
+        );
       }
 
       case 'translate_to_english': {

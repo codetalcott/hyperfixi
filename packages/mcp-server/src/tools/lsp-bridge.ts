@@ -35,14 +35,22 @@ try {
  * Where an engine parse error stopped: its token's line (1-based) and column, from the
  * token's offset into `source` (the end-of-input token carries an offset and no line).
  */
-function engineErrorPosition(e: unknown, source: string): { line?: number; column?: number } {
+function engineErrorPosition(
+  e: unknown,
+  source: string
+): { line?: number; column?: number; length?: number } {
   const token = typeof e === 'object' && e !== null ? Reflect.get(e, 'token') : undefined;
   if (typeof token !== 'object' || token === null) return {};
   const start = Reflect.get(token, 'start');
   if (typeof start !== 'number') return {};
   const before = source.slice(0, start);
   const lineStart = before.lastIndexOf('\n') + 1;
-  return { line: before.split('\n').length, column: start - lineStart };
+  const value = Reflect.get(token, 'value');
+  return {
+    line: before.split('\n').length,
+    column: start - lineStart,
+    ...(typeof value === 'string' && value.length > 0 ? { length: value.length } : {}),
+  };
 }
 
 // Try to import semantic package for multilingual support
@@ -193,7 +201,7 @@ export const lspBridgeTools: Tool[] = [
   {
     name: 'get_diagnostics',
     description:
-      'Analyze hyperscript code and return LSP-compatible diagnostics (errors, warnings, hints). Supports 21 languages.',
+      'Analyze hyperscript code and return LSP-compatible diagnostics with line/column ranges (errors, warnings, hints). English is checked by the engine that runs the code: a parse error is reported at the token where it stopped. Other languages (24 in all) are checked by the semantic parser.',
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -341,6 +349,9 @@ export async function handleLspBridgeTool(
 // Diagnostic Analysis
 // ============================================================================
 
+/** runSimpleDiagnostics' advice about code that parses, as opposed to its guesses about whether it does. */
+const STYLE_HINTS = new Set(['prefer-wait', 'missing-then']);
+
 async function getDiagnostics(
   code: string,
   language: string,
@@ -348,32 +359,58 @@ async function getDiagnostics(
 ): Promise<CallToolResult> {
   const diagnostics: Diagnostic[] = [];
   let semanticConfidence = 0;
+  const english = language === 'en' || language.startsWith('en-');
 
-  // Phase 5: Try semantic analysis first (works for all supported languages)
-  // Phase 6: Use cached analyzer for performance
+  // For English the engine that runs the code decides, as in the language server and
+  // validate_and_compile: its parse error, at the token where it stopped, is the diagnostic.
+  // The checks below are heuristics it overrules. (Before 6.2 they ran first, and this tool
+  // flagged 6 of 27 English inputs the engine rejects, none with a position.)
+  let engine: 'reads' | 'rejects' | 'unavailable' = 'unavailable';
+  if (english && engineParse) {
+    try {
+      engineParse(code);
+      engine = 'reads';
+    } catch (e) {
+      engine = 'rejects';
+      const message = e instanceof Error ? e.message : String(e);
+      const { line = 1, column = 0, length = 1 } = engineErrorPosition(e, code);
+      diagnostics.push({
+        range: {
+          start: { line: line - 1, character: column },
+          end: { line: line - 1, character: column + length },
+        },
+        severity: 1, // Error
+        code: 'parse-error',
+        source: 'engine',
+        message: message.split('\n')[0] ?? message,
+      });
+    }
+  }
+
+  // Semantic analysis (every language). On English the engine reads, semantic's errors are
+  // doubts about its IR, not the code (they were this tool's false errors), so they are warnings.
   const analyzer = getSemanticAnalyzer();
-  if (analyzer) {
+  if (analyzer && engine !== 'rejects') {
     try {
       const result = analyzer.analyze(code, language);
       semanticConfidence = result.confidence;
 
-      // Add semantic-level errors
-      if (result.errors && result.errors.length > 0) {
-        for (const err of result.errors) {
-          diagnostics.push({
-            range: {
-              start: { line: 0, character: 0 },
-              end: { line: 0, character: code.split('\n')[0]?.length || code.length },
-            },
-            severity: 1, // Error
-            code: 'semantic-error',
-            source: 'hyperfixi-semantic',
-            message: err,
-          });
-        }
+      for (const err of result.errors ?? []) {
+        diagnostics.push({
+          range: {
+            start: { line: 0, character: 0 },
+            end: { line: 0, character: code.split('\n')[0]?.length || code.length },
+          },
+          severity: engine === 'reads' ? 2 : 1,
+          code: 'semantic-error',
+          source: 'hyperfixi-semantic',
+          message:
+            engine === 'reads'
+              ? `${err} (the engine reads this code; the semantic IR may leave part of it out)`
+              : err,
+        });
       }
 
-      // Low confidence warning
       if (result.confidence > 0 && result.confidence < 0.3) {
         diagnostics.push({
           range: {
@@ -386,60 +423,22 @@ async function getDiagnostics(
           message: `Code could not be fully parsed (${(result.confidence * 100).toFixed(0)}% confidence)`,
         });
       }
-
-      // Validate semantic roles (e.g., toggle without patient)
-      if (result.confidence >= 0.5 && result.command) {
-        const cmd = result.command.name;
-        const roles = result.command.roles;
-
-        if (cmd === 'toggle' && !roles.has('patient')) {
-          diagnostics.push({
-            range: { start: { line: 0, character: 0 }, end: { line: 0, character: code.length } },
-            severity: 2,
-            code: 'missing-role',
-            source: 'hyperfixi-semantic',
-            message: 'toggle command missing target (add .class, @attr, or selector)',
-          });
-        }
-
-        if (cmd === 'put' && !roles.has('destination')) {
-          diagnostics.push({
-            range: { start: { line: 0, character: 0 }, end: { line: 0, character: code.length } },
-            severity: 2,
-            code: 'missing-role',
-            source: 'hyperfixi-semantic',
-            message: 'put command missing destination (add "into #element")',
-          });
-        }
-      }
     } catch {
       // Semantic parsing failed - continue with other methods
     }
   }
 
-  // AST-based analysis: the parser's own errors first (a failed parse does
-  // not throw — it reports), then the interchange complexity diagnostics.
-  if (diagnostics.length === 0 && astToolkit?.interchangeToLSPDiagnostics) {
+  // The interchange complexity diagnostics, on code nothing has rejected. (The engine's parse
+  // error, which parseToInterchange also reports, is already above.)
+  if (!diagnostics.some(d => d.severity === 1) && astToolkit?.interchangeToLSPDiagnostics) {
     try {
       const parsed = parseToInterchange(code, language);
-      for (const err of parsed?.errors ?? []) {
-        const line = Math.max(0, (err.line ?? 1) - 1);
-        const character = Math.max(0, err.column ?? 0);
-        diagnostics.push({
-          range: { start: { line, character }, end: { line, character: character + 10 } },
-          severity: 1, // Error
-          code: 'parse-error',
-          source: 'hyperfixi-mcp',
-          message: err.message,
-        });
-      }
       if (parsed?.nodes.length) {
         diagnostics.push(
           ...astToolkit.interchangeToLSPDiagnostics(parsed.nodes, { source: 'hyperfixi-mcp' })
         );
       }
     } catch (parseError: any) {
-      // Parse error becomes a diagnostic
       diagnostics.push({
         range: {
           start: { line: 0, character: 0 },
@@ -453,9 +452,34 @@ async function getDiagnostics(
     }
   }
 
-  // Fallback: simple pattern-based analysis with multilingual support
-  if (diagnostics.length === 0) {
-    diagnostics.push(...runSimpleDiagnostics(code, language));
+  // The pattern-based checks guess at what a parser decides. On English the engine read the
+  // guesses can only be wrong (8 of this tool's false errors were unmatched quotes it read),
+  // and their command list is English, so on another language every native word looked like
+  // a typo (391 of 467 possible-typo warnings). On English they now give a "did you mean"
+  // beside the engine's error, or style advice when it reads the code; on other languages,
+  // every check but the typo one, when semantic found nothing; everything without the engine.
+  if (engine === 'rejects') {
+    // Only the word the engine stopped on: `toggel` in `on click toggel .active` is a typo,
+    // while `and` in `add .a to me and put …` is not `add` (the engine stops later, on `put`'s value).
+    const stop = diagnostics[0]!.range.start;
+    diagnostics.push(
+      ...runSimpleDiagnostics(code, language).filter(
+        d =>
+          d.code === 'possible-typo' &&
+          d.range.start.line === stop.line &&
+          d.range.start.character === stop.character
+      )
+    );
+  } else if (engine === 'reads') {
+    // Style advice survives (`wait` over setTimeout, `then` between commands); the quote,
+    // bracket and typo guesses about code the engine read do not.
+    diagnostics.push(
+      ...runSimpleDiagnostics(code, language).filter(d => STYLE_HINTS.has(String(d.code)))
+    );
+  } else if (engine === 'unavailable' && diagnostics.length === 0) {
+    diagnostics.push(
+      ...runSimpleDiagnostics(code, language).filter(d => english || d.code !== 'possible-typo')
+    );
   }
 
   // Build code actions for each diagnostic that has fixes
