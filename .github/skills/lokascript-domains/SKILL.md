@@ -1,17 +1,18 @@
 ---
 name: lokascript-domains
-description: 'Parses, compiles, validates, and translates multilingual DSL commands across 8 domains (SQL, BDD, todos, testing, LLM prompts, data flow, voice, learn). Use when user works with domain-specific commands in any of 24 supported languages, or needs cross-domain compilation, HATEOAS workflows, or LSE training data generation.'
+description: 'Parses, compiles, validates, and translates multilingual DSL commands across 7 domains (SQL, todos, behavior specs, LLM prompts, data flow, voice, learn). Use when user works with domain-specific commands in any of 24 supported languages, or needs cross-domain compilation, HATEOAS workflows, or LSE training data generation.'
 ---
 
 # LokaScript Domain DSLs
 
-8 multilingual domain-specific languages built on the LokaScript framework. Each domain exposes `parse`, `compile`, `validate`, and `translate` MCP tools.
+7 multilingual domain-specific languages built on the LokaScript framework. Each domain exposes `parse`, `compile`, `validate`, and `translate` MCP tools.
 
 ## When to Use
 
-- User writes SQL, BDD scenarios, todos, or LLM prompts in natural language
+- User writes SQL, behavior specs (given/when/expect), todos, or LLM prompts in natural language
 - User needs to translate domain commands between languages (en, es, ja, ar, ko, zh, tr, fr)
-- User asks to generate Playwright tests from BDD or behavior specs
+- User asks to generate Playwright tests from behavior specs (bdd's given/when/then forms merged into behaviorspec in
+  domains 4.2.0; `compile_bdd` and the other bdd tools are gone since domains 5.0.0)
 - User wants to compile natural language to target code (SQL, reactive JS)
 - User works with HATEOAS/Siren APIs via FlowScript commands
 - User needs LLM training data or feedback loops for LokaScript Explicit Syntax
@@ -64,9 +65,8 @@ compile_composite({ input: "select name from users\ngiven #button exists", langu
 | Domain           | Commands                                                     | Languages                              | `compile_{name}` Output            |
 | ---------------- | ------------------------------------------------------------ | -------------------------------------- | ---------------------------------- |
 | **sql**          | SELECT, INSERT, UPDATE, DELETE                               | en, es, ja, ar, ko, zh, tr, fr         | SQL query string                   |
-| **bdd**          | GIVEN, WHEN, THEN                                            | en, es, ja, ar                         | Playwright test                    |
 | **todo**         | add, complete, remove, list                                  | en, es, ja, ar, ko, zh, tr, fr         | Structured operation object        |
-| **behaviorspec** | given, when, then (pages)                                    | en, es, ja, ar, ko, zh, tr, fr         | Playwright interaction test        |
+| **behaviorspec** | test, given, when, expect, after, not                        | en, es, ja, ar, ko, zh, tr, fr         | Playwright interaction test        |
 | **llm**          | ask, summarize, analyze, translate                           | en, es, ja, ar, ko, zh, tr, fr         | LLMPromptSpec JSON                 |
 | **flow**         | fetch, poll, stream, submit, enter, follow, perform, capture | en, es, ja, ar, ko, zh, tr, fr         | Reactive JS / HATEOAS WorkflowSpec |
 | **voice**        | click, scroll, type, navigate                                | en, es, ja, ar, ko, zh, tr, fr         | DOM interaction command            |
@@ -113,9 +113,9 @@ agent can do itself).
 | Tool                   | When to Use                                                            |
 | ---------------------- | ---------------------------------------------------------------------- |
 | `lse_from_hyperscript` | Parse hyperscript (any of 24 languages) to LSE bracket + protocol JSON |
-| `lse_to_hyperscript`   | Validate/compile LSE from an LLM response back to JavaScript           |
+| `lse_to_hyperscript`   | Validate LSE from an LLM response: diagnostics, normalized LSE, JSON   |
 
-Typical round-trip: `lse_from_hyperscript` → LLM modifies LSE → `lse_to_hyperscript` → get compiled JS.
+Typical round-trip: `lse_from_hyperscript` → LLM modifies LSE → `lse_to_hyperscript` → validated LSE and its protocol JSON.
 
 ### LSE Training & Feedback
 
