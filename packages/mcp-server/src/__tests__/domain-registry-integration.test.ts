@@ -215,4 +215,62 @@ describe('BehaviorSpec Multi-Line Handler', () => {
     const result = await handleBehaviorSpecMultiLine('parse_behaviorspec', {});
     expect(result.isError).toBe(true);
   });
+
+  // lokascript-domains #54: on domains 5.0.1 this answered ok: true with the test body
+  // `await page.goto('/login');` and the two later lines gone.
+  const unreadLines =
+    'test "Login"\n  given page /login\n  when I click #submit\n  then #result is visible';
+
+  it('refuses to compile a spec with a line it cannot read, naming each line', async () => {
+    const result = await handleBehaviorSpecMultiLine('compile_behaviorspec', {
+      scenario: unreadLines,
+      language: 'en',
+    });
+    const data = JSON.parse(result.content[0].text);
+    expect(data.ok).toBe(false);
+    expect(data.code).toBeUndefined();
+    expect(data.errors).toHaveLength(2);
+    expect(data.errors[0]).toMatch(/^Line 3: .*when I click #submit/);
+    expect(data.partial).toContain("page.goto('/login')");
+  });
+
+  it('compiles every step of a spec it reads', async () => {
+    const result = await handleBehaviorSpecMultiLine('compile_behaviorspec', {
+      scenario:
+        'test "Login"\n  given page /login\n  when user clicks on #submit\n    #toast appears',
+      language: 'en',
+    });
+    const data = JSON.parse(result.content[0].text);
+    expect(data.ok).toBe(true);
+    expect(data.code).toContain("page.locator('#submit').click()");
+    expect(data.code).toContain("expect(page.locator('#toast')).toBeVisible()");
+  });
+
+  it('validates and translates as compile does', async () => {
+    // Each line parses, but the URL takes the rest of its line: the compiler refuses it.
+    const oneLine = 'test "B"\n  given page /login when user clicks on #b';
+    const valid = JSON.parse(
+      (
+        await handleBehaviorSpecMultiLine('validate_behaviorspec', {
+          scenario: oneLine,
+          language: 'en',
+        })
+      ).content[0].text
+    );
+    expect(valid.valid).toBe(false);
+    expect(valid.errors.join('\n')).toMatch(/leaving "when user clicks on #b" unread/);
+
+    const translated = JSON.parse(
+      (
+        await handleBehaviorSpecMultiLine('translate_behaviorspec', {
+          scenario: unreadLines,
+          from: 'en',
+          to: 'es',
+        })
+      ).content[0].text
+    );
+    expect(translated.translated).toBeNull();
+    expect(translated.playwright).toBeNull();
+    expect(translated.errors).toHaveLength(2);
+  });
 });

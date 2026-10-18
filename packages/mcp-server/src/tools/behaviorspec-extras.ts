@@ -46,6 +46,31 @@ export function isMultiLineBehaviorSpec(args: Record<string, unknown>): boolean 
 
 type ToolResponse = { content: Array<{ type: string; text: string }>; isError?: boolean };
 
+type CompileOutcome =
+  { ok: true; code: string } | { ok: false; errors: string[]; partial?: string };
+
+/**
+ * `compileBehaviorSpec` throws instead of returning a test that skips a line (domains 5.0.2,
+ * lokascript-domains #54): a `BehaviorSpecError` names each line it could not read and keeps
+ * the rest as `partial`, never returned as `code`. Before 5.0.2 it returned that partial file,
+ * and `compile_behaviorspec` answered `ok: true` with the lines gone.
+ */
+function compileOrRefuse(
+  compile: (scenario: string, language: string) => string,
+  scenario: string,
+  language: string
+): CompileOutcome {
+  try {
+    return { ok: true, code: compile(scenario, language) };
+  } catch (e) {
+    const errors = Array.isArray((e as { errors?: unknown }).errors)
+      ? (e as { errors: unknown[] }).errors.map(String)
+      : [e instanceof Error ? e.message : String(e)];
+    const partial = (e as { partial?: unknown }).partial;
+    return { ok: false, errors, ...(typeof partial === 'string' && partial ? { partial } : {}) };
+  }
+}
+
 /**
  * Handle multi-line BehaviorSpec operations.
  */
@@ -86,13 +111,23 @@ export async function handleBehaviorSpecMultiLine(
 
     if (operation === 'compile') {
       const language = getString(args, 'language', 'en');
-      const code = compile(scenario, language);
-      return jsonResponse({ ok: true, code, language });
+      const outcome = compileOrRefuse(compile, scenario, language);
+      return jsonResponse(
+        outcome.ok
+          ? { ok: true, code: outcome.code, language }
+          : { ok: false, errors: outcome.errors, partial: outcome.partial, language }
+      );
     }
 
     if (operation === 'validate') {
       const language = getString(args, 'language', 'en');
       const result = parseSpec(scenario, language);
+      // A spec every line of which parses can still be one the compiler refuses
+      // (`given page /login when …`): validate says what compile would.
+      if (result.errors.length === 0) {
+        const outcome = compileOrRefuse(compile, scenario, language);
+        if (!outcome.ok) result.errors.push(...outcome.errors);
+      }
       return jsonResponse({
         valid: result.errors.length === 0,
         testCount: result.tests.length,
@@ -108,6 +143,17 @@ export async function handleBehaviorSpecMultiLine(
       if (!from || !to) return errorResponse('Missing required parameter: from, to');
 
       const result = parseSpec(scenario, from);
+      // A spec with a line that did not parse is refused whole: the translation and the test
+      // would both leave that line out.
+      const compiled = result.errors.length === 0 ? compileOrRefuse(compile, scenario, from) : null;
+      if (!compiled?.ok) {
+        return jsonResponse({
+          input: { scenario, language: from },
+          translated: null,
+          playwright: null,
+          errors: compiled ? compiled.errors : result.errors,
+        });
+      }
       const renderedTests: string[] = [];
       // renderBehaviorSpec returns null for a node it cannot render. Interpolating
       // that would write the literal "null" into the spec, so one unrenderable
@@ -140,7 +186,7 @@ export async function handleBehaviorSpecMultiLine(
       return jsonResponse({
         input: { scenario, language: from },
         translated: complete ? renderedTests.join('\n\n') : null,
-        playwright: compile(scenario, from),
+        playwright: compiled.code,
         errors: result.errors,
       });
     }
