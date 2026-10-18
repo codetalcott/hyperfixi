@@ -67,7 +67,8 @@ const LANGUAGE_NAMES: Record<string, string> = {
  * Get all .ts files in a directory, excluding specified files.
  */
 function getLanguageFiles(dir: string, excludes: string[] = []): string[] {
-  const files = fs.readdirSync(dir)
+  const files = fs
+    .readdirSync(dir)
     .filter(f => f.endsWith('.ts') && !excludes.includes(f))
     .map(f => f.replace('.ts', ''))
     .sort();
@@ -170,9 +171,7 @@ function generateTokenizerExports(): void {
   // Generate re-export lines
   const exports = files.map(f => {
     // Find the language code for this file
-    const code = Object.keys(LANGUAGE_NAMES).find(c =>
-      LANGUAGE_NAMES[c] === f || c === f
-    ) || f;
+    const code = Object.keys(LANGUAGE_NAMES).find(c => LANGUAGE_NAMES[c] === f || c === f) || f;
     const tokenizerName = toTokenizerName(code);
     return `export { ${tokenizerName} } from './${f}';`;
   });
@@ -190,9 +189,7 @@ function generateProfilesIndex(): void {
   const files = getLanguageFiles(dir, ['index.ts', 'types.ts', 'marker-templates.ts']);
 
   const exports = files.map(f => {
-    const code = Object.keys(LANGUAGE_NAMES).find(c =>
-      LANGUAGE_NAMES[c] === f || c === f
-    ) || f;
+    const code = Object.keys(LANGUAGE_NAMES).find(c => LANGUAGE_NAMES[c] === f || c === f) || f;
     const profileName = toProfileName(code);
     return `export { ${profileName} } from './${f}';`;
   });
@@ -237,9 +234,7 @@ function generateLanguageProfiles(): void {
 
   // Build code → file/profile mapping
   const languages = files.map(f => {
-    const code = Object.keys(LANGUAGE_NAMES).find(c =>
-      LANGUAGE_NAMES[c] === f || c === f
-    ) || f;
+    const code = Object.keys(LANGUAGE_NAMES).find(c => LANGUAGE_NAMES[c] === f || c === f) || f;
     const profileName = toProfileName(code);
     return { code, file: f, profileName };
   });
@@ -324,7 +319,7 @@ function generateKnownProfiles(): void {
   const objectEntries = sorted
     .map(l => {
       const key = l.code.includes('-') ? `'${l.code}'` : l.code;
-      return `  ${key}: ${l.profileName},`;
+      return `    ${key}: ${l.profileName},`;
     })
     .join('\n');
 
@@ -350,9 +345,12 @@ function generateKnownProfiles(): void {
 import type { LanguageProfile } from './profiles/types';
 ${imports}
 
-export const KNOWN_PROFILES: Readonly<Record<string, LanguageProfile>> = Object.freeze({
+// Pure: a bundler cannot prove \`Object.freeze\` has no side effects, so without the annotation
+// every \`./core\` consumer kept all 24 profiles (35 KB gz) for the one unused export.
+export const KNOWN_PROFILES: Readonly<Record<string, LanguageProfile>> =
+  /* @__PURE__ */ Object.freeze({
 ${objectEntries}
-});
+  });
 `;
 
   fs.writeFileSync(path.join(SEMANTIC_SRC, 'generators/known-profiles.ts'), content);
@@ -383,33 +381,28 @@ function generatePatternIndex(command: string): void {
 
   // Build language info
   const languages = files.map(f => {
-    const code = Object.keys(LANGUAGE_NAMES).find(c =>
-      LANGUAGE_NAMES[c] === f || c === f
-    ) || f;
+    const code = Object.keys(LANGUAGE_NAMES).find(c => LANGUAGE_NAMES[c] === f || c === f) || f;
     const upperCode = code.charAt(0).toUpperCase() + code.slice(1);
     const funcName = `get${cmdPascal}Patterns${upperCode}`;
     return { code, file: f, funcName };
   });
 
-  const imports = languages.map(l =>
-    `import { ${l.funcName} } from './${l.file}';`
-  ).join('\n');
+  const imports = languages.map(l => `import { ${l.funcName} } from './${l.file}';`).join('\n');
 
-  const reExports = languages.map(l =>
-    `export { ${l.funcName} } from './${l.file}';`
-  ).join('\n');
+  const reExports = languages.map(l => `export { ${l.funcName} } from './${l.file}';`).join('\n');
 
-  const switchCases = languages.map(l =>
-    `    case '${l.code}':\n      return ${l.funcName}();`
-  ).join('\n');
+  const switchCases = languages
+    .map(l => `    case '${l.code}':\n      return ${l.funcName}();`)
+    .join('\n');
 
   const varName = `${command.replace(/-/g, '')}PatternLanguages`;
   const items = languages.map(l => `'${l.code}'`);
   const singleLine = `export const ${varName} = [${items.join(', ')}];`;
   const PRINT_WIDTH = 100;
-  const languageArrayDecl = singleLine.length <= PRINT_WIDTH
-    ? singleLine
-    : `export const ${varName} = [\n${items.map(i => `  ${i},`).join('\n')}\n];`;
+  const languageArrayDecl =
+    singleLine.length <= PRINT_WIDTH
+      ? singleLine
+      : `export const ${varName} = [\n${items.map(i => `  ${i},`).join('\n')}\n];`;
 
   const content = `/**
  * ${cmdPascal} Command Patterns
@@ -452,7 +445,8 @@ ${languageArrayDecl}
  */
 function generateAllPatternIndexes(): void {
   const patternsDir = path.join(SEMANTIC_SRC, 'patterns');
-  const commands = fs.readdirSync(patternsDir)
+  const commands = fs
+    .readdirSync(patternsDir)
     .filter(f => fs.statSync(path.join(patternsDir, f)).isDirectory())
     .filter(f => f !== 'index.ts')
     // Not a per-command directory: each language's registration of its own
@@ -475,7 +469,7 @@ function main() {
   generateKnownProfiles();
   generateAllPatternIndexes();
 
-  console.log('\nNote: tokenizers/index.ts has static content that shouldn\'t be auto-generated.');
+  console.log("\nNote: tokenizers/index.ts has static content that shouldn't be auto-generated.");
   console.log('If you added a new tokenizer, add the export manually.\n');
 
   console.log('Done!');

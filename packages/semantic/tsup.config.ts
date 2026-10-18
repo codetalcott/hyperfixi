@@ -8,7 +8,7 @@ export default defineConfig([
     splitting: false,
     sourcemap: true,
     clean: true,
-      },
+  },
   // Fidelity scorers (CJS + ESM) — pure functions over parsed node trees.
   // Output: dist/fidelity.js / dist/fidelity.cjs (+ dist/fidelity.d.ts via build:types)
   // Usage: import { computeFidelity } from '@lokascript/semantic/fidelity'
@@ -37,7 +37,7 @@ export default defineConfig([
     minify: true,
     sourcemap: true,
     platform: 'browser',
-        outExtension() {
+    outExtension() {
       return { js: '.global.js' };
     },
     esbuildOptions(options) {
@@ -56,7 +56,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-        outExtension() {
+    outExtension() {
       return { js: '.en.global.js' };
     },
     esbuildOptions(options) {
@@ -74,7 +74,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-        outExtension() {
+    outExtension() {
       return { js: '.es-en.global.js' };
     },
     esbuildOptions(options) {
@@ -93,7 +93,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-        outExtension() {
+    outExtension() {
       return { js: '.es.global.js' };
     },
     esbuildOptions(options) {
@@ -112,7 +112,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-        outExtension() {
+    outExtension() {
       return { js: '.tr.global.js' };
     },
     esbuildOptions(options) {
@@ -131,7 +131,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-        outExtension() {
+    outExtension() {
       return { js: '.western.global.js' };
     },
     esbuildOptions(options) {
@@ -150,7 +150,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-        outExtension() {
+    outExtension() {
       return { js: '.east-asian.global.js' };
     },
     esbuildOptions(options) {
@@ -169,7 +169,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-        outExtension() {
+    outExtension() {
       return { js: '.priority.global.js' };
     },
     esbuildOptions(options) {
@@ -188,7 +188,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-        outExtension() {
+    outExtension() {
       return { js: '.lazy.global.js' };
     },
     esbuildOptions(options) {
@@ -208,7 +208,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-        outExtension() {
+    outExtension() {
       return { js: '.core.global.js' };
     },
     esbuildOptions(options) {
@@ -227,7 +227,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-        outExtension() {
+    outExtension() {
       return { js: '.ja.global.js' };
     },
     esbuildOptions(options) {
@@ -246,7 +246,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-        outExtension() {
+    outExtension() {
       return { js: '.ar.global.js' };
     },
     esbuildOptions(options) {
@@ -265,7 +265,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-        outExtension() {
+    outExtension() {
       return { js: '.ko.global.js' };
     },
     esbuildOptions(options) {
@@ -284,7 +284,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-        outExtension() {
+    outExtension() {
       return { js: '.zh.global.js' };
     },
     esbuildOptions(options) {
@@ -303,7 +303,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-        outExtension() {
+    outExtension() {
       return { js: '.pt.global.js' };
     },
     esbuildOptions(options) {
@@ -322,7 +322,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-        outExtension() {
+    outExtension() {
       return { js: '.fr.global.js' };
     },
     esbuildOptions(options) {
@@ -341,7 +341,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-        outExtension() {
+    outExtension() {
       return { js: '.de.global.js' };
     },
     esbuildOptions(options) {
@@ -360,7 +360,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-        outExtension() {
+    outExtension() {
       return { js: '.id.global.js' };
     },
     esbuildOptions(options) {
@@ -379,7 +379,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-        outExtension() {
+    outExtension() {
       return { js: '.qu.global.js' };
     },
     esbuildOptions(options) {
@@ -398,7 +398,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-        outExtension() {
+    outExtension() {
       return { js: '.sw.global.js' };
     },
     esbuildOptions(options) {
@@ -417,7 +417,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-        outExtension() {
+    outExtension() {
       return { js: '.en-tr.global.js' };
     },
     esbuildOptions(options) {
@@ -680,7 +680,9 @@ export default defineConfig([
       'lexicons/zh': 'src/lexicons/zh.ts',
     },
     format: ['esm'],
-    splitting: false,
+    // Shared modules (tokenizer bases, the event-name table, extractors) go to common chunks
+    // instead of a copy in every language file: 174 KB raw of duplication across ten languages.
+    splitting: true,
     sourcemap: true,
     // Keep `../core` unbundled so all language modules share the runtime
     // registry singleton from dist/core.js. Without this, each language

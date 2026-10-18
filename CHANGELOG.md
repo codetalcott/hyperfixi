@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`@lokascript/semantic`: `lexicons/<code>` registers its vocabulary with `./core`.** Each
+  lexicon file bundled a private copy of the lexicon registry, so a page that imported
+  `@lokascript/semantic/core`, `languages/ja` and `lexicons/ja` registered the Japanese words in a
+  Map `render` never read, and value words stayed English (`私の valueに` for `私の 値 に`). The root
+  entry and the browser bundles were not affected. `test/core-subpaths.test.ts` holds it on the
+  built files.
+
 - **`@hyperfixi/mcp-server`: a multi-line BehaviorSpec with a line it cannot read is refused,
   not compiled without it** (lokascript-domains #54). On `@lokascript/domains` 5.0.1,
   `compile_behaviorspec` answered `ok: true` for `test "Login"` / `given page /login` /
@@ -22,6 +29,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`@lokascript/compilation-service`: `/health` reports the package's version**, not the `1.4.0`
   literal it reported through 6.1.0 (`src/version.ts`, rewritten by `set-version.cjs`).
+
+### Changed
+
+- **`@lokascript/semantic`: the `./core` + `./languages/<code>` path weighs about a third less.**
+  Measured with esbuild (minified, gzip -9) on learn's ten languages with their lexicons:
+  275 KB → 180 KB; `./core` alone 155 KB → 120 KB; core with one language and its lexicon
+  168 KB → 133 KB. Two packaging changes: `KNOWN_PROFILES` is marked pure, so a bundle that does
+  not use it drops the profiles of languages it never imports (35 KB); and the language and
+  lexicon modules share their common code in chunks instead of a copy each (60 KB over ten).
+  Through the packed tarball, the bundled path renders exactly what the root entry does (1,476 of
+  1,476 pairs: 164 docs patterns × 9 languages, there and back), and the root entry is unchanged
+  (3,772 of 3,772 pairs against 6.1.0). `@hyperfixi/vite-plugin`'s debug size table is
+  re-measured (one language ~130–135 KB, `all` ~222 KB).
+
+### Added
+
+- **`@lokascript/semantic/core` exports `getAllTranslations` and `getAllTranslationsWithStatus`**,
+  over the languages a page registered. lokascript-learn's playground imported the root entry, and
+  with it all 24 languages, for this one function.
 
 ## [6.1.0] - 2026-10-18
 
