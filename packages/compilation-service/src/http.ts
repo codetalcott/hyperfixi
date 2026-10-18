@@ -16,6 +16,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { CompilationService } from './service.js';
+import { VERSION } from './version.js';
 import type { CompileRequest, TranslateRequest, DiffRequest, GenerateRequest } from './types.js';
 import { bodyLimit } from './middleware/body-limit.js';
 import { timeout } from './middleware/timeout.js';
@@ -98,7 +99,7 @@ export function createApp(options: HttpOptions = {}): Hono {
 
   app.get('/health', async c => {
     const ready = service !== null;
-    return c.json({ ok: true, version: '1.4.0', ready, uptime: process.uptime() });
+    return c.json({ ok: true, version: VERSION, ready, uptime: process.uptime() });
   });
 
   app.post('/validate', async c => {

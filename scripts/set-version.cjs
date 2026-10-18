@@ -113,6 +113,8 @@ const GENERATED_VERSION_FILES = [
   // semantic's exported VERSION was a `0.1.0` literal from its first release
   // (and each browser bundle its own `1.0.0-<lang>`); test/version.test.ts.
   'packages/semantic/src/version.ts',
+  // compilation-service's /health reported a `1.4.0` literal through 6.1.0; src/version.test.ts.
+  'packages/compilation-service/src/version.ts',
 ];
 
 GENERATED_VERSION_FILES.forEach(relPath => {
