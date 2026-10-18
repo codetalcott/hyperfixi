@@ -7,10 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.2.0] - 2026-10-18
+
+The `@lokascript/semantic/core` path weighs about a third less, and its lexicons now register with
+it. MCP `get_diagnostics` gives the engine's verdict for English, and a multi-line BehaviorSpec with
+a line it cannot read is refused instead of compiled without it.
+
 ### Fixed
 
 - **`@hyperfixi/mcp-server`: `get_diagnostics` gives the engine's verdict for English, where it
-  stopped.** Measured on 672 inputs (the agent bench and the docs patterns, in en/ja/es/ar), it
+  stopped** (#1575). Measured on 672 inputs (the agent bench and the docs patterns, in en/ja/es/ar), it
   flagged 6 of the 27 English inputs the engine rejects, none with a position; gave 9 false errors
   on English the engine reads (8 of them a possessive `'s` read as an open quote); and warned 467
   `possible-typo`s, 391 on ja/es/ar words checked against an English command list. Now: 27 of 27,
@@ -24,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `@lokascript/semantic/core`, `languages/ja` and `lexicons/ja` registered the Japanese words in a
   Map `render` never read, and value words stayed English (`私の valueに` for `私の 値 に`). The root
   entry and the browser bundles were not affected. `test/core-subpaths.test.ts` holds it on the
-  built files.
+  built files (#1577).
 
 - **`@hyperfixi/mcp-server`: a multi-line BehaviorSpec with a line it cannot read is refused,
   not compiled without it** (lokascript-domains #54). On `@lokascript/domains` 5.0.1,
@@ -35,10 +41,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and the rest under `partial`, never `code`. `validate_behaviorspec` reports what compile would
   refuse (a `given page /login when …` URL that takes the rest of its line), and
   `translate_behaviorspec` refuses such a spec whole (`translated` and `playwright` are `null`)
-  instead of translating what remained.
+  instead of translating what remained (#1576).
 
 - **`@lokascript/compilation-service`: `/health` reports the package's version**, not the `1.4.0`
-  literal it reported through 6.1.0 (`src/version.ts`, rewritten by `set-version.cjs`).
+  literal it reported through 6.1.0 (`src/version.ts`, rewritten by `set-version.cjs`; #1576).
 
 ### Changed
 
@@ -51,7 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Through the packed tarball, the bundled path renders exactly what the root entry does (1,476 of
   1,476 pairs: 164 docs patterns × 9 languages, there and back), and the root entry is unchanged
   (3,772 of 3,772 pairs against 6.1.0). `@hyperfixi/vite-plugin`'s debug size table is
-  re-measured (one language ~130–135 KB, `all` ~222 KB).
+  re-measured (one language ~130–135 KB, `all` ~222 KB) (#1577).
 
 - **`@lokascript/language-server` on `vscode-languageserver` 10** (protocol 3.18; replaces
   Dependabot #1278), and the LokaScript VS Code extension on `vscode-languageclient` 10 (#1279),
@@ -59,13 +65,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `./node.js`, so the server imports `vscode-languageserver/node`; a diagnostic's `message` may be
   `MarkupContent` in 3.18, so the code actions read its text either way. Over stdio the server
   answers as 6.1.0 does: the same capabilities, the engine's parse error at the same position,
-  hover and completion.
+  hover and completion (#1579).
 
 ### Added
 
 - **`@lokascript/semantic/core` exports `getAllTranslations` and `getAllTranslationsWithStatus`**,
   over the languages a page registered. lokascript-learn's playground imported the root entry, and
-  with it all 24 languages, for this one function.
+  with it all 24 languages, for this one function (#1577).
 
 ### Deprecated
 
@@ -73,7 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (every handler as `on` and its event) and reported success on 21 of the 27 English inputs the
   engine rejects; `validate_and_compile` returns the whole IR and the engine's verdict. Its
   description starts "Deprecated", and each result carries a second text block naming the
-  replacement.
+  replacement (#1575).
 
 ## [6.1.0] - 2026-10-18
 
@@ -2067,7 +2073,8 @@ _Synchronized version release. See git history for details._
 - npm access token stored in GitHub Secrets
 - 2FA recommended for npm organization
 
-[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v6.1.0...HEAD
+[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v6.2.0...HEAD
+[6.2.0]: https://github.com/codetalcott/hyperfixi/compare/v6.1.0...v6.2.0
 [6.1.0]: https://github.com/codetalcott/hyperfixi/compare/v6.0.0...v6.1.0
 [6.0.0]: https://github.com/codetalcott/hyperfixi/compare/v5.1.0...v6.0.0
 [5.1.0]: https://github.com/codetalcott/hyperfixi/compare/v5.0.0...v5.1.0
