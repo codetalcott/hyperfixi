@@ -112,6 +112,57 @@ describe('get_diagnostics', () => {
     expect(parsed.diagnostics.some((d: any) => d.message.includes('then'))).toBe(true);
   });
 
+  // O8 (2026-10-18): measured on 672 inputs, this tool flagged 6 of the 27 English inputs the
+  // engine rejects (none with a position), gave 9 false errors on English it reads, and 467
+  // possible-typo warnings, 391 of them on ja/es/ar. The engine decides for English now.
+  const diagnose = async (code: string, language = 'en') =>
+    JSON.parse(getTextContent(await handleLspBridgeTool('get_diagnostics', { code, language })))
+      .diagnostics as any[];
+
+  it("reports the engine's parse error at the token where it stopped", async () => {
+    const ds = await diagnose('on click toggel .active');
+    expect(ds[0]).toMatchObject({
+      severity: 1,
+      code: 'parse-error',
+      source: 'engine',
+      range: { start: { line: 0, character: 9 }, end: { line: 0, character: 15 } },
+    });
+    // A "did you mean" for the word it stopped on, and only that one.
+    expect(ds.filter(d => d.code === 'possible-typo').map(d => d.message)).toEqual([
+      'Unknown command "toggel". Did you mean "toggle"?',
+    ]);
+  });
+
+  it('suggests no typo for a word the engine did not stop on', async () => {
+    // `and` is not a misspelled `add`: the engine stops on `"Loading"`.
+    const ds = await diagnose('on click add .busy to me and put "Loading" into #output');
+    expect(ds.map(d => d.code)).toEqual(['parse-error']);
+    expect(ds[0]).toMatchObject({ source: 'engine', range: { start: { line: 0, character: 33 } } });
+  });
+
+  it("gives no error on English the engine reads (a possessive 's is not an open quote)", async () => {
+    for (const code of [
+      "on click increment #counter's textContent",
+      "bind $color to #picker's value",
+    ]) {
+      expect((await diagnose(code)).filter(d => d.severity === 1)).toEqual([]);
+    }
+  });
+
+  it("makes semantic's doubt about English the engine reads a warning", async () => {
+    const ds = await diagnose('on "refresh" put "Refreshed" into #output');
+    expect(ds.filter(d => d.severity === 1)).toEqual([]);
+    expect(ds.some(d => d.code === 'semantic-error' && d.severity === 2)).toBe(true);
+  });
+
+  it('warns no possible-typo off English (its command list is English)', async () => {
+    const ds = await diagnose(
+      "على النقر أضف [@aria-selected='false'] إلى .tab ثم أضف [@aria-selected='true'] إليّ",
+      'ar'
+    );
+    expect(ds.filter(d => d.code === 'possible-typo')).toEqual([]);
+  });
+
   it('returns valid LSP diagnostic format', async () => {
     const result = await handleLspBridgeTool('get_diagnostics', {
       code: "on click put 'hello into #output",
