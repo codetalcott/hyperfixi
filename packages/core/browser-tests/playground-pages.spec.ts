@@ -2,11 +2,11 @@
  * Coverage for the interactive multilingual / showcase example pages that had
  * no Playwright spec:
  *   - multilingual/showcase.html            (counter/toggle/mirror/tabs, local core + semantic)
- *   - multilingual/polyglot-playground.html (local inc/dec/toggle demo)
- *   - multilingual/playground.html          (local demo mirror; i18n via unpkg CDN)
+ *   - multilingual/playground.html          (translations, roles, run; local semantic bundle)
  *
- * Strict assertions exercise the runtime/parser/i18n surfaces to surface bugs.
- * Tests target locally-served bundles and avoid the unpkg CDN. (The
+ * Strict assertions exercise the runtime/parser surfaces to surface bugs. Tests target
+ * locally-served bundles. (polyglot-playground.html was deleted on 2026-10-18, OPEN_ITEMS D5:
+ * its "write in any language" claim was never built; it ran its input as typed.) (The
  * examples/playground/* pages are intentionally excluded from the repo via
  * .gitignore, so they are not covered here.)
  */
@@ -75,6 +75,27 @@ test.describe('multilingual/showcase.html @comprehensive', () => {
     await expect(page.locator('#panel2')).toBeHidden();
   });
 
+  // Until 2026-10-18 a non-English choice wrote the translation into `_` with no adapter on
+  // the page: the engine rejected it, and every demo stopped working (and the choice persisted).
+  test('demos keep working in Japanese and Arabic (the adapter reads their data-lang)', async ({
+    page,
+  }) => {
+    const errors = createErrorCollector(page);
+    errors.attach();
+    await load(page, '/examples/multilingual/showcase.html');
+    for (const lang of ['ja', 'ar']) {
+      await page.locator('#language').selectOption(lang);
+      const increment = page.locator('#counter-demo-increment');
+      await expect(increment).toHaveAttribute('data-lang', lang);
+      expect(await increment.getAttribute('_')).not.toContain('increment');
+      const value = page.locator('#counter-value');
+      const before = parseInt((await value.textContent()) ?? '0', 10);
+      await increment.click();
+      await expect(value).toHaveText(String(before + 1));
+    }
+    expect(errors.getCriticalErrors()).toEqual([]);
+  });
+
   test('LokaScriptSemantic.parseSemantic is exposed and returns a real confidence', async ({
     page,
   }) => {
@@ -96,32 +117,34 @@ test.describe('multilingual/showcase.html @comprehensive', () => {
   });
 });
 
-test.describe('multilingual/polyglot-playground.html — local demo @comprehensive', () => {
-  test('increment/decrement buttons drive #count', async ({ page }) => {
-    await load(page, '/examples/multilingual/polyglot-playground.html');
-    const count = page.locator('#count');
-    const start = parseInt((await count.textContent()) ?? '0', 10);
-
-    await page.locator('.demo-btn.inc').click();
-    await expect(count).toHaveText(String(start + 1));
-    await page.locator('.demo-btn.inc').click();
-    await expect(count).toHaveText(String(start + 2));
-    await page.locator('.demo-btn.dec').click();
-    await expect(count).toHaveText(String(start + 1));
-  });
-
-  test('toggle-box toggles its own .active class', async ({ page }) => {
-    await load(page, '/examples/multilingual/polyglot-playground.html');
-    const box = page.locator('#toggle-box');
-    await expect(box).not.toHaveClass(/active/);
-    await box.click();
-    await expect(box).toHaveClass(/active/);
-  });
-});
-
 test.describe('multilingual/playground.html — local mirror @comprehensive', () => {
-  // i18n translate here comes from the unpkg CDN; this test only exercises the
-  // locally-served runtime (demo input mirror), so it stays deterministic offline.
+  // Translations come from the local semantic bundle (the page called i18n 2.3.0's retired
+  // transformer from unpkg until 2026-10-18, so it showed English for every language offline).
+  test('renders a translation for every other language the semantic parser reads', async ({
+    page,
+  }) => {
+    await load(page, '/examples/multilingual/playground.html');
+    await page.locator('#code-editor').fill('on click toggle .active');
+    await page.evaluate(() => (window as any).updateTransformations());
+    const cards = page.locator('.transform-card');
+    const languages = await page.evaluate(
+      () => (window as any).LokaScriptSemantic.getRegisteredLanguages().length
+    );
+    await expect(cards).toHaveCount(languages - 1);
+    await expect(page.locator('.transform-card', { hasText: '切り替え' })).toHaveCount(1);
+  });
+
+  test('runs a Japanese script on the demo button, translated to English', async ({ page }) => {
+    await load(page, '/examples/multilingual/playground.html');
+    await page.locator('#source-lang').selectOption('ja');
+    await page.locator('#code-editor').fill('クリック で .active を 切り替え');
+    await page.evaluate(() => (window as any).runHyperscript());
+    await expect(page.locator('#current-code')).toHaveText('on click toggle .active');
+    const button = page.locator('#demo-btn');
+    await button.click();
+    await expect(button).toHaveClass(/active/);
+  });
+
   test('demo input mirrors into #output', async ({ page }) => {
     await load(page, '/examples/multilingual/playground.html');
     await page.locator('#demo-input').fill('typed value');

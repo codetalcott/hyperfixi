@@ -466,7 +466,7 @@ Examples:
     <div class="preview-panel">
       <div class="panel-header">
         <h2>Transformations</h2>
-        <span id="transform-count" style="color: #666; font-size: 0.8rem;">13 languages</span>
+        <span id="transform-count" style="color: #666; font-size: 0.8rem;">languages</span>
       </div>
       <div class="transformations" id="transformations">
         <!-- Populated by JS -->
@@ -506,40 +506,29 @@ Examples:
       </div>
       <div class="console-output" id="console-output">
 <span class="info">[info]</span> LokaScript Playground loaded
-<span class="info">[info]</span> 13 languages available with grammar transformation
+<span class="info">[info]</span> Translations come from the semantic parser, in each language's word order
 <span class="success">[ready]</span> Type hyperscript and see live translations
       </div>
     </div>
   </div>
 
-  <!-- Load LokaScript bundles -->
+  <!-- Load LokaScript bundles: the engine, and the semantic parser for the 24 languages -->
   <script src="../bundle-loader.js" data-default="hs"></script>
-  <script src="https://unpkg.com/@lokascript/i18n@2.3.0/dist/lokascript-i18n.min.js"></script>
+  <script src="../../packages/semantic/dist/browser.global.js"></script>
 
   <script>
-    // Language metadata
-    const LANGUAGES = {
-      en: { name: 'English', flag: '🇺🇸', wordOrder: 'SVO' },
-      es: { name: 'Espanol', flag: '🇪🇸', wordOrder: 'SVO' },
-      pt: { name: 'Portugues', flag: '🇧🇷', wordOrder: 'SVO' },
-      ja: { name: '日本語', flag: '🇯🇵', wordOrder: 'SOV' },
-      zh: { name: '中文', flag: '🇨🇳', wordOrder: 'SVO' },
-      ko: { name: '한국어', flag: '🇰🇷', wordOrder: 'SOV' },
-      ar: { name: 'العربية', flag: '🇸🇦', wordOrder: 'VSO', rtl: true },
-      tr: { name: 'Turkce', flag: '🇹🇷', wordOrder: 'SOV' },
-      de: { name: 'Deutsch', flag: '🇩🇪', wordOrder: 'SVO' },
-      fr: { name: 'Francais', flag: '🇫🇷', wordOrder: 'SVO' },
-      id: { name: 'Bahasa Indonesia', flag: '🇮🇩', wordOrder: 'SVO' },
-      sw: { name: 'Kiswahili', flag: '🇰🇪', wordOrder: 'SVO' },
-      qu: { name: 'Runasimi', flag: '🇵🇪', wordOrder: 'SOV' },
-    };
+    const Semantic = window.LokaScriptSemantic;
 
-    // Direct translation pairs
-    const DIRECT_PAIRS = new Set([
-      'ja->zh', 'zh->ja',
-      'ko->ja', 'ja->ko',
-      'es->pt', 'pt->es',
-    ]);
+    // Every language the semantic parser reads, named and ordered by its own profile.
+    const LANGUAGES = {};
+    for (const code of Semantic ? Semantic.getRegisteredLanguages() : ['en']) {
+      const profile = Semantic && Semantic.tryGetProfile(code);
+      LANGUAGES[code] = {
+        name: (profile && (profile.nativeName || profile.name)) || code,
+        wordOrder: (profile && profile.wordOrder) || 'SVO',
+        rtl: !!(profile && profile.direction === 'rtl'),
+      };
+    }
 
     // DOM elements
     const codeEditor = document.getElementById('code-editor');
@@ -561,6 +550,12 @@ Examples:
       return div.innerHTML;
     }
 
+    // The source picker lists 13 languages in its markup; add the rest.
+    for (const [code, meta] of Object.entries(LANGUAGES)) {
+      if (![...sourceLang.options].some(o => o.value === code)) sourceLang.add(new Option(meta.name, code));
+    }
+    document.getElementById('transform-count').textContent = `${Object.keys(LANGUAGES).length} languages`;
+
     // Update transformations
     function updateTransformations() {
       const code = codeEditor.value.trim();
@@ -577,21 +572,11 @@ Examples:
         if (lang === source) continue;
 
         try {
-          const pairKey = `${source}->${lang}`;
-          const isDirect = DIRECT_PAIRS.has(pairKey);
-
-          // Use LokaScriptI18n if available, otherwise simulate
-          let translated = code;
-          if (window.LokaScriptI18n && window.LokaScriptI18n.translate) {
-            translated = window.LokaScriptI18n.translate(code, source, lang);
-          }
-
+          const translated = Semantic ? Semantic.translate(code, source, lang) : code;
           html += `
-            <div class="transform-card ${isDirect ? 'direct' : ''}">
+            <div class="transform-card">
               <div class="lang-header">
-                <span class="lang-flag">${meta.flag}</span>
-                <span class="lang-name">${meta.name}</span>
-                ${isDirect ? '<span class="direct-badge">DIRECT</span>' : ''}
+                <span class="lang-name">${escapeHtml(meta.name)}</span>
                 <span class="word-order-badge ${meta.wordOrder.toLowerCase()}">${meta.wordOrder}</span>
               </div>
               <pre class="transformed-code ${meta.rtl ? 'rtl' : ''}">${escapeHtml(translated)}</pre>
@@ -601,8 +586,7 @@ Examples:
           html += `
             <div class="transform-card">
               <div class="lang-header">
-                <span class="lang-flag">${meta.flag}</span>
-                <span class="lang-name">${meta.name}</span>
+                <span class="lang-name">${escapeHtml(meta.name)}</span>
               </div>
               <pre class="transformed-code" style="color: #f44336;">Error: ${escapeHtml(e.message)}</pre>
             </div>
@@ -613,28 +597,45 @@ Examples:
       transformations.innerHTML = html;
     }
 
+    // Each command in the parse, with the roles the semantic parser gave it.
+    function collectCommands(node, out) {
+      if (!node || typeof node !== 'object') return out;
+      if (typeof node.action === 'string' && node.roles instanceof Map) out.push(node);
+      for (const field of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches', 'eventHandlers', 'initBlock']) {
+        const child = node[field];
+        if (Array.isArray(child)) child.forEach(c => collectCommands(c, out));
+        else if (child && typeof child === 'object') collectCommands(child, out);
+      }
+      return out;
+    }
+
     // Update semantic analysis
     function updateSemanticAnalysis() {
       const code = codeEditor.value.trim();
       const source = sourceLang.value;
 
-      if (!code || !window.LokaScriptI18n || !window.LokaScriptI18n.parseStatement) {
+      if (!code || !Semantic) {
         semanticRoles.innerHTML = '<span style="color: #666;">Enter code to analyze</span>';
         return;
       }
 
       try {
-        const parsed = window.LokaScriptI18n.parseStatement(code, source);
-        if (!parsed || !parsed.roles) {
+        const parsed = Semantic.parse(code, source);
+        const commands = parsed ? collectCommands(parsed, []) : [];
+        if (!commands.length) {
           semanticRoles.innerHTML = '<span style="color: #666;">Could not parse statement</span>';
           return;
         }
 
         let html = '';
-        for (const [role, element] of parsed.roles) {
-          html += `<div class="role-item ${role}"><strong>${role}:</strong> ${escapeHtml(element.value)}</div>`;
+        for (const command of commands) {
+          html += `<div class="role-item"><strong>${escapeHtml(command.action)}</strong></div>`;
+          for (const [role, value] of command.roles) {
+            const shown = value && (value.value ?? value.raw ?? value.type);
+            html += `<div class="role-item ${role}"><strong>${role}:</strong> ${escapeHtml(String(shown))}</div>`;
+          }
         }
-        semanticRoles.innerHTML = html || '<span style="color: #666;">No roles detected</span>';
+        semanticRoles.innerHTML = html;
       } catch (e) {
         semanticRoles.innerHTML = `<span style="color: #f44336;">Parse error: ${escapeHtml(e.message)}</span>`;
       }
@@ -682,10 +683,9 @@ Examples:
 
       try {
         // Translate to English if needed
-        let englishCode = code;
-        if (source !== 'en' && window.LokaScriptI18n && window.LokaScriptI18n.toEnglish) {
-          englishCode = window.LokaScriptI18n.toEnglish(code, source);
-        }
+        // The engine runs English: translate first (a translation that would lose part of the
+        // script throws, and the catch below reports it).
+        const englishCode = source === 'en' ? code : Semantic.translate(code, source, 'en');
 
         logToConsole(`Applying: ${englishCode}`, 'info');
 
@@ -750,13 +750,10 @@ Examples:
     updateTransformations();
     updateSemanticAnalysis();
 
-    // Check for LokaScript availability
-    if (window.LokaScriptI18n) {
-      logToConsole('LokaScript i18n module loaded successfully', 'success');
-      const profiles = window.LokaScriptI18n.getSupportedLocales ? window.LokaScriptI18n.getSupportedLocales() : [];
-      logToConsole(`Supported locales: ${profiles.join(', ')}`, 'info');
+    if (Semantic) {
+      logToConsole(`Semantic parser loaded: ${Object.keys(LANGUAGES).length} languages`, 'success');
     } else {
-      logToConsole('LokaScript i18n module not found - running in demo mode', 'warning');
+      logToConsole('Semantic parser not found (build packages/semantic) - translations unavailable', 'warning');
     }
   </script>
 </body>

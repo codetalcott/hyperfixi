@@ -546,7 +546,7 @@
                 </div>
             </div>
 
-            <button class="expand-btn" onclick="toggleAllLanguages('counter')">View in all 13 languages</button>
+            <button class="expand-btn" onclick="toggleAllLanguages('counter')">View in 13 languages</button>
             <div class="all-languages" id="counter-all-languages"></div>
         </div>
 
@@ -575,7 +575,7 @@
                 </div>
             </div>
 
-            <button class="expand-btn" onclick="toggleAllLanguages('toggle')">View in all 13 languages</button>
+            <button class="expand-btn" onclick="toggleAllLanguages('toggle')">View in 13 languages</button>
             <div class="all-languages" id="toggle-all-languages"></div>
         </div>
 
@@ -606,7 +606,7 @@
                 </div>
             </div>
 
-            <button class="expand-btn" onclick="toggleAllLanguages('mirror')">View in all 13 languages</button>
+            <button class="expand-btn" onclick="toggleAllLanguages('mirror')">View in 13 languages</button>
             <div class="all-languages" id="mirror-all-languages"></div>
         </div>
 
@@ -644,7 +644,7 @@
                 </div>
             </div>
 
-            <button class="expand-btn" onclick="toggleAllLanguages('tabs')">View in all 13 languages</button>
+            <button class="expand-btn" onclick="toggleAllLanguages('tabs')">View in 13 languages</button>
             <div class="all-languages" id="tabs-all-languages"></div>
         </div>
 
@@ -688,6 +688,10 @@
     <!-- Load LokaScript bundles -->
     <script src="../../packages/engine/dist/hyperfixi-hs.js"></script>
     <script src="../../packages/semantic/dist/browser.global.js"></script>
+    <!-- Runs each demo's translated script: the engine reads English, and the adapter translates
+         an element's script from its data-lang as the engine reads it. Without it, a non-English
+         choice wrote a script the engine rejected, and the demos stopped working. -->
+    <script src="../../packages/hyperscript-adapter/dist/hyperscript-i18n-lite.global.js"></script>
 
     <script>
         // Language metadata
@@ -792,6 +796,7 @@
                     const translatedScript = translateScript(script, lang);
                     const demoEl = document.getElementById(`${exampleId}-demo-${scriptKey}`);
                     if (demoEl) {
+                        demoEl.setAttribute('data-lang', lang);
                         demoEl.setAttribute('_', translatedScript);
                         // Re-process with hyperfixi
                         if (window.hyperfixi && window.hyperfixi.processNode) {
