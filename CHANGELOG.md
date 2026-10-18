@@ -30,6 +30,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   bench every correct rejection was already the engine's (16 of 16), so none moved.
   testing-framework's `validate-agrees-with-engine.test.ts` holds the 1,128 at 0 rejected.
 
+- **`@hyperfixi/vite-plugin`: `region: 'slavic'` and `region: 'south-asian'` load their languages.**
+  Both were in the option's type and the README's language list, but the expansion had a
+  hand-written case per region and none for these two, so they loaded English alone. Regions now
+  expand from `REGIONS` itself, and the README's region table lists both. The debug size table
+  (`SEMANTIC_BUNDLE_SIZES`, January 2025) is re-measured by a new
+  `scripts/measure-semantic-sizes.ts`: semantic's core plus one language is ~163–175 KB gzipped,
+  not the ~14–20 KB it claimed (`all` ~383 KB, not ~61 KB).
+
 ## [6.0.0] - 2026-10-18
 
 Removes `@lokascript/compilation-service`'s test and component generation, deprecated in 5.1.0. For
