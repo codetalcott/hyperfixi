@@ -14,6 +14,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `omit`); the same seven domains and 28 domain tools as 5.0.0. framework's and server-bridge's
   dev dependency follows (`^5.0.0`).
 
+### Deprecated
+
+- **`@lokascript/compilation-service`: test and component generation, removed in 6.0.**
+  `generateTests`, `generateComponent`, `registerTestRenderer`, `registerComponentRenderer`, the
+  `PlaywrightRenderer`, `ReactRenderer`, `VueRenderer` and `SvelteRenderer` exports, and the react,
+  vue and svelte targets of `generate` (its `intent-element` target stays). Each call still works
+  and its response now carries an info diagnostic, `DEPRECATED`. The HTTP routes
+  `/generate-tests` and `/generate-component` and the MCP tools `generate_tests` and
+  `generate_component` go with them in 6.0; the tools' descriptions say so now. Measured on the
+  docs sites' 164 English patterns and lokascript-examples chat's five examples: 15 of 169 inputs
+  give a Playwright test that fails without the engine (103 are refused, 23 tests pass with no
+  engine loaded, 26 fail on it), and 4 of 6 React components do not typecheck (every command
+  aimed at another element: siblings with no fragment, `function ToggleDark-mode`,
+  `const [, set]`). Validation, translation, `scoreFidelity` and `diff` stay.
+
 ## [5.0.0] - 2026-10-17
 
 A renumber for everything but `@lokascript/framework`, whose classic DSL engine is removed: every

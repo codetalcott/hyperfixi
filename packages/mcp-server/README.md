@@ -101,8 +101,8 @@ The **93** tools below, plus the **5** GRAIL tools above, total **98** defined. 
 | ---------------------- | -------------------------------------------------------------------------- |
 | `validate_and_compile` | Parse to semantic IR with diagnostics; natural language also on the engine |
 | `translate_code`       | High-fidelity translation with SVO/SOV/VSO grammar transformation          |
-| `generate_tests`       | Generate Playwright behavior tests from hyperscript                        |
-| `generate_component`   | Generate React, Vue, or Svelte component from hyperscript                  |
+| `generate_tests`       | Deprecated, removed in 6.0: Playwright behavior tests from hyperscript     |
+| `generate_component`   | Deprecated, removed in 6.0: React, Vue, or Svelte component                |
 | `score_fidelity`       | Score a candidate against a reference: recall/precision/role/value signals |
 | `diff_behaviors`       | Compare two inputs for semantic equivalence                                |
 

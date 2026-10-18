@@ -57,7 +57,7 @@ export const compilationTools: Tool[] = [
   {
     name: 'generate_tests',
     description:
-      'Generate Playwright behavior tests from hyperscript. Extracts abstract operations and renders them as test assertions.',
+      'Deprecated (removed in 6.0): most inputs are refused and most tests it writes do not check the behavior. Generate Playwright behavior tests from hyperscript. Extracts abstract operations and renders them as test assertions.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -76,7 +76,7 @@ export const compilationTools: Tool[] = [
   {
     name: 'generate_component',
     description:
-      'Generate a React component from hyperscript. Maps semantic operations to React hooks and JSX, Vue 3 Composition API and templates, or Svelte 5 runes. Supports react (default), vue, and svelte frameworks.',
+      'Deprecated (removed in 6.0): a command aimed at another element renders a component that does not compile. Generate a React component from hyperscript. Maps semantic operations to React hooks and JSX, Vue 3 Composition API and templates, or Svelte 5 runes. Supports react (default), vue, and svelte frameworks.',
     inputSchema: {
       type: 'object',
       properties: {
