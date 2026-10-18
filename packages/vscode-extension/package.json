@@ -5,7 +5,7 @@
   "version": "6.1.0",
   "publisher": "lokascript",
   "engines": {
-    "vscode": "^1.85.0"
+    "vscode": "^1.91.0"
   },
   "categories": [
     "Programming Languages",
@@ -154,7 +154,7 @@
     "publish": "npx --yes @vscode/vsce@^3.9.1 publish --no-dependencies"
   },
   "dependencies": {
-    "vscode-languageclient": "^9.0.1"
+    "vscode-languageclient": "^10.1.2"
   },
   "devDependencies": {
     "@lokascript/semantic": "^6.1.0",
