@@ -42,6 +42,22 @@ describe('validationTools', () => {
   });
 });
 
+describe('parse_multilingual', () => {
+  it('is deprecated in favor of validate_and_compile (removed in 7.0)', async () => {
+    const tool = validationTools.find(t => t.name === 'parse_multilingual');
+    expect(tool?.description).toMatch(/^Deprecated \(removed in 7\.0\): use validate_and_compile/);
+    const result = await handleValidationTool('parse_multilingual', {
+      code: 'on click toggle .active',
+      language: 'en',
+    });
+    // The result is unchanged in content[0]; the notice is a block of its own.
+    expect(JSON.parse(result.content[0].text).success).toBe(true);
+    expect(result.content.at(-1)?.text).toMatch(
+      /^Deprecated: parse_multilingual is removed in 7\.0\. Use validate_and_compile/
+    );
+  });
+});
+
 describe('validate_hyperscript', () => {
   it('is deprecated in favor of validate_and_compile (removed in 7.0)', async () => {
     const tool = validationTools.find(t => t.name === 'validate_hyperscript');
