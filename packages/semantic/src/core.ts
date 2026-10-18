@@ -180,6 +180,10 @@ export {
   fromExplicit,
   LossyTranslationError,
   findTranslationLoss,
+  // Over the registered languages, so a page that registers ten gets ten (learn's playground
+  // imported the root entry, and all 24 languages, for this one function).
+  getAllTranslations,
+  getAllTranslationsWithStatus,
   type TranslateOptions,
   type TranslationLoss,
   type TranslationLossKind,
