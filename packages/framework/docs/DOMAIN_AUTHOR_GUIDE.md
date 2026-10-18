@@ -12,6 +12,12 @@ Build a multilingual DSL in ~500 lines using `@lokascript/framework`.
 > build time when this surface changes — the snapshot is what makes an
 > accidental change fail loudly. Deliberate changes regenerate the snapshot
 > (`npx tsx scripts/api-surface-report.ts`) and get a note here.
+>
+> **On the core.** `createMultilingualDSL(config)` reads every DSL with the core semantic's
+> hyperscript parser runs (the schema-pattern generator, the matcher's skeleton with the stock
+> value reader, rendering through the patterns where your renderer declines). `engine: 'core'`
+> is still accepted and changes nothing; `engine: 'classic'`, framework's first generator and
+> matcher, was removed in 5.0 and throws, as does any other name.
 
 ## What You Get
 
@@ -140,6 +146,13 @@ export const createSchema = defineCommand({
 - `methodCarrier` (optional) — when this role's marker has alternates, records the matched marker as a literal in the named sibling role. `put`'s destination role uses `methodCarrier: 'method'` to expose which positional keyword fired (`into` / `before` / `after`).
 - `argSkipTokens` (CommandSchema, optional) — identifier tokens that may appear in the parser's positional `args` but aren't bound to any role (e.g., scroll's `top|bottom|smoothly`). Schema-driven role inference skips these when scanning for a role's value.
 - `targetRole` (CommandSchema, optional) — which role consumes the parser's trailing `target` field (the `on X` / `from X` / etc. captured separately from args). Defaults to `'destination'`. Set to `'source'` for commands like `remove`.
+
+`RoleSpec` and `CommandSchema` are the one schema type every grammar shares: hyperscript's
+schemas in `@lokascript/semantic` are the same type, narrowed by its type parameters
+(`CommandSchema<Action, Role, Value, Category>`, each defaulting to the plain type a domain uses, which
+`docs/API_SURFACE.md` now prints spelled out). It also carries the fields only semantic's generator and
+matcher read today (`valueShape`, `variantOnly`, `markerOptional`, `markerLegacy`, the
+`*Variants` lists); in a domain schema they do nothing yet, and each field's doc says which code reads it.
 
 ### 3. Fill In Language Profiles
 
@@ -332,6 +345,36 @@ describe('domain-myapi', () => {
   });
 });
 ```
+
+Then the round trip of every command in every language, and the lint rules, from
+`@lokascript/framework/testing/gate` (no test runner needed, so a regen tool can call it too):
+
+```typescript
+import { runRoundTrip, countsOf, lintDomain } from '@lokascript/framework/testing/gate';
+import { validateCommandSchema } from '@lokascript/semantic';
+
+// Each command rendered in each language and read back: `pass`, `refused` (the caller is told)
+// or `silent` (it reads as something else); and each render plus an unknown word, which must be refused.
+const results = runRoundTrip('myapi', createMyapiDSL(), allSchemas, {
+  oracle: 'compile', // or 'node' when the compiled output depends on the language
+  values: { 'create.type': ['database', 'table'] }, // fixed words; other roles get `v0x`
+});
+expect(countsOf(results).roundTrip.silent).toBe(0);
+
+// Profile ↔ tokenizer ↔ schema ↔ renderer agreement (R1–R10); R1/R2 run the validator you pass.
+const lint = lintDomain({
+  name: 'myapi',
+  schemas,
+  profiles,
+  tokenizers,
+  validateSchema: validateCommandSchema,
+});
+expect(lint.errorCount).toBe(0);
+```
+
+A gate that only shrinks keeps a baseline (`listingOf`, `countsOf`) and fails on `compare`'s `worse`
+and `better` lists; `snapshotOf` / `snapshotChanges` show every parse a change moved. The
+lokascript-domains gate is the worked example.
 
 ### 7. Run
 
@@ -748,6 +791,22 @@ In the MCP server, register your domain with the shared registry instead of writ
 ---
 
 ## Troubleshooting
+
+**`UnreadInputError: "…" reads as X only by leaving "…" unread`.**
+A parse must read the whole input: every pattern is tried, and only a match that consumes every
+token counts (highest priority, then confidence). The error names what the longest match read
+(`reading`) and the text it left (`unread`); `compile`, `validate` and `translate` report it too.
+If the unread text belongs to a role, that role stops too early: a value that runs to the end of the
+input (a SQL condition, `age > 18`) needs `greedy: true`. Before this refusal the trailing words were
+dropped without a word.
+
+**`TranslationReadBackError: translation en → ja does not read back as the source (…)`.**
+`translate` reads its own output in the target language and requires the source command back: the
+same action and role values, or, when the DSL has a code generator, the same compiled code (so a value
+your renderer translates and your generator normalizes, bdd's `visible` → ja `表示`, is fine). The
+error carries the output (`partial`), what it reads as (`reading`, null when it does not parse) and
+why (`role lost`, `reads as …`). Fix the renderer or the schema so the two agree; a caller that wants
+the output regardless passes `{ lossy: 'allow' }`, as with semantic's `translate`.
 
 **Parsing fails in SOV languages but works in SVO.**
 Check that your tokenizer's `keywordExtras` includes `{ native: '...', normalized: 'english_keyword' }` for every non-Latin keyword. The pattern matcher compares stop markers against both `token.value` (native) and `token.normalized` (English) — if normalization is missing, the matcher can't recognize when to stop consuming tokens.

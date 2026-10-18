@@ -12,7 +12,10 @@ import type { ContextAwareExtractor, TokenizerContext } from '../context-aware-e
 
 function createLatinCharClassifiers(pattern: RegExp) {
   const isLetter = (char: string) => pattern.test(char);
-  const isIdentifierChar = (char: string) => /[0-9]/.test(char) || pattern.test(char);
+  // `_` is a word character mid-word (never a word start: canExtract tests isLetter), so a
+  // snake_case name (`my_func()`) is one word and an `_`-joined keyword is looked up whole,
+  // as the Cyrillic and Malay extractors read them. It split at `_` before.
+  const isIdentifierChar = (char: string) => /[0-9_]/.test(char) || pattern.test(char);
   return { isLetter, isIdentifierChar };
 }
 
@@ -78,6 +81,20 @@ export class FrenchKeywordExtractor implements ContextAwareExtractor {
     }
 
     if (!word) return null;
+
+    // A keyword with an apostrophe in it is one word: the profile's `until` is
+    // `jusqu'à`, which read as `jusqu`, a quote and `à` (to), and a loop's
+    // closing `jusqu'à x est 3` was lost. Joined only when the whole is a keyword,
+    // so an elided clitic (`l'afficher`) still splits.
+    if ((input[pos] === "'" || input[pos] === '’') && isFrenchLetter(input[pos + 1] ?? '')) {
+      let end = pos + 1;
+      while (end < input.length && isFrenchIdentifierChar(input[end])) end++;
+      const joined = `${word}'${input.slice(pos + 1, end)}`;
+      if (this.context.lookupKeyword(joined.toLowerCase())) {
+        word = joined;
+        pos = end;
+      }
+    }
 
     const lower = word.toLowerCase();
 

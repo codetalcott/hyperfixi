@@ -111,46 +111,6 @@ describe('POST /translate', () => {
 });
 
 // =============================================================================
-// Generate Tests
-// =============================================================================
-
-describe('POST /generate-tests', () => {
-  it('generates tests from explicit syntax', async () => {
-    const res = await app.request('/generate-tests', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ explicit: '[toggle patient:.active]' }),
-    });
-
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.ok).toBe(true);
-    expect(body.tests).toHaveLength(1);
-    expect(body.operations.length).toBeGreaterThan(0);
-  });
-});
-
-// =============================================================================
-// Generate Component
-// =============================================================================
-
-describe('POST /generate-component', () => {
-  it('generates React component from explicit syntax', async () => {
-    const res = await app.request('/generate-component', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ explicit: '[toggle patient:.active destination:#btn]' }),
-    });
-
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.ok).toBe(true);
-    expect(body.component).toBeDefined();
-    expect(body.component.framework).toBe('react');
-  });
-});
-
-// =============================================================================
 // Diff
 // =============================================================================
 

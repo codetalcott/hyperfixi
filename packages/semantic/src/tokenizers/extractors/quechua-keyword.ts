@@ -245,7 +245,13 @@ export class QuechuaKeywordExtractor implements ContextAwareExtractor {
     let word = '';
     let pos = position;
 
-    while (pos < input.length && isQuechuaLetter(input[pos])) {
+    // `_` continues a word between letters or digits, so a snake_case name (`my_func()`) is one
+    // word; it split at `_` before.
+    const continuesWord = (at: number): boolean =>
+      isQuechuaLetter(input[at]) ||
+      (input[at] === '_' && word.length > 0 && /[\p{L}\p{N}]/u.test(input[at + 1] ?? '')) ||
+      (word.includes('_') && /[0-9]/.test(input[at]));
+    while (pos < input.length && continuesWord(pos)) {
       // Break for an attached agglutinative case-marker suffix (`-ta`, `-man`,
       // `-pi`, …) at a word boundary. Restricted to the Quechua suffix set — a
       // generic isKeywordStart(AtBoundary) check also fires on the English

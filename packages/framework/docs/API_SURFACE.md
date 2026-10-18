@@ -33,7 +33,7 @@ ONLY for a deliberate contract change, and note it in DOMAIN_AUTHOR_GUIDE.md.
 - `name: string`
 - `outputDescription?: string`
 - `scanConfig?: { readonly attributes: readonly string[]; readonly scriptTypes?: readonly string[]; readonly defaultLanguage?: string; readonly keywords?: Readonly<Record<string, readonly string[]>>; }`
-- `schemas?: readonly CommandSchema[]`
+- `schemas?: readonly CommandSchema<string, string, SemanticValue, string>[]`
 - `tools?: readonly ("parse" | "compile" | "validate" | "translate")[]`
 
 ## MultilingualDSL
@@ -43,14 +43,14 @@ ONLY for a deliberate contract change, and note it in DOMAIN_AUTHOR_GUIDE.md.
 - `parse: (input: string, language: string) => SemanticNode`
 - `parseWithConfidence: (input: string, language: string) => { node: SemanticNode; confidence: number; }`
 - `render?: (node: SemanticNode, language: string) => string | null`
-- `translate: (input: string, fromLanguage: string, toLanguage: string) => string`
+- `translate: (input: string, fromLanguage: string, toLanguage: string, options?: TranslateOptions) => string`
 - `validate: (input: string, language: string) => ValidationResult`
 
 ## DomainExtension
 
 - `generate?: (node: SemanticNode) => string`
 - `render?: DomainRenderFn`
-- `schema: CommandSchema`
+- `schema: CommandSchema<string, string, SemanticValue, string>`
 - `vocabulary: Readonly<Record<string, ExtensionVocabulary>>`
 
 ## DomainRegistry.register

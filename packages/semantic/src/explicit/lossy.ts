@@ -25,8 +25,14 @@
  *
  * None of them can say a translation is right. Each says one way it is wrong;
  * the command-shape gate (testing-framework) measures what they still miss.
+ *
+ * The checks' order, the error and the unread-input rule are framework's
+ * (`findTranslationLoss`, domains rethink Phase 4.5); this module holds
+ * hyperscript's rules for them: its core-only forms, its spellings, the
+ * command / role / clause comparisons and the verbatim values.
  */
 
+import { findTranslationLoss as findLoss, type TranslationLoss } from '@lokascript/framework';
 import type { SemanticNode } from '../types';
 import {
   collectActionsMultiset,
@@ -36,20 +42,13 @@ import {
 import { parse } from '../parser';
 import { toForeignSpelling, toUpstreamSpelling, unspelledForms } from './upstream-spelling';
 
-export type TranslationLossKind = 'truncation' | 'core-only' | 'read-back' | 'invariant';
-
-/** One way a translation loses part of its input. */
-export interface TranslationLoss {
-  kind: TranslationLossKind;
-  /**
-   * What is lost: the input left unread (`truncation`); the core-only forms
-   * nothing writes (`core-only`, as `swap <strategy>`); the output left unread
-   * or the commands it reads back without or with in excess (`read-back`, as
-   * `-cmd` / `+cmd`); or the verbatim values missing from the output
-   * (`invariant`).
-   */
-  lost: string[];
-}
+// The loss contract is framework's; semantic's importers keep this path.
+export {
+  LossyTranslationError,
+  unconsumedSpans,
+  type TranslationLoss,
+  type TranslationLossKind,
+} from '@lokascript/framework';
 
 export interface TranslateOptions {
   /**
@@ -60,37 +59,6 @@ export interface TranslateOptions {
 }
 
 /** A translation `translate()` refused because it loses part of its input. */
-export class LossyTranslationError extends Error {
-  override readonly name = 'LossyTranslationError';
-
-  constructor(
-    /** The output `translate()` would have returned: NOT the whole script. */
-    readonly partial: string,
-    readonly loss: TranslationLoss,
-    readonly from: string,
-    readonly to: string
-  ) {
-    super(
-      `translation ${from} → ${to} would lose part of the script (${loss.kind}): ` +
-        loss.lost.join(', ')
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// truncation
-// ---------------------------------------------------------------------------
-
-/** The spans a parse left bound to no role (its top node carries them all). */
-export function unconsumedSpans(node: SemanticNode): string[] {
-  const out: string[] = [];
-  for (const d of node.diagnostics ?? []) {
-    if (d.code !== 'unconsumed-input') continue;
-    out.push(/"(.*)"\s*$/s.exec(d.message)?.[1] ?? d.message);
-  }
-  return out;
-}
-
 // ---------------------------------------------------------------------------
 // read-back
 // ---------------------------------------------------------------------------
@@ -310,36 +278,18 @@ export function findTranslationLoss(
   to: string,
   readBack: (output: string) => SemanticNode = text => parse(text, to)
 ): TranslationLoss | undefined {
-  const unread = unconsumedSpans(node);
-  if (unread.length) return { kind: 'truncation', lost: unread };
-  // In every language: a translation's English is what upstream and the engine
-  // run, and they would run these as something else.
-  const unspelled = unspelledForms(node);
-  if (unspelled.length) return { kind: 'core-only', lost: unspelled };
-
-  let back: SemanticNode;
-  try {
-    back = readBack(output);
-  } catch (e) {
-    return { kind: 'read-back', lost: [`the output does not read: ${(e as Error).message}`] };
-  }
-  const misread = unconsumedSpans(back);
-  if (misread.length) return { kind: 'read-back', lost: misread };
-  // English is written in upstream's spelling (explicit/upstream-spelling.ts:
-  // the owner's 2026-10-01 rule, each rewrite measured on both engines), which
-  // can wrap a command (a view-transition tail becomes `start view transition
-  // … end`) or respell one (`prepend` becomes `put … at start of`), and the
-  // other languages write `put … at start of` as their `prepend`: compare with
-  // what was rendered.
-  const rendered = to === 'en' ? toUpstreamSpelling(node) : toForeignSpelling(node);
-  const commands = actionDifference(rendered, back);
-  if (commands.length) return { kind: 'read-back', lost: commands };
-  const roles = lostRoles(rendered, back);
-  if (roles.length) return { kind: 'read-back', lost: roles };
-  const clauses = clauseDifference(rendered, back);
-  if (clauses.length) return { kind: 'read-back', lost: clauses };
-
-  const values = missingInvariants(input, output);
-  if (values.length) return { kind: 'invariant', lost: values };
-  return undefined;
+  return findLoss(input, node, output, readBack, {
+    // In every language: a translation's English is what upstream and the engine
+    // run, and they would run these as something else.
+    unwritable: unspelledForms,
+    // English is written in upstream's spelling (explicit/upstream-spelling.ts:
+    // the owner's 2026-10-01 rule, each rewrite measured on both engines), which
+    // can wrap a command (a view-transition tail becomes `start view transition
+    // … end`) or respell one (`prepend` becomes `put … at start of`), and the
+    // other languages write `put … at start of` as their `prepend`: compare with
+    // what was rendered.
+    written: written => (to === 'en' ? toUpstreamSpelling(written) : toForeignSpelling(written)),
+    differences: [actionDifference, lostRoles, clauseDifference],
+    missingValues: missingInvariants,
+  });
 }

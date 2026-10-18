@@ -7,11 +7,276 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.1.0] - 2026-10-18
+
+One validator and one translator: MCP `validate_and_compile` accepts the English the engine reads
+and warns `NAME_COLLISION`, and `validate_hyperscript` and `translate_hyperscript` are deprecated for
+7.0. `@hyperfixi/vite-plugin`'s `slavic` and `south-asian` regions load their languages.
+
+### Added
+
+- **`@lokascript/compilation-service`: `validate` warns `NAME_COLLISION`** on foreign input whose
+  variable is spelled like a word of its own language (es `si` is also `if`), with the rename
+  semantic's finder suggests: the one check MCP `validate_hyperscript` made that `validate_and_compile`
+  did not, with its wording and its confidence floor (#1568).
+- **`@lokascript/compilation-service`: a README** (#1570). `files` listed one, but the package had
+  none.
+
+### Deprecated
+
+- **`@hyperfixi/mcp-server`: `validate_hyperscript` and `translate_hyperscript`, removed in 7.0**
+  (#1569).
+  Measured 2026-10-18 on 6.0.0, through the server:
+  - `translate_hyperscript` returns `translate_code`'s text on 471 of 471 pairs, with the same 21
+    refusals; `translate_code` adds a fidelity `verification` and `NAME_COLLISION` warnings.
+  - On 672 inputs `validate_hyperscript` caught nothing `validate_and_compile` missed, and every
+    warning only it gave was a false alarm (a fixed list of 34 event names; an if/end count). Its one
+    useful check, `NAME_COLLISION`, is in `validate_and_compile` now.
+
+  Both still work. Their descriptions start "Deprecated", and each result carries a second text block
+  naming the replacement. The skills, the mcp-server README, MIGRATION.md and the LLM-tool checklist
+  name only `validate_and_compile` and `translate_code`. The lokascript-multilingual skill had called
+  `translate_hyperscript` keyword substitution that does not reorder words, which was not true.
+
+### Fixed
+
+- **`@lokascript/compilation-service`: `validate` (MCP `validate_and_compile`) no longer rejects
+  English the engine reads.** Of the 1,128 command-shape cases `@hyperfixi/engine` reads, it
+  rejected 90:
+  - every behavior definition (a `BehaviorNode` keeps its name as a field, and the schema check read
+    it as a missing role; this also failed behaviors in every other language);
+  - 73 parses under semantic's default confidence bar (`init`, `when`, `def`, `live`, bare `hide`, …);
+  - a quoted event name semantic does not read, and `wait for <event>`.
+
+  For natural-language English the engine's parse now decides `ok`, and semantic's doubts come back
+  as warnings that say the IR may leave part of the code out. A request that sets `confidence`
+  keeps them as errors, as does foreign input, which runs as semantic's translation. On the agent
+  bench every correct rejection was already the engine's (16 of 16), so none moved.
+  testing-framework's `validate-agrees-with-engine.test.ts` holds the 1,128 at 0 rejected (#1566).
+
+- **`@hyperfixi/vite-plugin`: `region: 'slavic'` and `region: 'south-asian'` load their languages**
+  (#1567).
+  Both were in the option's type and the README's language list, but the expansion had a
+  hand-written case per region and none for these two, so they loaded English alone. Regions now
+  expand from `REGIONS` itself, and the README's region table lists both. The debug size table
+  (`SEMANTIC_BUNDLE_SIZES`, January 2025) is re-measured by a new
+  `scripts/measure-semantic-sizes.ts`: semantic's core plus one language is ~163–175 KB gzipped,
+  not the ~14–20 KB it claimed (`all` ~383 KB, not ~61 KB).
+
+## [6.0.0] - 2026-10-18
+
+Removes `@lokascript/compilation-service`'s test and component generation, deprecated in 5.1.0. For
+every other package 6.0 is a renumber: `@lokascript/domains` 5.0.1+ accepts it.
+
+### Removed (BREAKING)
+
+- **`@lokascript/compilation-service`: test and component generation** (deprecated in #1560).
+  Gone: `generateTests`, `generateComponent`, `registerTestRenderer`, `registerComponentRenderer`,
+  `PlaywrightRenderer`, `ReactRenderer`, `VueRenderer`, `SvelteRenderer` and their types,
+  `ServiceOptions.testRenderers` / `componentRenderers`, the HTTP routes `/generate-tests` and
+  `/generate-component`, and `generate()`'s react, vue and svelte targets (it answers
+  `UNKNOWN_TARGET`; `intent-element` stays). `@hyperfixi/mcp-server` drops the `generate_tests` and
+  `generate_component` tools: 96 defined, 91 listed by default (98, 93). The operation extractor
+  stays, behind `diff`; its per-operation tests now run through `/diff`. MIGRATION.md has the 6.0
+  table.
+
+### Changed
+
+- **`@hyperfixi/mcp-server`: on `@lokascript/domains` 5.0.1**, which peers framework, semantic and
+  intent `^5.0.0 || ^6.0.0` (lokascript-domains #52, #53): the bridge that lets 6.0.0 publish.
+
+## [5.1.0] - 2026-10-18
+
+Deprecates `@lokascript/compilation-service`'s test and component generation, which 6.0 removes;
+`@hyperfixi/mcp-server` moves to `@lokascript/domains` 5.0.0.
+
+### Changed
+
+- **`@hyperfixi/mcp-server`: on `@lokascript/domains` 5.0.0** (domains rethink Phase 6), which deletes
+  bdd and peers framework, semantic and intent `^5.0.0`. The server registers every domain (no
+  `omit`); the same seven domains and 28 domain tools as 5.0.0. framework's and server-bridge's
+  dev dependency follows (`^5.0.0`) (#1559).
+
+### Deprecated
+
+- **`@lokascript/compilation-service`: test and component generation, removed in 6.0** (#1560).
+  `generateTests`, `generateComponent`, `registerTestRenderer`, `registerComponentRenderer`, the
+  `PlaywrightRenderer`, `ReactRenderer`, `VueRenderer` and `SvelteRenderer` exports, and the react,
+  vue and svelte targets of `generate` (its `intent-element` target stays). Each call still works
+  and its response now carries an info diagnostic, `DEPRECATED`. The HTTP routes
+  `/generate-tests` and `/generate-component` and the MCP tools `generate_tests` and
+  `generate_component` go with them in 6.0; the tools' descriptions say so now. Measured on the
+  docs sites' 164 English patterns and lokascript-examples chat's five examples: 15 of 169 inputs
+  give a Playwright test that fails without the engine (103 are refused, 23 tests pass with no
+  engine loaded, 26 fail on it), and 4 of 6 React components do not typecheck (every command
+  aimed at another element: siblings with no fragment, `function ToggleDark-mode`,
+  `const [, set]`). Validation, translation, `scoreFidelity` and `diff` stay.
+
+## [5.0.0] - 2026-10-17
+
+A renumber for everything but `@lokascript/framework`, whose classic DSL engine is removed: every
+other package is unchanged in its API, and `@lokascript/domains` 4.2.1+ accepts 5.0.
+
+### Removed (BREAKING)
+
+- **`@lokascript/framework`: the classic DSL engine** (domains rethink Phase 6; M3 (e): one
+  matcher). Every DSL reads on the core engine, which every kept domain has used since domains 4.2.0
+  (bdd's own suite and its gate read the same on it, 0 cases moved). Gone: `PatternMatcher`,
+  `patternMatcher`, `matchPattern`, `matchBest` and the `./core/pattern-matching` subpath (and
+  `PatternMatcher` from `./parsing`); the classic generator, `generatePattern`,
+  `generatePatternVariants` and `GeneratorConfig`. `createMultilingualDSL` defaults to the core;
+  `engine: 'core'` is still accepted and changes nothing, so the domains build unchanged, while
+  `engine: 'classic'` throws, naming what replaced it. Kept: the schema renderer
+  (`createDomainRenderer`, `createSchemaRenderer`, the domains' renderer kit), `PatternGenLanguageProfile`
+  and `sortRolesByWordOrder` (now in `generation/profile.ts`), and the value helpers the stock reader
+  uses (`isTypeCompatible`, `getPossessiveReference` & co., now in `core/matching`, still exported
+  from the root).
+
+### Changed
+
+- **`@hyperfixi/mcp-server`: on `@lokascript/domains` 4.2.1, without bdd's tools** (domains rethink
+  Phase 5, D6). `parse_bdd`, `compile_bdd`, `validate_bdd` and `translate_bdd` and the multi-step
+  bdd scenario handling are gone: behaviorspec reads bdd's preconditions, actions and assertions
+  (`given #button is visible`, `when user presses 'Enter'`, `expect #title text Welcome`), and the
+  server creates its registry with `createDomainRegistry({ omit: ['bdd'] })`. 98 tools defined, 93
+  listed by default (102 and 97). From domains 4.2.0 the domain tools also refuse what their DSL does
+  not read (no domain gate case accepts leftover input), and `parse_learn` & co. read and write
+  learn's commanding sentence with semantic.
+
+### Fixed
+
+- **`@hyperfixi/server-bridge` reads a fetch's method from upstream's options.** It read the method
+  only from 2.x's `via POST`, so a route written in the engine's syntax, such as
+  `fetch /api/x with {method:'POST'}`, was generated as GET. It now reads `with {method:'POST'}`,
+  `with method:'POST'` or a bare `{method:'POST'}`, with `as` before or after them (`as an html`
+  too); `via` is still read. Measured on lokascript-examples' cross-domain and flow-playground
+  pages: 3 POST routes read as GET, all POST now.
+
+## [4.8.0] - 2026-10-16
+
+### Added
+
+- **`@lokascript/intent` / `@lokascript/framework`: a role's word list, `RoleSpec.words`** (domains
+  rethink Phase 5). Per language, with `'*'` for every language; the core engine (`engine: 'core'`)
+  reads such a slot only from one of its words, compared lower-cased, so a word the grammar does not
+  know is left unread and the input refused, instead of read as the value. It is for a domain's fixed
+  words: behaviorspec's `when clicks zzqx` read actor `clicks`, action `zzqx`, and compiled to a
+  comment. The schema-pattern generator carries the pattern language's list on the role token
+  (`RolePatternToken.words`); a grammar that lists no words generates the same patterns. The classic
+  engine and semantic ignore it.
+- **`@lokascript/framework/testing/gate`: `GateFixture.commands`**, commands the gate writes besides
+  the generated ones, where one role's value depends on another's (behaviorspec's
+  `[given subject:#box value:visible]` beside `[given subject:viewport value:1024x768]`).
+- **`@lokascript/framework`: `UnreadInputError.hint`.** Where the last word a parse read as a value is
+  followed by another bare word, the refusal adds `if "buy milk" is one value, quote it` (todo's
+  `add buy milk to groceries`, whose item is quoted).
+
+### Changed
+
+- **`@lokascript/framework/testing/gate`: leftover input read into a role is `pass`.** An unknown word
+  after a command used to be `silent` wherever the parse accepted it. It is `pass` when the parse is
+  the text's own with the word in one role (an open-text role extended by it, sql's
+  `where active zzqx`, or a role the text left empty, todo's `list zzqx`) and the word reaches the
+  compiled code; `refused` when the input stops compiling; `silent` otherwise (read as something
+  else, or the word goes nowhere). `readsWord` is exported. On the domains (domains 4.1.0, this
+  framework packed): 74 leftover cases accepted → read, 0 worse, 0 parses moved.
+- **`@lokascript/framework`: the stock reader's optional slot does not read a marker the rest of the
+  pattern owes**, through its optional groups, as a required slot already does not read the marker
+  next to it (behaviorspec's `when user types into #search`, whose typed text is optional and has no
+  marker). No domain parse moves.
+
+## [4.7.0] - 2026-10-16
+
+### Added
+
+- **`@lokascript/framework`: the matcher's skeleton, `MatchSkeleton`** (domains rethink Phase 4.3), with
+  its seam (`ValueReader`, `MatchView`, `RoleSlot`) and the `ConfidenceModel` / `ConfidenceContext` /
+  `ConfidenceBreakdown` interfaces, all exported. It is the skeleton semantic's hyperscript matcher runs:
+  `@lokascript/semantic`'s `PatternMatcher` now extends it and passes `HyperscriptValueReader`, and its
+  confidence types are framework's narrowed to hyperscript's names. Framework's pattern types take the
+  fields semantic's carried alone (`LanguagePattern.parseOnly`, `LiteralPatternToken.renderSuppress`,
+  `RolePatternToken.valueShape`, `GroupPatternToken.renderRequired`, `ExtractionRule.valueIsExpression`,
+  `PatternMatchResult.roleStarts` / `eventSource`). `createMultilingualDSL` still uses its own matcher.
+  Every hyperscript parse is unchanged (27,194 checked); semantic's browser bundles grew ~150 bytes
+  gzipped.
+- **`@lokascript/framework`: `createSchemaPatternGenerator`** (domains rethink Phase 4.4), the pattern
+  generator semantic's hyperscript parser runs, moved from `@lokascript/semantic`: the main pattern per
+  command and language and its variants (simple, omit-role, widened-type, required-role, SOV verb-first,
+  value-prefix-literal), with the grammar's hook `positionOrder` (`'ascending'`: hyperscript's 1-based
+  positions; `'descending'`: a domain's, as framework's `generatePattern` reads them). Also exported:
+  `withoutVariantOnlyRoles`, `resolveMarkerForRole`, `schemaMarkerAlternatives`,
+  `legacyMarkerAlternatives`. semantic's `generatePattern` / `generatePatternVariants` / … keep their
+  names and signatures over it; its fused event-handler patterns stay in semantic. Every generated
+  pattern in all 24 languages is byte-identical (5,899), and every parse unchanged (27,194).
+- **`@lokascript/framework`: rendering through patterns, and the translation-loss checks** (domains
+  rethink Phase 4.5), moved from `@lokascript/semantic`. `selectRenderPattern` scores a language's
+  patterns for a node (role coverage, values a pattern pins) and `renderPattern` walks the chosen one;
+  a grammar's preferences and its value writing are `PatternRenderHooks`. `findTranslationLoss` runs
+  the fail-loud checks in order (unread input, forms nothing writes, a read-back that does not read or
+  differs, verbatim values) with a grammar's `TranslationLossRules`; `LossyTranslationError`,
+  `TranslationLoss` and `unconsumedSpans` moved with it (semantic re-exports them, so `instanceof`
+  holds). semantic's renderer and `translate` run them with hyperscript's hooks and rules; its
+  collision rule (`verified-render`) stays in semantic. Every translation of every command-shape case
+  in all 24 languages is unchanged, rendered (27,240) and with refusals on (704 refused, the same
+  kinds and losses).
+- **`@lokascript/framework/testing/gate`: the round-trip gate kit and the grammar linter** (domains
+  rethink Phase 4.6), moved from lokascript-domains: `runRoundTrip` renders every command of a
+  grammar in each of its languages and reads it back (`pass` / `refused` / `silent`, plus each render
+  with an unknown word after it, which must be refused); `compare` / `listingOf` / `countsOf` keep a
+  shrink-only baseline and `snapshotOf` / `snapshotChanges` a parse snapshot; `lintDomain` runs the
+  domain-toolkit rules R1–R10, its schema-structure rule on the validator the input passes
+  (`validateSchema`; framework cannot import semantic). No test runner needed. On the 8 domains, with
+  their own fixtures, it reads 3,488 of 3,488 cases as the domains' gate does, with no drift from
+  their baseline.
+- **`@lokascript/framework`: the stock value reader and confidence model for domain grammars** (domains
+  rethink Phase 4.7a). `createStockReader()` (`StockValueReader`) is a `ValueReader` for the matcher's
+  skeleton: a greedy slot reads up to the next marker its pattern owes (`readGreedy`,
+  `greedyStopMarkers`), any other slot one value (`readRoleValue`: a selector, a quoted string, a number,
+  a boolean, a duration, a URL, an identifier, or a dotted or called form, checked against the slot's
+  types), a required slot never takes the marker its pattern wants next, and an optional one may be
+  skipped for it. `stockConfidenceModel` scores as the old matcher did. Both are the old matcher's code,
+  moved: `createMultilingualDSL`'s matcher calls them, and the domain gate on this build moves no case
+  and no parse. `createSchemaPatternGenerator` also takes a domain schema's `greedy`, its
+  post-verb `sovSlot` and its `markerPosition` (hyperscript's patterns: unchanged, 5,899).
+- **`@lokascript/framework`: `engine: 'core'`, a domain DSL on the core** (domains rethink Phase 4.7b):
+  a `DSLConfig` option. `createMultilingualDSL({ ...config, engine: 'core' })` returns the same
+  `MultilingualDSL`, read by the core semantic's hyperscript parser runs: patterns from
+  `createSchemaPatternGenerator` (positions descending), matched by `MatchSkeleton` with the stock
+  reader and confidence model, and rendered through those patterns where the domain's own renderer
+  declines. Parsing's whole-input rule, the refusals, translation's read-back, compile, explicit syntax
+  and extensions are shared with the default, `engine: 'classic'`, which is unchanged; any other engine
+  name throws. The stock reader also gives a required slot back the value an optional, marker-less slot
+  just before it read (the old matcher's backtrack). Measured on the 8 domains, each on the core
+  (the domain gate on a packed build): 0 cases worse, 30 better (behaviorspec 306 → 336
+  round trips), no case silent that was not before.
+
+### Changed
+
+- **`@lokascript/intent`: one schema type for every grammar** (domains rethink Phase 4.1). `RoleSpec` and
+  `CommandSchema` now hold the fields hyperscript's schemas use as well as the domains' (`valueShape`,
+  `variantOnly`, `markerOptional`, `markerLegacy`, `valuePrefixLiteral`; `bareKeyword`, `structuralOnly`
+  and the `omitRoleVariants` / `widenTypeVariants` / `rolePrefixLiteralVariants` / `requiredRoleVariants`
+  lists), each documented with the code that reads it, and take type parameters for a grammar's action,
+  role, value and category names. The parameters default to today's types, so a domain schema reads as
+  before; framework's `docs/API_SURFACE.md` prints them spelled out. `@lokascript/semantic`'s `RoleSpec`
+  is this type with hyperscript's names, and its `CommandSchema` extends it with the fields only its AST
+  builder and error docs read (`ast`, `errorCodes`, `preconditions`, `recoveryHints`). One field keeps two
+  meanings for now: framework's generator sorts `svoPosition` / `sovPosition` descending (higher =
+  earlier), semantic's ascending; the field doc says so.
+- **`@lokascript/semantic`: the pattern matcher reads every value through a seam** (domains rethink
+  Phase 4.2). The matcher is now a grammar-neutral skeleton (`parser/match-skeleton.ts`: literals,
+  groups and their rollback, the speculative skip of an optional slot, spans, ranking, confidence) and
+  hyperscript's `HyperscriptValueReader`, which reads each role slot and answers the skeleton's grammar
+  hooks (`parser/value-reader.ts`). `PatternMatcher` keeps its constructor, methods and import path. Every
+  parse is unchanged (27,194 checked).
+
+## [4.6.0] - 2026-10-15
+
 ### Added
 
 - **`@lokascript/semantic`: `ask` and `answer`** in every language's own word (es `preguntar` /
-  `responder`, ja `尋ねる` / `答える`, de `frage` / `antworte`): upstream's two dialog commands (`ask
-  "Name?"` prompts; `answer "Save?" with "Yes" or "No"` confirms, the choices after the language's
+  `responder`, ja `尋ねる` / `答える`, de `frage` / `antworte`): upstream's two dialog commands
+  (`ask "Name?"` prompts; `answer "Save?" with "Yes" or "No"` confirms, the choices after the language's
   `with`). Both were refused in every language. Listed for native review in
   `packages/semantic/NATIVE_REVIEW_NEEDED.md`.
 - **`@lokascript/semantic`: `scroll … by` with a direction** in every language's own words
@@ -20,13 +285,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   direction had a word, and scroll's schema modeled `scroll to <el>` alone. Listed for native review in
   `packages/semantic/NATIVE_REVIEW_NEEDED.md`.
 
+### Changed
+
+- **`@lokascript/framework`: a domain DSL's parse refuses input it did not read.**
+  `createMultilingualDSL`'s `parse` (and so `compile`, `validate`, `translate`) tries every pattern and
+  takes the best match that reads the WHOLE input: highest priority, then confidence. When the only
+  matches leave input unread, it throws `UnreadInputError` (exported; `code: 'unread-input'`, with the
+  longest match's `reading` and the `unread` text). It used to return the first match however much it
+  read, so a trailing word was dropped without a word: the domain gate (lokascript-domains) found
+  1,744 of 1,744 renders accepted with an unknown word after them, and `ask what is 2+2` asked the
+  model "what". Against the gate (domains 4.0.0, measured unpublished with `gate:upstream`): 1,527
+  cases better, 62 worse, every one `pass → refused` (a value such as `click`'s that the generator
+  ignored, now refused as unread rather than dropped); no case became silent, and no accepted parse
+  changed its reading. A multi-word llm question is quoted: `ask "what is 2+2"`.
+- **`@lokascript/framework`: a domain DSL's `translate` refuses a rendering that does not read
+  back.** It reads its output in the target language and requires the source command: the same
+  action and role values, or the same compiled code. Otherwise it throws `TranslationReadBackError`
+  (exported; the text under `partial`, what it reads as under `reading`), unless `{ lossy: 'allow' }`,
+  as semantic's `translate`. `DomainRegistry`'s tools (the MCP `parse_` / `compile_` / `validate_` /
+  `translate_<domain>` tools) report refusals as `ok: false` with an `UNREAD_INPUT` or
+  `TRANSLATION_DOES_NOT_READ_BACK` diagnostic instead of a generic tool error, and `translate_<domain>`
+  reads its own rendering back the same way. Translating every domain gate command from English: 46
+  renders that used to be returned are now refused (45 do not parse in the target language).
+- **`@lokascript/semantic`: the parser is split into modules.** `semantic-parser.ts` went from 9,680
+  lines to 751, across 22 modules under `parser/`, and each question about an end word (does it close a
+  block, does it stop a clause) has one reader. Each step was checked against 27,194 parses; the steps
+  that change a reading are listed under Fixed. `SemanticParseError` keeps its import path.
+
 ### Fixed
 
 - **`@lokascript/semantic`: a handler's count** (`on click 1 …`, the first click only; `on click 2 …`)
   is read in every language. The renders already wrote it (es `al clic 1 ocultar`), but every reader
   outside English dropped it, so the translation was refused in all 23 languages. Bengali, Italian and
-  Thai also read every clause between a handler's event and its body (`on click elsewhere`, `on
-  mutation of attributes`, `on foo queue first`), which their head pattern skipped. In the command-shape
+  Thai also read every clause between a handler's event and its body (`on click elsewhere`,
+  `on mutation of attributes`, `on foo queue first`), which their head pattern skipped. In the command-shape
   gate, 375 lanes that were refused now pass.
 - **`@lokascript/semantic`: a query of a pseudo-class alone** (`<:checked/>`, `<:not(.done)/>`) reads
   as a query in every language, English too. Every tokenizer read `<` and then a local variable
@@ -41,12 +333,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `get #p1 in me` read back as `get #p1 on me` in Italian, and `get result as JSONString` was refused
   in Quechua. In the command-shape gate, 202 lanes are better, 3 of them silent before.
 - **`@lokascript/semantic`: upstream's collection expressions** read in English and translate:
-  `set :items to <span/> in #box where it matches .a`, `put matches mapped to its textContent into
-  #out`, `repeat for x in :items where x.val > 10 …`. They were refused in every language, English
+  `set :items to <span/> in #box where it matches .a`,
+  `put matches mapped to its textContent into #out`, `repeat for x in :items where x.val > 10 …`. They were refused in every language, English
   too, or kept as an English clause after the command. A translation writes the language's own `where`,
   as it already did in a condition (es `donde`, de `wo`), and keeps `mapped to` in English until native
-  review. Also read now: an element-scoped variable (`:items`) inside a longer value, the article in `in
-  the closest <table/>` and `checked of the :boxes`, and zh/tl's `no` before a sigil variable. Quechua and
+  review. Also read now: an element-scoped variable (`:items`) inside a longer value, the article in
+  `in the closest <table/>` and `checked of the :boxes`, and zh/tl's `no` before a sigil variable. Quechua and
   Vietnamese read their own `where` back (it read as `target`, or split at its `_`), which also clears a
   silent pair in each. In the command-shape gate, 154 lanes are better, 2 of them silent before.
 - **`@lokascript/semantic`: a query's scope inside a phrase** reads in English and translates:
@@ -56,8 +348,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `put the length of <p/> into #out` and `put 'x' into the next <div/>'s textContent`, which the lossy
   check refused because it read the `'s` after `<p/>` as a quote. In the command-shape gate, 63 lanes are
   better, 1 of them silent before.
+- **`@lokascript/semantic`: no translation reads back as other English without saying so.** The
+  command-shape gate's last five silent pairs read back as their source: pl's `closest .bar to .foo`
+  (pl's own `to` is "it"), `closest @foo` in pl and sw, a Quechua chain of `'s` (`$data's inner's val`,
+  read as a string), and Indonesian's `saya punya @data-x`. English `set closest @foo to "doh"` and
+  `put closest @foo into me`, refused in all 24 languages, read now too.
+- **`@lokascript/semantic`: commands that semantic already models, refused in some languages,** read
+  and translate. In the command-shape gate, 168 lanes that were refused now pass; with the rows above,
+  the refused lanes of shapes semantic models went from 911 to 86, and the gate reads 26,531 pass,
+  709 refused and 0 silent. The commands:
+  - `fetch $u as JSON`, with a `$` or `:` variable as the URL (23 languages);
+  - `toggle my *display`, `*opacity` and `*visibility` (ar, de, fr, he, ja, tr);
+  - a `js(…) … end` block after `then` behind a handler head (bn, es, it, ko, pl, ru, th, tl, uk);
+  - a snake_case name (`call global_function()`), which 11 tokenizers split at its `_`;
+  - a custom event after a handler head's `or` (`on click or foo`: bn, it, ja, ko, th, tr, zh). English
+    no longer drops the second event of `on foo or bar`;
+  - `put … at end of` in Vietnamese, and in bn, hi, ja, qu and tr after a bare name
+    (`put response at end of #results`);
+  - a `set` target with no marker after it, in it, pl, ru and uk (`set .divs.innerHTML to "foo"`,
+    `#d1.parentNode`, `bar["count"]`), and `on keydown[key=="Enter"]` in ar, de, fr and he;
+  - `fetch … as Object` and `as Number` behind a bn, hi or ko handler head;
+  - a top-level `for item in items …`, which bn, hi, ko and sw read as a handler on `item`;
+  - a loop's bottom test (`repeat … until x is 3 end`) in de, fr and ko;
+  - a Korean second handler on a parameterized event (`on exception(error)`), and Polish
+    `then throw` after `do` (Polish for `into`);
+  - bn, th and vi's own word for `checked`.
+- **`@lokascript/semantic`: `at end of` inside a behavior or a def** reads in every language:
+  `behavior B on click put "x" at end of me end` was refused, English to English too, because the
+  `end` of `at end of` closed the block. A variable spelled like an end word in such a body reads too
+  (es `fin`).
+- **`@lokascript/semantic`: two copied type lists that had lost `property-path`.** Chinese reads
+  `put the textContent of last <.picked/> in #list`, which it refused, and ja, ko and zh write the count
+  of `repeat the textContent of #a times` in their own words (`#aのtextContent`), not English.
+- **`@lokascript/semantic`: Quechua's `repeat until event … from …`** writes Quechua
+  (`kama ruway pointerup ta kutipay #box manta …`), not a leftover of the retired i18n transformer with
+  English `until event` and `repeat` in it.
 - **Test runs no longer fill the temp directory**: `scripts/vitest-run.sh` gives each run its own
   `TMPDIR` and removes it. Vitest 5.0.2 leaves a copy of every transformed module in `$TMPDIR` per run.
+
+### Removed
+
+- **`@hyperfixi/mcp-server`: the jsx domain's four tools** (`parse_jsx`, `compile_jsx`, `validate_jsx`,
+  `translate_jsx`), and `jsx` as a `domain` for `lse_validate_and_feedback`, `generate_training_data`
+  and the `lse_generate` prompt. The server now depends on `@lokascript/domains` ^4.0.0, which retired
+  jsx with six other preview domains (`docs-internal/DOMAINS_RETHINK.md`, D1). 8 domains remain (sql,
+  bdd, behaviorspec, llm, flow, voice, todo, learn): 32 domain tools, 102 tools defined, 97 listed by
+  default.
 
 ## [4.5.0] - 2026-10-11
 
@@ -84,9 +420,9 @@ review in `packages/semantic/NATIVE_REVIEW_NEEDED.md`; none has been reviewed ye
 
 - **`@lokascript/semantic` writes a pronoun in the case its marker takes.** Free forms: es `en mí`,
   pt `a mim`, it `a me`, tl `sa akin`, pl `do mnie`, ru `ко мне` / `во мне`, uk `до мене`, de `zu mir`
-  / `in mich` (direction) / `auf mir` (location), hi `मुझ में`; `it` after a marker (ru `к этому`, pl `do
-  tego`, de `dazu` / `darin` / `darauf`, fr `à lui`, hi `इस में`); `me` as a verb's object (de `zeige
-  mich`, ru `покажи меня`). Fused forms: tr `bana` / `beni` / `benden`, `ona` / `onu`; ar `إليّ` / `فيه`;
+  / `in mich` (direction) / `auf mir` (location), hi `मुझ में`; `it` after a marker (ru `к этому`, pl
+  `do tego`, de `dazu` / `darin` / `darauf`, fr `à lui`, hi `इस में`); `me` as a verb's object (de
+  `zeige mich`, ru `покажи меня`). Fused forms: tr `bana` / `beni` / `benden`, `ona` / `onu`; ar `إليّ` / `فيه`;
   he `אליי` / `ממני`; bn `আমাকে` / `আমাতে`; hi `मुझे`; tl `dito`; pt `nele`. Object clitics on the verb:
   es `mostrarme`, it `metterlo`, pt `colocá-lo`, ar `ضعه`; fr writes the object pronoun before the
   infinitive (`le mettre`, `l'afficher`, `me cacher`). Every reader takes the nominative and the English
@@ -140,8 +476,8 @@ language has a word for. The words are the owner's vocabulary sheet
   counts, per render, the English grammar words (the tokens the engine's own parser matched in the
   source), English event names the language's lexicon has a word for, and a nominative `me` beside a
   marker in the 13 languages where that case is wrong. Two shrink-only baselines (the corpus, in
-  `test:canonical`, and the command-shape cases, in their shards); `tools/regen-english-leaks-baseline.ts
-  --report` prints each language against M2's targets. An English alternative a profile keeps for
+  `test:canonical`, and the command-shape cases, in their shards);
+  `tools/regen-english-leaks-baseline.ts --report` prints each language against M2's targets. An English alternative a profile keeps for
   code-switched input, beside a primary that is the language's own, counts as English.
 - **`@lokascript/semantic`: `transition … from … to`** reads and writes in every language (a `source`
   role), and the bare command reads in English. The schema's `destination` role is gone: upstream has
@@ -158,8 +494,8 @@ language has a word for. The words are the owner's vocabulary sheet
   back in English as upstream's first person), `does not match`, `fetch … do not throw`, `on first`,
   `go back`, `from elsewhere`, a loop's `index`, `start view transition`, a query's `in`, a conversion's
   `as` (the type name stays English), `the X of Y` inside an expression (es `valor de #price`, ja
-  `#priceの値`), `catch` and `finally`, `element x`, and `def` (as the noun "function", es `función
-  greet(name)`). bn, th and vi have their own `document` and `window`; he has its own words for all of
+  `#priceの値`), `catch` and `finally`, `element x`, and `def` (as the noun "function", es
+  `función greet(name)`). bn, th and vi have their own `document` and `window`; he has its own words for all of
   these and for `matches`, `exists`, `or`, `not`, `first`, `next`, `previous`, `closest`, `empty`, `is`,
   `document` and `window`; and the 15 languages that wrote English `forever` have their own (es
   `repetir siempre`, de `endlos`, ja `ずっと`). Every reader still takes the English words. Where a word
@@ -1663,7 +1999,14 @@ _Synchronized version release. See git history for details._
 - npm access token stored in GitHub Secrets
 - 2FA recommended for npm organization
 
-[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v4.4.0...HEAD
+[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v6.1.0...HEAD
+[6.1.0]: https://github.com/codetalcott/hyperfixi/compare/v6.0.0...v6.1.0
+[6.0.0]: https://github.com/codetalcott/hyperfixi/compare/v5.1.0...v6.0.0
+[5.1.0]: https://github.com/codetalcott/hyperfixi/compare/v5.0.0...v5.1.0
+[5.0.0]: https://github.com/codetalcott/hyperfixi/compare/v4.8.0...v5.0.0
+[4.8.0]: https://github.com/codetalcott/hyperfixi/compare/v4.7.0...v4.8.0
+[4.7.0]: https://github.com/codetalcott/hyperfixi/compare/v4.6.0...v4.7.0
+[4.6.0]: https://github.com/codetalcott/hyperfixi/compare/v4.5.0...v4.6.0
 [4.5.0]: https://github.com/codetalcott/hyperfixi/compare/v4.4.0...v4.5.0
 [4.4.0]: https://github.com/codetalcott/hyperfixi/compare/v4.3.0...v4.4.0
 [4.3.0]: https://github.com/codetalcott/hyperfixi/compare/v4.2.0...v4.3.0

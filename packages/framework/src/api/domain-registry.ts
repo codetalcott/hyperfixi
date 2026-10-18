@@ -31,6 +31,9 @@
  */
 
 import type { MultilingualDSL, CompileResult, ValidationResult } from './create-dsl';
+import { UnreadInputError, TranslationReadBackError } from './create-dsl';
+import { readingDifference } from './reading';
+import type { SemanticNode } from '../core/types';
 import type { NaturalLanguageRenderer, DomainRenderFn } from '../generation/renderer';
 import type { CommandSchema } from '../schema/command-schema';
 import type { SchemaLookup } from '../ir/types';
@@ -244,6 +247,9 @@ export class DomainRegistry {
           return jsonResponse({ error: `Unknown operation: ${parsed.operation}` }, true);
       }
     } catch (error) {
+      // A refusal is not a tool failure: say what was refused and why, as translate_code does.
+      if (error instanceof UnreadInputError) return unreadInputResponse(error);
+      if (error instanceof TranslationReadBackError) return readBackResponse(error);
       const message = error instanceof Error ? error.message : String(error);
       return jsonResponse({ error: `${descriptor.name} tool error: ${message}` }, true);
     }
@@ -412,6 +418,9 @@ export class DomainRegistry {
       ok: result.ok,
       code: result.code,
       errors: result.errors,
+      ...(result.errorCode === 'unread-input'
+        ? { diagnostics: [UNREAD_INPUT(result.errors)] }
+        : {}),
       language,
       input,
     });
@@ -431,6 +440,9 @@ export class DomainRegistry {
     return jsonResponse({
       valid: result.valid,
       errors: result.errors,
+      ...(result.errorCode === 'unread-input'
+        ? { diagnostics: [UNREAD_INPUT(result.errors)] }
+        : {}),
       language,
       [descriptor.inputLabel]: input,
     });
@@ -478,7 +490,28 @@ export class DomainRegistry {
       roles[key] = value;
     }
 
+    // The rendering must read back as the source, by the rule `translate` uses: the same action and
+    // role values, or the same compiled code. A rendering that does not is refused, with the text under
+    // `partial`, never `rendered`.
+    if (rendered != null) {
+      let back: SemanticNode | null = null;
+      let why = '';
+      try {
+        back = dsl.parse(rendered, to);
+        why = readingDifference(node, back);
+        if (why && compiled.ok) {
+          const again = dsl.compile(rendered, to);
+          if (again.ok && again.code === compiled.code) why = '';
+        }
+      } catch (error) {
+        why = error instanceof Error ? error.message : String(error);
+      }
+      if (why)
+        return readBackResponse(new TranslationReadBackError(rendered, from, to, node, back, why));
+    }
+
     return jsonResponse({
+      ok: true,
       input: { [descriptor.inputLabel]: input, language: from },
       ...(rendered != null && { rendered: { text: rendered, language: to } }),
       semantic: { action: node.action, roles },
@@ -567,7 +600,7 @@ function generateToolDefinitions(desc: DomainDescriptor): MCPToolDefinition[] {
       case 'translate':
         tools.push({
           name: `translate_${desc.name}`,
-          description: `Translate ${desc.description} input between natural languages (requires 'from' and 'to' codes). Supports: ${langList}.`,
+          description: `Translate ${desc.description} input between natural languages (requires 'from' and 'to' codes). Supports: ${langList}. A rendering that does not read back as the source is REFUSED: ok is false, the diagnostic is TRANSLATION_DOES_NOT_READ_BACK, and its text is under \`partial\`, never \`rendered\`: do not present it as the translation. Input left unread is refused as UNREAD_INPUT.`,
           inputSchema: {
             type: 'object',
             properties: {
@@ -607,6 +640,54 @@ function parseToolName(name: string): { operation: string; domain: string } | nu
 function getString(args: Record<string, unknown>, name: string, defaultValue = ''): string {
   const value = args[name];
   return typeof value === 'string' ? value : defaultValue;
+}
+
+function readingOf(node: SemanticNode): { action: string; roles: Record<string, unknown> } {
+  const roles: Record<string, unknown> = {};
+  for (const [key, value] of node.roles) roles[key] = value;
+  return { action: node.action, roles };
+}
+
+const UNREAD_INPUT = (errors?: readonly string[]) => ({
+  severity: 'error',
+  code: 'UNREAD_INPUT',
+  message: errors?.[0] ?? 'part of the input was not read',
+  suggestion:
+    'Part of the input belongs to no role of the command it reads as: remove it, or quote a value of several words.',
+});
+
+/** A parse refused because it read the command only by leaving input unread. */
+function unreadInputResponse(error: UnreadInputError): MCPToolResponse {
+  return jsonResponse(
+    {
+      ok: false,
+      unread: error.unread,
+      reading: readingOf(error.reading),
+      diagnostics: [UNREAD_INPUT([error.message])],
+    },
+    true
+  );
+}
+
+/** A translation refused because it does not read back as the source; its text under `partial`. */
+function readBackResponse(error: TranslationReadBackError): MCPToolResponse {
+  return jsonResponse(
+    {
+      ok: false,
+      partial: error.partial,
+      ...(error.reading ? { reading: readingOf(error.reading) } : {}),
+      diagnostics: [
+        {
+          severity: 'error',
+          code: 'TRANSLATION_DOES_NOT_READ_BACK',
+          message: error.message,
+          suggestion:
+            'The rendering would not mean the source in the target language: do not present `partial` as the translation.',
+        },
+      ],
+    },
+    true
+  );
 }
 
 function jsonResponse(data: unknown, isError?: boolean): MCPToolResponse {

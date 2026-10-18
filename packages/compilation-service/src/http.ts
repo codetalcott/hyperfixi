@@ -16,14 +16,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { CompilationService } from './service.js';
-import type {
-  CompileRequest,
-  TranslateRequest,
-  TestRequest,
-  ComponentRequest,
-  DiffRequest,
-  GenerateRequest,
-} from './types.js';
+import type { CompileRequest, TranslateRequest, DiffRequest, GenerateRequest } from './types.js';
 import { bodyLimit } from './middleware/body-limit.js';
 import { timeout } from './middleware/timeout.js';
 import { structuredLogger } from './middleware/logger.js';
@@ -122,20 +115,6 @@ export function createApp(options: HttpOptions = {}): Hono {
     return c.json(result, result.ok ? 200 : 422);
   });
 
-  app.post('/generate-tests', async c => {
-    const svc = await getService();
-    const body = await c.req.json<TestRequest>();
-    const result = svc.generateTests(body);
-    return c.json(result, result.ok ? 200 : 422);
-  });
-
-  app.post('/generate-component', async c => {
-    const svc = await getService();
-    const body = await c.req.json<ComponentRequest>();
-    const result = svc.generateComponent(body);
-    return c.json(result, result.ok ? 200 : 422);
-  });
-
   app.post('/diff', async c => {
     const svc = await getService();
     const body = await c.req.json<DiffRequest>();
@@ -150,7 +129,7 @@ export function createApp(options: HttpOptions = {}): Hono {
    * (e.g. via the `lse_generate_with_correction` MCP tool) and renders
    * it to the requested target format.
    *
-   * Body: { lse: string, target: 'react'|'vue'|'svelte'|'intent-element', task?: string }
+   * Body: { lse: string, target: 'intent-element', task?: string }
    */
   app.post('/generate', async c => {
     const svc = await getService();

@@ -271,7 +271,7 @@ describe('execute_llm pipeline', () => {
     const dsl = await registry.getDSLForDomain('llm');
     expect(dsl).not.toBeNull();
 
-    const result = dsl!.compile('ask what is 2+2', 'en');
+    const result = dsl!.compile('ask "what is 2+2"', 'en');
     expect(result.ok).toBe(true);
     expect(result.code).toBeDefined();
 
@@ -302,11 +302,21 @@ describe('execute_llm pipeline', () => {
     expect(params.messages.length).toBeGreaterThanOrEqual(1);
   });
 
+  // Unquoted, llm's ask reads one word as the question: `ask what is 2+2` used to ask "what". The
+  // framework now refuses input left unread instead of compiling the shorter question.
+  it('refuses an unquoted multi-word question rather than asking its first word', async () => {
+    const registry = createDomainRegistry();
+    const dsl = await registry.getDSLForDomain('llm');
+    const result = dsl!.compile('ask what is 2+2', 'en');
+    expect(result.ok).toBe(false);
+    expect(result.errors?.[0]).toMatch(/unread/);
+  });
+
   it('compiles Spanish LLM command through full pipeline', async () => {
     const registry = createDomainRegistry();
     const dsl = await registry.getDSLForDomain('llm');
 
-    const result = dsl!.compile('preguntar qué es la inteligencia artificial', 'es');
+    const result = dsl!.compile('preguntar "qué es la inteligencia artificial"', 'es');
     expect(result.ok).toBe(true);
 
     const spec: LLMPromptSpec = JSON.parse(result.code!);
@@ -351,6 +361,25 @@ describe('execute_llm pipeline', () => {
     );
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain('registry');
+  });
+
+  it('refuses an unquoted multi-word question with how to write it, without sampling', async () => {
+    const mockServer = {
+      createMessage: () => {
+        throw new Error('should not be called');
+      },
+    };
+    const result = await handleSamplingTool(
+      'execute_llm',
+      { command: 'ask what is 2+2' },
+      mockServer as any,
+      createDomainRegistry()
+    );
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toMatch(/unread/);
+    expect(result.content[0].text).toContain(
+      'A question of several words is quoted: ask "what is 2+2".'
+    );
   });
 });
 

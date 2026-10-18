@@ -37,22 +37,39 @@ import { createConstant } from '../types';
 import type { CommandSchema } from '../generators/command-schemas';
 import {
   COMMAND_ACTION_KEYWORDS,
+  loneKeywordKind,
+  translateConnective,
+} from './utils/expression-lexicon';
+import {
+  endsClauseAt,
   endWordIsValue,
   endWordPlace,
   isEndWord,
-  loneKeywordKind,
-  translateConnective,
   type EndWordPlace,
-} from './utils/expression-lexicon';
-import { isCuratedEndKeyword } from './end-keywords';
+} from './end-words';
 import { BINARY_OPERATORS, RUN_OPERATORS } from './utils/operators';
 
-/** Nothing follows, or `then`, `end` or `else`: the clause ends before `next`. */
-export function clauseEndsAt(next: LanguageToken | undefined): boolean {
+/**
+ * The clause ends at token `i`: nothing, `then` or `else`, or an end word.
+ *
+ * A named exception to endsClauseAt (C3): an end word ends a slot's clause
+ * here whether or not it stands where a value does. C7 reads a particle as
+ * the slot's value when the clause ends after it, and endWordIsValue reads an
+ * end word after a marker as that marker's value, so each would wait on the
+ * other: it `per n in arr impostare in x a fine` (for n in arr set x to a,
+ * end) writes a variable `a` spelled like its marker `a`, and asked, the
+ * loop's `fine` became set's value (value-reading.test.ts pins it).
+ */
+export function clauseEndsAt(
+  tokens: readonly LanguageToken[],
+  i: number,
+  language: string
+): boolean {
+  const next = tokens[i];
   if (!next) return true;
   if (next.kind !== 'keyword') return false;
   const norm = (next.normalized ?? next.value).toLowerCase();
-  return norm === 'then' || norm === 'end' || norm === 'else';
+  return norm === 'then' || norm === 'else' || isEndWord(next, language);
 }
 
 /** `next` is a run operator. */
@@ -71,6 +88,9 @@ export class SlotContext {
   readonly next: LanguageToken | undefined;
   /** The token and its neighbours two deep, as an end word's readers see it (C3). */
   readonly place: EndWordPlace;
+  /** The stream's tokens, and the index of the slot's first token in them. */
+  readonly all: readonly LanguageToken[];
+  readonly at: number;
   private nextIsMarkerMemo: boolean | undefined;
   private tokenIsMarkerMemo: boolean | undefined;
 
@@ -81,13 +101,17 @@ export class SlotContext {
     /** The slot directly follows a literal the pattern matched: its marker, or the verb. */
     readonly afterLiteral: boolean,
     private readonly nextPatternToken: PatternToken | undefined,
-    private readonly wouldMatch: (pt: PatternToken | undefined, token: LanguageToken) => boolean
+    private readonly wouldMatch: (pt: PatternToken | undefined, token: LanguageToken) => boolean,
+    /** The language being read. */
+    readonly language: string
   ) {
     const at = tokens.position();
     this.token = tokens.tokens[at]!;
     this.prev = tokens.tokens[at - 1];
     this.next = tokens.tokens[at + 1];
     this.place = endWordPlace(tokens.tokens, at);
+    this.all = tokens.tokens;
+    this.at = at;
   }
 
   /** The pattern ends with this slot. */
@@ -115,7 +139,7 @@ export class SlotContext {
 
   /** The clause ends after the token. */
   get clauseEndsAfter(): boolean {
-    return clauseEndsAt(this.next);
+    return clauseEndsAt(this.all, this.at + 1, this.language);
   }
 }
 
@@ -143,8 +167,9 @@ export function isCommandVerb(token: LanguageToken): boolean {
 }
 
 /**
- * C3: `then`, `end` and a curated end word are never a value (#635). A
- * sequence connective or a block terminator by normalized form — the generated
+ * C3: where the clause ends (endsClauseAt), the slot holds no value (#635):
+ * the language's `then`, or an end word that closes a block. A
+ * sequence connective or a block terminator — the generated
  * increment's trailing `{quantity}` swallowed the `then` that opens the next
  * statement (it `allora`, pl `wtedy`: increment by NaN), and a verb-first
  * wait's duration a following bn তারপর/শেষ — except `end` before a selector,
@@ -159,12 +184,7 @@ export function isCommandVerb(token: LanguageToken): boolean {
 export function neverAValue(slot: SlotContext, language: string): boolean {
   const token = slot.token;
   if (token.kind !== 'keyword') return false;
-  const norm = (token.normalized ?? token.value).toLowerCase();
-  if (norm === 'then') return true;
-  const endWord =
-    (norm === 'end' && slot.next?.kind !== 'selector') ||
-    isCuratedEndKeyword(token.value, language);
-  return endWord && !endWordIsValue(slot.place, language);
+  return endsClauseAt(slot.all, slot.at, language);
 }
 
 /**

@@ -596,7 +596,7 @@ const CODE_NAMES: readonly string[] = ['userData'];
  * Not a name the window already holds (`focus`, `length`), nor `then`: the
  * fixture sets each name there, and a `then` on the window makes upstream
  * take it for a promise. Not yet `if` or `end`, which open and close a block
- * in every language's reader (OPEN_ITEMS P53: 93 and 505 failing pairs).
+ * in every language's reader (OPEN_ITEMS P53: 93 and 501 failing pairs, 2026-10-13).
  */
 export const KEYWORD_NAMES: readonly string[] = [
   'click',

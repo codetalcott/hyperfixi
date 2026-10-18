@@ -125,6 +125,10 @@ const GERMAN_EXTRAS: KeywordEntry[] = [
   { native: 'anschliessend', normalized: 'then' },
 
   // Verb conjugation variants (imperatives for test cases)
+  // `setze` is what de writes for `set` (set-de-full); read as an identifier, a
+  // head's optional slot took it for a value (`wiederholen endlos setze x auf …`
+  // read `setze` as the loop's count and lost the body).
+  { native: 'setze', normalized: 'set' },
   { native: 'erhöhe', normalized: 'increment' },
   { native: 'erhohe', normalized: 'increment' },
   { native: 'verringere', normalized: 'decrement' },

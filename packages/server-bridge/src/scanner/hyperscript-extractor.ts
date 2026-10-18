@@ -22,9 +22,25 @@ const SCRIPT_PATTERN = /<script[^>]*type=["']?text\/hyperscript["']?[^>]*>([\s\S
 
 /**
  * Regex for fetch commands within hyperscript code.
- * Captures: url, optional response type (as json/html/text), optional method (via GET/POST)
+ * Captures: url, optional response type (as json/html/text), optional method (2.x's via GET/POST)
  */
-const FETCH_COMMAND = /\bfetch\s+['"]?([^\s'"]+)['"]?(?:\s+as\s+(\w+))?(?:\s+via\s+(\w+))?/gi;
+const FETCH_COMMAND =
+  /\bfetch\s+['"]?([^\s'"]+)['"]?(?:\s+as\s+(?:an?\s+)?(\w+))?(?:\s+via\s+(\w+))?/gi;
+
+/**
+ * Upstream `_hyperscript` names a fetch's method in its options, after the URL
+ * (`with {method:'POST'}`, `with method:'POST'`, or a bare `{method:'POST'}`),
+ * and its `as` may follow them. Both are read from the rest of the command.
+ */
+const OPTIONS_METHOD = /\bmethod\s*:\s*['"]?([A-Za-z]+)/i;
+const TRAILING_AS = /\bas\s+(?:an?\s+)?(\w+)/i;
+
+/** The rest of a command: up to `then`, `end` or the end of the line. */
+function restOfCommand(code: string, from: number): string {
+  const rest = code.slice(from);
+  const end = rest.search(/\bthen\b|\bend\b|\n/);
+  return end === -1 ? rest : rest.slice(0, end);
+}
 
 /**
  * Regex for "send form to URL" pattern (implies POST).
@@ -52,8 +68,9 @@ export function extractHyperscriptRoutes(
     // Extract fetch commands
     for (const match of region.code.matchAll(FETCH_COMMAND)) {
       const rawUrl = match[1];
-      const responseType = match[2]; // json, html, text
-      const method = match[3]; // GET, POST, etc.
+      const rest = restOfCommand(region.code, match.index + match[0].length);
+      const responseType = match[2] ?? rest.match(TRAILING_AS)?.[1]; // json, html, text
+      const method = match[3] ?? rest.match(OPTIONS_METHOD)?.[1]; // GET, POST, etc.
 
       addRoute(routes, seen, rawUrl, {
         file: options.file,

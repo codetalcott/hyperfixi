@@ -140,6 +140,12 @@ export interface LanguagePattern {
   readonly template: PatternTemplate;
   readonly extraction: ExtractionRules;
   readonly constraints?: PatternConstraints;
+  /**
+   * The pattern reads a form the renderer does not write by choosing it
+   * (hyperscript's wait `esperar evento {event}`: the renderer writes the event
+   * word itself, before a name no table knows). The renderer skips it.
+   */
+  readonly parseOnly?: boolean;
 }
 
 export interface PatternTemplate {
@@ -153,6 +159,13 @@ export interface LiteralPatternToken {
   readonly type: 'literal';
   readonly value: string;
   readonly alternatives?: string[];
+  /**
+   * Parse-only marker: the matcher still consumes this literal, but the
+   * renderer skips it. Set when a role declares `renderOverride: { <lang>: '' }`
+   * (hyperscript's fetch `from`: required to PARSE `fetch from /api`, absent from
+   * the render, since `fetch from "/api"` is not canonical _hyperscript).
+   */
+  readonly renderSuppress?: boolean;
 }
 
 export interface RolePatternToken {
@@ -161,12 +174,33 @@ export interface RolePatternToken {
   readonly optional?: boolean;
   readonly expectedTypes?: Array<ExpectedType>;
   readonly greedy?: boolean;
+  /**
+   * The words the slot reads, from the schema's `RoleSpec.words` for the pattern's language (its
+   * `'*'` list and the language's own): the stock reader reads the slot only from one of them.
+   */
+  readonly words?: readonly string[];
+  /**
+   * Mirrors the schema's `RoleSpec.valueShape`: the slot's surface form is
+   * unambiguous on its own. Carried onto the pattern token because the value
+   * reader needs it too, not just the confidence model (hyperscript's
+   * `'keyword'` slots hold a fixed keyword phrase and are exempt from the
+   * trailing-slot verb guard).
+   */
+  readonly valueShape?: 'time' | 'reference' | 'keyword' | 'object' | 'clause' | 'list';
 }
 
 export interface GroupPatternToken {
   readonly type: 'group';
   readonly tokens: PatternToken[];
   readonly optional?: boolean;
+  /**
+   * The group is optional for PARSING but belongs in canonical output: the
+   * marker-only groups a profile's optional case markers produce (Turkish case
+   * suffixes may be dropped colloquially, so the parse accepts both forms).
+   * The matcher's skeleton also requires such a group's marker after a role it
+   * captures (`MatchSkeleton`).
+   */
+  readonly renderRequired?: boolean;
 }
 
 export interface ExtractionRules {
@@ -180,6 +214,11 @@ export interface ExtractionRule {
   readonly transform?: (raw: string) => SemanticValue;
   readonly default?: SemanticValue;
   readonly value?: string;
+  /**
+   * The static `value` is an expression, as the English parse types the word
+   * (hyperscript's `go back` destination), not a literal.
+   */
+  readonly valueIsExpression?: true;
   readonly fromRole?: string;
 }
 
@@ -195,6 +234,20 @@ export interface PatternMatchResult {
   readonly captured: ReadonlyMap<SemanticRole, SemanticValue>;
   readonly consumedTokens: number;
   readonly confidence: number;
+  /**
+   * Stream index at which each captured role's value STARTED, for callers that
+   * need to re-read a slot's own span rather than the tail after it. Populated
+   * on the same success path as `captured` (`MatchSkeleton`), so a role left
+   * behind by a rolled-back group survives in both maps or in neither.
+   */
+  readonly roleStarts?: ReadonlyMap<SemanticRole, number>;
+  /**
+   * A source phrase hyperscript's reader found in an event HEAD (`from #btn`
+   * right after the event) rather than in a pattern slot: kept out of
+   * `captured`, so a fused pattern's own source group can neither overwrite it
+   * nor be overwritten (`ValueReader.resultFields`).
+   */
+  readonly eventSource?: SemanticValue;
 }
 
 export interface PatternMatchError {

@@ -11,8 +11,11 @@
  * Known `fetch … as <type>` response-type words. Untranslated loanwords in
  * every corpus language (the transformer localizes the `as` marker, never the
  * word), so a value-set gate is language-invariant. Used by the trailing
- * response-type reclaim in {@link buildEventHandler} — mirrors core's
- * supported conversions (json/text/html/response + binary forms).
+ * response-type reclaim in {@link buildEventHandler}: core's supported
+ * conversions (json/text/html/response + binary forms), and the engine's
+ * other names for them (`Object` is JSON, `String` is text) and its built-in
+ * conversions (`fetch /test as Number`, upstream's suite; the engine's
+ * `RESPONSE_TYPES` and `conversions`).
  */
 export const RESPONSE_TYPE_WORDS = new Set([
   'json',
@@ -23,6 +26,12 @@ export const RESPONSE_TYPE_WORDS = new Set([
   'arraybuffer',
   'formdata',
   'response',
+  'object',
+  'string',
+  'number',
+  'int',
+  'float',
+  'fragment',
 ]);
 
 /**

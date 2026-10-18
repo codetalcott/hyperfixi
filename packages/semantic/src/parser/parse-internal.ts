@@ -60,6 +60,7 @@ import {
 import { buildCommand, tryParsePseudoCommand } from './clause-heads';
 import { parseBodyWithClauses, tryParseUnlessGuard } from './clause-walk';
 import {
+  loopHeadLength,
   tryCompoundCommandParsing,
   tryMidStreamEventExtraction,
   trySOVEventExtraction,
@@ -520,7 +521,21 @@ export function parseInternal(state: ParserState, input: string, language: strin
       if (!isOrWordToken(t, language)) continue;
       const evTok = arr[i + 1];
       const evNorm = (evTok.normalized ?? evTok.value).toLowerCase();
-      if (!KNOWN_EVENTS.has(evNorm)) break;
+      // A custom event (`on click or foo`) too, when the head's own event stands
+      // right before the or-word: a known one, or a bare name opening the input,
+      // where a verb-final head starts (ja `foo または barで …` read back as
+      // `on bar log foo or 1`, silently). Never an operand (`$a or $b`), and only
+      // adopted below when what is left still parses as a handler.
+      const prev = arr[i - 1];
+      const isName = (t: LanguageToken | undefined): boolean =>
+        t !== undefined && t.kind === 'identifier' && /^[\p{L}_][\p{L}\p{N}_:-]*$/u.test(t.value);
+      const customLeg =
+        isName(evTok) &&
+        prev !== undefined &&
+        (KNOWN_EVENTS.has((prev.normalized ?? prev.value).toLowerCase()) ||
+          (i === 1 && isName(prev)));
+      if (!KNOWN_EVENTS.has(evNorm) && !customLeg) break;
+      const legName = customLeg && !KNOWN_EVENTS.has(evNorm) ? evTok.value : evNorm;
       // Optional trailing `[filter]` selector token (`keypress[key=="Enter"]`
       // tokenizes as `keypress` + `[key=="Enter"]`).
       let lastIdx = i + 1;
@@ -542,7 +557,7 @@ export function parseInternal(state: ParserState, input: string, language: strin
             // The filter stays glued to its leg, as the main event's does
             // (`keydown[key=="Escape"]`): it was excised with the leg and lost.
             (reparsed as { additionalEvents?: SemanticValue[] }).additionalEvents = [
-              { type: 'literal', value: lastIdx > i + 1 ? evNorm + filterTok.value : evNorm },
+              { type: 'literal', value: lastIdx > i + 1 ? legName + filterTok.value : legName },
             ];
             const result = modifiers
               ? applyModifiers(reparsed as EventHandlerSemanticNode, modifiers)
@@ -605,6 +620,7 @@ export function parseInternal(state: ParserState, input: string, language: strin
   // matchBest re-consumes the winning match, leaving the stream past the event;
   // the bare-event guard below needs to rewind here to peek/re-run from the start.
   const eventStart = tokens.mark();
+  const eventStartIndex = tokens.position();
   const eventMatch = patternMatcher.matchBest(tokens, eventPatterns);
 
   if (eventMatch) {
@@ -682,6 +698,30 @@ export function parseInternal(state: ParserState, input: string, language: strin
             patternMatcher.matchBest(tokens, eventPatterns);
           }
         }
+      }
+    }
+
+    // A custom name that opens a loop's head is the loop's variable
+    // (loopHeadLength: bn `item এ items জন্য …`, hi `item में items हेतु …`, sw
+    // `kwa item ndani items …`), and the loop is the statement.
+    if (!preferCommandStage) {
+      const ev = eventMatch.captured.get('event') as
+        { type?: string; raw?: string; value?: string } | undefined;
+      const name = String(ev?.raw ?? ev?.value ?? '').toLowerCase();
+      if (
+        name &&
+        !KNOWN_EVENTS.has(name) &&
+        loopHeadLength(tokens.tokens.slice(eventStartIndex), language, sortedPatterns) > 0
+      ) {
+        tokens.reset(eventStart);
+        preferCommandStage = true;
+        diagnostics.push(
+          parseDiagnostic(
+            `event "${name}" is a loop's variable; command stage preferred`,
+            'info',
+            'stage-loop-head-guard'
+          )
+        );
       }
     }
 

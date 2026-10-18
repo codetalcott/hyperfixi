@@ -60,6 +60,10 @@ const SINGLE_POSTPOSITIONS = new Set([
  * Extras provide: values, positional, events, modifiers
  */
 const BENGALI_EXTRAS: KeywordEntry[] = [
+  // `checked`, the property word the render writes (PROPERTY_NAME_LEXICON): two
+  // words, and read apart neither was the property (`set checked of :boxes …`).
+  { native: 'চেক করা', normalized: 'checked' },
+
   // Values
   { native: 'সত্য', normalized: 'true' },
   { native: 'মিথ্যা', normalized: 'false' },

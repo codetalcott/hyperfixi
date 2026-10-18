@@ -1,0 +1,215 @@
+/**
+ * End words: a language's word for a block's `end` (es `fin`, tr `son`, ja
+ * `終わり`, bn `শেষ`), and the three questions the parser asks of one
+ * (docs-internal/END_WORD_READERS.md, M3 C3):
+ *
+ * 1. Does it close a block here? (the block scanners, the clause walk, the
+ *    fused handler's scan)
+ * 2. Does a clause or a value stop here? (the role capture, the value extent,
+ *    the trailing-role scans)
+ * 3. Is it a value here? A variable spelled like it, as upstream reads `put
+ *    end into #out` (es `poner fin en #out`): {@link endWordIsValue}.
+ *
+ * Every scanner asks them here. The definition, {@link endWordKind}, sits one
+ * layer down, in `end-keywords.ts`, because `endWordIsValue` lives in the
+ * expression lexicon beside the sense tables it shares, and the lexicon reads
+ * end words too: one module for both would be an import cycle.
+ *
+ * A reader reads the kind one of three ways: {@link isCuratedEndWord} (the
+ * curated kind only), {@link isEndWordAt} (either kind, but not the positional
+ * `last` before a selector) or {@link isEndWord} (either kind, anywhere).
+ */
+import type { LanguageToken } from '../types';
+import { isAtEndPositionNoun } from '../patterns/put';
+import { isThenKeyword } from './clause-keywords';
+import { endWordKind, endWordPlace, isEndWord, type EndWordPlace } from './end-keywords';
+import { endWordIsValue } from './utils/expression-lexicon';
+
+export {
+  endWordKind,
+  endWordPlace,
+  endWordSurfaces,
+  isEndWord,
+  type EndWordKind,
+  type EndWordPlace,
+} from './end-keywords';
+export { endWordIsValue } from './utils/expression-lexicon';
+
+/**
+ * A curated end word: read by its value, never the positional `last`. The
+ * readers that do not read bn `শেষ` (`end`, and also `last`) at all: the
+ * clause walk's own `end` (bn's closes an open loop there, through
+ * closesBlockAt, and never the body), the fused handler's body tests, the
+ * trailing-role scans and the coverage residue.
+ */
+export function isCuratedEndWord(token: LanguageToken, language: string): boolean {
+  return endWordKind(token, language) === 'curated';
+}
+
+/**
+ * An end word where it stands: a curated one anywhere, and one of the `end`
+ * kind except before a selector, where it is the positional `last` (bn `শেষ
+ * <li/>`). A curated word keeps its reading before a selector-led sibling
+ * clause: tr `son .item` is a loop's end, and the next command's patient.
+ */
+export function isEndWordAt(
+  token: LanguageToken,
+  next: LanguageToken | undefined,
+  language: string
+): boolean {
+  return isEndWord(token, language) && !isPositionalLast(token, next, language);
+}
+
+/**
+ * The positional `last`: an end word of the `end` kind before a selector on
+ * its line (bn `শেষ <li/>`). A selector that starts the next line begins a
+ * command or a handler of its own (bn `শেষ ⏎ .close থেকে ক্লিকে`, a handler's
+ * end and the next handler's source).
+ */
+function isPositionalLast(
+  token: LanguageToken,
+  next: LanguageToken | undefined,
+  language: string
+): boolean {
+  return (
+    next?.kind === 'selector' && !next.metadata?.lineStart && endWordKind(token, language) === 'end'
+  );
+}
+
+/**
+ * Is `tok` the language's `then` where it stands? tl `tapos` is both `then`
+ * and one of its end words, and where a value stands it is neither (C3,
+ * endWordIsValue): `kung tapos at flag …` (if tapos and flag) read `if` with
+ * no condition, then its branch.
+ */
+export function isThenAt(tok: LanguageToken, place: EndWordPlace, language: string): boolean {
+  if (!isThenKeyword(tok.value, language)) return false;
+  return !(isCuratedEndWord(tok, language) && endWordIsValue(place, language));
+}
+
+/**
+ * The terminator of a js BLOCK: an end word of either kind, before a selector
+ * too. A role-value reader must not take bn `শেষ` (also `last`) for a
+ * terminator, but `শেষ` IS what the renderer emits for bn's `end`, so a js
+ * block read that way had no close at all: `consumeJsBlock` walked past it and
+ * the JavaScript was handed to the command patterns (bn `js(me) if (…) return
+ * "cancel";` came back as `js ;`). The homonym cannot bite here: the span
+ * being scanned is raw JavaScript, which is ASCII, so a Bengali positional
+ * `last` cannot occur inside it.
+ */
+export function isJsBlockTerminator(token: LanguageToken, language: string): boolean {
+  return isEndWord(token, language);
+}
+
+/**
+ * Is the end word `tok` the noun of an `at end of` phrase, a position and no
+ * block's end (`put it at end of body`, make-toast-element)? English writes
+ * `at` or `at the` before it and `of` after; every other language its own
+ * words, from put's patterns (zh `在 结束 的`, id `di akhir dari`, vi `tại
+ * kết thúc của tôi`, where `of` and `me` are one token: isAtEndPositionNoun).
+ */
+export function isAtEndOfNoun(tok: LanguageToken, place: EndWordPlace, language: string): boolean {
+  const word = (t: LanguageToken | undefined) => t?.value.toLowerCase();
+  return (
+    (word(place.next) === 'of' &&
+      (word(place.prev) === 'at' ||
+        (word(place.prev) === 'the' && word(place.beforePrev) === 'at'))) ||
+    isAtEndPositionNoun(language, tok.value, place.prev?.value, place.next?.value)
+  );
+}
+
+/**
+ * Is the end word at `i` a position, and no block's end? The positional
+ * `last` before a selector (the `end` kind only: bn `শেষ <li/>`), or the noun
+ * of `at end of` (isAtEndOfNoun).
+ */
+export function isPositionalEnd(
+  tokens: readonly LanguageToken[],
+  i: number,
+  language: string
+): boolean {
+  const tok = tokens[i];
+  if (!tok) return false;
+  const place = endWordPlace(tokens, i);
+  return isPositionalLast(tok, place.next, language) || isAtEndOfNoun(tok, place, language);
+}
+
+/**
+ * Question 1: does the token at `i` close a block? An end word that is not a
+ * position (isPositionalEnd) and not a value (endWordIsValue), or one the
+ * clause walk matched to the block it tracks (`closesTrackedBlock`), which
+ * closes it before a selector too.
+ *
+ * Read by kind, not by value alone: bn renders `end` as শেষ, which is also its
+ * positional `last`, so no curated set can list it, and a bn conditional fold
+ * read by value never closed: every sibling after the conditional nested into
+ * its branch (behavior-removable bn dropped both `trigger`s). An end word
+ * where a value stands is a variable spelled like it (C3): tr `eğer son ve
+ * flag` (if son and flag) ended its block at `son`. The noun of `at end of`
+ * is a position (`if x put 'a' at end of me end`): taken for the block's
+ * `end`, it ended the conditional early, its own `end` closed the loop or
+ * handler around it, and the commands after it ran inside it.
+ */
+export function closesBlockAt(
+  tokens: readonly LanguageToken[],
+  i: number,
+  language: string
+): boolean {
+  const tok = tokens[i];
+  if (!tok) return false;
+  if (tok.metadata?.closesTrackedBlock === true) return true;
+  return (
+    isEndWord(tok, language) &&
+    !isPositionalEnd(tokens, i, language) &&
+    !endWordIsValue(endWordPlace(tokens, i), language)
+  );
+}
+
+/**
+ * The SOV value groups' stray terminator, a named exception to closesBlockAt
+ * (C3): a block terminator the SOV reorder absorbed into a role phrase is
+ * structural residue, never part of a value. bn repeat-while once rendered
+ * wait's object phrase as `200ms শেষ কে`: the terminator belongs after the
+ * verb, and joined in it glued (`200msশেষ`). It does not ask whether the word
+ * is a value: endWordIsValue reads an end word before its own case marker as
+ * one (tr `son i #out e koy`, put son into #out), and here the marker is the
+ * value's before it. It is an end word where it stands (isEndWordAt), since a
+ * value group is exactly where a positional-`last` phrase lives (bn `শেষ
+ * <li/>`), unless the clause walker matched it to a tracked block opener,
+ * which makes it structural even before a selector (tr behavior-sortable's
+ * `son .{dragClass}`, loop end then remove's patient: see the annotation in
+ * parseBodyWithClauses).
+ */
+export function isStrayTerminator(
+  t: LanguageToken,
+  next: LanguageToken | undefined,
+  language: string
+): boolean {
+  if (t.metadata?.closesTrackedBlock === true) return isEndWord(t, language);
+  return isEndWordAt(t, next, language);
+}
+
+/**
+ * Question 2: does a clause or a value stop at the token at `i`? Nothing
+ * (the end of the input), a conjunction, the language's `then` where it
+ * stands (isThenAt), or an end word that closes a block (closesBlockAt): not
+ * a variable spelled like one, nor a position.
+ */
+export function endsClauseAt(
+  tokens: readonly LanguageToken[],
+  i: number,
+  language: string
+): boolean {
+  const tok = tokens[i];
+  if (!tok) return true;
+  if (tok.kind === 'conjunction') return true;
+  // The place is built only for a `then` word: this runs for nearly every token.
+  if (
+    tok.kind === 'keyword' &&
+    isThenKeyword(tok.value, language) &&
+    isThenAt(tok, endWordPlace(tokens, i), language)
+  ) {
+    return true;
+  }
+  return closesBlockAt(tokens, i, language);
+}

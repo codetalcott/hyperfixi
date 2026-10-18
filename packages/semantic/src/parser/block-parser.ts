@@ -33,6 +33,7 @@ import { getPatternsForLanguage, tryGetProfile } from '../registry';
 import { tokenize } from '../tokenizers';
 import { commandSchemas } from '../generators/command-schemas';
 import { joinExpressionTokens } from './utils/expression-lexicon';
+import { closesBlockAt, endsClauseAt, endWordSurfaces } from './end-words';
 import { isOrWordToken } from './utils/or-words';
 import { grammarWord, grammarWordForms } from './utils/grammar-words';
 
@@ -100,7 +101,8 @@ interface OpenerForms {
   readonly elseForms: Set<string>;
   readonly inForms: Set<string>;
   readonly tellForms: Set<string>;
-  readonly endForms: Set<string>;
+  /** The language the forms are for: its end words are read by isEndWord. */
+  readonly language: string;
   readonly onForms: Set<string>;
   /** `def`, `init`, `behavior`: words that start a feature, which closes an open `tell`. */
   readonly featureForms: Set<string>;
@@ -117,7 +119,7 @@ function openerForms(language: string): OpenerForms {
     elseForms: keywordForms(language, 'else'),
     inForms: keywordForms(language, 'in'),
     tellForms: keywordForms(language, 'tell'),
-    endForms: keywordForms(language, 'end'),
+    language,
     onForms: keywordForms(language, 'on'),
     featureForms: new Set(
       ['def', 'init', 'behavior'].flatMap(action => [...keywordForms(language, action)])
@@ -196,7 +198,7 @@ function tellTakesAnEnd(tokens: readonly LanguageToken[], j: number, forms: Open
   let depth = 0;
   for (let k = j + 1; k < tokens.length; k++) {
     const tok = tokens[k];
-    if (tokenMatches(tok, forms.endForms)) {
+    if (closesBlockAt(tokens, k, forms.language)) {
       if (depth === 0) return true;
       depth--;
       continue;
@@ -385,12 +387,12 @@ function isPrecedingCommandMarker(
   segStart: number,
   j: number,
   language: string,
-  endsClause: (tok: LanguageToken) => boolean
+  endsClause: (k: number) => boolean
 ): boolean {
   const surface = tokens[j].value.toLowerCase();
   for (let k = j - 1; k > segStart; k--) {
     const t = tokens[k];
-    if (endsClause(t) || t.value.toLowerCase() === surface) return false;
+    if (endsClause(k) || t.value.toLowerCase() === surface) return false;
     const action = (t.normalized ?? t.value).toLowerCase();
     // Not `on`: a handler is not the command before its own marker, and vi's
     // toggle target `trên` normalizes to `on` (`chuyển đổi .a trên #x khi keyup`).
@@ -476,10 +478,10 @@ interface HandlerHeads {
   /** A fronted event source (`#btn から keyup を で …`) belongs to its handler. */
   readonly source: Set<string>;
   /**
-   * The language's `end` forms, by their spelling: tr's `son` is also its `last`,
-   * which the tokenizer normalizes it to (afterCommand reads the block's end).
+   * The language the heads are for: afterCommand reads its end words (isEndWord,
+   * by value too: tr's `son` is also its `last`, which the tokenizer normalizes it to).
    */
-  readonly ends: Set<string>;
+  readonly language: string;
   /** Words a chain writes once per handler: two of them gate the tokenize. */
   readonly anchors: readonly string[];
 }
@@ -562,7 +564,7 @@ function handlerHeads(language: string): HandlerHeads {
     afterClause,
     patient: markerSurfaceForms(profile?.roleMarkers?.patient),
     source: markerSurfaceForms(profile?.roleMarkers?.source),
-    ends: keywordForms(language, 'end'),
+    language,
     anchors: [
       ...leading,
       ...circumfix.flatMap(([lead]) => [...lead]),
@@ -597,7 +599,7 @@ function handlerStartAt(
   language: string,
   heads: HandlerHeads,
   thenForms: Set<string>,
-  endsClause: (tok: LanguageToken) => boolean
+  endsClause: (k: number) => boolean
 ): HandlerStart | null {
   const tok = tokens[j];
   const word = tok.value.toLowerCase();
@@ -617,8 +619,9 @@ function handlerStartAt(
   if (leads) return withFrontedSource(tokens, j, segStart, heads, true);
 
   // Written after the event: the event is at j - 1, and the handler that began
-  // at segStart has its own head before it.
-  const eventAt = j - 1;
+  // at segStart has its own head before it. A parameterized event's name stands
+  // before its parameters (ko `exception(error) 할 때`): split there, not at `)`.
+  const eventAt = beforeParameters(tokens, j - 1, segStart);
   const event = tokens[eventAt];
   if (eventAt <= segStart || !looksLikeEvent(event)) return null;
   if (heads.trailing.some(words => wordsAt(tokens, j, words))) {
@@ -634,6 +637,29 @@ function handlerStartAt(
     return withFrontedSource(tokens, eventAt, segStart, heads, false);
   }
   return null;
+}
+
+/**
+ * Where an event ends at `at` with a `)`, the index of its name: the token
+ * before the `(` that opens the parameters and touches it (`exception(error)`).
+ * Otherwise `at`. A handler's parameters are names; a call's are not, or are
+ * none (bn `bar()তে`, `to bar()`, where `তে` is also bn's `on`).
+ */
+function beforeParameters(tokens: readonly LanguageToken[], at: number, segStart: number): number {
+  if (tokens[at]?.value !== ')') return at;
+  const isName = (t: LanguageToken) => /^[\p{L}_$][\p{L}\p{N}_$]*$/u.test(t.value);
+  let open = at - 1;
+  while (open > segStart && tokens[open]!.value !== '(') {
+    if (tokens[open]!.value !== ',' && !isName(tokens[open]!)) return at;
+    open--;
+  }
+  const name = tokens[open - 1];
+  return tokens[open]?.value === '(' &&
+    open < at - 1 &&
+    name !== undefined &&
+    name.position.end === tokens[open]!.position.start
+    ? open - 1
+    : at;
 }
 
 /**
@@ -687,18 +713,19 @@ const UNSURE_SPLIT_CONFIDENCE = 0.4;
  * still owes its verb.
  */
 function afterCommand(tokens: readonly LanguageToken[], at: number, heads: HandlerHeads): boolean {
-  const ends = (tok: LanguageToken | undefined): boolean => {
+  const ends = (k: number): boolean => {
+    const tok = tokens[k];
     if (!tok || tok.kind !== 'keyword') return false;
     const norm = (tok.normalized ?? tok.value).toLowerCase();
-    return norm === 'end' || isAction(norm) || tokenMatches(tok, heads.ends);
+    return isAction(norm) || closesBlockAt(tokens, k, heads.language);
   };
   const before = tokens[at - 1];
-  if (ends(before)) return true;
+  if (ends(at - 1)) return true;
   return (
     before !== undefined &&
     before.kind === 'particle' &&
     !tokenMatches(before, heads.patient) &&
-    ends(tokens[at - 3])
+    ends(at - 3)
   );
 }
 
@@ -911,10 +938,9 @@ function splitProgram(
   // single-statement inputs that have neither. Over-counting only costs a
   // tokenize that then yields <2 segments → null; under-counting would miss a
   // real program, so this errs toward proceeding.
-  const endForms = keywordForms(language, 'end');
   const thenForms = keywordForms(language, 'then');
   const lower = input.toLowerCase();
-  const hasEnd = [...endForms].some(f => lower.includes(f));
+  const hasEnd = [...endWordSurfaces(language)].some(f => lower.includes(f));
   // A script that opens with another feature (`set :x to 1 on click …`, `init …
   // on click …`) needs only the one head.
   const opensWithHead = heads.anchors.some(f => lower.trimStart().startsWith(f));
@@ -946,8 +972,9 @@ function splitProgram(
 
   const forms = openerForms(language);
   const isOpener = (j: number): boolean => opensBlock(tokens, j, forms);
-  const isEnd = (tok: LanguageToken): boolean => tokenMatches(tok, endForms);
-  const endsClause = (t: LanguageToken): boolean => isEnd(t) || tokenMatches(t, thenForms);
+  const isEnd = (j: number): boolean => closesBlockAt(tokens, j, language);
+  const endsClause = (k: number): boolean =>
+    endsClauseAt(tokens, k, language) || tokenMatches(tokens[k]!, thenForms);
 
   // Split into top-level handler segments. At depth 0, a `end` closes the current
   // handler (end-delimited form), and a handler head starts a new one
@@ -959,7 +986,7 @@ function splitProgram(
   let segStart = 0;
   for (let j = 0; j < tokens.length; j++) {
     const tok = tokens[j];
-    if (isEnd(tok)) {
+    if (isEnd(j)) {
       if (depth > 0) {
         depth--;
         continue;
@@ -1232,15 +1259,15 @@ function parseBehaviorBlock(
   if (bodyStart <= lastIdx) bodyStart = lastIdx + 1;
 
   const initForms = keywordForms(language, 'init');
-  const endForms = keywordForms(language, 'end');
   const forms = openerForms(language);
   const isOpener = (j: number): boolean => opensBlock(tokens, j, forms);
-  const isEnd = (tok: LanguageToken): boolean => tokenMatches(tok, endForms);
+  const isEnd = (j: number): boolean => closesBlockAt(tokens, j, language);
   // Where the handler after an `init` with no `end` starts: the same heads the
   // top-level split reads (handlerStartAt), in every word order.
   const heads = handlerHeads(language);
   const thenForms = keywordForms(language, 'then');
-  const endsClause = (t: LanguageToken): boolean => isEnd(t) || tokenMatches(t, thenForms);
+  const endsClause = (k: number): boolean =>
+    endsClauseAt(tokens, k, language) || tokenMatches(tokens[k]!, thenForms);
 
   /** Parse the `init` segment `tokens[segStart] … tokens[stop - 1]` into initCommands. */
   const takeInit = (stop: number): void => {
@@ -1333,7 +1360,7 @@ function parseBehaviorBlock(
       segStart = tokens.length;
       break;
     }
-    if (isEnd(tok)) {
+    if (isEnd(j)) {
       if (depth > 0) {
         depth--; // closes a NESTED block (if/repeat/…) inside the current handler
         continue;
@@ -1427,10 +1454,9 @@ function parseDefBlock(
   let bodyStart = sovFinal ? keywordIdx + 1 : tokens.findIndex(t => t.position.start >= headerEnd);
   if (bodyStart <= lastIdx) bodyStart = lastIdx + 1;
 
-  const endForms = keywordForms(language, 'end');
   const forms = openerForms(language);
   const isOpener = (j: number): boolean => opensBlock(tokens, j, forms);
-  const isEnd = (tok: LanguageToken): boolean => tokenMatches(tok, endForms);
+  const isEnd = (j: number): boolean => closesBlockAt(tokens, j, language);
 
   // The def body is a flat command sequence (no event handlers). Find the def's
   // own closing `end` via depth-aware matching (nested if/repeat have their own
@@ -1438,7 +1464,7 @@ function parseDefBlock(
   let depth = 0;
   let endIdx = -1;
   for (let j = bodyStart; j < tokens.length; j++) {
-    if (isEnd(tokens[j])) {
+    if (isEnd(j)) {
       if (depth === 0) {
         endIdx = j;
         break;
@@ -1789,10 +1815,9 @@ function parseFeatureBlock(
   action: FeatureAction,
   keywordIdx: number
 ): SemanticNode | null {
-  const endForms = keywordForms(language, 'end');
   const forms = openerForms(language);
   const isOpener = (j: number): boolean => opensBlock(tokens, j, forms);
-  const isEnd = (tok: LanguageToken): boolean => tokenMatches(tok, endForms);
+  const isEnd = (j: number): boolean => closesBlockAt(tokens, j, language);
 
   const name = featureName(action, tokens, keywordIdx, language);
   if (NAMED_FEATURES.has(action) && (!name || !PASCAL_CASE_NAME.test(name))) return null;
@@ -1835,7 +1860,7 @@ function parseFeatureBlock(
     let segStart = bodyStart;
     for (let j = bodyStart; j < tokens.length; j++) {
       const tok = tokens[j];
-      if (isEnd(tok)) {
+      if (isEnd(j)) {
         if (depth > 0) {
           depth--; // closes a nested if/repeat inside the current segment
           continue;
@@ -2009,14 +2034,13 @@ function locateReactiveWhenHead(tokens: readonly LanguageToken[], language: stri
   const changesForms = keywordForms(language, 'changes');
   const isChangesWord = (tok: LanguageToken): boolean =>
     changesForms.has(tok.value.toLowerCase()) || tok.normalized?.toLowerCase() === 'changes';
-  const endForms = keywordForms(language, 'end');
   // From index 2: the watched expression is never empty (`when changes …` is
   // not a reactive head).
   for (let j = 2; j < tokens.length; j++) {
     const tok = tokens[j];
     if (tok.kind === 'literal') continue;
     if (isChangesWord(tok)) return j;
-    if (tokenMatches(tok, endForms)) return -1;
+    if (closesBlockAt(tokens, j, language)) return -1;
     const norm = (tok.normalized ?? tok.value).toLowerCase();
     if (tok.kind === 'keyword' && WATCHED_EXPRESSION_STOP_WORDS.has(norm)) return -1;
   }
@@ -2069,10 +2093,9 @@ function parseReactiveWhenBlock(
   parsers: BlockParsers,
   changesIdx: number
 ): SemanticNode | null {
-  const endForms = keywordForms(language, 'end');
   const forms = openerForms(language);
   const isOpener = (j: number): boolean => opensBlock(tokens, j, forms);
-  const isEnd = (tok: LanguageToken): boolean => tokenMatches(tok, endForms);
+  const isEnd = (j: number): boolean => closesBlockAt(tokens, j, language);
 
   const bodyStart = changesIdx + 1;
   if (bodyStart >= tokens.length) return null;
@@ -2111,12 +2134,12 @@ function parseReactiveWhenBlock(
 function findBlockEnd(
   tokens: readonly LanguageToken[],
   from: number,
-  isEnd: (tok: LanguageToken) => boolean,
+  isEnd: (j: number) => boolean,
   isOpener: (j: number) => boolean
 ): number {
   let depth = 0;
   for (let j = from; j < tokens.length; j++) {
-    if (isEnd(tokens[j])) {
+    if (isEnd(j)) {
       if (depth === 0) return j;
       depth--;
     } else if (isOpener(j)) {

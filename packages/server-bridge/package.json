@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/server-bridge",
-  "version": "4.5.0",
+  "version": "6.1.0",
   "description": "Extract server route contracts from hyperscript/htmx HTML and generate server-side route scaffolding",
   "type": "module",
   "sideEffects": false,
@@ -29,7 +29,7 @@
     "glob": "^13.0.6"
   },
   "devDependencies": {
-    "@lokascript/domains": "^3.0.1",
+    "@lokascript/domains": "^5.0.0",
     "@types/node": "^26.6.3",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",

@@ -439,6 +439,87 @@ describe('CompilationService', () => {
       expect(spanish.diagnostics.some(d => d.code === 'ENGINE_PARSE_ERROR')).toBe(false);
     });
 
+    it('accepts behavior definitions: the name is the node’s own field, not a role', () => {
+      // The behavior schema requires its name as `patient`, but semantic's BehaviorNode keeps
+      // the name and parameters as fields with no roles, so every behavior read as missing it.
+      for (const [code, language] of [
+        ['behavior Foo(x) on click toggle .on end', 'en'],
+        ['振る舞い Foo(x)\n  クリックで .onを 切り替え\n  終わり\n終わり', 'ja'],
+      ]) {
+        const r = service.validate({ code, language });
+        expect(r.ok, code).toBe(true);
+        expect(r.semantic?.action, code).toBe('behavior');
+        expect(
+          r.diagnostics.filter(d => d.code === 'MISSING_REQUIRED_ROLE'),
+          code
+        ).toEqual([]);
+      }
+    });
+
+    it('lets the engine decide English it reads: semantic’s doubts are warnings', () => {
+      // `init` parses at a confidence under the default bar. The engine reads it, and the page
+      // runs English as written, so the gate's error becomes a warning saying why.
+      const init = service.validate({ code: "init set ^color to 'red'", language: 'en' });
+      expect(init.ok).toBe(true);
+      const low = init.diagnostics.find(d => d.code === 'LOW_CONFIDENCE');
+      expect(low?.severity).toBe('warning');
+      expect(low?.message).toContain('@hyperfixi/engine reads this code');
+      expect(init.semantic?.action).toBe('init');
+
+      // A quoted event name semantic does not read at all: ok, with no IR to show.
+      const quoted = service.validate({
+        code: 'on "refresh" put "Refreshed" into #output',
+        language: 'en',
+      });
+      expect(quoted.ok).toBe(true);
+      expect(quoted.semantic).toBeUndefined();
+      expect(quoted.diagnostics.every(d => d.severity !== 'error')).toBe(true);
+      expect(quoted.diagnostics.some(d => d.code === 'PARSE_FAILED')).toBe(true);
+
+      // English the engine rejects is still an error, beside semantic's own complaints.
+      const broken = service.validate({ code: 'on click toggle .active on', language: 'en' });
+      expect(broken.ok).toBe(false);
+      expect(broken.diagnostics.some(d => d.code === 'ENGINE_PARSE_ERROR')).toBe(true);
+    });
+
+    it('keeps semantic’s gates as errors for a set `confidence` and for foreign input', () => {
+      // A request that sets `confidence` asks semantic's reading to meet that bar.
+      const strict = service.validate({
+        code: "init set ^color to 'red'",
+        language: 'en',
+        confidence: 0.7,
+      });
+      expect(strict.ok).toBe(false);
+      expect(strict.diagnostics.find(d => d.code === 'LOW_CONFIDENCE')?.severity).toBe('error');
+
+      // Foreign input runs as semantic's translation, so semantic's doubt is about what runs.
+      const japanese = service.validate({ code: '隠す', language: 'ja' });
+      expect(japanese.ok).toBe(false);
+      expect(japanese.diagnostics.find(d => d.code === 'LOW_CONFIDENCE')?.severity).toBe('error');
+    });
+
+    it('warns on a variable spelled like a word of its own language (NAME_COLLISION)', () => {
+      // es `si` is also `if`: a reader tells them apart only by where it stands.
+      const r = service.validate({ code: 'al clic establecer si a 1', language: 'es' });
+      expect(r.ok).toBe(true);
+      const collision = r.diagnostics.find(d => d.code === 'NAME_COLLISION');
+      expect(collision?.severity).toBe('warning');
+      expect(collision?.message).toContain('`si`');
+      expect(collision?.suggestion).toContain('`si1`');
+
+      // English has no such reading; nor does a name no word of the language spells.
+      expect(
+        service
+          .validate({ code: 'on click set si to 1', language: 'en' })
+          .diagnostics.some(d => d.code === 'NAME_COLLISION')
+      ).toBe(false);
+      expect(
+        service
+          .validate({ code: 'al clic establecer cuenta a 1', language: 'es' })
+          .diagnostics.some(d => d.code === 'NAME_COLLISION')
+      ).toBe(false);
+    });
+
     it('inert-shape gate stays quiet on correct phrasings', () => {
       // False positives teach agents to distrust warnings; these must be clean.
       for (const code of [
@@ -529,172 +610,11 @@ describe('CompilationService', () => {
   // ---------------------------------------------------------------------------
   // Pluggable Renderers
   // ---------------------------------------------------------------------------
-
-  describe('pluggable renderers', () => {
-    it('uses default playwright renderer for generateTests()', () => {
-      const result = service.generateTests({
-        explicit: '[toggle patient:.active]',
-      });
-      expect(result.ok).toBe(true);
-      expect(result.tests).toHaveLength(1);
-      expect(result.tests[0].framework).toBe('playwright');
-    });
-
-    it('uses default react renderer for generateComponent()', () => {
-      const result = service.generateComponent({
-        explicit: '[toggle patient:.active]',
-      });
-      expect(result.ok).toBe(true);
-      expect(result.component?.framework).toBe('react');
-    });
-
-    it('returns error for unknown test framework', () => {
-      const result = service.generateTests({
-        explicit: '[toggle patient:.active]',
-        framework: 'vitest',
-      });
-      expect(result.ok).toBe(false);
-      expect(result.diagnostics.some(d => d.code === 'UNKNOWN_FRAMEWORK')).toBe(true);
-    });
-
-    it('returns error for unknown component framework', () => {
-      const result = service.generateComponent({
-        explicit: '[toggle patient:.active]',
-        framework: 'angular',
-      });
-      expect(result.ok).toBe(false);
-      expect(result.diagnostics.some(d => d.code === 'UNKNOWN_FRAMEWORK')).toBe(true);
-    });
-
-    it('uses default vue renderer for generateComponent()', () => {
-      const result = service.generateComponent({
-        explicit: '[toggle patient:.active]',
-        framework: 'vue',
-      });
-      expect(result.ok).toBe(true);
-      expect(result.component?.framework).toBe('vue');
-    });
-
-    it('uses default svelte renderer for generateComponent()', () => {
-      const result = service.generateComponent({
-        explicit: '[toggle patient:.active]',
-        framework: 'svelte',
-      });
-      expect(result.ok).toBe(true);
-      expect(result.component?.framework).toBe('svelte');
-    });
-
-    it('accepts custom test renderer via registerTestRenderer()', () => {
-      const mockRenderer = {
-        framework: 'mock-test',
-        render: () => ({
-          name: 'mock test',
-          code: '// mock test code',
-          html: '<div></div>',
-          framework: 'mock-test',
-          operations: [],
-        }),
-      };
-
-      service.registerTestRenderer('mock-test', mockRenderer);
-      const result = service.generateTests({
-        explicit: '[toggle patient:.active]',
-        framework: 'mock-test',
-      });
-
-      expect(result.ok).toBe(true);
-      expect(result.tests[0].framework).toBe('mock-test');
-      expect(result.tests[0].code).toBe('// mock test code');
-    });
-
-    it('accepts custom component renderer via registerComponentRenderer()', () => {
-      const mockRenderer = {
-        framework: 'mock-component',
-        render: () => ({
-          name: 'MockComponent',
-          code: '// mock component code',
-          framework: 'mock-component',
-          operations: [],
-          hooks: [],
-        }),
-      };
-
-      service.registerComponentRenderer('mock-component', mockRenderer);
-      const result = service.generateComponent({
-        explicit: '[toggle patient:.active]',
-        framework: 'mock-component',
-      });
-
-      expect(result.ok).toBe(true);
-      expect(result.component?.framework).toBe('mock-component');
-      expect(result.component?.code).toBe('// mock component code');
-    });
-  });
 });
 
 // =============================================================================
 // Custom Renderers via ServiceOptions
 // =============================================================================
-
-describe('CompilationService with custom renderers', () => {
-  let service: CompilationService;
-
-  beforeAll(async () => {
-    service = await CompilationService.create({
-      testRenderers: {
-        custom: {
-          framework: 'custom',
-          render: () => ({
-            name: 'custom test',
-            code: '// custom renderer',
-            html: '<div></div>',
-            framework: 'custom',
-            operations: [],
-          }),
-        },
-      },
-      componentRenderers: {
-        vue: {
-          framework: 'vue',
-          render: () => ({
-            name: 'VueComponent',
-            code: '// vue component',
-            framework: 'vue',
-            operations: [],
-            hooks: [],
-          }),
-        },
-      },
-    });
-  }, 30000);
-
-  it('uses custom test renderer from ServiceOptions', () => {
-    const result = service.generateTests({
-      explicit: '[toggle patient:.active]',
-      framework: 'custom',
-    });
-    expect(result.ok).toBe(true);
-    expect(result.tests[0].framework).toBe('custom');
-  });
-
-  it('uses custom component renderer from ServiceOptions', () => {
-    const result = service.generateComponent({
-      explicit: '[toggle patient:.active]',
-      framework: 'vue',
-    });
-    expect(result.ok).toBe(true);
-    expect(result.component?.framework).toBe('vue');
-  });
-
-  it('does not have default renderers when custom ones are provided', () => {
-    const result = service.generateTests({
-      explicit: '[toggle patient:.active]',
-      framework: 'playwright',
-    });
-    expect(result.ok).toBe(false);
-    expect(result.diagnostics.some(d => d.code === 'UNKNOWN_FRAMEWORK')).toBe(true);
-  });
-});
 
 // =============================================================================
 // intent-element target (generates <lse-intent> HTML snippets)
@@ -792,4 +712,18 @@ describe('CompilationService — generate() targets', () => {
     expect(result.output).toBeUndefined();
     expect(result.diagnostics.some(d => d.code === 'UNKNOWN_TARGET')).toBe(true);
   });
+
+  // react, vue and svelte were targets until 6.0 removed component generation.
+  it.each(['react', 'vue', 'svelte'])(
+    "rejects the removed '%s' target with UNKNOWN_TARGET",
+    async target => {
+      const result = await service.generate({
+        lse: '[toggle patient:.active]',
+        target: target as never,
+      });
+      expect(result.ok).toBe(false);
+      expect(result.output).toBeUndefined();
+      expect(result.diagnostics.some(d => d.code === 'UNKNOWN_TARGET')).toBe(true);
+    }
+  );
 });

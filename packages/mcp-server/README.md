@@ -1,6 +1,6 @@
 # @hyperfixi/mcp-server
 
-MCP (Model Context Protocol) server for hyperscript and multilingual DSL development. Provides **101 tools** by default (**106** defined — the 5 MCP-sampling tools are opt-in and hidden unless `LOKASCRIPT_MCP_LLM_TOOLS=1`), **9 resources**, and **9 prompts** spanning: GRAIL workflow orchestration, validation, compilation, analysis, patterns, LSP bridge, language profiles, code generation, route extraction, 9 domain DSLs, IR conversion, cross-domain dispatch, MCP sampling (opt-in), AI-assisted debugging, template inventory, and the LSE round-trip pipeline.
+MCP (Model Context Protocol) server for hyperscript and multilingual DSL development. Provides **91 tools** by default (**96** defined — the 5 MCP-sampling tools are opt-in and hidden unless `LOKASCRIPT_MCP_LLM_TOOLS=1`), **9 resources**, and **9 prompts** spanning: GRAIL workflow orchestration, validation, compilation, analysis, patterns, LSP bridge, language profiles, code generation, route extraction, 7 domain DSLs, IR conversion, cross-domain dispatch, MCP sampling (opt-in), AI-assisted debugging, template inventory, and the LSE round-trip pipeline.
 
 ## The agent loop
 
@@ -80,13 +80,13 @@ See **[GRAIL.md](GRAIL.md)** for full documentation, schema reference, and examp
 
 ## Available Tools
 
-The **101** tools below, plus the **5** GRAIL tools above, total **106** defined. The 5 MCP-sampling tools among them are hidden from `tools/list` unless `LOKASCRIPT_MCP_LLM_TOOLS=1`, so a default connection sees **101**.
+The **91** tools below, plus the **5** GRAIL tools above, total **96** defined. The 5 MCP-sampling tools among them are hidden from `tools/list` unless `LOKASCRIPT_MCP_LLM_TOOLS=1`, so a default connection sees **91**.
 
 ### Validation & Semantic Tools (8)
 
 | Tool                   | Description                                                      |
 | ---------------------- | ---------------------------------------------------------------- |
-| `validate_hyperscript` | Check hyperscript for syntax errors and role warnings            |
+| `validate_hyperscript` | Deprecated (removed in 7.0): use `validate_and_compile`          |
 | `validate_schema`      | Validate internal command schema definitions (not user code)     |
 | `suggest_command`      | Suggest the best command for a task (multilingual)               |
 | `get_bundle_config`    | Get recommended bundle configuration based on usage              |
@@ -95,14 +95,12 @@ The **101** tools below, plus the **5** GRAIL tools above, total **106** defined
 | `explain_in_language`  | Explain code with grammar rules, roles, and translations         |
 | `get_code_fixes`       | Get auto-fixes for specific error codes                          |
 
-### Compilation & Code Generation (6)
+### Compilation (4)
 
 | Tool                   | Description                                                                |
 | ---------------------- | -------------------------------------------------------------------------- |
 | `validate_and_compile` | Parse to semantic IR with diagnostics; natural language also on the engine |
 | `translate_code`       | High-fidelity translation with SVO/SOV/VSO grammar transformation          |
-| `generate_tests`       | Generate Playwright behavior tests from hyperscript                        |
-| `generate_component`   | Generate React, Vue, or Svelte component from hyperscript                  |
 | `score_fidelity`       | Score a candidate against a reference: recall/precision/role/value signals |
 | `diff_behaviors`       | Compare two inputs for semantic equivalence                                |
 
@@ -117,12 +115,12 @@ The **101** tools below, plus the **5** GRAIL tools above, total **106** defined
 
 ### Pattern Lookup (4)
 
-| Tool                    | Description                                                                                |
-| ----------------------- | ------------------------------------------------------------------------------------------ |
-| `get_examples`          | Get working code examples matching a task description                                      |
-| `search_patterns`       | Search pattern database by keyword or category                                             |
-| `translate_hyperscript` | Translate between 24 languages (same engine as `translate_code`, without its verification) |
-| `get_pattern_stats`     | Get statistics about patterns and languages                                                |
+| Tool                    | Description                                                                                    |
+| ----------------------- | ---------------------------------------------------------------------------------------------- |
+| `get_examples`          | Get working code examples matching a task description                                          |
+| `search_patterns`       | Search pattern database by keyword or category                                                 |
+| `translate_hyperscript` | Deprecated (removed in 7.0): use `translate_code`, which returns the same text and verifies it |
+| `get_pattern_stats`     | Get statistics about patterns and languages                                                    |
 
 ### LSP Bridge (4)
 
@@ -232,25 +230,23 @@ The **101** tools below, plus the **5** GRAIL tools above, total **106** defined
 | ------------------------------ | --------------------------------------------------------------- |
 | `lse_generate_with_correction` | Stateless LSE generation + self-correction loop (prompt/schema) |
 
-### Domain DSL Tools (36)
+### Domain DSL Tools (28)
 
-Each of the 9 domains exposes `parse_`, `compile_`, `validate_`, and `translate_` tools (9 × 4 = 36). Language coverage comes in three tiers:
+Each of the 7 domains exposes `parse_`, `compile_`, `validate_`, and `translate_` tools (7 × 4 = 28). bdd's tools left with domains 4.2.0 and bdd itself with domains 5.0.0: behaviorspec reads its preconditions, actions and assertions. Language coverage comes in three tiers:
 
 - **Bridge (11):** en, es, ja, ar, ko, zh, tr, fr, de, pt, ru
 - **Classic (8):** en, es, ja, ar, ko, zh, tr, fr
 - **Learn (10):** Bridge minus ru
 
-| Domain         | Languages   | compile Output                    |
-| -------------- | ----------- | --------------------------------- |
-| `sql`          | Bridge (11) | SQL query string                  |
-| `bdd`          | Classic (8) | Playwright test (Given/When/Then) |
-| `jsx`          | Bridge (11) | JSX/React markup                  |
-| `todo`         | Bridge (11) | Structured operation object       |
-| `behaviorspec` | Classic (8) | Playwright interaction test       |
-| `llm`          | Bridge (11) | LLMPromptSpec JSON                |
-| `flow`         | Bridge (11) | Reactive data flow JS             |
-| `voice`        | Bridge (11) | DOM interaction command           |
-| `learn`        | Learn (10)  | Rendered sentence w/ morphology   |
+| Domain         | Languages   | compile Output                  |
+| -------------- | ----------- | ------------------------------- |
+| `sql`          | Bridge (11) | SQL query string                |
+| `todo`         | Bridge (11) | Structured operation object     |
+| `behaviorspec` | Classic (8) | Playwright interaction test     |
+| `llm`          | Bridge (11) | LLMPromptSpec JSON              |
+| `flow`         | Bridge (11) | Reactive data flow JS           |
+| `voice`        | Bridge (11) | DOM interaction command         |
+| `learn`        | Learn (10)  | Rendered sentence w/ morphology |
 
 ## Available Resources (5)
 

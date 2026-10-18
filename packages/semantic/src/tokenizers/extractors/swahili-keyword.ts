@@ -44,7 +44,10 @@ const PREPOSITIONS = new Set([
 function createSwahiliCharClassifiers() {
   const swahiliPattern = /[a-zA-Z]/;
   const isLetter = (char: string) => swahiliPattern.test(char);
-  const isIdentifierChar = (char: string) => /[0-9]/.test(char) || swahiliPattern.test(char);
+  // `_` is a word character mid-word (never a word start: canExtract tests isLetter), so a
+  // snake_case name (`my_func()`) is one word and an `_`-joined keyword is looked up whole,
+  // as the Cyrillic and Malay extractors read them. It split at `_` before.
+  const isIdentifierChar = (char: string) => /[0-9_]/.test(char) || swahiliPattern.test(char);
   return { isLetter, isIdentifierChar };
 }
 
@@ -77,28 +80,6 @@ export class SwahiliKeywordExtractor implements ContextAwareExtractor {
     // Extract word
     while (pos < input.length && isSwahiliIdentifierChar(input[pos])) {
       word += input[pos++];
-    }
-
-    // Underscore-joined keyword recovery. The i18n sw dict joins multi-word event
-    // names with `_` (`panya_shuka`=mousedown, `panya_juu`=mouseup); the reader stops
-    // at `_`, so `kwenye panya_shuka` split and the handler dropped (repeat-until-event
-    // sw, fid 0.75). When `_` follows, read the full `_`-joined run and adopt it ONLY
-    // if it resolves to a REGISTERED keyword — so arbitrary snake_case identifiers and
-    // unregistered dict forms (the blur `poteza_macho`) stay split exactly as before.
-    // See docs-internal/HANDOFF-lossy-tail.md (repeat-until-event).
-    if (this.context && pos < input.length && input[pos] === '_') {
-      let extPos = pos;
-      let ext = word;
-      while (
-        extPos < input.length &&
-        (input[extPos] === '_' || isSwahiliIdentifierChar(input[extPos]))
-      ) {
-        ext += input[extPos++];
-      }
-      if (this.context.lookupKeyword(ext.toLowerCase())) {
-        word = ext;
-        pos = extPos;
-      }
     }
 
     if (!word) return null;

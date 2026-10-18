@@ -18,7 +18,7 @@ What the gates measure. Each claim carries its re-check command:
 | --------------------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | Corpus fidelity, 11 ratchet signals     | 1.000 in all 24 languages (baseline 2026-09-25)                     | `cd packages/testing-framework && npx tsx src/multilingual/cli.ts --full --bundle browser-priority --regression` (after `populate`) |
 | Value matrix (4,537 cells × 48 lanes)   | 6 failing, all ACCEPTED, 0 open (2026-10-07)                        | `npx tsx tools/regen-value-matrix-baseline.ts --dry-run` (testing-framework)                                                        |
-| Command shapes (1,135 scripts × 24)     | 25,886 pass, 1,343 refused, 11 silent; en 1,089 / 46 / 0 (10-12)    | `npx tsx tools/regen-command-shapes-baseline.ts --report` (testing-framework)                                                       |
+| Command shapes (1,135 scripts × 24)     | 26,531 pass, 709 refused, 0 silent; en 1,109 / 26 / 0 (10-13)       | `npx tsx tools/regen-command-shapes-baseline.ts --report` (testing-framework)                                                       |
 | English left in renders: words / events / `me` case | corpus 5.4% / 0.0% / 9.0% of renders; command shapes 10.8% / 0.0% / 16.3%. Words counted toward the target (kept English out), per language: corpus 0.7–4.6%, shapes 3.9–6.2%, met in 23/23 (10-10) | `npx tsx tools/regen-english-leaks-baseline.ts --report` (testing-framework; corpus after `populate`) |
 | Canonical validity (upstream parses it) | both allowlists empty (3174/3174 foreign, 138/138 en on 2026-09-23) | `npm run test:canonical --prefix packages/testing-framework`                                                                        |
 | English reference preserved             | 162/163 units (1 allowlisted: async-block, by design; 2026-10-06)   | same                                                                                                                                |
@@ -30,7 +30,7 @@ What **no** gate measures (measured 2026-09-30 unless a row is dated):
 | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------ |
 | Commands outside every gate's input          | 36 filed parser items (2026-10-07); since 4.2.0 a translation that would lose part of a script is refused, so most are now loud     | P2–P55 |
 | User docs that match the product             | example pages pin i18n 2.3.0; a never-deployed docs app; no package chooser; README examples run only for the adapter (2026-10-06) | D5–D8  |
-| Shipping                                     | 4.3.0 on npm 2026-10-08 (`npm view @hyperfixi/core version`; unreleased: `git log v4.3.0..origin/main -- packages`)                | —      |
+| Shipping                                     | 6.0.0 on npm 2026-10-18 (`npm view @hyperfixi/core version`; unreleased: `git log v6.0.0..origin/main -- packages`)                | —      |
 
 ## 2. How we choose work now
 
@@ -154,9 +154,21 @@ tools/regen-command-shapes-baseline.ts --dry-run`); the last five were reader fi
 `closest @attr`, qu `'s` chains, id `saya punya @attr`), and `SILENT_FAMILIES` is empty. (2) Refusals by reach:
 handler-head counts (`on click 1`; done 2026-10-12: 375 lanes, with every head clause bn, it and th
 dropped, `on click elsewhere` among them; residue P61), `wait for <custom event>` (P52, done), pseudo-class
-queries (`<:checked/>`; done 2026-10-12: 161 lanes; the two cases left are P62's), rare values (escaped class names, comma queries, `(w)px`, `[@a]`, `it @a`, a dotted path before `of`, `set {…} on obj`; done 2026-10-12: 202 lanes, with qu's `fetch … as JSON`), collection expressions (P57; done 2026-10-12: 154 lanes, 2 of them silent), a query's scope inside a phrase (P62; done 2026-10-12), then `transition` with two properties
-in SOV, and the rest by the regen tool's family table. A refused pair that starts to render can come out silent: the
-command-shape dry run shows each move.
+queries (`<:checked/>`; done 2026-10-12: 161 lanes; the two cases left are P62's), rare values (escaped class names, comma queries, `(w)px`, `[@a]`, `it @a`, a dotted path before `of`, `set {…} on obj`; done 2026-10-12: 202 lanes, with qu's `fetch … as JSON`), collection expressions (P57; done 2026-10-12: 154 lanes, 2 of them silent), a query's scope inside a phrase (P62; done 2026-10-12), a `$` or `:` variable as fetch's URL (`fetch $u as JSON`; done 2026-10-13: 23 lanes), `toggle my *display` (done 2026-10-13: 18 lanes), a `js(…)` block after `then` behind a fused handler head (done 2026-10-13: 18 lanes), a snake_case name (`call global_function()`; done 2026-10-13: 11 lanes), a custom event after a head's `or` (`on click or foo`; done 2026-10-13: 7 lanes, and English no longer drops `on foo or bar`'s `bar`), `put … at end of` (vi's `of me`, read as one `my` token, and a bare patient before an SOV `at` word that is also the event marker; done 2026-10-13: 25 lanes), a `set` target no marker ends (it/pl/ru/uk: `.divs.innerHTML`, `#d1.parentNode`, `bar["count"]`, a spaced `(` after a path; done 2026-10-13: 20 lanes, with ar/de/fr/he `on keydown[key=="Enter"]`), `fetch … as Object` / `as Number` behind a bn/hi/ko handler head (done 2026-10-13: 9 lanes), a loop head's variable read as a handler's event (bn/hi/ko/sw top-level `for item in …`, bn/ko `repeat for x in …`; done 2026-10-13: 11 lanes), a loop's bottom test (`repeat … until x is 3 end`: de `setze`, fr `jusqu'à`, ko `까지`; done 2026-10-13: 8 lanes), a second handler on a parameterized event (ko `exception(error) 할 때`) and pl's `do` (`into`) read as `do not throw` (done 2026-10-13: 11 lanes), bn/th/vi's own word for the property `checked` (`চেক করা`, `เลือกแล้ว`, `được chọn`; done 2026-10-13: 7 lanes, vi's `set checked of :boxes` left). **Row (2) done 2026-10-13:** the refused lanes of shapes
+semantic models went 911 → 86, and the gate reads 26,528 pass / 712 refused (626 of them LOUD) / 0 silent. The 86
+left are in the baseline, each pair listed, and go to M4:
+
+- two-property `transition` in SOV (bn/hi/ja/ko/pl/qu/tr, 13 lanes). **Needs an owner call:** a transition that
+  carries several properties, or a change to `maySkipVerbSlot`'s lock that keeps ja's goal reading;
+- P62's residue, `<:checked/> in the next <tbody/>` (bn/hi/it/ja/ko/tl/vi/zh, 15 lanes, and bn's `in #list-scope`);
+- ko commands in sequence without `then` (`blur #search blur me`, `open`, `close`, `focus`, `scroll`, `trigger`,
+  `wait`: 7 lanes) and hi's bare one-word commands (`close`, `hide`, `show`, `reset`, `return`, `halt`: 6 lanes);
+- qu's dotted event names (`on foo.bar`, `trigger foo.bar`, `on example.event`: 3 lanes);
+- a tail of 1–3-lane cases: English `in` beside de/it/tr's own (`on click in #d1`, `scroll to #item in #box`),
+  a bare `my` in id/ms/vi (`log me, my`), vi's `set checked of :boxes`, ja `fetch /test {…}`, pt's `increment()`
+  handlers, and others.
+
+A refused pair that starts to render can come out silent: the command-shape dry run shows each move.
 
 ### M3: complexity down
 
@@ -165,7 +177,7 @@ command-shape dry run shows each move.
 - `semantic-parser.ts` is 8,871 lines (2026-10-06, `wc -l`), and grew 19% in the week of 2026-09-23.
 - The handcrafted patterns hold 158 hand-written `expectedTypes` lists; only 5 files derive theirs from
   a schema. A copied list that drifted is why German lost every `get` of a literal (PR 130).
-- An end word has nine readers.
+- An end word had nine readers (C3, below).
 
 **Work:**
 
@@ -190,6 +202,10 @@ command-shape dry run shows each move.
   other. Optional: name `parseInternal`'s stages as functions.
 - (e) The semantic/framework `PatternMatcher` fork. **Decided 2026-10-13:** one matcher, built from semantic's,
   and the domain family cut down and rebuilt on it, after the semantic work: [`DOMAINS_RETHINK.md`](DOMAINS_RETHINK.md).
+  Its decisions D1–D6 were taken 2026-10-14; Phase 1 (domains 4.0.0: the cuts, and the family on framework 4.x)
+  is lokascript-domains #21.
+  Closed by its Phase 6 (#1552, 2026-10-17): framework's copy and the classic engine deleted; released in 5.0.0
+  (2026-10-17). The rethink's plan is archived at `archived/domains-rethink-2026-10-18` (see [`ARCHIVE.md`](ARCHIVE.md)).
 
 **Exit metrics** (stamp them when the arc starts):
 
@@ -207,7 +223,11 @@ command-shape dry run shows each move.
   drifted and lost a property). Of the 28, 8 are narrower than their schema on purpose (es/qu/zh set values,
   `set.ts` says why), pick's 6 wait for pick's own refusals, and the rest are roles their schema lacks (repeat's
   and wait's conditions, wait's source and value, qu set's source, hi's `जब` event).
-- Readers per question: an end word still has nine (`VALUE_READING.md` C3).
+- Readers per question (`VALUE_READING.md` C3): 9 definitions of an end word, 26 sites with their own test.
+  **C3 done 2026-10-13 (#1513–#1518):** one definition (`endWordKind`), one function per question
+  (`closesBlockAt`, `endsClauseAt`, `endWordIsValue`), four named exceptions (`parser/end-words.ts`). P58
+  fixed; P53's `end` half needs the render. Plan at `archived/end-word-readers-2026-10-13`. With C3 the
+  semantic work is done (the owner's definition); next: [`DOMAINS_RETHINK.md`](DOMAINS_RETHINK.md).
 
 ### M4: the small queue (take items opportunistically)
 
@@ -217,6 +237,7 @@ command-shape dry run shows each move.
 - **Vocabulary:** V5–V7.
 - **Gate items:** G2–G6, G9, G10.
 - **G11** is a one-line win: widen `ARGS_FORM_OK` to 23 languages.
+- **The 86 refused lanes** Reliability row (2) left (listed there; the regen tool's family table orders them).
 
 ## 4. Parked, and decisions waiting on the owner
 

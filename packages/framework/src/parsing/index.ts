@@ -4,7 +4,6 @@
 
 // Re-export core parsing types
 export type { SemanticNode, TokenStream, LanguageTokenizer } from '../core/types';
-export { PatternMatcher } from '../core/pattern-matching';
 
 // Multi-statement parser
 export { createMultiStatementParser, accumulateBlocks } from './multi-statement';

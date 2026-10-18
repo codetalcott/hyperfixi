@@ -12,7 +12,7 @@ import {
   type SemanticConfig,
 } from './semantic-integration';
 import type { HyperfixiPluginOptions } from './types';
-import type { SupportedLanguage } from './language-keywords';
+import { REGIONS, type SupportedLanguage } from './language-keywords';
 
 describe('selectOptimalBundle', () => {
   it('returns en for empty language set', () => {
@@ -123,6 +123,27 @@ describe('getLanguagesForBundleType', () => {
     const result = getLanguagesForBundleType('es-en', new Set());
     expect(result.has('en')).toBe(true);
     expect(result.has('es')).toBe(true);
+  });
+
+  it('expands every region the `region` option names (slavic and south-asian loaded English alone)', () => {
+    expect([...getLanguagesForBundleType('slavic', new Set())].sort()).toEqual([
+      'en',
+      'pl',
+      'ru',
+      'uk',
+    ]);
+    expect([...getLanguagesForBundleType('south-asian', new Set())].sort()).toEqual([
+      'bn',
+      'en',
+      'hi',
+    ]);
+    for (const [region, languages] of Object.entries(REGIONS)) {
+      const result = getLanguagesForBundleType(region as SemanticBundleType, new Set());
+      expect(
+        languages.filter(l => !result.has(l)),
+        region
+      ).toEqual([]);
+    }
   });
 
   it('includes config languages plus bundle type', () => {
@@ -432,6 +453,21 @@ describe('resolveSemanticConfig', () => {
     const options: HyperfixiPluginOptions = { semantic: true, region: 'all' };
     const config = resolveSemanticConfig(options, new Set(['en']));
     expect(config.bundleType).toBe('all');
+  });
+
+  it('imports the languages of an explicit slavic or south-asian region', () => {
+    for (const [region, languages] of [
+      ['slavic', ['pl', 'ru', 'uk']],
+      ['south-asian', ['bn', 'hi']],
+    ] as const) {
+      const config = resolveSemanticConfig({ semantic: true, region }, new Set(['en']));
+      const code = generateSemanticIntegrationCode(config);
+      for (const lang of languages) {
+        expect(code, `${region} → ${lang}`).toContain(
+          `import '@lokascript/semantic/languages/${lang}';`
+        );
+      }
+    }
   });
 
   it('includes extra languages', () => {

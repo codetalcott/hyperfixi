@@ -19,16 +19,10 @@ import { createCommandNode, createEventHandler, createCompoundNode } from '../ty
 import { tokenize as tokenizeInternal, TokenStreamImpl } from '../tokenizers';
 import { getPatternsForLanguage, tryGetProfile } from '../registry';
 import { getSchema } from '../generators/command-schemas';
-import { endWordPlace } from './utils/expression-lexicon';
 import { ROLE_MARKER_CONCEPTS } from './utils/marker-resolution';
 import { patternMatcher } from './pattern-matcher';
-import {
-  isBlockEndToken,
-  isEndKeyword,
-  isIfKeyword,
-  isThenAt,
-  isThenKeyword,
-} from './clause-keywords';
+import { isIfKeyword, isThenKeyword } from './clause-keywords';
+import { closesBlockAt, endsClauseAt, endWordPlace, isCuratedEndWord, isThenAt } from './end-words';
 import { type ParserState } from './parser-state';
 import { RESPONSE_TYPE_WORDS } from './response-type-words';
 import { eventNameTranslations } from '../patterns/event-handler';
@@ -209,8 +203,12 @@ export function buildEventHandler(
     }
   }
 
-  // Extract "or" conjunction events (e.g., "click or keydown")
-  // Combines into event value string for AST builder compatibility.
+  // Extract "or" conjunction events (e.g., "click or keydown"), kept as the
+  // handler's `additionalEvents`, as parseInternal's or-lift keeps a known one.
+  // They were joined into the event string (`click or foo`) when the event was a
+  // literal and DROPPED when it was not (`on foo or bar` read as `on foo`), and the
+  // renderer, which writes `additionalEvents` in each language's or-word, wrote the
+  // joined string's English `or`.
   // Only directly after the event: a fused pattern can stop inside what
   // follows it (ms `apabila click jika r atau q`, whose `if-event-ms-vso`
   // takes one token of the condition), and the condition's `atau q` became
@@ -223,14 +221,9 @@ export function buildEventHandler(
     lastConsumed !== undefined &&
     lastConsumed.position.end > eventSpan.end;
   const additionalEvents = pastEvent ? [] : extractOrConjunctionEvents(tokens, language);
-  let resolvedEventValue = eventValue;
-  if (additionalEvents.length > 0 && eventValue.type === 'literal') {
-    const allEvents = [
-      String(eventValue.value),
-      ...additionalEvents.map(e => String('value' in e ? e.value : '')),
-    ];
-    resolvedEventValue = { type: 'literal', value: allEvents.join(' or ') };
-  }
+  const resolvedEventValue = eventValue;
+  const withAdditionalEvents = <T extends EventHandlerSemanticNode>(handler: T): T =>
+    additionalEvents.length > 0 ? { ...handler, additionalEvents } : handler;
 
   let body: SemanticNode[];
   let headClause: string | undefined;
@@ -329,11 +322,13 @@ export function buildEventHandler(
           (folded[0] as CompoundSemanticNode).statements.some(s => s.kind === 'conditional'));
       if (foldedConditional) {
         while (!tokens.isAtEnd()) tokens.advance(); // body fully consumed by the fold
-        return createEventHandler(resolvedEventValue, folded, eventModifiers, {
-          sourceLanguage: language,
-          patternId: match.pattern.id,
-          confidence: match.confidence,
-        });
+        return withAdditionalEvents(
+          createEventHandler(resolvedEventValue, folded, eventModifiers, {
+            sourceLanguage: language,
+            patternId: match.pattern.id,
+            confidence: match.confidence,
+          })
+        );
       }
       // Fold discarded — its coverage records describe a parse that never
       // happened; the flat path below does its own accounting.
@@ -411,12 +406,7 @@ export function buildEventHandler(
           delete roles.patient;
           while (!tokens.isAtEnd()) {
             const t = tokens.peek();
-            if (
-              !t ||
-              t.kind === 'conjunction' ||
-              (t.kind === 'keyword' &&
-                (isThenKeyword(t.value, language) || isEndKeyword(t.value, language)))
-            ) {
+            if (!t || endsClauseAt(tokens.tokens, tokens.position(), language)) {
               break;
             }
             tokens.advance();
@@ -521,19 +511,18 @@ export function buildEventHandler(
         const place = endWordPlace(all, k);
         return (
           isThenAt(t, place, language) ||
-          // isBlockEndToken: not a variable spelled like it (C3), and not the
+          // closesBlockAt: not a variable spelled like it (C3), and not the
           // noun of `at end of` (ms `letak x di tamat daripada saya`, he `at
           // סוף of`), which ended a loop body's clause inside its put.
-          (isEndKeyword(t.value, language) && isBlockEndToken(t, place, language))
+          (isCuratedEndWord(t, language) && closesBlockAt(all, k, language))
         );
       };
       // A loop head's clause also stops at the loop's own `end` where
-      // isEndKeyword cannot list it (bn শেষ, also `last`): read past, the
+      // no curated set can list it (bn শেষ, also `last`): read past, the
       // `end` was swallowed as a stray terminator and the loop lost its extent.
       const loopHeadAction = actionName === 'repeat' || actionName === 'while';
       const endsClause = (k: number): boolean =>
-        isClauseBoundary(k) ||
-        (loopHeadAction && isBlockEndToken(all[k], endWordPlace(all, k), language));
+        isClauseBoundary(k) || (loopHeadAction && closesBlockAt(all, k, language));
       // The scan-back below identifies the verb by its NORMALIZED form. That
       // misses whenever the language's verb normalizes to something other
       // than the action name: id `muat` normalizes to `load` (a synonym) and
@@ -583,7 +572,7 @@ export function buildEventHandler(
           ) {
             nested++;
           } else if (nested > 0) {
-            if (isBlockEndToken(t, endWordPlace(all, clauseEnd), language)) nested--;
+            if (closesBlockAt(all, clauseEnd, language)) nested--;
           } else if (endsClause(clauseEnd)) {
             break;
           }
@@ -1111,8 +1100,15 @@ export function buildEventHandler(
     // body unconsumed — and, unlike a simple command, those trailing tokens are
     // *not* bridged by a then-marker (`on click if <cond> show … else … end`).
     const isBlockBodyAction = BLOCK_BODY_ACTIONS.has(actionName);
-    const hasBlockBody =
-      isBlockBodyAction && !!nextToken && !isEndKeyword(nextToken.value, language);
+    // The handler's own `end`, as the clause walk reads one: a curated end
+    // word that closes a block here (closesBlockAt), not a variable spelled
+    // like it, nor the noun of `at end of`.
+    const nextEndsBody =
+      !!nextToken &&
+      nextToken.kind === 'keyword' &&
+      isCuratedEndWord(nextToken, language) &&
+      closesBlockAt(tokens.tokens, tokens.position(), language);
+    const hasBlockBody = isBlockBodyAction && !!nextToken && !nextEndsBody;
 
     // General case: a fused event pattern captured the *first* body command as the
     // action and left the rest unconsumed. The body's remaining commands may be
@@ -1124,7 +1120,7 @@ export function buildEventHandler(
     // already-consumed simple handler (no remainder) is unchanged, and stray role
     // words can never become spurious commands. Subsumes the then-chain and
     // block-body cases above; both are kept named for documentation.
-    const hasTrailingBody = !!nextToken && !isEndKeyword(nextToken.value, language);
+    const hasTrailingBody = !!nextToken && !nextEndsBody;
 
     // The captured command can be a LOOP head (`repeat-event-es-vso` fuses
     // `al clic repetir 3 times`), whose body the re-parse above recovered.
@@ -1134,7 +1130,7 @@ export function buildEventHandler(
     const leading: WalkEntry[] = [commandNode, ...reparsedTail];
     const closesLeadingLoop =
       !!nextToken &&
-      isEndKeyword(nextToken.value, language) &&
+      closesBlockAt(tokens.tokens, tokens.position(), language) &&
       openLoopCount(leading) > 0 &&
       tokens.peek(1) !== null;
     if (closesLeadingLoop) {
@@ -1247,10 +1243,12 @@ export function buildEventHandler(
   const foldedBody =
     body.length > 1 ? [createCompoundNode(body, 'then', { sourceLanguage: language })] : body;
 
-  const handler = createEventHandler(resolvedEventValue, foldedBody, eventModifiers, {
-    sourceLanguage: language,
-    patternId: match.pattern.id,
-    confidence: match.confidence,
-  });
+  const handler = withAdditionalEvents(
+    createEventHandler(resolvedEventValue, foldedBody, eventModifiers, {
+      sourceLanguage: language,
+      patternId: match.pattern.id,
+      confidence: match.confidence,
+    })
+  );
   return headClause ? { ...handler, headClause } : handler;
 }

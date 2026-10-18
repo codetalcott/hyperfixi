@@ -29,7 +29,6 @@ import { routeTools, handleRouteTool } from './tools/routes.js';
 
 // Domain registry — auto-generates tool definitions and dispatches tool calls
 import { createDomainRegistry } from './tools/domain-registry-setup.js';
-import { isMultiStepBDD, handleBDDMultiStep } from './tools/bdd-extras.js';
 import {
   isMultiLineBehaviorSpec,
   handleBehaviorSpecMultiLine,
@@ -272,8 +271,6 @@ function buildServer(): Server {
     if (
       name === 'validate_and_compile' ||
       name === 'translate_code' ||
-      name === 'generate_tests' ||
-      name === 'generate_component' ||
       name === 'score_fidelity' ||
       name === 'diff_behaviors'
     ) {
@@ -305,11 +302,6 @@ function buildServer(): Server {
     // extras handle multi-step/multi-line extensions
     if (registry.canHandle(name)) {
       const typedArgs = args as Record<string, unknown>;
-
-      // Multi-step BDD scenarios (comma/newline-separated)
-      if (name.endsWith('_bdd') && isMultiStepBDD(typedArgs)) {
-        return handleBDDMultiStep(name, typedArgs) as any;
-      }
 
       // Multi-line BehaviorSpec scenarios (indented test blocks)
       if (name.endsWith('_behaviorspec') && isMultiLineBehaviorSpec(typedArgs)) {

@@ -1,16 +1,16 @@
 ---
 name: hyperfixi-codegen
-description: 'Validates HyperFixi/LokaScript, generates React/Vue/Svelte components, and produces Playwright tests. Use when user wants framework components, test generation, a validation dry-run, or behavioral comparison.'
+description: 'Validates HyperFixi/LokaScript (a semantic dry-run) and compares two behaviors. Use when the user wants a validation dry-run or a behavioral comparison. Component and test generation were removed in 6.0.'
 ---
 
 # HyperFixi Code Generation
 
-Validate HyperFixi/LokaScript code, generate framework components, and produce Playwright tests. (Compiling to JavaScript, `compile_hyperscript`, retired with the AOT compiler in 4.0: hyperscript runs as written, in an `_="..."` attribute, on `@hyperfixi/engine`.)
+Validate HyperFixi/LokaScript code and compare behaviors. (Compiling to JavaScript, `compile_hyperscript`, retired with the AOT compiler in 4.0: hyperscript runs as written, in an `_="..."` attribute, on `@hyperfixi/engine`.)
+
+**`generate_component` and `generate_tests` were removed in 6.0.** Measured on 169 real inputs, 15 gave a Playwright test that checked the behavior, and a component for any command aimed at another element did not compile. Write the component or the test directly.
 
 ## When to Use
 
-- Generate React, Vue, or Svelte components from HyperFixi behavior
-- Generate Playwright tests from HyperFixi code
 - Validate semantics (dry-run)
 - Compare two inputs for behavioral equivalence
 
@@ -21,11 +21,9 @@ Validate HyperFixi/LokaScript code, generate framework components, and produce P
 | Goal                       | Tool                   |
 | -------------------------- | ---------------------- |
 | Dry-run (semantic IR only) | `validate_and_compile` |
-| Generate component         | `generate_component`   |
-| Generate tests             | `generate_tests`       |
 | Compare behaviors          | `diff_behaviors`       |
 
-### 2. Generate
+### 2. Validate
 
 Every tool accepts 3 input formats:
 
@@ -35,29 +33,7 @@ validate_and_compile({ explicit: "[toggle patient:.active destination:#btn]" })
 validate_and_compile({ semantic: { action: "toggle", roles: { patient: { type: "selector", value: ".active" } } } })
 ```
 
-**Generate a component:**
-
-```
-generate_component({ code: "on click toggle .active", framework: "react" })
-```
-
-- **React:** Hooks + JSX (TypeScript by default)
-- **Vue:** SFC with `<script setup>` + `<template>`
-- **Svelte:** Runes (`$state`, `bind:this`)
-
-**Generate tests:**
-
-```
-generate_tests({ code: "on click toggle .active", testName: "toggle active class" })
-```
-
-### 3. Validate the Output
-
-Use `validate_and_compile` for a dry-run that returns semantic IR and diagnostics:
-
-```
-validate_and_compile({ code: "on click toggle .active" })
-```
+`validate_and_compile` returns semantic IR and diagnostics; for natural-language input it also reports the engine's own parse error, if any.
 
 ## Behavior Comparison
 
@@ -87,17 +63,14 @@ The language-agnostic IR format `[command role:value ...]`:
 1. **Wrong input format** -- every tool accepts `code`, `explicit`, or `semantic`; don't mix them in one call
 2. **Missing `language` for non-English** -- pass `language: "ja"` etc. when input is not English
 3. **Expecting runtime behavior from dry-run** -- `validate_and_compile` returns IR, not executable code
-4. **Ignoring framework differences** -- React uses hooks, Vue uses SFC, Svelte uses runes; generated code is idiomatic per framework
 
 ## MCP Tools
 
-### Compilation & Generation
+### Validation & Comparison
 
 | Tool                   | Description                                      |
 | ---------------------- | ------------------------------------------------ |
 | `validate_and_compile` | Parse to semantic IR with diagnostics            |
-| `generate_component`   | Generate React/Vue/Svelte component              |
-| `generate_tests`       | Generate Playwright behavior tests               |
 | `diff_behaviors`       | Compare two inputs for semantic equivalence      |
 | `translate_code`       | Translate code between languages (high fidelity) |
 

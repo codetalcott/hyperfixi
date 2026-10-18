@@ -164,7 +164,7 @@ export function isElseIfChain(
  * own `end` then ended the enclosing body: `if x repeat 3 times … end end
  * then remove .b from me` lost the `remove`. A `for` right after `repeat`
  * names the loop's form (`repeat for …`) and opens nothing. The English
- * `repeat` counts in every language, as `end` does in isEndKeyword: the SOV
+ * `repeat` counts in every language, as `end` does in endWordKind: the SOV
  * counted-loop head keeps it untranslated (ja/ko/tr `3 times を repeat`),
  * where it tokenizes as an identifier.
  *

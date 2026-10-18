@@ -21,7 +21,9 @@ describe('parse-only patterns', () => {
       .sort();
     // Plus `wait-<lang>-event-head` (P52): the renderer writes the event word
     // itself, before a name no table knows.
-    expect(ids).toEqual(['repeat-qu-midclause-until-head', 'repeat-qu-until-head']);
+    // `put-vi-at-end-of-me`: vi's tokenizer reads the `của tôi` the at-end
+    // pattern writes as one `my` token.
+    expect(ids).toEqual(['put-vi-at-end-of-me', 'repeat-qu-midclause-until-head']);
   });
 
   it("qu writes its own until-head, with a source too, and still reads the transformer's", () => {

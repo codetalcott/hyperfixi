@@ -2,9 +2,9 @@
  * CompilationService — the main orchestrator.
  *
  * Accepts hyperscript in three formats (natural language, explicit syntax, LLM JSON),
- * validates it through semantic schemas and the engine, and translates, diffs, scores, and
- * renders it as components and tests. (It compiled to JavaScript through
- * `@hyperfixi/aot-compiler` until 4.0, when the AOT compiler retired.)
+ * validates it through semantic schemas and the engine, and translates, diffs, and scores it.
+ * (It compiled to JavaScript through `@hyperfixi/aot-compiler` until 4.0, when the AOT compiler
+ * retired, and rendered React/Vue/Svelte components and Playwright tests until 6.0.)
  */
 
 import type {
@@ -12,10 +12,6 @@ import type {
   ValidationResponse,
   TranslateRequest,
   TranslateResponse,
-  TestRequest,
-  TestResponse,
-  ComponentRequest,
-  ComponentResponse,
   DiffRequest,
   DiffResponse,
   GenerateRequest,
@@ -35,28 +31,28 @@ import {
   type ValidationFunctions,
 } from './validation/gates.js';
 import { extractOperations } from './operations/extract.js';
-import { PlaywrightRenderer } from './renderers/playwright.js';
-import { ReactRenderer } from './renderers/react.js';
-import { VueRenderer } from './renderers/vue.js';
-import { SvelteRenderer } from './renderers/svelte.js';
-import type { TestRenderer } from './renderers/types.js';
-import type { ComponentRenderer } from './renderers/component-types.js';
 
 // =============================================================================
 // Service
 // =============================================================================
+
+/** A variable semantic finds spelled like a word of some language, as the service reads it. */
+interface CollisionFinding {
+  readonly name: string;
+  readonly occurrences: ReadonlyArray<unknown>;
+  readonly rename: string | undefined;
+  readonly message: string;
+}
 
 /** semantic's `findTranslationCollisions`, as the service calls it. */
 type TranslationCollisionsFn = (
   code: string,
   from: string,
   to: string
-) => ReadonlyArray<{
-  readonly name: string;
-  readonly occurrences: ReadonlyArray<unknown>;
-  readonly rename: string | undefined;
-  readonly message: string;
-}>;
+) => ReadonlyArray<CollisionFinding>;
+
+/** semantic's `findNameCollisions`: a variable spelled like a word of its own code's language. */
+type NameCollisionsFn = (code: string, language: string) => ReadonlyArray<CollisionFinding>;
 
 /** `@lokascript/semantic`'s refusal, by name (the service loads semantic dynamically). */
 interface LossyTranslation {
@@ -74,10 +70,23 @@ function isLossyTranslation(error: unknown): error is LossyTranslation {
   );
 }
 
+/** A semantic gate's error on English the engine reads: a warning, saying why. */
+function readByTheEngine(diagnostic: Diagnostic): Diagnostic {
+  if (diagnostic.severity !== 'error') return diagnostic;
+  return {
+    ...diagnostic,
+    severity: 'warning',
+    message:
+      `${diagnostic.message} @hyperfixi/engine reads this code, so it runs as written; ` +
+      "semantic's reading of it (the IR here, and a translation made from it) may leave part of it out.",
+  };
+}
+
 export class CompilationService {
   private confidenceThreshold: number;
   private translateFn: ((code: string, from: string, to: string) => string) | null = null;
   private translationCollisionsFn: TranslationCollisionsFn | null = null;
+  private nameCollisionsFn: NameCollisionsFn | null = null;
   /** semantic's `render`, for the English a translation runs as. */
   private renderFn: ((node: unknown, language: string) => string) | null = null;
   /**
@@ -85,39 +94,9 @@ export class CompilationService {
    * when the engine is installed (an optional peer); without it there is no engine check.
    */
   private engineError: ((source: string) => string | null) | null = null;
-  private testRenderers: Map<string, TestRenderer>;
-  private componentRenderers: Map<string, ComponentRenderer>;
 
   private constructor(options: ServiceOptions = {}) {
     this.confidenceThreshold = options.confidenceThreshold ?? 0.7;
-
-    // Initialize renderer registries with defaults
-    this.testRenderers = new Map<string, TestRenderer>(
-      Object.entries(options.testRenderers ?? { playwright: new PlaywrightRenderer() })
-    );
-    this.componentRenderers = new Map<string, ComponentRenderer>(
-      Object.entries(
-        options.componentRenderers ?? {
-          react: new ReactRenderer(),
-          vue: new VueRenderer(),
-          svelte: new SvelteRenderer(),
-        }
-      )
-    );
-  }
-
-  /**
-   * Register a test renderer for a given framework.
-   */
-  registerTestRenderer(framework: string, renderer: TestRenderer): void {
-    this.testRenderers.set(framework, renderer);
-  }
-
-  /**
-   * Register a component renderer for a given framework.
-   */
-  registerComponentRenderer(framework: string, renderer: ComponentRenderer): void {
-    this.componentRenderers.set(framework, renderer);
   }
 
   /**
@@ -149,6 +128,7 @@ export class CompilationService {
     // Store translate function
     service.translateFn = semantic.translate;
     service.translationCollisionsFn = semantic.findTranslationCollisions;
+    service.nameCollisionsFn = semantic.findNameCollisions;
     service.renderFn = semantic.render as (node: unknown, language: string) => string;
 
     // The engine the product runs (hyperfixi-hs.js), when it is installed. Natural-language
@@ -182,8 +162,7 @@ export class CompilationService {
     normalized: NormalizeResult
   ): Diagnostic | null {
     if (!this.engineError || normalized.format !== 'natural' || !request.code) return null;
-    const language = request.language ?? 'en';
-    const english = language === 'en' || language.startsWith('en-');
+    const english = this.isEnglishAsWritten(request, normalized);
     let source = request.code;
     if (!english) {
       if (!this.renderFn || !normalized.node) return null;
@@ -207,13 +186,24 @@ export class CompilationService {
     };
   }
 
+  /** Natural-language English: the source as written is what the engine runs. */
+  private isEnglishAsWritten(request: CompileRequest, normalized: NormalizeResult): boolean {
+    const language = request.language ?? 'en';
+    return (
+      normalized.format === 'natural' &&
+      !!request.code &&
+      (language === 'en' || language.startsWith('en-'))
+    );
+  }
+
   // ===========================================================================
   // Public API
   // ===========================================================================
 
   /**
    * Validate input: semantic's parse and schemas, and (for natural-language input) the
-   * engine's parse of the English the page would run.
+   * engine's parse of the English the page would run. For English, the engine's parse decides
+   * `ok`, and semantic's own doubts are warnings, unless the request sets `confidence`.
    * Returns semantic representation and diagnostics.
    */
   validate(request: CompileRequest): ValidationResponse {
@@ -221,20 +211,46 @@ export class CompilationService {
 
     // Normalize
     const normalized = normalize(request);
-    diagnostics.push(...normalized.diagnostics);
+
+    // English as written is what the page runs, so for natural-language English the engine's
+    // parse decides. When it reads the code, semantic's doubts (no reading, a low confidence, a
+    // role its schema expects) are warnings: the code runs, but the IR may not show all of it.
+    // Measured on the command-shape cases (testing-framework): semantic's gates rejected 90 of
+    // the 1,128 the engine reads, and on the agent bench caught nothing the engine missed. Foreign
+    // input runs as semantic's translation, so its gates stay errors there, as they do when
+    // the request sets `confidence` (a bar for semantic's reading).
+    const engineDecides =
+      this.engineError !== null &&
+      request.confidence === undefined &&
+      this.isEnglishAsWritten(request, normalized);
+    const engineRejects = engineDecides ? this.engineDiagnostic(request, normalized) : null;
+    const advisory = engineDecides && !engineRejects ? readByTheEngine : undefined;
+
+    diagnostics.push(...(advisory ? normalized.diagnostics.map(advisory) : normalized.diagnostics));
 
     if (!normalized.node) {
-      return { ok: false, diagnostics };
+      if (engineRejects) diagnostics.push(engineRejects);
+      return { ok: advisory !== undefined, diagnostics };
     }
 
     // Validate
     const threshold = request.confidence ?? this.confidenceThreshold;
-    const gateResult = runValidationGates(normalized.node, normalized.confidence, threshold);
+    const gateResult = runValidationGates(
+      normalized.node,
+      normalized.confidence,
+      threshold,
+      advisory
+    );
     diagnostics.push(...gateResult.diagnostics);
 
-    const engineRejects = gateResult.pass ? this.engineDiagnostic(request, normalized) : null;
-    if (engineRejects) diagnostics.push(engineRejects);
-    const ok = gateResult.pass && !engineRejects;
+    const engineError = engineDecides
+      ? engineRejects
+      : gateResult.pass
+        ? this.engineDiagnostic(request, normalized)
+        : null;
+    if (engineError) diagnostics.push(engineError);
+    const ok = gateResult.pass && !engineError;
+    diagnostics.push(...this.nameCollisions(request, normalized));
 
     const semanticJSON = ok ? nodeToSemanticJSON(normalized.node) : undefined;
 
@@ -244,6 +260,26 @@ export class CompilationService {
       confidence: gateResult.adjustedConfidence,
       diagnostics,
     };
+  }
+
+  /**
+   * A variable spelled like a word of the code's own language (es `si`, tr `i`): its readers
+   * tell the two apart only by where it stands, so the warning suggests a rename. Moved here
+   * from MCP `validate_hyperscript`, with its wording and its confidence floor.
+   */
+  private nameCollisions(request: CompileRequest, normalized: NormalizeResult): Diagnostic[] {
+    const language = request.language ?? 'en';
+    const english = language === 'en' || language.startsWith('en-');
+    if (normalized.format !== 'natural' || !request.code || english) return [];
+    if (!normalized.node || normalized.confidence < 0.5) return [];
+    return (this.nameCollisionsFn?.(request.code, language) ?? []).map(finding => ({
+      severity: 'warning' as const,
+      code: 'NAME_COLLISION',
+      message: finding.message,
+      suggestion: finding.rename
+        ? `Rename \`${finding.name}\` to \`${finding.rename}\` in the ${finding.occurrences.length} place(s) the parse reads it as the variable.`
+        : `Rename \`${finding.name}\`.`,
+    }));
   }
 
   /**
@@ -331,171 +367,6 @@ export class CompilationService {
         ? `Rename \`${finding.name}\` to \`${finding.rename}\` in the source (${finding.occurrences.length} place(s)), then translate.`
         : `Rename \`${finding.name}\` in the source, then translate.`,
     }));
-  }
-
-  /**
-   * Generate behavior-level tests from hyperscript.
-   *
-   * Parses the input, extracts abstract operations (what the behavior does),
-   * and renders them as test code in the requested framework.
-   */
-  generateTests(request: TestRequest): TestResponse {
-    const diagnostics: Diagnostic[] = [];
-
-    // Step 1: Normalize input to SemanticNode (reuse existing pipeline)
-    const normalized = normalize({
-      code: request.code,
-      explicit: request.explicit,
-      semantic: request.semantic,
-      language: request.language,
-      confidence: request.confidence,
-    });
-    diagnostics.push(...normalized.diagnostics);
-
-    if (!normalized.node) {
-      return { ok: false, tests: [], operations: [], diagnostics };
-    }
-
-    // Step 2: Validate
-    const threshold = request.confidence ?? this.confidenceThreshold;
-    const gateResult = runValidationGates(normalized.node, normalized.confidence, threshold);
-    diagnostics.push(...gateResult.diagnostics);
-
-    if (!gateResult.pass) {
-      return { ok: false, tests: [], operations: [], diagnostics };
-    }
-
-    // Step 3: Extract abstract operations
-    const spec = extractOperations(normalized.node);
-
-    if (spec.operations.length === 0) {
-      diagnostics.push({
-        severity: 'warning',
-        code: 'NO_OPERATIONS',
-        message: 'No testable operations extracted from the input.',
-      });
-      return { ok: false, tests: [], operations: [], diagnostics };
-    }
-
-    // Attach source hyperscript for test naming
-    if (!spec.source && request.code) {
-      spec.source = request.code;
-    }
-
-    // Step 4: Render tests
-    const frameworkName = request.framework ?? 'playwright';
-    const renderer = this.testRenderers.get(frameworkName);
-    if (!renderer) {
-      diagnostics.push({
-        severity: 'error',
-        code: 'UNKNOWN_FRAMEWORK',
-        message: `No test renderer registered for framework '${frameworkName}'. Available: ${[...this.testRenderers.keys()].join(', ')}`,
-      });
-      return { ok: false, tests: [], operations: [], diagnostics };
-    }
-
-    const generated = renderer.render(spec, {
-      testName: request.testName,
-      bundlePath: request.bundlePath,
-      hyperscript: request.code ?? request.explicit,
-    });
-
-    const semanticJSON = nodeToSemanticJSON(normalized.node);
-
-    return {
-      ok: true,
-      tests: [
-        {
-          name: generated.name,
-          code: generated.code,
-          html: generated.html,
-          framework: generated.framework,
-        },
-      ],
-      operations: spec.operations,
-      semantic: semanticJSON,
-      diagnostics,
-    };
-  }
-
-  /**
-   * Generate a framework component from hyperscript.
-   *
-   * Parses the input, extracts abstract operations, and renders
-   * them as a framework-specific component (React, Vue, or Svelte).
-   */
-  generateComponent(request: ComponentRequest): ComponentResponse {
-    const diagnostics: Diagnostic[] = [];
-
-    // Step 1: Normalize input to SemanticNode
-    const normalized = normalize({
-      code: request.code,
-      explicit: request.explicit,
-      semantic: request.semantic,
-      language: request.language,
-      confidence: request.confidence,
-    });
-    diagnostics.push(...normalized.diagnostics);
-
-    if (!normalized.node) {
-      return { ok: false, operations: [], diagnostics };
-    }
-
-    // Step 2: Validate
-    const threshold = request.confidence ?? this.confidenceThreshold;
-    const gateResult = runValidationGates(normalized.node, normalized.confidence, threshold);
-    diagnostics.push(...gateResult.diagnostics);
-
-    if (!gateResult.pass) {
-      return { ok: false, operations: [], diagnostics };
-    }
-
-    // Step 3: Extract abstract operations
-    const spec = extractOperations(normalized.node);
-
-    if (spec.operations.length === 0) {
-      diagnostics.push({
-        severity: 'warning',
-        code: 'NO_OPERATIONS',
-        message: 'No operations extracted from the input.',
-      });
-      return { ok: false, operations: [], diagnostics };
-    }
-
-    if (!spec.source && request.code) {
-      spec.source = request.code;
-    }
-
-    // Step 4: Render component
-    const frameworkName = request.framework ?? 'react';
-    const renderer = this.componentRenderers.get(frameworkName);
-    if (!renderer) {
-      diagnostics.push({
-        severity: 'error',
-        code: 'UNKNOWN_FRAMEWORK',
-        message: `No component renderer registered for framework '${frameworkName}'. Available: ${[...this.componentRenderers.keys()].join(', ')}`,
-      });
-      return { ok: false, operations: [], diagnostics };
-    }
-    const generated = renderer.render(spec, {
-      componentName: request.componentName,
-      typescript: request.typescript,
-    });
-
-    const semanticJSON = nodeToSemanticJSON(normalized.node);
-
-    return {
-      ok: true,
-      component: {
-        name: generated.name,
-        code: generated.code,
-        hooks: generated.hooks,
-        framework: generated.framework,
-      },
-      operations: spec.operations,
-      semantic: semanticJSON,
-      diagnostics,
-    };
   }
 
   /**
@@ -652,10 +523,9 @@ export class CompilationService {
    * validates it, and renders to the requested target format.
    *
    * Targets (`target` is required):
-   * - 'react'          — React component
-   * - 'vue'            — Vue component
-   * - 'svelte'         — Svelte component
    * - 'intent-element' — HTML snippet with embedded `<lse-intent>` JSON
+   *
+   * (The react, vue and svelte targets were removed in 6.0 with `generateComponent`.)
    */
   async generate(request: GenerateRequest): Promise<GenerateResponse> {
     const { lse, target, task } = request;
@@ -769,34 +639,13 @@ export class CompilationService {
       }
     }
 
-    // ── framework targets: delegate to existing pipeline ───────────────────
-
-    const componentTargets = ['react', 'vue', 'svelte'] as const;
-    type ComponentTarget = (typeof componentTargets)[number];
-
-    if ((componentTargets as readonly string[]).includes(target)) {
-      const componentRequest: ComponentRequest = isJSON
-        ? { semantic: JSON.parse(lse) as SemanticJSON }
-        : { explicit: lse };
-      const result = this.generateComponent({
-        ...componentRequest,
-        framework: target as ComponentTarget,
-      });
-      return {
-        ok: result.ok,
-        output: result.component?.code,
-        protocol: result.semantic,
-        diagnostics: result.diagnostics,
-      };
-    }
-
     return {
       ok: false,
       diagnostics: [
         {
           severity: 'error',
           code: 'UNKNOWN_TARGET',
-          message: `Unknown target '${String(target)}'. Available: react, vue, svelte, intent-element`,
+          message: `Unknown target '${String(target)}'. Available: intent-element`,
         },
       ],
     };

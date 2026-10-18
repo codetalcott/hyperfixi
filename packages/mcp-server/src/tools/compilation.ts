@@ -28,7 +28,7 @@ export const compilationTools: Tool[] = [
   {
     name: 'validate_and_compile',
     description:
-      'START HERE when generating hyperscript: parse into semantic IR with diagnostics. Returns action, roles, and trigger structure so you can check the parse matches your intent. Accepts natural language (code + language), explicit bracket syntax (explicit, e.g. "[toggle patient:.active destination:#btn]"), or LLM JSON (semantic: { action, roles, trigger }). Natural-language input must also parse on @hyperfixi/engine, the engine that runs it (ENGINE_PARSE_ERROR when it does not). On failure, apply the diagnostics and re-validate (get_code_fixes maps error codes to concrete fixes; get_command_docs lists per-command roles); once valid, the hyperscript goes in an _="..." attribute as is. This validate → repair loop is deterministic — no LLM in the checker. (The name predates 4.0, when compiling to JavaScript retired with the AOT compiler.)',
+      'START HERE when generating hyperscript: parse into semantic IR with diagnostics. Returns action, roles, and trigger structure so you can check the parse matches your intent. Accepts natural language (code + language), explicit bracket syntax (explicit, e.g. "[toggle patient:.active destination:#btn]"), or LLM JSON (semantic: { action, roles, trigger }). Natural-language input must also parse on @hyperfixi/engine, the engine that runs it (ENGINE_PARSE_ERROR when it does not); for English the engine decides ok, and doubts from the semantic parser (LOW_CONFIDENCE, an unread role) are warnings that the returned IR may not show all of the code. On failure, apply the diagnostics and re-validate (get_code_fixes maps error codes to concrete fixes; get_command_docs lists per-command roles); once valid, the hyperscript goes in an _="..." attribute as is. This validate → repair loop is deterministic — no LLM in the checker. (The name predates 4.0, when compiling to JavaScript retired with the AOT compiler.)',
     inputSchema: {
       type: 'object',
       properties: {
@@ -43,7 +43,7 @@ export const compilationTools: Tool[] = [
   {
     name: 'translate_code',
     description:
-      'Translate hyperscript between any of 24 languages via full semantic parsing — deterministic grammar transformation (SVO/SOV/VSO word order), not LLM translation. Every result carries a `verification` report (the output scored against the source via score_fidelity): verification.faithful === true is the claim "this rendering is structurally exact", so present it alongside the translation when showing code to a user for review. A variable the target language reads as a pronoun or another value word (tl `ako` is `me`) comes back as a NAME_COLLISION warning with a rename: rename it in the source and translate again. A translation that would lose part of the script is REFUSED: ok is false, the diagnostic is LOSSY_TRANSLATION, `loss.lost` says what would be dropped, and the partial text is under `partial`, never `code` — do not present it as the translation. Higher fidelity than translate_hyperscript; preferred for production translations.',
+      'Translate hyperscript between any of 24 languages via full semantic parsing — deterministic grammar transformation (SVO/SOV/VSO word order), not LLM translation. Every result carries a `verification` report (the output scored against the source via score_fidelity): verification.faithful === true is the claim "this rendering is structurally exact", so present it alongside the translation when showing code to a user for review. A variable the target language reads as a pronoun or another value word (tl `ako` is `me`) comes back as a NAME_COLLISION warning with a rename: rename it in the source and translate again. A translation that would lose part of the script is REFUSED: ok is false, the diagnostic is LOSSY_TRANSLATION, `loss.lost` says what would be dropped, and the partial text is under `partial`, never `code` — do not present it as the translation. translate_hyperscript (deprecated, removed in 7.0) returns the same text without the verification or the warnings.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -52,48 +52,6 @@ export const compilationTools: Tool[] = [
         to: { type: 'string', description: 'Target language code' },
       },
       required: ['code', 'from', 'to'],
-    },
-  },
-  {
-    name: 'generate_tests',
-    description:
-      'Generate Playwright behavior tests from hyperscript. Extracts abstract operations and renders them as test assertions.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        code: { type: 'string', description: 'Natural language hyperscript' },
-        explicit: { type: 'string', description: 'Explicit syntax' },
-        semantic: { type: 'object', description: 'LLM JSON' },
-        language: { type: 'string', description: 'Language code' },
-        testName: { type: 'string', description: 'Custom test name' },
-        framework: {
-          type: 'string',
-          description: 'Test framework to target (default "playwright")',
-        },
-      },
-    },
-  },
-  {
-    name: 'generate_component',
-    description:
-      'Generate a React component from hyperscript. Maps semantic operations to React hooks and JSX, Vue 3 Composition API and templates, or Svelte 5 runes. Supports react (default), vue, and svelte frameworks.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        code: { type: 'string', description: 'Natural language hyperscript' },
-        explicit: { type: 'string', description: 'Explicit syntax' },
-        semantic: { type: 'object', description: 'LLM JSON' },
-        language: { type: 'string', description: 'Language code' },
-        componentName: { type: 'string', description: 'Custom component name' },
-        typescript: {
-          type: 'boolean',
-          description: 'TypeScript output (default true)',
-        },
-        framework: {
-          type: 'string',
-          description: 'Component framework to target: "react" (default), "vue", or "svelte"',
-        },
-      },
     },
   },
   {
@@ -226,37 +184,6 @@ export async function handleCompilationTool(
           code: args.code as string,
           from: args.from as string,
           to: args.to as string,
-        });
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          isError: !result.ok,
-        };
-      }
-
-      case 'generate_tests': {
-        const result = service.generateTests({
-          code: args.code as string | undefined,
-          explicit: args.explicit as string | undefined,
-          semantic: args.semantic as any,
-          language: args.language as string | undefined,
-          testName: args.testName as string | undefined,
-          framework: args.framework as string | undefined,
-        });
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          isError: !result.ok,
-        };
-      }
-
-      case 'generate_component': {
-        const result = service.generateComponent({
-          code: args.code as string | undefined,
-          explicit: args.explicit as string | undefined,
-          semantic: args.semantic as any,
-          language: args.language as string | undefined,
-          componentName: args.componentName as string | undefined,
-          typescript: args.typescript as boolean | undefined,
-          framework: args.framework as string | undefined,
         });
         return {
           content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],

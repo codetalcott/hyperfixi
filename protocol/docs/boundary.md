@@ -35,7 +35,7 @@ This document describes the boundary between the **LSE protocol layer** (this di
   this monorepo in v2.11.0 into the [lokascript-domains](https://github.com/codetalcott/lokascript-domains)
   repository and consumed here as an npm dependency; the former per-domain `@lokascript/domain-*` packages are
   deprecated on npm and point at the corresponding subpath.
-- `@lokascript/compilation-service` — generates React/Vue/Svelte components from LSE.
+- `@lokascript/compilation-service` — validates, translates, diffs and scores hyperscript; `generate()` renders LSE as an `<lse-intent>` element (its React, Vue and Svelte targets were removed in 6.0).
 - `@lokascript/mcp-server` — MCP tools (`lse_to_hyperscript`, `validate_lse`, `translate_lse`, ...) for LLM integration.
 
 **Depends on:** the protocol layer (logically — in practice, `@lokascript/intent` is an in-monorepo re-implementation of the protocol TypeScript reference parser, not a dependency on `@lokascript/explicit-syntax`).

@@ -87,13 +87,13 @@ Enable semantic parsing for natural language hyperscript and multilingual suppor
 
 ### Multilingual Options
 
-| Option           | Type                                               | Default | Description                             |
-| ---------------- | -------------------------------------------------- | ------- | --------------------------------------- |
-| `semantic`       | `boolean \| 'en' \| 'auto'`                        | `false` | Enable semantic parser                  |
-| `languages`      | `string[]`                                         | `[]`    | Explicit language codes to support      |
-| `region`         | `'western' \| 'east-asian' \| 'priority' \| 'all'` | auto    | Force a regional bundle                 |
-| `grammar`        | `boolean`                                          | `false` | Add `translateHyperscript()` to the API |
-| `extraLanguages` | `string[]`                                         | `[]`    | Languages to always include             |
+| Option           | Type                                                                            | Default | Description                             |
+| ---------------- | ------------------------------------------------------------------------------- | ------- | --------------------------------------- |
+| `semantic`       | `boolean \| 'en' \| 'auto'`                                                     | `false` | Enable semantic parser                  |
+| `languages`      | `string[]`                                                                      | `[]`    | Explicit language codes to support      |
+| `region`         | `'western' \| 'east-asian' \| 'slavic' \| 'south-asian' \| 'priority' \| 'all'` | auto    | Force a regional bundle                 |
+| `grammar`        | `boolean`                                                                       | `false` | Add `translateHyperscript()` to the API |
+| `extraLanguages` | `string[]`                                                                      | `[]`    | Languages to always include             |
 
 ### Supported Languages (24)
 
@@ -148,6 +148,8 @@ The plugin automatically selects the smallest bundle that covers all detected la
 | `languages: ['en', 'es']` | English + Spanish                                                |
 | `region: 'western'`       | en, es, pt, fr, de, it                                           |
 | `region: 'east-asian'`    | ja, zh, ko                                                       |
+| `region: 'slavic'`        | pl, ru, uk                                                       |
+| `region: 'south-asian'`   | hi, bn                                                           |
 | `region: 'priority'`      | 13 languages: en, es, pt, fr, de, it, ja, zh, ko, ar, tr, ru, hi |
 | `region: 'all'`           | All 24 languages                                                 |
 
@@ -226,7 +228,7 @@ hyperfixi({
   // Multilingual options (see "Multilingual & Semantic Parsing" section)
   semantic: false, // boolean | 'en' | 'auto'
   languages: [], // ['en', 'es', 'ja']
-  region: undefined, // 'western' | 'east-asian' | 'priority' | 'all'
+  region: undefined, // 'western' | 'east-asian' | 'slavic' | 'south-asian' | 'priority' | 'all'
   grammar: false, // Add translateHyperscript() to the API (implies semantic)
   extraLanguages: [], // Languages to always include
 });

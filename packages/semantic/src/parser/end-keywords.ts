@@ -1,4 +1,10 @@
 /**
+ * End words, defined: the one definition of an end word ({@link endWordKind}),
+ * the curated per-language surfaces it reads, and the place a word stands in.
+ * The readers that ask the parser's questions of one are in `end-words.ts`;
+ * this layer sits below the expression lexicon, which reads end words too (C3,
+ * END_WORD_READERS.md).
+ *
  * Curated per-language block-terminator surfaces.
  *
  * These sets are AUDITED for two collision classes and deliberately exclude
@@ -13,9 +19,12 @@
  * terminator; qu last is `qhipa`, not `tukuy`), so role captures and value
  * groups can treat it as structural residue unconditionally.
  *
- * Shared by the semantic parser's isEndKeyword and the pattern matcher's
- * role-value guards (pattern-matcher can't import semantic-parser — cycle).
+ * A language with no curated set (hi, it, ms, pl, ru, th, uk, vi, he) reads its
+ * profile's end words the same way: none of them is its positional `last`.
  */
+import type { LanguageToken } from '../types';
+import { tryGetProfile } from '../registry';
+
 const CURATED_END_KEYWORDS: Record<string, Set<string>> = {
   en: new Set(['end']),
   // 終了 is deliberately ABSENT: it is the i18n dict's `exit` emission
@@ -48,18 +57,98 @@ const CURATED_END_KEYWORDS: Record<string, Set<string>> = {
   sw: new Set(['mwisho', 'maliza', 'tamati']),
 };
 
-/** The curated set for a language, or undefined for profile-fallback languages. */
-export function curatedEndKeywordSet(language: string): Set<string> | undefined {
-  return CURATED_END_KEYWORDS[language];
+const NO_WORDS: ReadonlySet<string> = new Set();
+const profileEndWordsMemo = new WeakMap<object, ReadonlySet<string>>();
+
+/**
+ * The profile's own words for `end` (primary and alternatives), lowercased.
+ * Memoized per profile: endWordKind runs for nearly every token the parser
+ * reads.
+ */
+function profileEndWords(language: string): ReadonlySet<string> {
+  const profile = tryGetProfile(language);
+  if (!profile) return NO_WORDS;
+  let words = profileEndWordsMemo.get(profile);
+  if (!words) {
+    const entry = profile.keywords?.end;
+    words = new Set(
+      (entry ? [entry.primary, ...(entry.alternatives ?? [])] : [])
+        .filter((word): word is string => !!word)
+        .map(word => word.toLowerCase())
+    );
+    profileEndWordsMemo.set(profile, words);
+  }
+  return words;
 }
 
 /**
- * True when `value` is one of the language's CURATED terminator surfaces
- * (audited to never be positional `last` — see the map's doc comment). Does
- * NOT include the universal English-literal `end` acceptance or the
- * profile-keyword fallback; callers wanting full terminator detection use the
- * semantic parser's isEndKeyword.
+ * What kind of end word a token is, if it is one:
+ *
+ * - `'curated'`, read by its value and never the positional `last`: the
+ *   English literal `end` (a translation passes it through, and a masked `js
+ *   … end` restores it in every language), a word of the language's curated
+ *   set, or, where no set is curated, one of the profile's words for `end`;
+ * - `'end'`: any other keyword the tokenizer normalized to `end`, or a profile
+ *   word the curated set leaves out (bn `শেষ`, which is also the positional
+ *   `last`). Before a selector it is that `last` (`শেষ <li/>`): see
+ *   isEndWordAt.
+ *
+ * The one definition (C3): every reader asks it, through the readings in
+ * end-words.ts. A string keeps its quotes, so `"end"` is none.
  */
-export function isCuratedEndKeyword(value: string, language: string): boolean {
-  return CURATED_END_KEYWORDS[language]?.has(value.toLowerCase()) ?? false;
+export function endWordKind(token: LanguageToken, language: string): EndWordKind | null {
+  const value = token.value.toLowerCase();
+  if (value === 'end') return 'curated';
+  const profileWords = profileEndWords(language);
+  const curated = CURATED_END_KEYWORDS[language];
+  if (curated ? curated.has(value) : profileWords.has(value)) return 'curated';
+  if (token.kind === 'keyword' && (token.normalized ?? token.value).toLowerCase() === 'end') {
+    return 'end';
+  }
+  return profileWords.has(value) ? 'end' : null;
+}
+
+export type EndWordKind = 'curated' | 'end';
+
+/**
+ * An end word of either kind, wherever it stands. Read before a selector too:
+ * the expression lexicon's join and sense words, and the block parser, which
+ * splits a bn program at `শেষ` before the next handler's `.close থেকে ক্লিকে`.
+ */
+export function isEndWord(token: LanguageToken, language: string): boolean {
+  return endWordKind(token, language) !== null;
+}
+
+/**
+ * Every surface an end word has by value in a language (`end`, the curated
+ * set, the profile's words): the block parser's cheap pre-guard, which looks
+ * for one in the raw input before it tokenizes.
+ */
+export function endWordSurfaces(language: string): ReadonlySet<string> {
+  return new Set(['end', ...(CURATED_END_KEYWORDS[language] ?? []), ...profileEndWords(language)]);
+}
+
+/**
+ * Where an end word stands: the two tokens either side of it. `beforePrev`
+ * says whether `prev` is itself a value (a verb's or a marker's), and
+ * `afterNext` whether `next` is the end word's own marker.
+ */
+export interface EndWordPlace {
+  readonly prev?: LanguageToken | undefined;
+  readonly beforePrev?: LanguageToken | undefined;
+  /** The token before `beforePrev`. */
+  readonly third?: LanguageToken | undefined;
+  readonly next?: LanguageToken | undefined;
+  readonly afterNext?: LanguageToken | undefined;
+}
+
+/** The place of the token at `i` of `tokens`. */
+export function endWordPlace(tokens: readonly LanguageToken[], i: number): EndWordPlace {
+  return {
+    prev: tokens[i - 1],
+    beforePrev: tokens[i - 2],
+    third: tokens[i - 3],
+    next: tokens[i + 1],
+    afterNext: tokens[i + 2],
+  };
 }

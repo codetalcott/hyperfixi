@@ -20,21 +20,19 @@ import { createCommandNode, createCompoundNode, createConditionalNode } from '..
 import { tokenize as tokenizeInternal, TokenStreamImpl } from '../tokenizers';
 import { tryGetProfile } from '../registry';
 import { getSchema } from '../generators/command-schemas';
-import { endWordIsValue, endWordPlace } from './utils/expression-lexicon';
 import { patternMatcher } from './pattern-matcher';
 import { CONDITION_PREDICATES, copulaHoldsCondition } from './value-reading';
+import { isElseKeyword, isIfKeyword, isThenKeyword, isUnlessKeyword } from './clause-keywords';
 import {
-  isBlockEndToken,
-  isElseKeyword,
-  isEndKeyword,
-  isIfKeyword,
+  closesBlockAt,
+  endsClauseAt,
+  endWordPlace,
+  isAtEndOfNoun,
+  isCuratedEndWord,
   isThenAt,
-  isThenKeyword,
-  isUnlessKeyword,
-} from './clause-keywords';
+} from './end-words';
 import { consumeJsBlock, consumeVerbFinalJsBlock } from './js-block';
 import { type ParserState } from './parser-state';
-import { isAtEndPositionNoun } from '../patterns/put';
 import { joinTokenText } from './value-from-tokens';
 import {
   tryAttachTrailingDuration,
@@ -226,32 +224,12 @@ export function parseBodyWithClauses(
       (current.kind === 'keyword' &&
         isThenAt(current, endWordPlace(tokens.tokens, tokens.position()), language));
 
-    // Check if this is an 'end' keyword (terminates block). The English
-    // positional-put phrase `at end of <target>` contains the literal word
-    // `end` — when the pending clause ends with `at` and the next token is
-    // `of`, this `end` is the position noun, not a block terminator
-    // (`put it at end of body`, make-toast-element). The sandwich check is
-    // value-based and language-safe: no other language's end keyword sits
-    // between literal `at`/`of` tokens.
-    const prevClauseToken = currentClauseTokens[currentClauseTokens.length - 1];
-    const followingToken = tokens.peek(1);
-    const beforePrevClauseToken = currentClauseTokens[currentClauseTokens.length - 2];
-    const isPositionalEndNoun =
-      (followingToken?.value.toLowerCase() === 'of' &&
-        (prevClauseToken?.value.toLowerCase() === 'at' ||
-          // `at the end of`, which upstream reads too.
-          (prevClauseToken?.value.toLowerCase() === 'the' &&
-            beforePrevClauseToken?.value.toLowerCase() === 'at'))) ||
-      // Per-language `at end of` phrase (zh `在 结束 的`, id `di akhir dari`, …):
-      // the `end` noun tokenizes as a keyword in some languages and would
-      // otherwise chop make-toast's trailing `put it at end of body` clause.
-      isAtEndPositionNoun(language, current.value, prevClauseToken?.value, followingToken?.value);
-    const isEnd =
-      current.kind === 'keyword' &&
-      isEndKeyword(current.value, language) &&
-      !isPositionalEndNoun &&
-      // An end word where a value stands is a variable spelled like it (C3).
-      !endWordIsValue(endWordPlace(tokens.tokens, tokens.position()), language);
+    // Check if this is an 'end' keyword (terminates block): not the noun of
+    // `at end of <target>` (`put it at end of body`, make-toast-element; zh
+    // `在 结束 的`, id `di akhir dari`), which is a position, and not a variable
+    // spelled like it where a value stands (C3).
+    const closesBlock = closesBlockAt(tokens.tokens, tokens.position(), language);
+    const isEnd = closesBlock && current.kind === 'keyword' && isCuratedEndWord(current, language);
 
     // Depth-aware termination. An `end` that closes a NESTED block accumulated
     // mid-clause must not terminate the whole body. A nested `if`/`unless`/
@@ -278,14 +256,10 @@ export function parseBodyWithClauses(
     // every opener in the pending clause is a loop — an open `if` or `unless`
     // keeps the block-content reading, which its own fold reassembles.
     //
-    // bn's শেষ is `end` AND the positional `last`, so isEndKeyword cannot list
+    // bn's শেষ is `end` AND the positional `last`, so no curated set can list
     // it and it never terminates a body; it can still close an open loop, by
     // the conditional fold's test (a keyword normalized `end`, not before a
     // selector). closeLoopAtEnd declines unless a loop is open.
-    const closesBlock =
-      isEnd ||
-      (!isPositionalEndNoun &&
-        isBlockEndToken(current, endWordPlace(tokens.tokens, tokens.position()), language));
     // A `while` no `repeat` claimed, last in a loop, is that loop's bottom
     // test (`repeat … while x < 3 end`): the `end` is the loop's. An SOV
     // while-phrase is claimed by the `repeat` verb after it before any `end`.
@@ -398,11 +372,7 @@ export function parseBodyWithClauses(
       while (!tokens.isAtEnd()) {
         const t = tokens.peek();
         if (!t) break;
-        const tIsBoundary =
-          t.kind === 'conjunction' ||
-          (t.kind === 'keyword' &&
-            (isThenKeyword(t.value, language) || isEndKeyword(t.value, language)));
-        if (tIsBoundary) break;
+        if (endsClauseAt(tokens.tokens, tokens.position(), language)) break;
         trailingTokens.push(t);
         tokens.advance();
       }
@@ -1063,31 +1033,28 @@ export function parseBodyWithGrammarPatterns(
     // parseBodyWithClauses applies, now mirrored on this fused-body path so a
     // make-event's trailing at-end put (make-toast) isn't chopped.
     //
-    // bn's শেষ (`end` AND the positional `last`) is no isEndKeyword; it closes
+    // bn's শেষ (`end` AND the positional `last`) is no curated end word; it closes
     // an open loop all the same, by the conditional fold's test — see the
     // matching note in parseBodyWithClauses.
     if (
       current &&
       openLoops() > 0 &&
-      !isEndKeyword(current.value, language) &&
-      isBlockEndToken(current, endWordPlace(tokens.tokens, tokens.position()), language) &&
-      !isAtEndPositionNoun(language, current.value, tokens.peek(-1)?.value, tokens.peek(1)?.value)
+      !isCuratedEndWord(current, language) &&
+      closesBlockAt(tokens.tokens, tokens.position(), language)
     ) {
       flushClause();
       commands.push(LOOP_CLOSE);
       tokens.advance();
       continue;
     }
-    if (current && isEndKeyword(current.value, language)) {
-      const prevTok = tokens.peek(-1);
-      const nextTok = tokens.peek(1);
-      const isPositionalEnd = isAtEndPositionNoun(
-        language,
-        current.value,
-        prevTok?.value,
-        nextTok?.value
-      );
-      if (!isPositionalEnd) {
+    // A named exception to closesBlockAt (C3): this `end` does not ask whether
+    // it is a value. Asked, endWordIsValue reads an end word after a marker as
+    // the marker's value, and it `per n in arr impostare in x a fine` (for n
+    // in arr set x to a end) writes a variable `a` spelled like its marker
+    // `a`: the loop lost its `end`, and the commands after it ran inside it.
+    if (current && isCuratedEndWord(current, language)) {
+      const place = endWordPlace(tokens.tokens, tokens.position());
+      if (!isAtEndOfNoun(current, place, language)) {
         flushClause();
         if (openLoops() > 0) {
           // This `end` closes an earlier loop head — mark it and keep walking.
@@ -1122,6 +1089,23 @@ export function parseBodyWithGrammarPatterns(
     // juxtaposed `<cmd> if` mid-clause is untouched. tryParseConditionalBlock
     // folds `if` only and returns null without consuming when the head isn't a
     // usable conditional, so a non-`if` clause is byte-identical to before.
+    // A `js(…) … end` block at a clause start is raw JavaScript, read whole, as
+    // parseBodyWithClauses reads it. Without it a fused handler's tail ran the
+    // generated `js` pattern, which took `(t)` as the value and left the body to the
+    // command patterns: es `al clic registrar 1 entonces js (t) window.x = t fin` read
+    // `window.x = t` as a `set` (bn/es/it/ko/pl/ru/th/tl/uk). Returns null without
+    // consuming when no block starts here.
+    if (current && !clauseHadMatch && skippedClauseTokens.length === 0) {
+      const jsNode =
+        consumeJsBlock(tokens, language, state.positionSource) ??
+        consumeVerbFinalJsBlock(tokens, language, state.positionSource);
+      if (jsNode) {
+        commands.push(jsNode);
+        clauseHadMatch = true;
+        continue;
+      }
+    }
+
     if (
       current &&
       !clauseHadMatch &&
@@ -1433,7 +1417,7 @@ export function tryParseConditionalBlock(
       tokens.advance();
       continue;
     }
-    if (isBlockEndToken(t, endWordPlace(tokens.tokens, tokens.position()), language)) {
+    if (closesBlockAt(tokens.tokens, tokens.position(), language)) {
       if (depth === 0) {
         tokens.advance(); // consume the terminating `end`
         closed = true;
@@ -1471,7 +1455,7 @@ export function tryParseConditionalBlock(
     // stay visible to the command-start test below.
     if (i > 0 && (isIfKeyword(tv, language) || isUnlessKeyword(tv, language))) {
       bodyDepth++;
-    } else if (isBlockEndToken(t, endWordPlace(all, blockStart + i), language)) bodyDepth--;
+    } else if (closesBlockAt(all, blockStart + i, language)) bodyDepth--;
     if (bodyDepth === 0 && isThenAt(t, endWordPlace(all, blockStart + i), language)) {
       sawThen = true;
       i++; // skip the `then`
@@ -1560,7 +1544,7 @@ export function tryParseConditionalBlock(
   for (; i < blockTokens.length; i++) {
     const t = blockTokens[i];
     if (opensNestedBlock(t, wordBefore(blockTokens, i), language)) branchDepth++;
-    else if (isBlockEndToken(t, endWordPlace(all, blockStart + i), language)) branchDepth--;
+    else if (closesBlockAt(all, blockStart + i, language)) branchDepth--;
     if (branchDepth === 0 && !inElse && isElseKeyword(t.value, language)) {
       inElse = true;
       continue; // skip the `else`

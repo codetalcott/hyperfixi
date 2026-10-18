@@ -2,11 +2,25 @@
  * Main API for creating multilingual DSLs
  */
 
-import type { SemanticNode, LanguageTokenizer, LanguagePattern } from '../core/types';
+import type {
+  SemanticNode,
+  LanguageToken,
+  LanguageTokenizer,
+  LanguagePattern,
+  PatternMatchResult,
+  RolePatternToken,
+  TokenStream,
+} from '../core/types';
+import { extractRoleValue } from '../core/types';
 import type { CommandSchema } from '../schema';
-import { PatternMatcher, type PatternMatcherProfile } from '../core/pattern-matching';
-import { generatePattern, type PatternGenLanguageProfile } from '../generation/pattern-generator';
-import { createDomainRenderer, type DomainRenderFn } from '../generation/renderer';
+import { MatchSkeleton, createStockReader, stockConfidenceModel } from '../core/matching';
+import type { PatternGenLanguageProfile } from '../generation/profile';
+import type { DomainRenderFn } from '../generation/renderer';
+import {
+  createSchemaPatternGenerator,
+  type SchemaPatternProfile,
+} from '../generation/schema-patterns';
+import { renderPattern, selectRenderPattern } from '../generation/pattern-render';
 import { GrammarTransformer, type LanguageProfile as GrammarProfile } from '../grammar';
 import {
   type Dictionary,
@@ -16,6 +30,7 @@ import {
   InMemoryProfileProvider,
 } from '../interfaces';
 import { isExplicitSyntax, parseExplicit } from '../ir';
+import { readingDifference } from './reading';
 import type { SchemaLookup } from '../ir';
 
 /**
@@ -168,6 +183,19 @@ export interface DSLConfig {
 
   /** Custom patterns to supplement generated ones */
   readonly customPatterns?: LanguagePattern[];
+
+  /**
+   * What reads and writes the DSL. `'core'`, the only engine (and the
+   * default): the core semantic's hyperscript parser runs — patterns from
+   * `createSchemaPatternGenerator` (positions descending, as a domain's schemas
+   * read), matched by `MatchSkeleton` with the stock reader and confidence
+   * model, and rendered through those patterns where the domain's own renderer
+   * declines. The option stays so a config written for framework 4.7–4.8
+   * (`engine: 'core'`) builds unchanged; `'classic'`, framework's first
+   * generator and matcher, was removed in 5.0 (domains rethink Phase 6) and
+   * throws.
+   */
+  readonly engine?: 'core';
 }
 
 /**
@@ -177,6 +205,8 @@ export interface ValidationResult {
   readonly valid: boolean;
   readonly node?: SemanticNode;
   readonly errors?: string[];
+  /** Set when the input was refused for a known reason: `'unread-input'` (`UnreadInputError`). */
+  readonly errorCode?: string;
 }
 
 /**
@@ -186,11 +216,68 @@ export interface CompileResult {
   readonly ok: boolean;
   readonly code?: string;
   readonly errors?: string[];
+  /** Set when the input was refused for a known reason: `'unread-input'` (`UnreadInputError`). */
+  readonly errorCode?: string;
   readonly node?: SemanticNode;
   readonly metadata?: {
     readonly parser: string;
     readonly confidence: number;
   };
+}
+
+/**
+ * Thrown by `parse` (and so `compile`, `validate`, `translate`) when the input reads as a command
+ * only by leaving some of it unread: `select name from users banana` is not `select name from users`.
+ * `reading` is what the longest such match read, `unread` the text after it. `hint`, when there is
+ * one, says how the input might read: where a bare word read as a value is followed by another, the
+ * two may be one value written without quotes (todo `add buy milk to groceries`).
+ */
+export class UnreadInputError extends Error {
+  readonly code = 'unread-input';
+
+  constructor(
+    readonly input: string,
+    readonly language: string,
+    readonly reading: SemanticNode,
+    readonly unread: string,
+    readonly hint?: string
+  ) {
+    super(
+      `"${input}" (${language}) reads as ${reading.action} only by leaving "${unread}" unread` +
+        (hint ? `; ${hint}` : '')
+    );
+    this.name = 'UnreadInputError';
+  }
+}
+
+/** Options for `translate`. */
+export interface TranslateOptions {
+  /**
+   * `'allow'` returns a translation that does not read back as the source instead of throwing
+   * `TranslationReadBackError`, as semantic's `translate` does with the same option.
+   */
+  readonly lossy?: 'allow' | 'refuse';
+}
+
+/**
+ * Thrown by `translate` when its output, read in the target language, is not the source command:
+ * it does not read at all, or reads as another command, or with a role lost or changed. `partial` is
+ * what `translate` would have returned; `reading` what it reads as (null when it does not read).
+ */
+export class TranslationReadBackError extends Error {
+  readonly code = 'translation-does-not-read-back';
+
+  constructor(
+    readonly partial: string,
+    readonly from: string,
+    readonly to: string,
+    readonly source: SemanticNode,
+    readonly reading: SemanticNode | null,
+    readonly why: string
+  ) {
+    super(`translation ${from} → ${to} does not read back as the source (${why}): "${partial}"`);
+    this.name = 'TranslationReadBackError';
+  }
 }
 
 /**
@@ -208,7 +295,17 @@ export interface MultilingualDSL {
   compile(input: string, language: string): CompileResult;
 
   // Translation
-  translate(input: string, fromLanguage: string, toLanguage: string): string;
+  /**
+   * Parse in one language, render in another. The output must read back as the source command
+   * (the same action and role values, or the same compiled code); when it does not,
+   * `TranslationReadBackError`, unless `{ lossy: 'allow' }`.
+   */
+  translate(
+    input: string,
+    fromLanguage: string,
+    toLanguage: string,
+    options?: TranslateOptions
+  ): string;
 
   /**
    * Render a parsed node back to natural language.
@@ -239,7 +336,11 @@ class DSLRegistry {
    *   subset of the DSL's languages. A built-in command missing a keyword stays
    *   an error, since that is a domain-authoring mistake.
    */
-  constructor(config: DSLConfig, partiallyTranslatedActions: ReadonlySet<string> = new Set()) {
+  constructor(
+    config: DSLConfig,
+    partiallyTranslatedActions: ReadonlySet<string>,
+    private readonly generate: DSLEngine['generate']
+  ) {
     this.schemas = config.schemas;
     this.partiallyTranslatedActions = partiallyTranslatedActions;
 
@@ -262,7 +363,7 @@ class DSLRegistry {
       ) {
         continue; // this extension command was not translated into this language
       }
-      const pattern = generatePattern(schema, lang.patternProfile);
+      const pattern = this.generate(schema, lang.patternProfile);
       patterns.push(pattern);
     }
 
@@ -287,7 +388,7 @@ class DSLRegistry {
  */
 class MultilingualDSLImpl implements MultilingualDSL {
   private registry: DSLRegistry;
-  private matcher: PatternMatcher;
+  private match: DSLEngine['match'];
   private transformer: GrammarTransformer;
   private profileProvider: ProfileProvider;
   private codeGenerator?: CodeGenerator;
@@ -300,10 +401,11 @@ class MultilingualDSLImpl implements MultilingualDSL {
     config: DSLConfig,
     registry: DSLRegistry,
     transformer: GrammarTransformer,
-    profileProvider: ProfileProvider
+    profileProvider: ProfileProvider,
+    engine: DSLEngine
   ) {
     this.registry = registry;
-    this.matcher = new PatternMatcher();
+    this.match = engine.match;
     this.transformer = transformer;
     this.profileProvider = profileProvider;
     if (config.codeGenerator) {
@@ -321,10 +423,7 @@ class MultilingualDSLImpl implements MultilingualDSL {
     // Last resort for render(): covers extension commands with no custom
     // renderer, and any built-in action the domain renderer declines. Lazy, so
     // a DSL that never renders pays nothing.
-    this.schemaFallbackRenderer = createDomainRenderer({
-      schemas: config.schemas,
-      profiles: config.languages.map(l => l.patternProfile),
-    });
+    this.schemaFallbackRenderer = engine.fallbackRenderer(config, registry);
 
     // Build SchemaLookup from config schemas for explicit syntax validation
     const schemaMap = new Map(config.schemas.map(s => [s.action, s]));
@@ -361,33 +460,85 @@ class MultilingualDSLImpl implements MultilingualDSL {
     // Get patterns for language
     const patterns = this.registry.getPatterns(language);
 
-    // Create profile for matcher
-    const profile: PatternMatcherProfile = {
-      code: language,
-    };
-
-    // Try to match each pattern
+    // Every pattern is tried, and only a match that reads the WHOLE input counts; of those, the
+    // highest priority wins, then the highest confidence, then the earliest pattern. The first match
+    // used to win however much it read, so a trailing word was dropped without a word (the domain
+    // gate measured 1,744 of 1,744 such inputs accepted) and an earlier, shorter pattern could
+    // shadow the one that reads everything.
+    const total = tokens.tokens.length;
+    let best: PatternMatchResult | null = null;
+    let longestPartial: PatternMatchResult | null = null;
     for (const pattern of patterns) {
-      const match = this.matcher.matchPattern(tokens, pattern, profile);
-      if (match) {
-        // Build semantic node
-        const node: SemanticNode = {
-          kind: 'command',
-          action: pattern.command,
-          roles: match.captured,
-          metadata: {
-            sourceLanguage: language,
-            sourceText: input,
-            patternId: pattern.id,
-            confidence: match.confidence,
-          },
-        };
-
-        return { node, confidence: match.confidence };
+      const mark = tokens.mark();
+      const match = this.match(tokens, pattern, language);
+      tokens.reset(mark);
+      if (!match) continue;
+      if (match.consumedTokens < total) {
+        if (!longestPartial || match.consumedTokens > longestPartial.consumedTokens)
+          longestPartial = match;
+        continue;
       }
+      if (
+        !best ||
+        match.pattern.priority > best.pattern.priority ||
+        (match.pattern.priority === best.pattern.priority &&
+          match.confidence > best.confidence + 0.001)
+      )
+        best = match;
     }
 
+    if (best) {
+      const node = this.nodeOf(best, input, language);
+      return { node, confidence: best.confidence };
+    }
+    if (longestPartial) {
+      const unread = tokens.tokens
+        .slice(longestPartial.consumedTokens)
+        .map(t => t.value)
+        .join(' ');
+      const hint = this.quoteHint(longestPartial, tokens.tokens);
+      throw new UnreadInputError(
+        input,
+        language,
+        this.nodeOf(longestPartial, input, language),
+        unread,
+        ...(hint ? [hint] : [])
+      );
+    }
     throw new Error(`No pattern matched for input: ${input}`);
+  }
+
+  /**
+   * `if "buy milk" is one value, quote it`, where the last token a match read is a bare word it took
+   * as a role's value (a role with no word list) and the first it left is a bare word too.
+   */
+  private quoteHint(
+    match: PatternMatchResult,
+    tokens: readonly LanguageToken[]
+  ): string | undefined {
+    const last = tokens[match.consumedTokens - 1];
+    const next = tokens[match.consumedTokens];
+    if (last?.kind !== 'identifier' || next?.kind !== 'identifier') return undefined;
+    const schema = this.schemaLookup.getSchema(match.pattern.command);
+    const role = [...match.captured].find(
+      ([, v]) => (v as { raw?: unknown }).raw === last.value
+    )?.[0];
+    if (!role || schema?.roles.find(r => r.role === role)?.words) return undefined;
+    return `if "${last.value} ${next.value}" is one value, quote it`;
+  }
+
+  private nodeOf(match: PatternMatchResult, input: string, language: string): SemanticNode {
+    return {
+      kind: 'command',
+      action: match.pattern.command,
+      roles: match.captured,
+      metadata: {
+        sourceLanguage: language,
+        sourceText: input,
+        patternId: match.pattern.id,
+        confidence: match.confidence,
+      },
+    };
   }
 
   validate(input: string, language: string): ValidationResult {
@@ -401,11 +552,17 @@ class MultilingualDSLImpl implements MultilingualDSL {
       return {
         valid: false,
         errors: [error instanceof Error ? error.message : String(error)],
+        ...(error instanceof UnreadInputError ? { errorCode: error.code } : {}),
       };
     }
   }
 
-  translate(input: string, fromLanguage: string, toLanguage: string): string {
+  translate(
+    input: string,
+    fromLanguage: string,
+    toLanguage: string,
+    options?: TranslateOptions
+  ): string {
     // Explicit syntax is language-agnostic — return unchanged
     if (isExplicitSyntax(input)) return input;
 
@@ -432,12 +589,18 @@ class MultilingualDSLImpl implements MultilingualDSL {
     const rendered = this.registry.getSupportedLanguages().includes(toLanguage)
       ? this.render(node, toLanguage)
       : null;
-    if (rendered != null) return rendered;
+    if (rendered != null) return this.readsBack(rendered, node, fromLanguage, toLanguage, options);
 
     // render() covered nothing for this action/language pair; fall back to the
     // grammar transformer when profiles exist, otherwise name both remedies.
     if (this.hasGrammarProfile(fromLanguage) && this.hasGrammarProfile(toLanguage)) {
-      return this.transformer.transform(input, fromLanguage, toLanguage);
+      return this.readsBack(
+        this.transformer.transform(input, fromLanguage, toLanguage),
+        node,
+        fromLanguage,
+        toLanguage,
+        options
+      );
     }
     throw new Error(
       `translate() could not render action "${node.action}" in language "${toLanguage}": no ` +
@@ -446,6 +609,40 @@ class MultilingualDSLImpl implements MultilingualDSL {
         `the DSL's languages/renderer, or set 'grammarProfile' on its LanguageConfig in ` +
         `createMultilingualDSL() (parse/validate/compile do not need it).`
     );
+  }
+
+  /**
+   * `rendered`, read in `to`, must be `source`: the same action and role values, or, when the DSL
+   * compiles, the same code (a parser may keep a translated word its generator normalizes: bdd ja
+   * `表示` is `visible`). The rule is the domain gate's (lokascript-domains). A translation used to be
+   * returned whatever it read as: ja/ko bdd `select` dropped its value, and nothing said so.
+   */
+  private readsBack(
+    rendered: string,
+    source: SemanticNode,
+    from: string,
+    to: string,
+    options?: TranslateOptions
+  ): string {
+    if (options?.lossy === 'allow') return rendered;
+    let back: SemanticNode;
+    try {
+      back = this.parseWithConfidence(rendered, to).node;
+    } catch (error) {
+      const why = error instanceof Error ? error.message : String(error);
+      throw new TranslationReadBackError(rendered, from, to, source, null, why);
+    }
+    const difference = readingDifference(source, back);
+    if (!difference) return rendered;
+    if (this.codeGenerator) {
+      try {
+        if (this.codeGenerator.generate(back) === this.codeGenerator.generate(source))
+          return rendered;
+      } catch {
+        // a generator that cannot compile one of them does not vouch for either
+      }
+    }
+    throw new TranslationReadBackError(rendered, from, to, source, back, difference);
   }
 
   private hasGrammarProfile(language: string): boolean {
@@ -477,6 +674,7 @@ class MultilingualDSLImpl implements MultilingualDSL {
       return {
         ok: false,
         errors: [error instanceof Error ? error.message : String(error)],
+        ...(error instanceof UnreadInputError ? { errorCode: error.code } : {}),
       };
     }
   }
@@ -678,6 +876,100 @@ export function createMultilingualDSL(config: DSLConfig): MultilingualDSL {
   });
 
   // Create registry and implementation
-  const registry = new DSLRegistry(effectiveConfig, extensionActions);
-  return new MultilingualDSLImpl(effectiveConfig, registry, transformer, profileProvider);
+  const engine = engineFor(config);
+  const registry = new DSLRegistry(effectiveConfig, extensionActions, engine.generate);
+  return new MultilingualDSLImpl(effectiveConfig, registry, transformer, profileProvider, engine);
+}
+
+// =============================================================================
+// The engines: how a DSL turns its schemas into patterns and reads with them
+// =============================================================================
+
+/**
+ * What reads and writes a DSL: how each command's pattern is generated, how
+ * input is matched against it, and the renderer `render()` falls back to.
+ * Parsing's whole-input rule, refusals, translation's read-back, compile,
+ * explicit syntax and extensions sit above it.
+ */
+interface DSLEngine {
+  generate(schema: CommandSchema, profile: PatternGenLanguageProfile): LanguagePattern;
+  match(tokens: TokenStream, pattern: LanguagePattern, language: string): PatternMatchResult | null;
+  fallbackRenderer(config: DSLConfig, registry: DSLRegistry): DomainRenderFn;
+}
+
+/**
+ * The engine `config.engine` names: the core, the only one since 5.0. An
+ * unknown name throws rather than reading with the default, and `'classic'`
+ * says what replaced it.
+ */
+function engineFor(config: DSLConfig): DSLEngine {
+  const name: string = config.engine ?? 'core';
+  if (name === 'core') return coreEngine();
+  if (name === 'classic') {
+    throw new Error(
+      'The "classic" DSL engine was removed in @lokascript/framework 5.0. ' +
+        'Omit `engine` (or pass "core"): every domain reads on the core.'
+    );
+  }
+  throw new Error(`Unknown DSL engine "${name}" (expected "core")`);
+}
+
+/**
+ * A domain profile as the schema-pattern generator reads it: every role marker
+ * with a side (the word order's default where the profile names none).
+ */
+function schemaProfileOf(profile: PatternGenLanguageProfile): SchemaPatternProfile {
+  const side = profile.wordOrder === 'SOV' ? 'after' : 'before';
+  const roleMarkers: Record<string, NonNullable<SchemaPatternProfile['roleMarkers'][string]>> = {};
+  for (const [role, marker] of Object.entries(profile.roleMarkers ?? {})) {
+    roleMarkers[role] = {
+      primary: marker.primary,
+      ...(marker.alternatives ? { alternatives: marker.alternatives } : {}),
+      position: marker.position ?? side,
+    };
+  }
+  return {
+    code: profile.code,
+    wordOrder: profile.wordOrder,
+    keywords: profile.keywords,
+    roleMarkers,
+  };
+}
+
+/**
+ * The core (domains rethink Phase 4, `engine: 'core'`): the schema-pattern
+ * generator, the skeleton, the stock reader.
+ */
+function coreEngine(): DSLEngine {
+  const generator = createSchemaPatternGenerator({ positionOrder: 'descending' });
+  const matcher = new MatchSkeleton(createStockReader(), stockConfidenceModel);
+  return {
+    generate: (schema, profile) => generator.generatePattern(schema, schemaProfileOf(profile)),
+    match: (tokens, pattern) => matcher.matchPattern(tokens, pattern),
+    fallbackRenderer: (config, registry) => {
+      const schemas = new Map(config.schemas.map(s => [s.action, s]));
+      const hooks = {
+        hasRealRole: (node: SemanticNode, role: string) => {
+          const value = node.roles.get(role) as { implicit?: unknown } | undefined;
+          return value !== undefined && value.implicit !== true;
+        },
+        writeRole: (token: RolePatternToken, node: SemanticNode) => {
+          if (!node.roles.has(token.role)) return null;
+          let value = extractRoleValue(node, token.role);
+          const spec = schemas.get(node.action)?.roles.find(r => r.role === token.role);
+          if (spec?.quoteMultiword && /\s/.test(value) && !/^(["']).*\1$/.test(value)) {
+            value = `"${value}"`;
+          }
+          return value || null;
+        },
+      };
+      return (node, language) => {
+        const patterns = registry.getPatterns(language).filter(p => p.command === node.action);
+        const pattern = selectRenderPattern(node, patterns, hooks);
+        if (!pattern) return null;
+        const text = renderPattern(node, pattern, hooks).join(' ');
+        return text || null;
+      };
+    },
+  };
 }

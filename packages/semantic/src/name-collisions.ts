@@ -11,7 +11,7 @@
  * language. `findNameCollisions` finds them in a program: the variables its
  * parse reads that collide in its own language, where each is read as the
  * variable, and a name to rename it to. The language server reports them as
- * warnings with a rename, and so does MCP `validate_hyperscript`
+ * warnings with a rename, and so does MCP `validate_and_compile`
  * (`NAME_COLLISION`).
  */
 import { tokenize } from './tokenizers';

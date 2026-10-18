@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import { createDomainRegistry } from '../tools/domain-registry-setup.js';
-import { isMultiStepBDD, handleBDDMultiStep } from '../tools/bdd-extras.js';
 import {
   isMultiLineBehaviorSpec,
   handleBehaviorSpecMultiLine,
@@ -11,34 +10,23 @@ import {
 // =============================================================================
 
 describe('DomainRegistry Integration', () => {
-  it('registers all 9 domains', () => {
+  it('registers 7 domains: bdd is gone, behaviorspec reads its forms (domains 5.0.0)', () => {
     const registry = createDomainRegistry();
     const names = registry.getDomainNames().sort();
-    expect(names).toEqual([
-      'bdd',
-      'behaviorspec',
-      'flow',
-      'jsx',
-      'learn',
-      'llm',
-      'sql',
-      'todo',
-      'voice',
-    ]);
+    expect(names).toEqual(['behaviorspec', 'flow', 'learn', 'llm', 'sql', 'todo', 'voice']);
   });
 
-  it('generates 36 tool definitions (4 per domain)', () => {
+  it('generates 28 tool definitions (4 per domain)', () => {
     const registry = createDomainRegistry();
     const tools = registry.getToolDefinitions();
-    expect(tools).toHaveLength(36);
+    expect(tools).toHaveLength(28);
 
     const toolNames = tools.map(t => t.name).sort();
     expect(toolNames).toContain('parse_sql');
     expect(toolNames).toContain('compile_sql');
     expect(toolNames).toContain('validate_sql');
     expect(toolNames).toContain('translate_sql');
-    expect(toolNames).toContain('parse_bdd');
-    expect(toolNames).toContain('parse_jsx');
+    expect(toolNames).not.toContain('parse_bdd');
     expect(toolNames).toContain('parse_behaviorspec');
     expect(toolNames).toContain('parse_learn');
   });
@@ -64,11 +52,8 @@ describe('DomainRegistry Integration', () => {
     const parseSql = tools.find(t => t.name === 'parse_sql')!;
     expect(parseSql.inputSchema.required).toContain('query');
 
-    const parseBdd = tools.find(t => t.name === 'parse_bdd')!;
-    expect(parseBdd.inputSchema.required).toContain('scenario');
-
-    const parseJsx = tools.find(t => t.name === 'parse_jsx')!;
-    expect(parseJsx.inputSchema.required).toContain('code');
+    const parseFlow = tools.find(t => t.name === 'parse_flow')!;
+    expect(parseFlow.inputSchema.required).toContain('pipeline');
 
     const parseBs = tools.find(t => t.name === 'parse_behaviorspec')!;
     expect(parseBs.inputSchema.required).toContain('scenario');
@@ -77,8 +62,8 @@ describe('DomainRegistry Integration', () => {
   it('canHandle returns true for registered domain tools', () => {
     const registry = createDomainRegistry();
     expect(registry.canHandle('parse_sql')).toBe(true);
-    expect(registry.canHandle('compile_bdd')).toBe(true);
-    expect(registry.canHandle('validate_jsx')).toBe(true);
+    expect(registry.canHandle('compile_bdd')).toBe(false);
+    expect(registry.canHandle('validate_todo')).toBe(true);
     expect(registry.canHandle('translate_behaviorspec')).toBe(true);
   });
 
@@ -104,10 +89,10 @@ describe('DomainRegistry Integration', () => {
     expect(data.language).toBe('en');
   });
 
-  it('JSX single-step compile dispatches through registry', async () => {
+  it('todo single-step compile dispatches through registry', async () => {
     const registry = createDomainRegistry();
-    const result = await registry.handleToolCall('compile_jsx', {
-      code: 'element div with className "app"',
+    const result = await registry.handleToolCall('compile_todo', {
+      command: 'add milk to groceries',
       language: 'en',
     });
 
@@ -116,6 +101,32 @@ describe('DomainRegistry Integration', () => {
 
     const data = JSON.parse(result!.content[0].text);
     expect(data.ok).toBe(true);
+  });
+
+  // Phase 3 of the domains rethink: a parse that leaves input unread, and a translation that does not
+  // read back as its source, are refused with a diagnostic rather than answered.
+  it('compile_sql refuses a trailing word with an UNREAD_INPUT diagnostic', async () => {
+    const registry = createDomainRegistry();
+    const result = await registry.handleToolCall('compile_sql', {
+      query: 'select name from users banana',
+      language: 'en',
+    });
+    const data = JSON.parse(result!.content[0].text);
+    expect(data.ok).toBe(false);
+    expect(data.diagnostics[0].code).toBe('UNREAD_INPUT');
+  });
+
+  it('translate_sql answers ok when the rendering reads back as the source', async () => {
+    const registry = createDomainRegistry();
+    const result = await registry.handleToolCall('translate_sql', {
+      query: 'select name from users',
+      from: 'en',
+      to: 'es',
+    });
+    expect(result!.isError).toBeUndefined();
+    const data = JSON.parse(result!.content[0].text);
+    expect(data.ok).toBe(true);
+    expect(data.rendered.language).toBe('es');
   });
 
   it('returns null for unknown domain tools', async () => {
@@ -167,29 +178,6 @@ describe('DomainRegistry Integration', () => {
 // Multi-Step Detection Tests
 // =============================================================================
 
-describe('BDD Multi-Step Detection', () => {
-  it('detects comma-separated steps as multi-step', () => {
-    expect(isMultiStepBDD({ scenario: 'given #button is exists, when click on #button' })).toBe(
-      true
-    );
-  });
-
-  it('detects newline-separated steps as multi-step', () => {
-    expect(isMultiStepBDD({ scenario: 'given #button is exists\nwhen click on #button' })).toBe(
-      true
-    );
-  });
-
-  it('detects single step as not multi-step', () => {
-    expect(isMultiStepBDD({ scenario: 'given #button is exists' })).toBe(false);
-  });
-
-  it('returns false for empty scenario', () => {
-    expect(isMultiStepBDD({ scenario: '' })).toBe(false);
-    expect(isMultiStepBDD({})).toBe(false);
-  });
-});
-
 describe('BehaviorSpec Multi-Line Detection', () => {
   it('detects multi-line input', () => {
     expect(isMultiLineBehaviorSpec({ scenario: 'test "Login"\n  given page /login' })).toBe(true);
@@ -208,25 +196,6 @@ describe('BehaviorSpec Multi-Line Detection', () => {
 // =============================================================================
 // Multi-Step Handler Tests
 // =============================================================================
-
-describe('BDD Multi-Step Handler', () => {
-  it('parses multi-step BDD scenario', async () => {
-    const result = await handleBDDMultiStep('parse_bdd', {
-      scenario: 'given #button is exists, when click on #button, then #button has .active',
-      language: 'en',
-    });
-
-    expect(result.isError).toBeUndefined();
-    const data = JSON.parse(result.content[0].text);
-    expect(data.type).toBe('scenario');
-    expect(data.stepCount).toBeGreaterThan(0);
-  });
-
-  it('returns error for missing scenario', async () => {
-    const result = await handleBDDMultiStep('parse_bdd', {});
-    expect(result.isError).toBe(true);
-  });
-});
 
 describe('BehaviorSpec Multi-Line Handler', () => {
   it('parses multi-line BehaviorSpec', async () => {

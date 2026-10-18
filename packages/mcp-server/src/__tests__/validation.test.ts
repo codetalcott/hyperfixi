@@ -43,6 +43,19 @@ describe('validationTools', () => {
 });
 
 describe('validate_hyperscript', () => {
+  it('is deprecated in favor of validate_and_compile (removed in 7.0)', async () => {
+    const tool = validationTools.find(t => t.name === 'validate_hyperscript');
+    expect(tool?.description).toMatch(/^Deprecated \(removed in 7\.0\): use validate_and_compile/);
+    const result = await handleValidationTool('validate_hyperscript', {
+      code: 'on click toggle .active',
+    });
+    // The result is unchanged in content[0]; the notice is a block of its own.
+    expect(JSON.parse(result.content[0].text).valid).toBe(true);
+    expect(result.content.at(-1)?.text).toMatch(
+      /^Deprecated: validate_hyperscript is removed in 7\.0\. Use validate_and_compile/
+    );
+  });
+
   it('returns valid for correct code', async () => {
     const result = await handleValidationTool('validate_hyperscript', {
       code: 'on click toggle .active',

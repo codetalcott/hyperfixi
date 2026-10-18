@@ -13,6 +13,7 @@ import {
   getDefaultExtractors,
   type SemanticNode,
   type MultilingualDSL,
+  type DSLConfig,
 } from '../../index';
 
 // =============================================================================
@@ -47,6 +48,9 @@ export const selectCommand = defineCommand({
       description: 'WHERE clause condition',
       required: false,
       expectedTypes: ['expression'],
+      // As in domain-sql: the condition is the rest of the input (`age > 18`). Without it the
+      // condition read `age` and dropped `> 18`, which parse accepted until it refused unread input.
+      greedy: true,
       svoPosition: 0,
       sovPosition: 0,
       markerOverride: { en: 'where', es: 'donde' },
@@ -165,7 +169,12 @@ function generateSQL(node: SemanticNode): string {
 // =============================================================================
 
 export function createSQLDSL(): MultilingualDSL {
-  return createMultilingualDSL({
+  return createMultilingualDSL(sqlDSLConfig());
+}
+
+/** The fixture's config, for a test that builds the DSL with another factory. */
+export function sqlDSLConfig(): DSLConfig {
+  return {
     name: 'SQL DSL Test Fixture',
     schemas: [selectCommand],
     languages: [
@@ -187,7 +196,7 @@ export function createSQLDSL(): MultilingualDSL {
     codeGenerator: {
       generate: generateSQL,
     },
-  });
+  };
 }
 
 // =============================================================================

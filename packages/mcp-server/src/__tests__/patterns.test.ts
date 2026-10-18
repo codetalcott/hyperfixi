@@ -210,6 +210,26 @@ describe('search_patterns against the pattern database', () => {
 });
 
 describe('translate_hyperscript', () => {
+  it('is deprecated in favor of translate_code (removed in 7.0)', async () => {
+    const tool = patternTools.find(t => t.name === 'translate_hyperscript');
+    expect(tool?.description).toMatch(/^Deprecated \(removed in 7\.0\): use translate_code/);
+    for (const code of ['on click toggle .active', 'on click halt default then put 1 into me']) {
+      // Both the translation and a refusal carry the notice after the tool's own JSON.
+      const result = await handlePatternTool('translate_hyperscript', {
+        code,
+        fromLanguage: 'en',
+        toLanguage: 'ja',
+      });
+      expect(() => JSON.parse(result.content[0].text)).not.toThrow();
+      expect(result.content.at(-1)?.text).toMatch(
+        /^Deprecated: translate_hyperscript is removed in 7\.0\. Use translate_code/
+      );
+    }
+    // Other pattern tools carry no notice.
+    const examples = await handlePatternTool('get_examples', { prompt: 'toggle a class' });
+    expect(examples.content.some(c => c.text.startsWith('Deprecated:'))).toBe(false);
+  });
+
   it('attempts translation', async () => {
     const result = await handlePatternTool('translate_hyperscript', {
       code: 'on click toggle .active',

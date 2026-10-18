@@ -397,133 +397,6 @@ describe('Diff endpoint — cross-format', () => {
 });
 
 // =============================================================================
-// Generate Tests Endpoint — Options
-// =============================================================================
-
-describe('Generate tests — options', () => {
-  it('generates test with custom name', async () => {
-    const { body } = await post('/generate-tests', {
-      explicit: '[toggle patient:.active]',
-      testName: 'My Custom Toggle Test',
-    });
-
-    expect(body.ok).toBe(true);
-    expect(body.tests).toHaveLength(1);
-    expect(body.tests[0].name).toBe('My Custom Toggle Test');
-    expect(body.tests[0].code).toContain('My Custom Toggle Test');
-  });
-
-  it('generates test from LLM JSON', async () => {
-    const { body } = await post('/generate-tests', {
-      semantic: {
-        action: 'toggle',
-        roles: { patient: { type: 'selector', value: '.active' } },
-        trigger: { event: 'click' },
-      },
-    });
-
-    expect(body.ok).toBe(true);
-    expect(body.tests).toHaveLength(1);
-    expect(body.operations.length).toBeGreaterThan(0);
-    expect(body.operations[0].op).toBe('toggleClass');
-  });
-
-  it('returns operations with correct types', async () => {
-    const { body } = await post('/generate-tests', {
-      explicit: '[add patient:.highlight destination:#panel]',
-    });
-
-    expect(body.ok).toBe(true);
-    expect(body.operations[0].op).toBe('addClass');
-    expect(body.operations[0].className).toBe('highlight');
-  });
-
-  it('test HTML fixture contains required elements', async () => {
-    const { body } = await post('/generate-tests', {
-      explicit: '[toggle patient:.active destination:#btn]',
-    });
-
-    expect(body.ok).toBe(true);
-    expect(body.tests[0].html).toContain('#btn');
-    expect(body.tests[0].html).toContain('id="btn"');
-  });
-
-  it('returns 422 for unparseable input', async () => {
-    const { status, body } = await post('/generate-tests', {
-      code: 'xyzzy blorp',
-      language: 'en',
-      confidence: 0.9,
-    });
-
-    expect(status).toBe(422);
-    expect(body.ok).toBe(false);
-  });
-});
-
-// =============================================================================
-// Generate Component Endpoint — Options
-// =============================================================================
-
-describe('Generate component — options', () => {
-  it('generates component with custom name', async () => {
-    const { body } = await post('/generate-component', {
-      explicit: '[toggle patient:.active]',
-      componentName: 'MyToggleButton',
-    });
-
-    expect(body.ok).toBe(true);
-    expect(body.component.name).toBe('MyToggleButton');
-    expect(body.component.code).toContain('MyToggleButton');
-  });
-
-  it('generates component from LLM JSON', async () => {
-    const { body } = await post('/generate-component', {
-      semantic: {
-        action: 'toggle',
-        roles: { patient: { type: 'selector', value: '.active' } },
-        trigger: { event: 'click' },
-      },
-    });
-
-    expect(body.ok).toBe(true);
-    expect(body.component).toBeDefined();
-    expect(body.component.framework).toBe('react');
-    expect(body.component.code).toContain("from 'react'");
-    expect(body.component.hooks).toContain('useState');
-  });
-
-  it('includes useCallback in hooks list', async () => {
-    const { body } = await post('/generate-component', {
-      explicit: '[toggle patient:.active]',
-    });
-
-    expect(body.ok).toBe(true);
-    expect(body.component.hooks).toContain('useCallback');
-  });
-
-  it('returns operations alongside component', async () => {
-    const { body } = await post('/generate-component', {
-      explicit: '[show patient:#modal]',
-    });
-
-    expect(body.ok).toBe(true);
-    expect(body.operations.length).toBeGreaterThan(0);
-    expect(body.operations[0].op).toBe('show');
-  });
-
-  it('returns 422 for unparseable input', async () => {
-    const { status, body } = await post('/generate-component', {
-      code: 'xyzzy blorp',
-      language: 'en',
-      confidence: 0.9,
-    });
-
-    expect(status).toBe(422);
-    expect(body.ok).toBe(false);
-  });
-});
-
-// =============================================================================
 // Operation Type Coverage
 // =============================================================================
 
@@ -563,11 +436,13 @@ describe('Operation type coverage via explicit syntax', () => {
 
   for (const { name, explicit, expectedOp } of cases) {
     it(`extracts ${name} operation from explicit syntax`, async () => {
-      const { body } = await post('/generate-tests', { explicit });
+      // /diff of an input against itself returns its operations, each unchanged
+      const { body } = await post('/diff', { a: { explicit }, b: { explicit } });
 
       expect(body.ok).toBe(true);
       expect(body.operations.length).toBeGreaterThan(0);
-      expect(body.operations[0].op).toBe(expectedOp);
+      expect(body.operations[0].kind).toBe('unchanged');
+      expect(body.operations[0].a.op).toBe(expectedOp);
     });
   }
 });

@@ -1,5 +1,30 @@
 # Migration Guide
 
+## Deprecated in 6.x, removed in 7.0
+
+Two MCP tools duplicate the ones the server tells agents to use. Both still work in 6.x; their
+descriptions and results say they are deprecated.
+
+| Deprecated                  | Instead                                                                                                               |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| MCP `validate_hyperscript`  | `validate_and_compile`: the engine's verdict, the semantic IR, and the same `NAME_COLLISION` warnings                 |
+| MCP `translate_hyperscript` | `translate_code`: the same text, plus a fidelity `verification` and `NAME_COLLISION` warnings (arguments `from`/`to`) |
+
+## Migrating from 5.x to 6.0
+
+`@lokascript/compilation-service` no longer generates tests or components. Deprecated in 5.x,
+removed in 6.0:
+
+| Removed                                                                                                                        | Instead                                        |
+| ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------- |
+| `generateTests`, `PlaywrightRenderer`, `registerTestRenderer`, `POST /generate-tests`                                          | Write the Playwright test against your page    |
+| `generateComponent`, `ReactRenderer`, `VueRenderer`, `SvelteRenderer`, `registerComponentRenderer`, `POST /generate-component` | Write the component directly                   |
+| `generate()`'s `react`, `vue` and `svelte` targets                                                                             | `intent-element` stays                         |
+| MCP tools `generate_tests`, `generate_component`                                                                               | `validate_and_compile`, then write it yourself |
+| `ServiceOptions.testRenderers`, `componentRenderers`; the request/response types for both                                      | —                                              |
+
+Validation, translation, `diff` and `scoreFidelity` are unchanged.
+
 ## Migrating from 3.x to 4.0
 
 ### Overview
@@ -38,7 +63,7 @@ api.parse('on click toggle .active on me').errors; // [] when 4.0 reads it
 
 In a page on `hyperfixi-hs.js`, each script the engine rejects logs a `console.error` and
 dispatches `hyperscript:parse-error` on its element. The 4.0 `@lokascript/language-server` and MCP
-`validate_hyperscript` report the same errors.
+`validate_and_compile` report the same errors.
 
 ### Removed bundles and files
 

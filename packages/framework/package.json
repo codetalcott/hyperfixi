@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/framework",
-  "version": "4.5.0",
+  "version": "6.1.0",
   "description": "Generic framework for building multilingual DSLs with semantic parsing and grammar transformation",
   "type": "module",
   "main": "dist/index.cjs",
@@ -23,10 +23,6 @@
     "./core/tokenization": {
       "types": "./dist/core/tokenization/index.d.ts",
       "import": "./dist/core/tokenization/index.js"
-    },
-    "./core/pattern-matching": {
-      "types": "./dist/core/pattern-matching/index.d.ts",
-      "import": "./dist/core/pattern-matching/index.js"
     },
     "./multilingual": {
       "types": "./dist/multilingual/index.d.ts",
@@ -56,6 +52,10 @@
       "types": "./dist/testing/index.d.ts",
       "import": "./dist/testing/index.js"
     },
+    "./testing/gate": {
+      "types": "./dist/testing/gate/index.d.ts",
+      "import": "./dist/testing/gate/index.js"
+    },
     "./ir": {
       "types": "./dist/ir/index.d.ts",
       "import": "./dist/ir/index.js"
@@ -73,7 +73,6 @@
     "test:coverage": "vitest run --coverage",
     "test:unit": "vitest run src/core/**/*.test.ts src/generation/**/*.test.ts",
     "test:integration": "vitest run src/__test__/**/*.test.ts src/api/**/*.test.ts",
-    "test:pattern-matcher": "vitest run src/core/pattern-matching",
     "test:tokenizer": "vitest run src/core/tokenization",
     "typecheck": "tsc --noEmit",
     "create-domain": "npx tsx scripts/create-domain.ts"
@@ -96,10 +95,10 @@
   "author": "LokaScript Contributors",
   "license": "MIT",
   "dependencies": {
-    "@lokascript/intent": "^4.5.0"
+    "@lokascript/intent": "^6.1.0"
   },
   "devDependencies": {
-    "@lokascript/domains": "^3.0.1",
+    "@lokascript/domains": "^5.0.0",
     "@types/node": "^26.6.3",
     "@vitest/coverage-v8": "^5.0.0",
     "tsup": "^8.0.0",

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { DomainRegistry } from './domain-registry';
 import type { DomainDescriptor, MCPToolDefinition } from './domain-registry';
-import type { MultilingualDSL } from './create-dsl';
+import { UnreadInputError, type MultilingualDSL } from './create-dsl';
 import type { SemanticNode } from '../core/types';
 
 // =============================================================================
@@ -11,10 +11,19 @@ import type { SemanticNode } from '../core/types';
 function createMockDSL(): MultilingualDSL {
   return {
     parse(input: string, language: string): SemanticNode {
+      // A rendering is `[<lang>] <source>`: read the source back out of it.
+      const source = input.replace(/^\[\w+\] /, '');
+      if (source.includes(' zzqx'))
+        throw new UnreadInputError(
+          input,
+          language,
+          this.parse(source.replace(' zzqx', ''), language),
+          'zzqx'
+        );
       return {
         kind: 'command',
-        action: input.split(/\s+/)[0].toLowerCase(),
-        roles: new Map([['raw', { type: 'expression' as const, raw: input }]]),
+        action: source.split(/\s+/)[0].toLowerCase(),
+        roles: new Map([['raw', { type: 'expression' as const, raw: source }]]),
         metadata: { sourceLanguage: language },
       };
     },
@@ -33,7 +42,9 @@ function createMockDSL(): MultilingualDSL {
       try {
         const node = this.parse(input, language);
         return { ok: true, code: `compiled(${input})`, node };
-      } catch {
+      } catch (error) {
+        if (error instanceof UnreadInputError)
+          return { ok: false, errors: [error.message], errorCode: error.code };
         return { ok: false, errors: ['Compile failed'] };
       }
     },
@@ -46,7 +57,14 @@ function createMockDSL(): MultilingualDSL {
   };
 }
 
+/** Writes the whole source, so a rendering reads back. */
 function mockRenderer(node: SemanticNode, language: string): string {
+  const raw = (node.roles.get('raw') as { raw?: string } | undefined)?.raw ?? node.action;
+  return `[${language}] ${raw}`;
+}
+
+/** Writes the action alone: `select name` comes out as `select`, which does not read back. */
+function lossyRenderer(node: SemanticNode, language: string): string {
   return `[${language}] ${node.action}`;
 }
 
@@ -236,6 +254,19 @@ describe('DomainRegistry', () => {
         expect(data.ok).toBe(true);
         expect(data.code).toBe('compiled(select name)');
       });
+
+      it('reports input left unread as an UNREAD_INPUT diagnostic', async () => {
+        registry.register(createTestDescriptor());
+        const result = await registry.handleToolCall('compile_test', {
+          query: 'select name zzqx',
+          language: 'en',
+        });
+
+        const data = JSON.parse(result!.content[0].text);
+        expect(data.ok).toBe(false);
+        expect(data.diagnostics[0].code).toBe('UNREAD_INPUT');
+        expect(data.diagnostics[0].message).toMatch(/zzqx/);
+      });
     });
 
     describe('validate', () => {
@@ -263,8 +294,42 @@ describe('DomainRegistry', () => {
         const data = JSON.parse(result!.content[0].text);
         expect(data.input.query).toBe('select name');
         expect(data.input.language).toBe('en');
-        expect(data.rendered.text).toBe('[ja] select');
+        expect(data.ok).toBe(true);
+        expect(data.rendered.text).toBe('[ja] select name');
         expect(data.rendered.language).toBe('ja');
+      });
+
+      it('refuses a rendering that does not read back, with its text under partial', async () => {
+        registry.register(createTestDescriptor({ getRenderer: () => lossyRenderer }));
+        const result = await registry.handleToolCall('translate_test', {
+          query: 'select name',
+          from: 'en',
+          to: 'ja',
+        });
+
+        expect(result!.isError).toBe(true);
+        const data = JSON.parse(result!.content[0].text);
+        expect(data.ok).toBe(false);
+        expect(data.partial).toBe('[ja] select');
+        expect(data.rendered).toBeUndefined();
+        expect(data.diagnostics[0].code).toBe('TRANSLATION_DOES_NOT_READ_BACK');
+        expect(data.diagnostics[0].message).toMatch(/raw: select name → select/);
+      });
+
+      it('refuses input left unread, naming it', async () => {
+        registry.register(createTestDescriptor());
+        const result = await registry.handleToolCall('translate_test', {
+          query: 'select name zzqx',
+          from: 'en',
+          to: 'ja',
+        });
+
+        expect(result!.isError).toBe(true);
+        const data = JSON.parse(result!.content[0].text);
+        expect(data.ok).toBe(false);
+        expect(data.unread).toBe('zzqx');
+        expect(data.reading.action).toBe('select');
+        expect(data.diagnostics[0].code).toBe('UNREAD_INPUT');
       });
 
       it('returns error when from/to missing', async () => {

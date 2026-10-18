@@ -59,8 +59,7 @@ describe('the rendered surface is Quechua, and reads back', () => {
 });
 
 describe('the i18n tolerances still read their own form', () => {
-  // The reason the canonical head needs its own id: registering it as
-  // `repeat-qu-until-head` replaces this one.
+  // `hayk_akama` is one keyword (→until), read by `repeat-qu-midclause-until-head`.
   it('parses `hayk_akama ruway pointerup ta qillqa manta kutipay`', () => {
     const node = findRepeat(parse('hayk_akama ruway pointerup ta qillqa manta kutipay', 'qu'));
     expect(node).not.toBeNull();

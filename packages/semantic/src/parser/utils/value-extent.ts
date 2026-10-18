@@ -57,7 +57,7 @@ import { parseExpression } from '../../ast-builder/expression-parser/parser';
 import { tokenize } from '../../ast-builder/expression-parser/tokenizer';
 import type { LanguageProfile } from '../../generators/profiles/types';
 import type { LanguageToken } from '../../types';
-import { isCuratedEndKeyword } from '../end-keywords';
+import { endsClauseAt } from '../end-words';
 import { isParticleAfterOf } from '../value-reading';
 import {
   expressionWordOf,
@@ -298,9 +298,7 @@ const EQUAL_TO_LEADS: ReadonlySet<string> = new Set(['is', 'not', 'really', 'am'
 function endsEqualTo(all: readonly LanguageToken[], i: number, language: string): boolean {
   const word = (k: number): string => {
     const token = all[k];
-    return token
-      ? expressionWordOf(language, token, all[k - 1], all[k + 1], undefined).toLowerCase()
-      : '';
+    return token ? expressionWordOf(language, { tokens: all, i: k }, undefined).toLowerCase() : '';
   };
   return word(i) === 'to' && word(i - 1) === 'equal' && EQUAL_TO_LEADS.has(word(i - 2));
 }
@@ -358,13 +356,16 @@ function isReferenceAfterOf(
   return OF_OWNER_REFERENCES.has((token.normalized ?? token.value).toLowerCase());
 }
 
-/** C13: the clause's end, or a marker the pattern still owes. */
-export function isValueBoundary(token: LanguageToken, ctx: ExtentContext): boolean {
-  if (token.kind === 'conjunction') return true;
-  if (token.kind === 'keyword') {
-    const norm = (token.normalized ?? token.value).toLowerCase();
-    if (norm === 'then' || norm === 'end' || norm === 'else') return true;
-    if (isCuratedEndKeyword(token.value, ctx.profile?.code ?? '')) return true;
+/** C13: the clause's end (endsClauseAt), an `else`, or a marker the pattern still owes. */
+export function isValueBoundary(
+  all: readonly LanguageToken[],
+  i: number,
+  ctx: ExtentContext
+): boolean {
+  if (endsClauseAt(all, i, ctx.profile?.code ?? 'en')) return true;
+  const token = all[i]!;
+  if (token.kind === 'keyword' && (token.normalized ?? token.value).toLowerCase() === 'else') {
+    return true;
   }
   return ctx.owes(token);
 }
@@ -382,7 +383,7 @@ function stopsAt(all: readonly LanguageToken[], i: number, ctx: ExtentContext): 
   if (endsEqualTo(all, i, language) || isWordA(all[i]!)) return false;
   if (endsMappedTo(all, i)) return false;
   const token = all[i]!;
-  return isValueBoundary(token, ctx) || ctx.commandMarkers.has(token.value.toLowerCase());
+  return isValueBoundary(all, i, ctx) || ctx.commandMarkers.has(token.value.toLowerCase());
 }
 
 /**
@@ -413,7 +414,7 @@ export function continuesValue(
     if (!token.value.startsWith('.') || !prev || tokensAdjacent(prev, token)) return true;
     if (RUN_OPERATORS.has(prev.value) || /^[([,]$/.test(prev.value)) return true;
     if (isOfPossessiveMarker(ctx.profile, prev)) return true;
-    const prevWord = expressionWordOf(language, prev, all[i - 2], token, undefined).toLowerCase();
+    const prevWord = expressionWordOf(language, { tokens: all, i: i - 1 }, undefined).toLowerCase();
     return OPERATOR_WORDS.has(prevWord);
   }
   if (RUN_OPERATORS.has(token.value)) return true;
@@ -424,7 +425,7 @@ export function continuesValue(
   if (isCopulaIn(language, all, i) || isParticleAfterOf(all, i)) return true;
   if (isReferenceAfterOf(all, i, ctx.profile)) return true;
   if (endsEqualTo(all, i, language)) return true;
-  const word = expressionWordOf(language, token, prev, all[i + 1], undefined).toLowerCase();
+  const word = expressionWordOf(language, { tokens: all, i }, undefined).toLowerCase();
   if (word === 'as' && ctx.hasResponseType) return false;
   if (EXPRESSION_WORDS.has(word)) return true;
   // An identifier in any script: the join translates a localized property
@@ -432,10 +433,11 @@ export function continuesValue(
   // leaves untranslated. qu and uk keep an apostrophe in a word, so `foo's` in
   // `obj's foo's bar` is one token. A name the reader fused, `(si)`, is one too
   // (registry.tokenize): `length of (si)`. So is an element-scoped variable,
-  // `:checkboxes` (`checked of :checkboxes`, P57).
+  // `:checkboxes` (`checked of :checkboxes`, P57), and a name with its index,
+  // which qu keeps one word (`element's bar["count"]`).
   return (
     token.kind === 'identifier' &&
-    /^(?::?[\p{L}_$][\p{L}\p{M}\p{N}_$]*('s)?|\([\p{L}_$][\p{L}\p{M}\p{N}_$]*\))$/u.test(
+    /^(?::?[\p{L}_$][\p{L}\p{M}\p{N}_$]*(\[[^\]]*\])*('s)?|\([\p{L}_$][\p{L}\p{M}\p{N}_$]*\))$/u.test(
       token.value
     )
   );
@@ -468,8 +470,10 @@ export function valueTailEnds(
 /**
  * C16: where each possessive link after a value ends, longest first — `'s v`
  * (en splits it into `'` `s`; uk keeps `obj's` one word, so the property
- * follows it), or an of-marker and its owner. What a value no marker bounds
- * may run on through (PR 83).
+ * follows it), an of-marker and its owner, or a `.member` or `[index]` that
+ * abuts the token before it (`.divs.innerHTML`, `#d1.parentNode`: a class name
+ * has no `.`, so upstream reads the property; `bar["count"]`). What a value no
+ * marker bounds may run on through (PR 83).
  */
 export function possessiveLinkEnds(
   all: readonly LanguageToken[],
@@ -484,10 +488,19 @@ export function possessiveLinkEnds(
     if (t.value === "'" && all[k + 1]?.value === 's' && all[k + 2]) k += 3;
     else if (/.'s$/.test(all[k - 1]?.value ?? '')) k += 1;
     else if (isOfPossessiveMarker(profile, t) && all[k + 1]) k += 2;
+    else if (/^(\.[\p{L}_$][\p{L}\p{N}_$]*|\[.*\])$/u.test(t.value) && abutsPrevious(all, k))
+      k += 1;
     else break;
     ends.push(k);
   }
   return ends.reverse();
+}
+
+/** Does `all[k]` start where the token before it ends (no space between)? */
+function abutsPrevious(all: readonly LanguageToken[], k: number): boolean {
+  const prev = all[k - 1];
+  const t = all[k];
+  return !!prev && !!t && prev.position.end === t.position.start;
 }
 
 /**

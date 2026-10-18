@@ -12,6 +12,7 @@ import { tokenize as tokenizeInternal, TokenStreamImpl } from '../tokenizers';
 import { isElseKeyword, isIfKeyword, isThenKeyword } from './clause-keywords';
 import { type ParserState } from './parser-state';
 import { eventNameTranslations } from '../patterns/event-handler';
+import { isAtEndPositionNoun } from '../patterns/put';
 import { KNOWN_EVENTS, WAITABLE_EVENT_WORDS, matchEventParamPhrase } from './event-words';
 import {
   SOV_EVENT_MARKERS,
@@ -22,6 +23,7 @@ import {
 } from './event-heads';
 import { coverageMark, coverageRollback } from './coverage';
 import { parseBodyWithClauses } from './clause-walk';
+import { patternMatcher } from './pattern-matcher';
 
 /** A node the walker nested: a loop, or a block command with its body. */
 export function isNestedBlock(node: SemanticNode | undefined): boolean {
@@ -33,6 +35,29 @@ export function isNestedBlock(node: SemanticNode | undefined): boolean {
  * separators event names use (`draggable:start`, `my-event`, `a.b`).
  */
 export const CUSTOM_EVENT_NAME = /^[\p{L}_$][\p{L}\p{N}_$:.\-]*$/u;
+
+/**
+ * How many tokens a loop's head (`for`, `repeat`) takes at the start of
+ * `tokens`, or 0. Inside it, no name is a handler's event: bn `item এ items জন্য
+ * …` and `পুনরাবৃত্তি item এ items …`, hi `item में items हेतु …` and sw `kwa
+ * item ndani items …` put the loop's variable beside a word that is also their
+ * `on`, and ko puts its collection right before its `for` word (`item 안에
+ * items 각각 …`), where a marker-less custom event stands. Each read `for item
+ * in items` at the top level as `on item`.
+ */
+export function loopHeadLength(
+  tokens: readonly LanguageToken[],
+  language: string,
+  patterns: readonly LanguagePattern[]
+): number {
+  const loopPatterns = patterns.filter(p => p.command === 'for' || p.command === 'repeat');
+  if (loopPatterns.length === 0) return 0;
+  const match = patternMatcher.matchBest(
+    new TokenStreamImpl([...tokens] as LanguageToken[], language),
+    loopPatterns
+  );
+  return match?.consumedTokens ?? 0;
+}
 
 /**
  * Re-parse a Stage-2 loop head whose body trails it, through the clause
@@ -476,7 +501,8 @@ export function trySOVEventExtraction(
     const commandActions = new Set<string>(
       patterns.filter(p => p.command !== 'on').map(p => p.command)
     );
-    for (let i = 0; i < allTokens.length; i++) {
+    const loopHead = loopHeadLength(allTokens, language, patterns);
+    for (let i = loopHead; i < allTokens.length; i++) {
       const token = allTokens[i];
       if (token.kind !== 'identifier') continue;
       // A template literal tokenizes as an identifier and is never an event
@@ -502,7 +528,15 @@ export function trySOVEventExtraction(
         if (
           markerToken &&
           (markerToken.kind === 'particle' || markerToken.kind === 'keyword') &&
-          eventMarkers.has(markerToken.value)
+          eventMarkers.has(markerToken.value) &&
+          // The marker is put's `at` word when the `end` noun and `of` word
+          // follow (`response で 終わり の #results を 置く`): a patient, not an event.
+          !isAtEndPositionNoun(
+            language,
+            allTokens[i + markerOffset + 1]?.value ?? '',
+            markerToken.value,
+            allTokens[i + markerOffset + 2]?.value
+          )
         ) {
           eventIndex = i;
           eventName = token.value;
