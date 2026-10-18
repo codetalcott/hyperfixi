@@ -229,6 +229,8 @@ export type SemanticBundleType =
   | 'es-en'
   | 'western'
   | 'east-asian'
+  | 'slavic'
+  | 'south-asian'
   | 'priority'
   | 'all';
 
@@ -417,42 +419,46 @@ export function selectOptimalBundle(languages: Set<SupportedLanguage>): Semantic
 }
 
 /**
- * Estimated bundle sizes for each semantic bundle type.
- * Used for debug logging to help users understand size impact.
- * Sizes measured from minified bundles (January 2025).
+ * Estimated size of each semantic bundle type, for debug logs: `@lokascript/semantic/core` plus
+ * the language modules the type resolves to, as `generateSemanticIntegrationCode` imports them.
+ * Measured 2026-10-18 with `scripts/measure-semantic-sizes.ts` (esbuild, minified; gzip on
+ * macOS), which prints these entries. The January 2025 table it replaces read about an eighth of
+ * this (en ~20 KB gzip); semantic's core alone is ~149 KB gzip today.
  */
 export const SEMANTIC_BUNDLE_SIZES: Record<SemanticBundleType, { raw: string; gzip: string }> = {
-  // Single-language bundles (all 25 languages)
-  ar: { raw: '66 KB', gzip: '~17 KB' },
-  bn: { raw: '56 KB', gzip: '~14 KB' },
-  de: { raw: '57 KB', gzip: '~14 KB' },
-  en: { raw: '82 KB', gzip: '~20 KB' },
-  es: { raw: '64 KB', gzip: '~16 KB' },
-  fr: { raw: '57 KB', gzip: '~14 KB' },
-  he: { raw: '56 KB', gzip: '~14 KB' },
-  hi: { raw: '56 KB', gzip: '~14 KB' },
-  id: { raw: '57 KB', gzip: '~14 KB' },
-  it: { raw: '57 KB', gzip: '~14 KB' },
-  ja: { raw: '67 KB', gzip: '~17 KB' },
-  ko: { raw: '69 KB', gzip: '~18 KB' },
-  ms: { raw: '56 KB', gzip: '~14 KB' },
-  pl: { raw: '56 KB', gzip: '~14 KB' },
-  pt: { raw: '56 KB', gzip: '~14 KB' },
-  qu: { raw: '56 KB', gzip: '~14 KB' },
-  ru: { raw: '56 KB', gzip: '~14 KB' },
-  sw: { raw: '56 KB', gzip: '~14 KB' },
-  th: { raw: '56 KB', gzip: '~14 KB' },
-  tl: { raw: '56 KB', gzip: '~14 KB' },
-  tr: { raw: '73 KB', gzip: '~18 KB' },
-  uk: { raw: '56 KB', gzip: '~14 KB' },
-  vi: { raw: '56 KB', gzip: '~14 KB' },
-  zh: { raw: '58 KB', gzip: '~15 KB' },
+  // Single-language bundles (core + the language + English)
+  ar: { raw: '702 KB', gzip: '~175 KB' },
+  bn: { raw: '706 KB', gzip: '~173 KB' },
+  de: { raw: '693 KB', gzip: '~172 KB' },
+  en: { raw: '655 KB', gzip: '~163 KB' },
+  es: { raw: '698 KB', gzip: '~174 KB' },
+  fr: { raw: '693 KB', gzip: '~173 KB' },
+  he: { raw: '693 KB', gzip: '~173 KB' },
+  hi: { raw: '708 KB', gzip: '~174 KB' },
+  id: { raw: '685 KB', gzip: '~171 KB' },
+  it: { raw: '702 KB', gzip: '~174 KB' },
+  ja: { raw: '693 KB', gzip: '~173 KB' },
+  ko: { raw: '700 KB', gzip: '~174 KB' },
+  ms: { raw: '680 KB', gzip: '~170 KB' },
+  pl: { raw: '697 KB', gzip: '~173 KB' },
+  pt: { raw: '694 KB', gzip: '~174 KB' },
+  qu: { raw: '699 KB', gzip: '~174 KB' },
+  ru: { raw: '716 KB', gzip: '~174 KB' },
+  sw: { raw: '683 KB', gzip: '~171 KB' },
+  th: { raw: '693 KB', gzip: '~172 KB' },
+  tl: { raw: '686 KB', gzip: '~172 KB' },
+  tr: { raw: '703 KB', gzip: '~174 KB' },
+  uk: { raw: '718 KB', gzip: '~175 KB' },
+  vi: { raw: '695 KB', gzip: '~173 KB' },
+  zh: { raw: '702 KB', gzip: '~174 KB' },
   // Regional bundles
-  'es-en': { raw: '99 KB', gzip: '~25 KB' },
-  western: { raw: '127 KB', gzip: '~30 KB' },
-  'east-asian': { raw: '99 KB', gzip: '~24 KB' },
-  priority: { raw: '231 KB', gzip: '~48 KB' },
-  all: { raw: '324 KB', gzip: '~61 KB' },
+  'es-en': { raw: '698 KB', gzip: '~174 KB' },
+  western: { raw: '859 KB', gzip: '~215 KB' },
+  'east-asian': { raw: '784 KB', gzip: '~195 KB' },
+  slavic: { raw: '821 KB', gzip: '~197 KB' },
+  'south-asian': { raw: '758 KB', gzip: '~184 KB' },
+  priority: { raw: '1196 KB', gzip: '~294 KB' },
+  all: { raw: '1623 KB', gzip: '~383 KB' },
 };
 
 /**
@@ -509,8 +515,8 @@ const LANGUAGES_WITH_ESM_EXPORTS = new Set([
  * full '@lokascript/semantic' entry which includes all languages.
  */
 export function getSemanticBundleImport(_bundleType: SemanticBundleType): string {
-  // Core entry provides createSemanticAnalyzer, buildAST, isLanguageSupported
-  // without bundling any language data (~20 KB vs ~102 KB gzip)
+  // Core entry: the parser, renderer and registry without any language data. Languages are
+  // imported one module each (core alone is ~149 KB gzip, measured 2026-10-18).
   return '@lokascript/semantic/core';
 }
 
@@ -524,30 +530,16 @@ export function getLanguagesForBundleType(
 ): Set<string> {
   const languages = new Set<string>(configLanguages);
 
-  // Expand regional bundle types to their constituent languages
-  switch (bundleType) {
-    case 'western':
-      REGIONS.western.forEach(l => languages.add(l));
-      break;
-    case 'east-asian':
-      REGIONS['east-asian'].forEach(l => languages.add(l));
-      break;
-    case 'priority':
-      REGIONS.priority.forEach(l => languages.add(l));
-      break;
-    case 'all':
-      REGIONS.all.forEach(l => languages.add(l));
-      break;
-    case 'es-en':
-      languages.add('en');
-      languages.add('es');
-      break;
-    default:
-      // Single language bundle type (e.g., 'en', 'ja') - add it
-      if (typeof bundleType === 'string' && bundleType.length <= 3) {
-        languages.add(bundleType);
-      }
-      break;
+  // Expand a regional bundle type to its languages, read from REGIONS itself: a hand-written
+  // case per region missed `slavic` and `south-asian`, which then loaded English alone.
+  if (bundleType === 'es-en') {
+    languages.add('en');
+    languages.add('es');
+  } else if (Object.prototype.hasOwnProperty.call(REGIONS, bundleType)) {
+    REGIONS[bundleType as keyof typeof REGIONS].forEach(l => languages.add(l));
+  } else if (typeof bundleType === 'string' && bundleType.length <= 3) {
+    // Single language bundle type (e.g., 'en', 'ja') - add it
+    languages.add(bundleType);
   }
 
   // Always ensure English is included as fallback
