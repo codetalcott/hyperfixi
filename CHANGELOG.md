@@ -7,16 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.1.0] - 2026-10-18
+
+Deprecates `@lokascript/compilation-service`'s test and component generation, which 6.0 removes;
+`@hyperfixi/mcp-server` moves to `@lokascript/domains` 5.0.0.
+
 ### Changed
 
 - **`@hyperfixi/mcp-server`: on `@lokascript/domains` 5.0.0** (domains rethink Phase 6), which deletes
   bdd and peers framework, semantic and intent `^5.0.0`. The server registers every domain (no
   `omit`); the same seven domains and 28 domain tools as 5.0.0. framework's and server-bridge's
-  dev dependency follows (`^5.0.0`).
+  dev dependency follows (`^5.0.0`) (#1559).
 
 ### Deprecated
 
-- **`@lokascript/compilation-service`: test and component generation, removed in 6.0.**
+- **`@lokascript/compilation-service`: test and component generation, removed in 6.0** (#1560).
   `generateTests`, `generateComponent`, `registerTestRenderer`, `registerComponentRenderer`, the
   `PlaywrightRenderer`, `ReactRenderer`, `VueRenderer` and `SvelteRenderer` exports, and the react,
   vue and svelte targets of `generate` (its `intent-element` target stays). Each call still works
@@ -1916,7 +1921,8 @@ _Synchronized version release. See git history for details._
 - npm access token stored in GitHub Secrets
 - 2FA recommended for npm organization
 
-[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v5.0.0...HEAD
+[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v5.1.0...HEAD
+[5.1.0]: https://github.com/codetalcott/hyperfixi/compare/v5.0.0...v5.1.0
 [5.0.0]: https://github.com/codetalcott/hyperfixi/compare/v4.8.0...v5.0.0
 [4.8.0]: https://github.com/codetalcott/hyperfixi/compare/v4.7.0...v4.8.0
 [4.7.0]: https://github.com/codetalcott/hyperfixi/compare/v4.6.0...v4.7.0
