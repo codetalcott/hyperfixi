@@ -423,42 +423,43 @@ export function selectOptimalBundle(languages: Set<SupportedLanguage>): Semantic
  * the language modules the type resolves to, as `generateSemanticIntegrationCode` imports them.
  * Measured 2026-10-18 with `scripts/measure-semantic-sizes.ts` (esbuild, minified; gzip on
  * macOS), which prints these entries. The January 2025 table it replaces read about an eighth of
- * this (en ~20 KB gzip); semantic's core alone is ~149 KB gzip today.
+ * this (en ~20 KB gzip). Re-measured after semantic's subpath packaging fix (core ~120 KB gzip,
+ * from ~155): each single language ~30–45 KB less, `all` ~222 KB (was ~383).
  */
 export const SEMANTIC_BUNDLE_SIZES: Record<SemanticBundleType, { raw: string; gzip: string }> = {
   // Single-language bundles (core + the language + English)
-  ar: { raw: '702 KB', gzip: '~175 KB' },
-  bn: { raw: '706 KB', gzip: '~173 KB' },
-  de: { raw: '693 KB', gzip: '~172 KB' },
-  en: { raw: '655 KB', gzip: '~163 KB' },
-  es: { raw: '698 KB', gzip: '~174 KB' },
-  fr: { raw: '693 KB', gzip: '~173 KB' },
-  he: { raw: '693 KB', gzip: '~173 KB' },
-  hi: { raw: '708 KB', gzip: '~174 KB' },
-  id: { raw: '685 KB', gzip: '~171 KB' },
-  it: { raw: '702 KB', gzip: '~174 KB' },
-  ja: { raw: '693 KB', gzip: '~173 KB' },
-  ko: { raw: '700 KB', gzip: '~174 KB' },
-  ms: { raw: '680 KB', gzip: '~170 KB' },
-  pl: { raw: '697 KB', gzip: '~173 KB' },
-  pt: { raw: '694 KB', gzip: '~174 KB' },
-  qu: { raw: '699 KB', gzip: '~174 KB' },
-  ru: { raw: '716 KB', gzip: '~174 KB' },
-  sw: { raw: '683 KB', gzip: '~171 KB' },
-  th: { raw: '693 KB', gzip: '~172 KB' },
-  tl: { raw: '686 KB', gzip: '~172 KB' },
-  tr: { raw: '703 KB', gzip: '~174 KB' },
-  uk: { raw: '718 KB', gzip: '~175 KB' },
-  vi: { raw: '695 KB', gzip: '~173 KB' },
-  zh: { raw: '702 KB', gzip: '~174 KB' },
+  ar: { raw: '486 KB', gzip: '~135 KB' },
+  bn: { raw: '490 KB', gzip: '~134 KB' },
+  de: { raw: '477 KB', gzip: '~132 KB' },
+  en: { raw: '455 KB', gzip: '~128 KB' },
+  es: { raw: '483 KB', gzip: '~134 KB' },
+  fr: { raw: '478 KB', gzip: '~133 KB' },
+  he: { raw: '477 KB', gzip: '~132 KB' },
+  hi: { raw: '492 KB', gzip: '~134 KB' },
+  id: { raw: '469 KB', gzip: '~131 KB' },
+  it: { raw: '486 KB', gzip: '~134 KB' },
+  ja: { raw: '478 KB', gzip: '~133 KB' },
+  ko: { raw: '484 KB', gzip: '~133 KB' },
+  ms: { raw: '465 KB', gzip: '~130 KB' },
+  pl: { raw: '482 KB', gzip: '~133 KB' },
+  pt: { raw: '479 KB', gzip: '~133 KB' },
+  qu: { raw: '483 KB', gzip: '~133 KB' },
+  ru: { raw: '500 KB', gzip: '~134 KB' },
+  sw: { raw: '467 KB', gzip: '~130 KB' },
+  th: { raw: '477 KB', gzip: '~131 KB' },
+  tl: { raw: '470 KB', gzip: '~131 KB' },
+  tr: { raw: '488 KB', gzip: '~134 KB' },
+  uk: { raw: '502 KB', gzip: '~135 KB' },
+  vi: { raw: '478 KB', gzip: '~132 KB' },
+  zh: { raw: '486 KB', gzip: '~133 KB' },
   // Regional bundles
-  'es-en': { raw: '698 KB', gzip: '~174 KB' },
-  western: { raw: '859 KB', gzip: '~215 KB' },
-  'east-asian': { raw: '784 KB', gzip: '~195 KB' },
-  slavic: { raw: '821 KB', gzip: '~197 KB' },
-  'south-asian': { raw: '758 KB', gzip: '~184 KB' },
-  priority: { raw: '1196 KB', gzip: '~294 KB' },
-  all: { raw: '1623 KB', gzip: '~383 KB' },
+  'es-en': { raw: '483 KB', gzip: '~134 KB' },
+  western: { raw: '573 KB', gzip: '~148 KB' },
+  'east-asian': { raw: '536 KB', gzip: '~142 KB' },
+  slavic: { raw: '571 KB', gzip: '~143 KB' },
+  'south-asian': { raw: '525 KB', gzip: '~139 KB' },
+  priority: { raw: '791 KB', gzip: '~186 KB' },
+  all: { raw: '1029 KB', gzip: '~222 KB' },
 };
 
 /**
@@ -516,7 +517,8 @@ const LANGUAGES_WITH_ESM_EXPORTS = new Set([
  */
 export function getSemanticBundleImport(_bundleType: SemanticBundleType): string {
   // Core entry: the parser, renderer and registry without any language data. Languages are
-  // imported one module each (core alone is ~149 KB gzip, measured 2026-10-18).
+  // imported one module each (core alone is ~120 KB gzip, measured 2026-10-18 after the
+  // packaging fix that let bundlers drop the profiles of languages a page does not import).
   return '@lokascript/semantic/core';
 }
 
