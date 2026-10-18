@@ -19,6 +19,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`toggel`, not `and`), never off English. Style advice (`wait` over `setTimeout`, `then` between
   commands) stays.
 
+- **`@hyperfixi/mcp-server`: a multi-line BehaviorSpec with a line it cannot read is refused,
+  not compiled without it** (lokascript-domains #54). On `@lokascript/domains` 5.0.1,
+  `compile_behaviorspec` answered `ok: true` for `test "Login"` / `given page /login` /
+  `when I click #submit` / `then #result is visible` with only the `goto`: the two lines it
+  could not read were gone. mcp-server is on domains 5.0.2, whose `compileBehaviorSpec` throws a
+  `BehaviorSpecError`; the multi-line handler answers `ok: false` with `errors` (one per line)
+  and the rest under `partial`, never `code`. `validate_behaviorspec` reports what compile would
+  refuse (a `given page /login when …` URL that takes the rest of its line), and
+  `translate_behaviorspec` refuses such a spec whole (`translated` and `playwright` are `null`)
+  instead of translating what remained.
+
+- **`@lokascript/compilation-service`: `/health` reports the package's version**, not the `1.4.0`
+  literal it reported through 6.1.0 (`src/version.ts`, rewritten by `set-version.cjs`).
+
 ### Deprecated
 
 - **`@hyperfixi/mcp-server`: `parse_multilingual`, removed in 7.0.** It returns only the top node
