@@ -241,6 +241,11 @@ A refused pair that starts to render can come out silent: the command-shape dry 
 
 ## 4. Parked, and decisions waiting on the owner
 
+- **Decided 2026-10-18 (owner, all as recommended):** `hx-query` stays English until native review (V4);
+  the htmx adapter's vocabulary moves to htmx 4's `hx-sse`/`hx-ws` (PR5); weight is semantic's packaging first
+  (S4); the LokaScript VS Code extension leaves the product story, removed in 7.0 if unpublished (S1);
+  `apps/docs-site` is deleted (D6). The entries below keep the questions as they were asked.
+
 - **M1 calls taken:** fail-loud by default (F1 `translate()` throws, F2 the adapter refuses at run time;
   2026-10-06, shipped in 4.2.0). `swap innerHTML of …` and a naked `${}` URL keep core's meaning in
   translation, and the docs teach upstream's (2026-10-07).

@@ -2,7 +2,7 @@
 
 Real-world HTML-first examples showcasing declarative LokaScript patterns.
 
-> **For JavaScript API usage**, see the [API Reference](../../apps/docs-site/en/api/) documentation.
+> **For JavaScript API usage**, see the [API Reference](./API.md).
 
 ## Table of Contents
 
@@ -1339,9 +1339,8 @@ LokaScript supports these languages with full grammar transformation:
 
 For complete multilingual documentation, see:
 
-- [Multilingual Guide](../../apps/docs-site/en/guide/multilingual.md)
-- [Grammar Transformation](../../apps/docs-site/en/guide/grammar.md)
-- [Semantic Parser](../../apps/docs-site/en/guide/semantic-parser.md)
+- [Multilingual Guide](https://lokascript.org/guide/multilingual/)
+- [Semantic Parser](https://lokascript.org/guide/semantic-parser/) (and [`@lokascript/semantic`'s README](../../semantic/README.md))
 
 ---
 
@@ -1350,7 +1349,7 @@ For complete multilingual documentation, see:
 For more advanced patterns, see:
 
 - [Advanced Examples](./ADVANCED.md) - Complex state machines, draggable elements, sortable lists
-- [Cookbook](../../apps/docs-site/en/cookbook/) - Step-by-step recipes with explanations
+- [Cookbook](https://hyperfixi.org/cookbook/) - Step-by-step recipes with explanations
 - [Live Examples](../../examples/) - Interactive HTML examples you can try
 
 ---
@@ -1359,7 +1358,5 @@ For more advanced patterns, see:
 
 These examples focus on HTML-first declarative patterns using `_` attributes. If you need to use the JavaScript API programmatically (for framework integrations, build tools, or dynamic compilation), see:
 
-- [API Reference](../../apps/docs-site/en/api/) - Complete JavaScript API documentation
-- [hyperscript Object](../../apps/docs-site/en/api/hyperscript.md) - Main API methods
-- [compile()](../../apps/docs-site/en/api/compile.md) - Compilation API
-- [execute()](../../apps/docs-site/en/api/execute.md) - Execution API
+- [API Reference](./API.md) - The JavaScript API (`@hyperfixi/core` re-exports `@hyperfixi/engine`)
+- [hyperfixi.org API](https://hyperfixi.org/api/) - The same API on the docs site
