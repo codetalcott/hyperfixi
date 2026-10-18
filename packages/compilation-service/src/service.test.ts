@@ -529,172 +529,11 @@ describe('CompilationService', () => {
   // ---------------------------------------------------------------------------
   // Pluggable Renderers
   // ---------------------------------------------------------------------------
-
-  describe('pluggable renderers', () => {
-    it('uses default playwright renderer for generateTests()', () => {
-      const result = service.generateTests({
-        explicit: '[toggle patient:.active]',
-      });
-      expect(result.ok).toBe(true);
-      expect(result.tests).toHaveLength(1);
-      expect(result.tests[0].framework).toBe('playwright');
-    });
-
-    it('uses default react renderer for generateComponent()', () => {
-      const result = service.generateComponent({
-        explicit: '[toggle patient:.active]',
-      });
-      expect(result.ok).toBe(true);
-      expect(result.component?.framework).toBe('react');
-    });
-
-    it('returns error for unknown test framework', () => {
-      const result = service.generateTests({
-        explicit: '[toggle patient:.active]',
-        framework: 'vitest',
-      });
-      expect(result.ok).toBe(false);
-      expect(result.diagnostics.some(d => d.code === 'UNKNOWN_FRAMEWORK')).toBe(true);
-    });
-
-    it('returns error for unknown component framework', () => {
-      const result = service.generateComponent({
-        explicit: '[toggle patient:.active]',
-        framework: 'angular',
-      });
-      expect(result.ok).toBe(false);
-      expect(result.diagnostics.some(d => d.code === 'UNKNOWN_FRAMEWORK')).toBe(true);
-    });
-
-    it('uses default vue renderer for generateComponent()', () => {
-      const result = service.generateComponent({
-        explicit: '[toggle patient:.active]',
-        framework: 'vue',
-      });
-      expect(result.ok).toBe(true);
-      expect(result.component?.framework).toBe('vue');
-    });
-
-    it('uses default svelte renderer for generateComponent()', () => {
-      const result = service.generateComponent({
-        explicit: '[toggle patient:.active]',
-        framework: 'svelte',
-      });
-      expect(result.ok).toBe(true);
-      expect(result.component?.framework).toBe('svelte');
-    });
-
-    it('accepts custom test renderer via registerTestRenderer()', () => {
-      const mockRenderer = {
-        framework: 'mock-test',
-        render: () => ({
-          name: 'mock test',
-          code: '// mock test code',
-          html: '<div></div>',
-          framework: 'mock-test',
-          operations: [],
-        }),
-      };
-
-      service.registerTestRenderer('mock-test', mockRenderer);
-      const result = service.generateTests({
-        explicit: '[toggle patient:.active]',
-        framework: 'mock-test',
-      });
-
-      expect(result.ok).toBe(true);
-      expect(result.tests[0].framework).toBe('mock-test');
-      expect(result.tests[0].code).toBe('// mock test code');
-    });
-
-    it('accepts custom component renderer via registerComponentRenderer()', () => {
-      const mockRenderer = {
-        framework: 'mock-component',
-        render: () => ({
-          name: 'MockComponent',
-          code: '// mock component code',
-          framework: 'mock-component',
-          operations: [],
-          hooks: [],
-        }),
-      };
-
-      service.registerComponentRenderer('mock-component', mockRenderer);
-      const result = service.generateComponent({
-        explicit: '[toggle patient:.active]',
-        framework: 'mock-component',
-      });
-
-      expect(result.ok).toBe(true);
-      expect(result.component?.framework).toBe('mock-component');
-      expect(result.component?.code).toBe('// mock component code');
-    });
-  });
 });
 
 // =============================================================================
 // Custom Renderers via ServiceOptions
 // =============================================================================
-
-describe('CompilationService with custom renderers', () => {
-  let service: CompilationService;
-
-  beforeAll(async () => {
-    service = await CompilationService.create({
-      testRenderers: {
-        custom: {
-          framework: 'custom',
-          render: () => ({
-            name: 'custom test',
-            code: '// custom renderer',
-            html: '<div></div>',
-            framework: 'custom',
-            operations: [],
-          }),
-        },
-      },
-      componentRenderers: {
-        vue: {
-          framework: 'vue',
-          render: () => ({
-            name: 'VueComponent',
-            code: '// vue component',
-            framework: 'vue',
-            operations: [],
-            hooks: [],
-          }),
-        },
-      },
-    });
-  }, 30000);
-
-  it('uses custom test renderer from ServiceOptions', () => {
-    const result = service.generateTests({
-      explicit: '[toggle patient:.active]',
-      framework: 'custom',
-    });
-    expect(result.ok).toBe(true);
-    expect(result.tests[0].framework).toBe('custom');
-  });
-
-  it('uses custom component renderer from ServiceOptions', () => {
-    const result = service.generateComponent({
-      explicit: '[toggle patient:.active]',
-      framework: 'vue',
-    });
-    expect(result.ok).toBe(true);
-    expect(result.component?.framework).toBe('vue');
-  });
-
-  it('does not have default renderers when custom ones are provided', () => {
-    const result = service.generateTests({
-      explicit: '[toggle patient:.active]',
-      framework: 'playwright',
-    });
-    expect(result.ok).toBe(false);
-    expect(result.diagnostics.some(d => d.code === 'UNKNOWN_FRAMEWORK')).toBe(true);
-  });
-});
 
 // =============================================================================
 // intent-element target (generates <lse-intent> HTML snippets)
@@ -792,50 +631,18 @@ describe('CompilationService — generate() targets', () => {
     expect(result.output).toBeUndefined();
     expect(result.diagnostics.some(d => d.code === 'UNKNOWN_TARGET')).toBe(true);
   });
-});
 
-// =============================================================================
-// Deprecations (removed in 6.0)
-// =============================================================================
-
-describe('deprecated generators', () => {
-  let service: CompilationService;
-
-  beforeAll(async () => {
-    service = await CompilationService.create();
-  }, 30000);
-
-  const isNotice = (d: { severity: string; code: string; message: string }) =>
-    d.severity === 'info' && d.code === 'DEPRECATED' && d.message.includes('6.0');
-
-  it('generateTests says it is deprecated, and still works', () => {
-    const r = service.generateTests({ code: 'on click toggle .active', language: 'en' });
-    expect(r.ok).toBe(true);
-    expect(r.diagnostics.filter(isNotice)).toHaveLength(1);
-  });
-
-  it('generateComponent says it is deprecated, and still works', () => {
-    const r = service.generateComponent({ code: 'on click toggle .active', language: 'en' });
-    expect(r.ok).toBe(true);
-    expect(r.diagnostics.filter(isNotice)).toHaveLength(1);
-  });
-
-  it("generate's component targets say so too; intent-element does not", async () => {
-    const react = await service.generate({ lse: '[toggle patient:.active]', target: 'react' });
-    expect(react.diagnostics.filter(isNotice)).toHaveLength(1);
-    const intent = await service.generate({
-      lse: '[toggle patient:.active]',
-      target: 'intent-element',
-    });
-    expect(intent.diagnostics.filter(isNotice)).toHaveLength(0);
-  });
-
-  it('a refused input still carries the notice', () => {
-    const r = service.generateComponent({
-      code: 'on click fetch /api/items as json then put it into #list',
-      language: 'en',
-    });
-    expect(r.ok).toBe(false);
-    expect(r.diagnostics.filter(isNotice)).toHaveLength(1);
-  });
+  // react, vue and svelte were targets until 6.0 removed component generation.
+  it.each(['react', 'vue', 'svelte'])(
+    "rejects the removed '%s' target with UNKNOWN_TARGET",
+    async target => {
+      const result = await service.generate({
+        lse: '[toggle patient:.active]',
+        target: target as never,
+      });
+      expect(result.ok).toBe(false);
+      expect(result.output).toBeUndefined();
+      expect(result.diagnostics.some(d => d.code === 'UNKNOWN_TARGET')).toBe(true);
+    }
+  );
 });

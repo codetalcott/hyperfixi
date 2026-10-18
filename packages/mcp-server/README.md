@@ -1,6 +1,6 @@
 # @hyperfixi/mcp-server
 
-MCP (Model Context Protocol) server for hyperscript and multilingual DSL development. Provides **93 tools** by default (**98** defined — the 5 MCP-sampling tools are opt-in and hidden unless `LOKASCRIPT_MCP_LLM_TOOLS=1`), **9 resources**, and **9 prompts** spanning: GRAIL workflow orchestration, validation, compilation, analysis, patterns, LSP bridge, language profiles, code generation, route extraction, 7 domain DSLs, IR conversion, cross-domain dispatch, MCP sampling (opt-in), AI-assisted debugging, template inventory, and the LSE round-trip pipeline.
+MCP (Model Context Protocol) server for hyperscript and multilingual DSL development. Provides **91 tools** by default (**96** defined — the 5 MCP-sampling tools are opt-in and hidden unless `LOKASCRIPT_MCP_LLM_TOOLS=1`), **9 resources**, and **9 prompts** spanning: GRAIL workflow orchestration, validation, compilation, analysis, patterns, LSP bridge, language profiles, code generation, route extraction, 7 domain DSLs, IR conversion, cross-domain dispatch, MCP sampling (opt-in), AI-assisted debugging, template inventory, and the LSE round-trip pipeline.
 
 ## The agent loop
 
@@ -80,7 +80,7 @@ See **[GRAIL.md](GRAIL.md)** for full documentation, schema reference, and examp
 
 ## Available Tools
 
-The **93** tools below, plus the **5** GRAIL tools above, total **98** defined. The 5 MCP-sampling tools among them are hidden from `tools/list` unless `LOKASCRIPT_MCP_LLM_TOOLS=1`, so a default connection sees **93**.
+The **91** tools below, plus the **5** GRAIL tools above, total **96** defined. The 5 MCP-sampling tools among them are hidden from `tools/list` unless `LOKASCRIPT_MCP_LLM_TOOLS=1`, so a default connection sees **91**.
 
 ### Validation & Semantic Tools (8)
 
@@ -95,14 +95,12 @@ The **93** tools below, plus the **5** GRAIL tools above, total **98** defined. 
 | `explain_in_language`  | Explain code with grammar rules, roles, and translations         |
 | `get_code_fixes`       | Get auto-fixes for specific error codes                          |
 
-### Compilation & Code Generation (6)
+### Compilation (4)
 
 | Tool                   | Description                                                                |
 | ---------------------- | -------------------------------------------------------------------------- |
 | `validate_and_compile` | Parse to semantic IR with diagnostics; natural language also on the engine |
 | `translate_code`       | High-fidelity translation with SVO/SOV/VSO grammar transformation          |
-| `generate_tests`       | Deprecated, removed in 6.0: Playwright behavior tests from hyperscript     |
-| `generate_component`   | Deprecated, removed in 6.0: React, Vue, or Svelte component                |
 | `score_fidelity`       | Score a candidate against a reference: recall/precision/role/value signals |
 | `diff_behaviors`       | Compare two inputs for semantic equivalence                                |
 

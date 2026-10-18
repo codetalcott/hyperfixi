@@ -1,13 +1,13 @@
 ---
 name: hyperfixi-codegen
-description: 'Validates HyperFixi/LokaScript (a semantic dry-run) and compares two behaviors. Use when the user wants a validation dry-run or a behavioral comparison. Component and test generation are deprecated (removed in 6.0).'
+description: 'Validates HyperFixi/LokaScript (a semantic dry-run) and compares two behaviors. Use when the user wants a validation dry-run or a behavioral comparison. Component and test generation were removed in 6.0.'
 ---
 
 # HyperFixi Code Generation
 
 Validate HyperFixi/LokaScript code and compare behaviors. (Compiling to JavaScript, `compile_hyperscript`, retired with the AOT compiler in 4.0: hyperscript runs as written, in an `_="..."` attribute, on `@hyperfixi/engine`.)
 
-**`generate_component` and `generate_tests` are deprecated and removed in 6.0.** Measured on 169 real inputs, 15 gave a Playwright test that checks the behavior, and a component for any command aimed at another element did not compile. Don't offer them: write the component or the test directly.
+**`generate_component` and `generate_tests` were removed in 6.0.** Measured on 169 real inputs, 15 gave a Playwright test that checked the behavior, and a component for any command aimed at another element did not compile. Write the component or the test directly.
 
 ## When to Use
 
@@ -71,8 +71,6 @@ The language-agnostic IR format `[command role:value ...]`:
 | Tool                   | Description                                      |
 | ---------------------- | ------------------------------------------------ |
 | `validate_and_compile` | Parse to semantic IR with diagnostics            |
-| `generate_component`   | Deprecated, removed in 6.0                       |
-| `generate_tests`       | Deprecated, removed in 6.0                       |
 | `diff_behaviors`       | Compare two inputs for semantic equivalence      |
 | `translate_code`       | Translate code between languages (high fidelity) |
 

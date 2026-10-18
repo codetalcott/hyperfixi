@@ -54,7 +54,7 @@ packages/
 │   └── src/         # See packages/htmx-adapter/CLAUDE.md
 │
 ├── framework/       # Shared DSL framework (createMultilingualDSL, DomainRegistry, CrossDomainDispatcher)
-├── compilation-service/  # Multi-target codegen (React, Vue, Svelte components; Playwright tests)
+├── compilation-service/  # Validate, translate, diff, score hyperscript (library + HTTP; MCP's backend)
 ├── mcp-server/      # MCP server exposing all tools (hyperscript + domain DSLs via @lokascript/domains)
 ├── server-bridge/   # Server-side route extraction from HTML
 │
@@ -1087,7 +1087,7 @@ carries the offset. (Core's 3.x debugging API — `compileSync(…).meta`, `debu
 | `packages/framework/src/api/domain-registry.ts`           | Domain registry + MCP tool generation                           |
 | `packages/framework/src/api/dispatcher.ts`                | `CrossDomainDispatcher` (auto-detect domain)                    |
 | `packages/mcp-server/src/tools/domain-registry-setup.ts`  | Domain registrations for MCP server                             |
-| `packages/compilation-service/src/`                       | Validation + component renderers (React, Vue, Svelte)           |
+| `packages/compilation-service/src/`                       | Validation, translation, behavior diff, fidelity scoring        |
 
 ## Vite Plugin (Recommended)
 

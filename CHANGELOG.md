@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.0.0] - 2026-10-18
+
+Removes `@lokascript/compilation-service`'s test and component generation, deprecated in 5.1.0. For
+every other package 6.0 is a renumber: `@lokascript/domains` 5.0.1+ accepts it.
+
+### Removed (BREAKING)
+
+- **`@lokascript/compilation-service`: test and component generation** (deprecated in #1560).
+  Gone: `generateTests`, `generateComponent`, `registerTestRenderer`, `registerComponentRenderer`,
+  `PlaywrightRenderer`, `ReactRenderer`, `VueRenderer`, `SvelteRenderer` and their types,
+  `ServiceOptions.testRenderers` / `componentRenderers`, the HTTP routes `/generate-tests` and
+  `/generate-component`, and `generate()`'s react, vue and svelte targets (it answers
+  `UNKNOWN_TARGET`; `intent-element` stays). `@hyperfixi/mcp-server` drops the `generate_tests` and
+  `generate_component` tools: 96 defined, 91 listed by default (98, 93). The operation extractor
+  stays, behind `diff`; its per-operation tests now run through `/diff`. MIGRATION.md has the 6.0
+  table.
+
 ### Changed
 
 - **`@hyperfixi/mcp-server`: on `@lokascript/domains` 5.0.1**, which peers framework, semantic and
@@ -1926,7 +1943,8 @@ _Synchronized version release. See git history for details._
 - npm access token stored in GitHub Secrets
 - 2FA recommended for npm organization
 
-[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v5.1.0...HEAD
+[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v6.0.0...HEAD
+[6.0.0]: https://github.com/codetalcott/hyperfixi/compare/v5.1.0...v6.0.0
 [5.1.0]: https://github.com/codetalcott/hyperfixi/compare/v5.0.0...v5.1.0
 [5.0.0]: https://github.com/codetalcott/hyperfixi/compare/v4.8.0...v5.0.0
 [4.8.0]: https://github.com/codetalcott/hyperfixi/compare/v4.7.0...v4.8.0

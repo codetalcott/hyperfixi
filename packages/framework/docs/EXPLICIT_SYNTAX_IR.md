@@ -32,11 +32,11 @@ Natural Language (24 languages)  ---+
 Explicit Syntax IR                  +---> SemanticNode (Map<role, value>)
 LLM JSON { action, roles }      ---+             |
                                                   v
-                       compile / generate_tests / generate_component / diff
+                      validate / translate / diff / score_fidelity
                                                   |
                         +-----------+-------------+------------+
                         v           v             v            v
-                   JavaScript   Playwright   React/Vue/Svelte  ...
+                   diagnostics  24 languages  behavior diff  fidelity
 ```
 
 **Input paths:**

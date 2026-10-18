@@ -2,9 +2,9 @@
  * CompilationService — the main orchestrator.
  *
  * Accepts hyperscript in three formats (natural language, explicit syntax, LLM JSON),
- * validates it through semantic schemas and the engine, and translates, diffs, scores, and
- * renders it as components and tests. (It compiled to JavaScript through
- * `@hyperfixi/aot-compiler` until 4.0, when the AOT compiler retired.)
+ * validates it through semantic schemas and the engine, and translates, diffs, and scores it.
+ * (It compiled to JavaScript through `@hyperfixi/aot-compiler` until 4.0, when the AOT compiler
+ * retired, and rendered React/Vue/Svelte components and Playwright tests until 6.0.)
  */
 
 import type {
@@ -12,10 +12,6 @@ import type {
   ValidationResponse,
   TranslateRequest,
   TranslateResponse,
-  TestRequest,
-  TestResponse,
-  ComponentRequest,
-  ComponentResponse,
   DiffRequest,
   DiffResponse,
   GenerateRequest,
@@ -35,12 +31,6 @@ import {
   type ValidationFunctions,
 } from './validation/gates.js';
 import { extractOperations } from './operations/extract.js';
-import { PlaywrightRenderer } from './renderers/playwright.js';
-import { ReactRenderer } from './renderers/react.js';
-import { VueRenderer } from './renderers/vue.js';
-import { SvelteRenderer } from './renderers/svelte.js';
-import type { TestRenderer } from './renderers/types.js';
-import type { ComponentRenderer } from './renderers/component-types.js';
 
 // =============================================================================
 // Service
@@ -74,22 +64,6 @@ function isLossyTranslation(error: unknown): error is LossyTranslation {
   );
 }
 
-/**
- * The notice `generateTests` and `generateComponent` return until 6.0 removes them. Measured
- * 2026-10-18 on the docs sites' 164 English patterns and lokascript-examples chat's five examples:
- * 15 of 169 inputs gave a Playwright test that fails without the engine (103 were refused, 23
- * tests pass with no engine at all, 26 fail on it), and 4 of 6 React components did not typecheck
- * (every command aimed at another element).
- */
-function deprecationNotice(operation: string): Diagnostic {
-  return {
-    severity: 'info',
-    code: 'DEPRECATED',
-    message: `${operation} is deprecated and is removed in @lokascript/compilation-service 6.0.`,
-    suggestion: 'validate, translate, scoreFidelity and diff stay.',
-  };
-}
-
 export class CompilationService {
   private confidenceThreshold: number;
   private translateFn: ((code: string, from: string, to: string) => string) | null = null;
@@ -101,43 +75,9 @@ export class CompilationService {
    * when the engine is installed (an optional peer); without it there is no engine check.
    */
   private engineError: ((source: string) => string | null) | null = null;
-  private testRenderers: Map<string, TestRenderer>;
-  private componentRenderers: Map<string, ComponentRenderer>;
 
   private constructor(options: ServiceOptions = {}) {
     this.confidenceThreshold = options.confidenceThreshold ?? 0.7;
-
-    // Initialize renderer registries with defaults
-    this.testRenderers = new Map<string, TestRenderer>(
-      Object.entries(options.testRenderers ?? { playwright: new PlaywrightRenderer() })
-    );
-    this.componentRenderers = new Map<string, ComponentRenderer>(
-      Object.entries(
-        options.componentRenderers ?? {
-          react: new ReactRenderer(),
-          vue: new VueRenderer(),
-          svelte: new SvelteRenderer(),
-        }
-      )
-    );
-  }
-
-  /**
-   * Register a test renderer for a given framework.
-   *
-   * @deprecated Removed in 6.0 with `generateTests`.
-   */
-  registerTestRenderer(framework: string, renderer: TestRenderer): void {
-    this.testRenderers.set(framework, renderer);
-  }
-
-  /**
-   * Register a component renderer for a given framework.
-   *
-   * @deprecated Removed in 6.0 with `generateComponent`.
-   */
-  registerComponentRenderer(framework: string, renderer: ComponentRenderer): void {
-    this.componentRenderers.set(framework, renderer);
   }
 
   /**
@@ -354,177 +294,6 @@ export class CompilationService {
   }
 
   /**
-   * Generate behavior-level tests from hyperscript.
-   *
-   * Parses the input, extracts abstract operations (what the behavior does),
-   * and renders them as test code in the requested framework.
-   *
-   * @deprecated Removed in 6.0: most inputs are refused, and most tests it writes do not check
-   * the behavior (see `deprecationNotice`). The response carries a `DEPRECATED` info diagnostic.
-   */
-  generateTests(request: TestRequest): TestResponse {
-    const diagnostics: Diagnostic[] = [deprecationNotice('generateTests')];
-
-    // Step 1: Normalize input to SemanticNode (reuse existing pipeline)
-    const normalized = normalize({
-      code: request.code,
-      explicit: request.explicit,
-      semantic: request.semantic,
-      language: request.language,
-      confidence: request.confidence,
-    });
-    diagnostics.push(...normalized.diagnostics);
-
-    if (!normalized.node) {
-      return { ok: false, tests: [], operations: [], diagnostics };
-    }
-
-    // Step 2: Validate
-    const threshold = request.confidence ?? this.confidenceThreshold;
-    const gateResult = runValidationGates(normalized.node, normalized.confidence, threshold);
-    diagnostics.push(...gateResult.diagnostics);
-
-    if (!gateResult.pass) {
-      return { ok: false, tests: [], operations: [], diagnostics };
-    }
-
-    // Step 3: Extract abstract operations
-    const spec = extractOperations(normalized.node);
-
-    if (spec.operations.length === 0) {
-      diagnostics.push({
-        severity: 'warning',
-        code: 'NO_OPERATIONS',
-        message: 'No testable operations extracted from the input.',
-      });
-      return { ok: false, tests: [], operations: [], diagnostics };
-    }
-
-    // Attach source hyperscript for test naming
-    if (!spec.source && request.code) {
-      spec.source = request.code;
-    }
-
-    // Step 4: Render tests
-    const frameworkName = request.framework ?? 'playwright';
-    const renderer = this.testRenderers.get(frameworkName);
-    if (!renderer) {
-      diagnostics.push({
-        severity: 'error',
-        code: 'UNKNOWN_FRAMEWORK',
-        message: `No test renderer registered for framework '${frameworkName}'. Available: ${[...this.testRenderers.keys()].join(', ')}`,
-      });
-      return { ok: false, tests: [], operations: [], diagnostics };
-    }
-
-    const generated = renderer.render(spec, {
-      testName: request.testName,
-      bundlePath: request.bundlePath,
-      hyperscript: request.code ?? request.explicit,
-    });
-
-    const semanticJSON = nodeToSemanticJSON(normalized.node);
-
-    return {
-      ok: true,
-      tests: [
-        {
-          name: generated.name,
-          code: generated.code,
-          html: generated.html,
-          framework: generated.framework,
-        },
-      ],
-      operations: spec.operations,
-      semantic: semanticJSON,
-      diagnostics,
-    };
-  }
-
-  /**
-   * Generate a framework component from hyperscript.
-   *
-   * Parses the input, extracts abstract operations, and renders
-   * them as a framework-specific component (React, Vue, or Svelte).
-   *
-   * @deprecated Removed in 6.0: a command aimed at another element renders a component that does
-   * not compile (see `deprecationNotice`). The response carries a `DEPRECATED` info diagnostic.
-   */
-  generateComponent(request: ComponentRequest): ComponentResponse {
-    const diagnostics: Diagnostic[] = [deprecationNotice('generateComponent')];
-
-    // Step 1: Normalize input to SemanticNode
-    const normalized = normalize({
-      code: request.code,
-      explicit: request.explicit,
-      semantic: request.semantic,
-      language: request.language,
-      confidence: request.confidence,
-    });
-    diagnostics.push(...normalized.diagnostics);
-
-    if (!normalized.node) {
-      return { ok: false, operations: [], diagnostics };
-    }
-
-    // Step 2: Validate
-    const threshold = request.confidence ?? this.confidenceThreshold;
-    const gateResult = runValidationGates(normalized.node, normalized.confidence, threshold);
-    diagnostics.push(...gateResult.diagnostics);
-
-    if (!gateResult.pass) {
-      return { ok: false, operations: [], diagnostics };
-    }
-
-    // Step 3: Extract abstract operations
-    const spec = extractOperations(normalized.node);
-
-    if (spec.operations.length === 0) {
-      diagnostics.push({
-        severity: 'warning',
-        code: 'NO_OPERATIONS',
-        message: 'No operations extracted from the input.',
-      });
-      return { ok: false, operations: [], diagnostics };
-    }
-
-    if (!spec.source && request.code) {
-      spec.source = request.code;
-    }
-
-    // Step 4: Render component
-    const frameworkName = request.framework ?? 'react';
-    const renderer = this.componentRenderers.get(frameworkName);
-    if (!renderer) {
-      diagnostics.push({
-        severity: 'error',
-        code: 'UNKNOWN_FRAMEWORK',
-        message: `No component renderer registered for framework '${frameworkName}'. Available: ${[...this.componentRenderers.keys()].join(', ')}`,
-      });
-      return { ok: false, operations: [], diagnostics };
-    }
-    const generated = renderer.render(spec, {
-      componentName: request.componentName,
-      typescript: request.typescript,
-    });
-
-    const semanticJSON = nodeToSemanticJSON(normalized.node);
-
-    return {
-      ok: true,
-      component: {
-        name: generated.name,
-        code: generated.code,
-        hooks: generated.hooks,
-        framework: generated.framework,
-      },
-      operations: spec.operations,
-      semantic: semanticJSON,
-      diagnostics,
-    };
-  }
-
-  /**
    * Compare two hyperscript inputs at the behavior level.
    *
    * Both sides are independently normalized and validated, then compared
@@ -678,10 +447,9 @@ export class CompilationService {
    * validates it, and renders to the requested target format.
    *
    * Targets (`target` is required):
-   * - 'react'          — React component (deprecated: removed in 6.0 with `generateComponent`)
-   * - 'vue'            — Vue component (deprecated, likewise)
-   * - 'svelte'         — Svelte component (deprecated, likewise)
    * - 'intent-element' — HTML snippet with embedded `<lse-intent>` JSON
+   *
+   * (The react, vue and svelte targets were removed in 6.0 with `generateComponent`.)
    */
   async generate(request: GenerateRequest): Promise<GenerateResponse> {
     const { lse, target, task } = request;
@@ -795,34 +563,13 @@ export class CompilationService {
       }
     }
 
-    // ── framework targets: delegate to existing pipeline ───────────────────
-
-    const componentTargets = ['react', 'vue', 'svelte'] as const;
-    type ComponentTarget = (typeof componentTargets)[number];
-
-    if ((componentTargets as readonly string[]).includes(target)) {
-      const componentRequest: ComponentRequest = isJSON
-        ? { semantic: JSON.parse(lse) as SemanticJSON }
-        : { explicit: lse };
-      const result = this.generateComponent({
-        ...componentRequest,
-        framework: target as ComponentTarget,
-      });
-      return {
-        ok: result.ok,
-        output: result.component?.code,
-        protocol: result.semantic,
-        diagnostics: result.diagnostics,
-      };
-    }
-
     return {
       ok: false,
       diagnostics: [
         {
           severity: 'error',
           code: 'UNKNOWN_TARGET',
-          message: `Unknown target '${String(target)}'. Available: react, vue, svelte, intent-element`,
+          message: `Unknown target '${String(target)}'. Available: intent-element`,
         },
       ],
     };
