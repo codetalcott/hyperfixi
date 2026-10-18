@@ -60,26 +60,6 @@ describe('API key authentication', () => {
     expect(res.status).toBe(401);
   });
 
-  it('rejects unauthenticated /generate-tests', async () => {
-    const res = await authedApp.request('/generate-tests', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ explicit: '[toggle patient:.active]' }),
-    });
-
-    expect(res.status).toBe(401);
-  });
-
-  it('rejects unauthenticated /generate-component', async () => {
-    const res = await authedApp.request('/generate-component', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ explicit: '[toggle patient:.active]' }),
-    });
-
-    expect(res.status).toBe(401);
-  });
-
   it('rejects unauthenticated /diff', async () => {
     const res = await authedApp.request('/diff', {
       method: 'POST',

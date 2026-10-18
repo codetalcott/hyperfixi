@@ -48,23 +48,6 @@ describe('Missing input', () => {
     expect(body.diagnostics[0].severity).toBe('error');
   });
 
-  it('/generate-tests with empty body returns diagnostics', async () => {
-    const { status, body } = await post('/generate-tests', {});
-
-    expect(status).toBe(422);
-    expect(body.ok).toBe(false);
-    expect(body.tests).toEqual([]);
-    expect(body.operations).toEqual([]);
-  });
-
-  it('/generate-component with empty body returns diagnostics', async () => {
-    const { status, body } = await post('/generate-component', {});
-
-    expect(status).toBe(422);
-    expect(body.ok).toBe(false);
-    expect(body.operations).toEqual([]);
-  });
-
   it('/diff with empty a and b returns diagnostics', async () => {
     const { body } = await post('/diff', {
       a: {},
@@ -227,24 +210,6 @@ describe('Edge cases', () => {
     expect(body.identical).toBe(true);
   });
 
-  it('generate-tests returns framework=playwright', async () => {
-    const { body } = await post('/generate-tests', {
-      explicit: '[toggle patient:.active]',
-    });
-
-    expect(body.ok).toBe(true);
-    expect(body.tests[0].framework).toBe('playwright');
-  });
-
-  it('generate-component returns framework=react', async () => {
-    const { body } = await post('/generate-component', {
-      explicit: '[toggle patient:.active]',
-    });
-
-    expect(body.ok).toBe(true);
-    expect(body.component.framework).toBe('react');
-  });
-
   it('health endpoint returns before service init', async () => {
     // Create a fresh app without pre-initialized service
     const freshApp = createApp();
@@ -297,44 +262,5 @@ describe('Response shape contracts', () => {
     expect(body).toHaveProperty('diagnostics');
     expect(Array.isArray(body.operations)).toBe(true);
     expect(typeof body.summary).toBe('string');
-  });
-
-  it('/generate-tests success has required fields', async () => {
-    const { body } = await post('/generate-tests', {
-      explicit: '[toggle patient:.active]',
-    });
-
-    expect(body).toHaveProperty('ok');
-    expect(body).toHaveProperty('tests');
-    expect(body).toHaveProperty('operations');
-    expect(body).toHaveProperty('diagnostics');
-    expect(Array.isArray(body.tests)).toBe(true);
-    expect(Array.isArray(body.operations)).toBe(true);
-
-    // Test shape
-    const test = body.tests[0];
-    expect(test).toHaveProperty('name');
-    expect(test).toHaveProperty('code');
-    expect(test).toHaveProperty('html');
-    expect(test).toHaveProperty('framework');
-  });
-
-  it('/generate-component success has required fields', async () => {
-    const { body } = await post('/generate-component', {
-      explicit: '[toggle patient:.active]',
-    });
-
-    expect(body).toHaveProperty('ok');
-    expect(body).toHaveProperty('component');
-    expect(body).toHaveProperty('operations');
-    expect(body).toHaveProperty('diagnostics');
-
-    // Component shape
-    const comp = body.component;
-    expect(comp).toHaveProperty('name');
-    expect(comp).toHaveProperty('code');
-    expect(comp).toHaveProperty('hooks');
-    expect(comp).toHaveProperty('framework');
-    expect(Array.isArray(comp.hooks)).toBe(true);
   });
 });

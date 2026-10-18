@@ -1,5 +1,20 @@
 # Migration Guide
 
+## Migrating from 5.x to 6.0
+
+`@lokascript/compilation-service` no longer generates tests or components. Deprecated in 5.x,
+removed in 6.0:
+
+| Removed                                                                                                                        | Instead                                        |
+| ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------- |
+| `generateTests`, `PlaywrightRenderer`, `registerTestRenderer`, `POST /generate-tests`                                          | Write the Playwright test against your page    |
+| `generateComponent`, `ReactRenderer`, `VueRenderer`, `SvelteRenderer`, `registerComponentRenderer`, `POST /generate-component` | Write the component directly                   |
+| `generate()`'s `react`, `vue` and `svelte` targets                                                                             | `intent-element` stays                         |
+| MCP tools `generate_tests`, `generate_component`                                                                               | `validate_and_compile`, then write it yourself |
+| `ServiceOptions.testRenderers`, `componentRenderers`; the request/response types for both                                      | —                                              |
+
+Validation, translation, `diff` and `scoreFidelity` are unchanged.
+
 ## Migrating from 3.x to 4.0
 
 ### Overview

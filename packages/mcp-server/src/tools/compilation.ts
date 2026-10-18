@@ -55,48 +55,6 @@ export const compilationTools: Tool[] = [
     },
   },
   {
-    name: 'generate_tests',
-    description:
-      'Deprecated (removed in 6.0): most inputs are refused and most tests it writes do not check the behavior. Generate Playwright behavior tests from hyperscript. Extracts abstract operations and renders them as test assertions.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        code: { type: 'string', description: 'Natural language hyperscript' },
-        explicit: { type: 'string', description: 'Explicit syntax' },
-        semantic: { type: 'object', description: 'LLM JSON' },
-        language: { type: 'string', description: 'Language code' },
-        testName: { type: 'string', description: 'Custom test name' },
-        framework: {
-          type: 'string',
-          description: 'Test framework to target (default "playwright")',
-        },
-      },
-    },
-  },
-  {
-    name: 'generate_component',
-    description:
-      'Deprecated (removed in 6.0): a command aimed at another element renders a component that does not compile. Generate a React component from hyperscript. Maps semantic operations to React hooks and JSX, Vue 3 Composition API and templates, or Svelte 5 runes. Supports react (default), vue, and svelte frameworks.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        code: { type: 'string', description: 'Natural language hyperscript' },
-        explicit: { type: 'string', description: 'Explicit syntax' },
-        semantic: { type: 'object', description: 'LLM JSON' },
-        language: { type: 'string', description: 'Language code' },
-        componentName: { type: 'string', description: 'Custom component name' },
-        typescript: {
-          type: 'boolean',
-          description: 'TypeScript output (default true)',
-        },
-        framework: {
-          type: 'string',
-          description: 'Component framework to target: "react" (default), "vue", or "svelte"',
-        },
-      },
-    },
-  },
-  {
     name: 'score_fidelity',
     description:
       "Score a candidate hyperscript snippet against a reference for structural fidelity — the multilingual CI ratchet's deterministic scorers applied to one pair. Returns actionRecall/multisetRecall/precision/roleFidelity/valueRecall (each 0–1), plus the exact missing/spurious actions and lost invariant values (e.g. a silently rewritten target: toggle.destination=#panel). Sides accept any input format and may be in DIFFERENT languages, so it also verifies a translation preserved meaning. Use after editing or translating code to prove the result faithful; diff_behaviors answers identical-or-not, this answers how-faithful-and-what-drifted.",
@@ -226,37 +184,6 @@ export async function handleCompilationTool(
           code: args.code as string,
           from: args.from as string,
           to: args.to as string,
-        });
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          isError: !result.ok,
-        };
-      }
-
-      case 'generate_tests': {
-        const result = service.generateTests({
-          code: args.code as string | undefined,
-          explicit: args.explicit as string | undefined,
-          semantic: args.semantic as any,
-          language: args.language as string | undefined,
-          testName: args.testName as string | undefined,
-          framework: args.framework as string | undefined,
-        });
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          isError: !result.ok,
-        };
-      }
-
-      case 'generate_component': {
-        const result = service.generateComponent({
-          code: args.code as string | undefined,
-          explicit: args.explicit as string | undefined,
-          semantic: args.semantic as any,
-          language: args.language as string | undefined,
-          componentName: args.componentName as string | undefined,
-          typescript: args.typescript as boolean | undefined,
-          framework: args.framework as string | undefined,
         });
         return {
           content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],

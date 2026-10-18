@@ -20,8 +20,6 @@ describe('Tool definition contracts', () => {
   const expectedTools = [
     'validate_and_compile',
     'translate_code',
-    'generate_tests',
-    'generate_component',
     'score_fidelity',
     'diff_behaviors',
   ];
@@ -74,31 +72,6 @@ describe('Schema-handler parameter parity', () => {
     expect(tool.inputSchema.required).toContain('code');
     expect(tool.inputSchema.required).toContain('from');
     expect(tool.inputSchema.required).toContain('to');
-  });
-
-  it('generate_tests schema matches handler expectations', () => {
-    const tool = compilationTools.find(t => t.name === 'generate_tests')!;
-    const props = Object.keys(tool.inputSchema.properties!);
-
-    expect(props).toContain('code');
-    expect(props).toContain('explicit');
-    expect(props).toContain('semantic');
-    expect(props).toContain('language');
-    expect(props).toContain('testName');
-    // 'compiled' was the only other execution mode; it retired with the AOT compiler.
-    expect(props).not.toContain('executionMode');
-  });
-
-  it('generate_component schema matches handler expectations', () => {
-    const tool = compilationTools.find(t => t.name === 'generate_component')!;
-    const props = Object.keys(tool.inputSchema.properties!);
-
-    expect(props).toContain('code');
-    expect(props).toContain('explicit');
-    expect(props).toContain('semantic');
-    expect(props).toContain('language');
-    expect(props).toContain('componentName');
-    expect(props).toContain('typescript');
   });
 
   it('diff_behaviors schema has required a and b', () => {
@@ -258,7 +231,7 @@ describe('diff_behaviors via MCP', () => {
 // =============================================================================
 
 describe('All tools accept explicit syntax', () => {
-  const toolsWithExplicit = ['validate_and_compile', 'generate_tests', 'generate_component'];
+  const toolsWithExplicit = ['validate_and_compile'];
 
   for (const toolName of toolsWithExplicit) {
     it(`${toolName} accepts explicit syntax input`, async () => {
@@ -274,7 +247,7 @@ describe('All tools accept explicit syntax', () => {
 });
 
 describe('All tools accept LLM JSON', () => {
-  const toolsWithSemantic = ['validate_and_compile', 'generate_tests', 'generate_component'];
+  const toolsWithSemantic = ['validate_and_compile'];
 
   for (const toolName of toolsWithSemantic) {
     it(`${toolName} accepts LLM JSON input`, async () => {

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed (BREAKING)
+
+- **`@lokascript/compilation-service`: test and component generation** (deprecated in #1560).
+  Gone: `generateTests`, `generateComponent`, `registerTestRenderer`, `registerComponentRenderer`,
+  `PlaywrightRenderer`, `ReactRenderer`, `VueRenderer`, `SvelteRenderer` and their types,
+  `ServiceOptions.testRenderers` / `componentRenderers`, the HTTP routes `/generate-tests` and
+  `/generate-component`, and `generate()`'s react, vue and svelte targets (it answers
+  `UNKNOWN_TARGET`; `intent-element` stays). `@hyperfixi/mcp-server` drops the `generate_tests` and
+  `generate_component` tools: 96 defined, 91 listed by default (98, 93). The operation extractor
+  stays, behind `diff`; its per-operation tests now run through `/diff`. MIGRATION.md has the 6.0
+  table.
+
 ### Changed
 
 - **`@hyperfixi/mcp-server`: on `@lokascript/domains` 5.0.1**, which peers framework, semantic and

@@ -271,8 +271,6 @@ function buildServer(): Server {
     if (
       name === 'validate_and_compile' ||
       name === 'translate_code' ||
-      name === 'generate_tests' ||
-      name === 'generate_component' ||
       name === 'score_fidelity' ||
       name === 'diff_behaviors'
     ) {

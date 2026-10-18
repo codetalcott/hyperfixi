@@ -38,7 +38,7 @@ packages/
 ├── framework/          # @lokascript/framework — Generic DSL framework
 │                       # (createMultilingualDSL, DomainRegistry, CrossDomainDispatcher)
 │
-├── compilation-service/# @lokascript/compilation-service — Multi-target codegen
+├── compilation-service/# @lokascript/compilation-service — validate, translate, diff, score
 ├── hyperscript-adapter/# @lokascript/hyperscript-adapter — Plugin for original _hyperscript
 ├── language-server/    # @lokascript/language-server — LSP implementation (24 languages)
 ├── server-bridge/      # @hyperfixi/server-bridge — Server-side route extraction

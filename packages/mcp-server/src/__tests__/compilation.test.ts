@@ -12,8 +12,8 @@ import { compilationTools, handleCompilationTool } from '../tools/compilation.js
 // =============================================================================
 
 describe('compilationTools', () => {
-  it('exports 6 tools', () => {
-    expect(compilationTools).toHaveLength(6);
+  it('exports 4 tools', () => {
+    expect(compilationTools).toHaveLength(4);
   });
 
   it('compile_hyperscript retired with the AOT compiler', () => {
@@ -31,16 +31,6 @@ describe('compilationTools', () => {
     expect(tool?.inputSchema.required).toContain('code');
     expect(tool?.inputSchema.required).toContain('from');
     expect(tool?.inputSchema.required).toContain('to');
-  });
-
-  it('has generate_tests tool', () => {
-    const tool = compilationTools.find(t => t.name === 'generate_tests');
-    expect(tool).toBeDefined();
-  });
-
-  it('has generate_component tool', () => {
-    const tool = compilationTools.find(t => t.name === 'generate_component');
-    expect(tool).toBeDefined();
   });
 
   it('has score_fidelity tool with required params', () => {
@@ -117,44 +107,6 @@ describe('translate_code', () => {
     const parsed = JSON.parse(result.content[0].text);
     expect(parsed.ok).toBe(true);
     expect(parsed.diagnostics.map((d: { code: string }) => d.code)).toEqual(['NAME_COLLISION']);
-  }, 30000);
-});
-
-describe('generate_tests', () => {
-  it('generates tests from explicit syntax', async () => {
-    const result = await handleCompilationTool('generate_tests', {
-      explicit: '[toggle patient:.active]',
-    });
-
-    const parsed = JSON.parse(result.content[0].text);
-    expect(parsed.ok).toBe(true);
-    expect(parsed.tests).toHaveLength(1);
-    expect(parsed.operations.length).toBeGreaterThan(0);
-  }, 30000);
-});
-
-describe('generate_component', () => {
-  it('generates React component from explicit syntax', async () => {
-    const result = await handleCompilationTool('generate_component', {
-      explicit: '[toggle patient:.active destination:#btn]',
-    });
-
-    const parsed = JSON.parse(result.content[0].text);
-    expect(parsed.ok).toBe(true);
-    expect(parsed.component).toBeDefined();
-    expect(parsed.component.framework).toBe('react');
-    expect(parsed.component.code).toContain("from 'react'");
-  }, 30000);
-
-  it('respects custom component name', async () => {
-    const result = await handleCompilationTool('generate_component', {
-      explicit: '[toggle patient:.active]',
-      componentName: 'MyToggle',
-    });
-
-    const parsed = JSON.parse(result.content[0].text);
-    expect(parsed.ok).toBe(true);
-    expect(parsed.component.name).toBe('MyToggle');
   }, 30000);
 });
 
