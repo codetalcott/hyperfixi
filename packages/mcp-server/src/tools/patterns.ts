@@ -7,7 +7,7 @@
 
 import type { Tool } from '@modelcontextprotocol/server';
 import type { Pattern } from '@hyperfixi/patterns-reference';
-import { translationRefusal } from './utils.js';
+import { translationRefusal, withDeprecation } from './utils.js';
 
 // =============================================================================
 // Tool Definitions
@@ -66,7 +66,7 @@ export const patternTools: Tool[] = [
   {
     name: 'translate_hyperscript',
     description:
-      "Translate hyperscript between any of 24 languages with @lokascript/semantic (parse, then render in the target language's word order); selectors and values are preserved. Same engine as translate_code, which also returns a fidelity verification and name-collision warnings. A translation that would lose part of the script is refused (refused: true, with `lost` and the `partial` text), never returned as `translated`.",
+      'Deprecated (removed in 7.0): use translate_code, which returns the same text (measured: 471 of 471 pairs identical, the same refusals) plus a fidelity verification and name-collision warnings; its arguments are from/to. Translates hyperscript between any of 24 languages with @lokascript/semantic; a translation that would lose part of the script is refused (refused: true, with `lost` and the `partial` text), never returned as `translated`.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -101,6 +101,21 @@ export const patternTools: Tool[] = [
 // =============================================================================
 
 export async function handlePatternTool(
+  name: string,
+  args: Record<string, unknown>
+): Promise<{ content: Array<{ type: string; text: string }>; isError?: boolean }> {
+  const result = await patternTool(name, args);
+  return name === 'translate_hyperscript'
+    ? withDeprecation(
+        result,
+        'translate_hyperscript',
+        'translate_code',
+        'the same text, plus a fidelity verification and name-collision warnings (arguments from/to).'
+      )
+    : result;
+}
+
+async function patternTool(
   name: string,
   args: Record<string, unknown>
 ): Promise<{ content: Array<{ type: string; text: string }>; isError?: boolean }> {

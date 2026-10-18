@@ -155,7 +155,7 @@ If confidence is below the threshold, the original text passes through unchanged
 | `get_bundle_config`        | Get adapter bundle recommendation (`runtime: "hyperscript"`) |
 | `translate_to_english`     | Preview what the adapter translates to                       |
 | `parse_multilingual`       | Parse code in any language with confidence scores            |
-| `validate_hyperscript`     | Validate code syntax (any language)                          |
+| `validate_and_compile`     | Validate code syntax (any language)                          |
 | `explain_in_language`      | Explain what code does, with translations                    |
 | `list_supported_languages` | List all 24 languages with metadata                          |
 

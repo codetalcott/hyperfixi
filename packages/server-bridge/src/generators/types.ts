@@ -2,7 +2,6 @@ import type { RouteDescriptor, GeneratorOptions, GenerateResult } from '../types
 
 /**
  * A route generator renders RouteDescriptor[] into framework-specific route files.
- * Follows the same pattern as TestRenderer in compilation-service.
  */
 export interface RouteGenerator {
   /** Target framework name */

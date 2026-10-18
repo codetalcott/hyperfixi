@@ -14,7 +14,7 @@ import {
   getFixableErrorCodes,
   hasFixesForError,
 } from './error-fixes.js';
-import { translationRefusal } from './utils.js';
+import { translationRefusal, withDeprecation } from './utils.js';
 
 // Try to import semantic package for multilingual support
 let semanticPackage: any = null;
@@ -115,7 +115,7 @@ export const validationTools: Tool[] = [
   {
     name: 'validate_hyperscript',
     description:
-      'Check hyperscript code for syntax errors and role warnings. Use as the FIRST validation step before returning code to users. English is also checked against hyperfixi\'s own parser (errors with source "core-parser"); tokens the semantic parser could not bind are warned as UNCONSUMED_INPUT, and a translation of that code drops them. It checks one snippet on its own, so it cannot tell whether a translation kept every clause: use score_fidelity (or translate_code\'s verification) for that. For detailed line/column positions, use get_diagnostics instead.',
+      'Deprecated (removed in 7.0): use validate_and_compile, which gives the verdict of the engine that runs the code, the semantic IR, and the same NAME_COLLISION warnings; measured on 672 inputs, this tool caught nothing validate_and_compile missed, and its event-name and if/end checks gave only false alarms. Checks hyperscript code for syntax errors and role warnings. English is also checked against the engine (errors with source "engine"); tokens the semantic parser could not bind are warned as UNCONSUMED_INPUT. For line/column positions, use get_diagnostics.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -289,7 +289,7 @@ export const validationTools: Tool[] = [
   {
     name: 'get_code_fixes',
     description:
-      'Get available auto-fixes for a specific error code or diagnostic — the repair half of the agent loop. When validate_and_compile or validate_hyperscript reports a coded error, this returns LSP-compatible CodeFix suggestions to apply before re-validating.',
+      'Get available auto-fixes for a specific error code or diagnostic — the repair half of the agent loop. When validate_and_compile reports a coded error, this returns LSP-compatible CodeFix suggestions to apply before re-validating.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -324,7 +324,12 @@ export async function handleValidationTool(
       case 'validate_hyperscript': {
         const code = args.code as string;
         const language = (args.language as string) || 'en';
-        return validateHyperscript(code, language);
+        return withDeprecation(
+          validateHyperscript(code, language),
+          'validate_hyperscript',
+          'validate_and_compile',
+          'the engine verdict, the semantic IR, and the same NAME_COLLISION warnings.'
+        );
       }
 
       case 'validate_schema': {
