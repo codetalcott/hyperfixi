@@ -10,7 +10,7 @@
 - Public exports are centralized in `src/index.ts` and mirrored in the `package.json` exports map; update Rollup configs when exposing new entry points.
 - Docs and cookbook examples live under `docs/` and `cookbook/`; update matching demo HTML when changing public APIs.
 - Examples gallery (`examples/`) can be served via `npm run dev` which starts an HTTP server at port 3000.
-- Docs site (`apps/docs-site`) serves documentation; build with `npm run docs:build` or preview via `npm run docs:dev`.
+- The docs sites (hyperfixi.org, lokascript.org) build from the separate `_hyper_min` repo, not from this one.
 - Quick regression loop for core: `npm run test:quick --prefix packages/core` (build + targeted suite) or `npm run test:feedback --prefix packages/core` for rich summaries.
 - Browser compatibility uses Playwright; run `npm run test:browser --prefix packages/core` for full official \_hyperscript parity and expect multi-minute runs.
 - Continuous metrics tracked by `scripts/compatibility-monitor.js`; it writes `metrics/compatibility-history.json` and exits non-zero when thresholds slip.

@@ -84,7 +84,9 @@ node dist/server.js --stdio
 
 ### With VS Code
 
-Use the companion extension `lokascript-vscode` which automatically starts this server.
+There is no published LokaScript extension. Start the server from a generic LSP client
+extension, or from your own extension with `vscode-languageclient` (the settings schema is
+below).
 
 ### With other editors
 
