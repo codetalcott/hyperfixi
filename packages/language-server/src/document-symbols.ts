@@ -12,7 +12,7 @@
  *   never match and the ten non-Latin languages silently produced no symbols.
  */
 
-import { type DocumentSymbol, SymbolKind } from 'vscode-languageserver/node.js';
+import { type DocumentSymbol, SymbolKind } from 'vscode-languageserver/node';
 import { escapeRegExp } from './utils.js';
 
 /** Matches at line start (after indentation) or right after a block-closing `end`. */
