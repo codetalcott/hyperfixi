@@ -7,7 +7,7 @@
  * like possessive 's, escaped quotes, and quotes nested inside other delimiters.
  */
 
-import { type Diagnostic, DiagnosticSeverity } from 'vscode-languageserver/node.js';
+import { type Diagnostic, DiagnosticSeverity } from 'vscode-languageserver/node';
 
 const enum QuoteState {
   NORMAL,
