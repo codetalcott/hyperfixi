@@ -498,6 +498,28 @@ describe('CompilationService', () => {
       expect(japanese.diagnostics.find(d => d.code === 'LOW_CONFIDENCE')?.severity).toBe('error');
     });
 
+    it('warns on a variable spelled like a word of its own language (NAME_COLLISION)', () => {
+      // es `si` is also `if`: a reader tells them apart only by where it stands.
+      const r = service.validate({ code: 'al clic establecer si a 1', language: 'es' });
+      expect(r.ok).toBe(true);
+      const collision = r.diagnostics.find(d => d.code === 'NAME_COLLISION');
+      expect(collision?.severity).toBe('warning');
+      expect(collision?.message).toContain('`si`');
+      expect(collision?.suggestion).toContain('`si1`');
+
+      // English has no such reading; nor does a name no word of the language spells.
+      expect(
+        service
+          .validate({ code: 'on click set si to 1', language: 'en' })
+          .diagnostics.some(d => d.code === 'NAME_COLLISION')
+      ).toBe(false);
+      expect(
+        service
+          .validate({ code: 'al clic establecer cuenta a 1', language: 'es' })
+          .diagnostics.some(d => d.code === 'NAME_COLLISION')
+      ).toBe(false);
+    });
+
     it('inert-shape gate stays quiet on correct phrasings', () => {
       // False positives teach agents to distrust warnings; these must be clean.
       for (const code of [

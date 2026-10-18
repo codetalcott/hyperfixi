@@ -104,7 +104,7 @@ places keeps the program's meaning, and the es `y` of `si a y b` (if a and b) or
 `i` after a variable `i` is left alone. The rename collides with nothing and is unused in the code;
 a digit splits a word in tr and qu, so it is checked, not assumed (tr `i` → `iValue`). The
 language server warns at each place (`name-collision`), with one quick fix renaming all of them;
-MCP `validate_hyperscript` warns (`NAME_COLLISION`). The value matrix now derives its colliding
+MCP `validate_and_compile` warns (`NAME_COLLISION`; `validate_hyperscript` did until its deprecation). The value matrix now derives its colliding
 names from `nameCollision`, which found one it lacked, fr `ou` (`or`): its six cells pass every
 lane. Not findable: a pronoun collision in the code's own language (the parse reads the
 pronoun), and English, which reports nothing. A **translation** finds one since PR 116 (the
