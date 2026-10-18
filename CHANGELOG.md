@@ -7,16 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.1.0] - 2026-10-18
+
+One validator and one translator: MCP `validate_and_compile` accepts the English the engine reads
+and warns `NAME_COLLISION`, and `validate_hyperscript` and `translate_hyperscript` are deprecated for
+7.0. `@hyperfixi/vite-plugin`'s `slavic` and `south-asian` regions load their languages.
+
 ### Added
 
 - **`@lokascript/compilation-service`: `validate` warns `NAME_COLLISION`** on foreign input whose
   variable is spelled like a word of its own language (es `si` is also `if`), with the rename
   semantic's finder suggests: the one check MCP `validate_hyperscript` made that `validate_and_compile`
-  did not, with its wording and its confidence floor.
+  did not, with its wording and its confidence floor (#1568).
+- **`@lokascript/compilation-service`: a README** (#1570). `files` listed one, but the package had
+  none.
 
 ### Deprecated
 
-- **`@hyperfixi/mcp-server`: `validate_hyperscript` and `translate_hyperscript`, removed in 7.0.**
+- **`@hyperfixi/mcp-server`: `validate_hyperscript` and `translate_hyperscript`, removed in 7.0**
+  (#1569).
   Measured 2026-10-18 on 6.0.0, through the server:
   - `translate_hyperscript` returns `translate_code`'s text on 471 of 471 pairs, with the same 21
     refusals; `translate_code` adds a fidelity `verification` and `NAME_COLLISION` warnings.
@@ -43,9 +52,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   as warnings that say the IR may leave part of the code out. A request that sets `confidence`
   keeps them as errors, as does foreign input, which runs as semantic's translation. On the agent
   bench every correct rejection was already the engine's (16 of 16), so none moved.
-  testing-framework's `validate-agrees-with-engine.test.ts` holds the 1,128 at 0 rejected.
+  testing-framework's `validate-agrees-with-engine.test.ts` holds the 1,128 at 0 rejected (#1566).
 
-- **`@hyperfixi/vite-plugin`: `region: 'slavic'` and `region: 'south-asian'` load their languages.**
+- **`@hyperfixi/vite-plugin`: `region: 'slavic'` and `region: 'south-asian'` load their languages**
+  (#1567).
   Both were in the option's type and the README's language list, but the expansion had a
   hand-written case per region and none for these two, so they loaded English alone. Regions now
   expand from `REGIONS` itself, and the README's region table lists both. The debug size table
@@ -1989,7 +1999,8 @@ _Synchronized version release. See git history for details._
 - npm access token stored in GitHub Secrets
 - 2FA recommended for npm organization
 
-[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v6.0.0...HEAD
+[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v6.1.0...HEAD
+[6.1.0]: https://github.com/codetalcott/hyperfixi/compare/v6.0.0...v6.1.0
 [6.0.0]: https://github.com/codetalcott/hyperfixi/compare/v5.1.0...v6.0.0
 [5.1.0]: https://github.com/codetalcott/hyperfixi/compare/v5.0.0...v5.1.0
 [5.0.0]: https://github.com/codetalcott/hyperfixi/compare/v4.8.0...v5.0.0
