@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`@lokascript/compilation-service`: `validate` (MCP `validate_and_compile`) no longer rejects
+  English the engine reads.** Of the 1,128 command-shape cases `@hyperfixi/engine` reads, it
+  rejected 90:
+  - every behavior definition (a `BehaviorNode` keeps its name as a field, and the schema check read
+    it as a missing role; this also failed behaviors in every other language);
+  - 73 parses under semantic's default confidence bar (`init`, `when`, `def`, `live`, bare `hide`, …);
+  - a quoted event name semantic does not read, and `wait for <event>`.
+
+  For natural-language English the engine's parse now decides `ok`, and semantic's doubts come back
+  as warnings that say the IR may leave part of the code out. A request that sets `confidence`
+  keeps them as errors, as does foreign input, which runs as semantic's translation. On the agent
+  bench every correct rejection was already the engine's (16 of 16), so none moved.
+  testing-framework's `validate-agrees-with-engine.test.ts` holds the 1,128 at 0 rejected.
+
 ## [6.0.0] - 2026-10-18
 
 Removes `@lokascript/compilation-service`'s test and component generation, deprecated in 5.1.0. For

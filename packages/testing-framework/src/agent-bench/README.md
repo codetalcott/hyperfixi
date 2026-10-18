@@ -200,6 +200,29 @@ measured. The three silent rows left are code the engine reads: `toggle .active 
 (`this` is a variable there, null at run time), and the valid-code-different-intent pair
 (`add .hidden to #menu`, `on mouseover`).
 
+### The engine decides English (2026-10-18)
+
+C4d added the engine's verdict but kept semantic's gates as errors too, so `validate` rejected
+English the engine reads. On the 1,128 command-shape cases the engine reads, it rejected 90:
+all 15 behavior definitions (the name is a `BehaviorNode` field, which the schema check read as a
+missing role), 73 parses under semantic's default confidence bar (`init`, `when`, `def`,
+`live`, bare `hide`, …), a quoted event name semantic does not read, and `wait for <event>`. On
+this bench every correct rejection was already the engine's.
+
+Now a behavior's name is not checked as a role, and for English the engine's parse decides
+`ok`: semantic's doubts are warnings, unless the request sets `confidence`. Foreign input runs as
+semantic's translation, so semantic's gates stay errors there. `validate-agrees-with-engine.test.ts`
+holds the 1,128 at 0 rejected.
+
+|                                       | C4d   | engine decides English |
+| ------------------------------------- | ----- | ---------------------- |
+| parse (validator says ok)             | 20/37 | 21/37                  |
+| wrong and **rejected** (loop repairs) | 16/37 | 16/37                  |
+| wrong and **silent**                  | 3/37  | 3/37                   |
+
+The row that moved is correct code: `on "refresh" put "Refreshed" into #output`. The engine reads
+a quoted event name, semantic does not, so it validates with a warning and no IR.
+
 ## Adding a task
 
 Append to [`tasks.ts`](./tasks.ts): a prompt with no hyperscript in it, a
