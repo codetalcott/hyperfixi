@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`@hyperfixi/mcp-server` requires `@lokascript/domains` ^5.0.3.** 5.0.3's BehaviorSpec lets `given`
+  set every state `expect` can check, and refuses an `expect` assertion it does not know (5.0.2
+  compiled it to a comment). Installs already resolved 5.0.3; the repository's lock held 5.0.2, so
+  its tests now run what users install.
+
 ## [6.3.0] - 2026-10-18
 
 The htmx adapter writes localized SSE and WebSocket attributes under the names the page's htmx

@@ -39,7 +39,7 @@
   "dependencies": {
     "@hyperfixi/patterns-reference": "^6.3.0",
     "@lokascript/compilation-service": "^6.3.0",
-    "@lokascript/domains": "^5.0.2",
+    "@lokascript/domains": "^5.0.3",
     "@lokascript/framework": "^6.3.0",
     "@lokascript/planner": "^6.3.0",
     "@lokascript/semantic": "^6.3.0",

@@ -6,6 +6,7 @@
 import express from 'express';
 import * as path from 'path';
 import * as fs from 'fs-extra';
+import type { Stats } from 'fs';
 import { createServer } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 import * as chokidar from 'chokidar';
@@ -42,6 +43,30 @@ const DEFAULT_CONFIG: DevServerConfig = {
   compression: true,
   open: true,
 };
+
+/** File types live reload reports. */
+const LIVE_RELOAD_EXTENSIONS = new Set(['.html', '.css', '.js', '.ts', '.json']);
+
+/** Directories live reload never enters (besides every dot-directory). */
+const LIVE_RELOAD_SKIPPED_DIRS = new Set(['node_modules', 'dist', 'build']);
+
+/**
+ * Whether live reload skips a path: anything under a dot-directory, node_modules, dist or build,
+ * a dotfile, and a file of another type. chokidar 4 reads no globs (chokidar 3 took `**\/*.html`
+ * and `**\/node_modules/**`), so the rule is a function. chokidar asks about a path before it
+ * knows the path's type, so a file is judged by type only once `stats` arrives.
+ */
+export function isIgnoredByLiveReload(filePath: string, stats?: Stats): boolean {
+  const skipped = filePath
+    .split(/[\\/]/)
+    .some(
+      segment =>
+        LIVE_RELOAD_SKIPPED_DIRS.has(segment) ||
+        (segment.startsWith('.') && segment !== '.' && segment !== '..')
+    );
+  if (skipped) return true;
+  return stats?.isFile() === true && !LIVE_RELOAD_EXTENSIONS.has(path.extname(filePath));
+}
 
 /**
  * Development Server
@@ -243,10 +268,8 @@ export class DevServer {
   private setupFileWatcher(): void {
     if (!this.config.livereload) return;
 
-    const watchPaths = ['**/*.html', '**/*.css', '**/*.js', '**/*.ts', '**/*.json'];
-
-    this.watcher = chokidar.watch(watchPaths, {
-      ignored: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/.git/**', '**/.*'],
+    this.watcher = chokidar.watch('.', {
+      ignored: isIgnoredByLiveReload,
       ignoreInitial: true,
       persistent: true,
     });
