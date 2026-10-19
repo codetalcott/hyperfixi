@@ -41,8 +41,9 @@ test/
     │                      #   allowlist rejection, mixed node; console + htmx:error collectors), v2 fallback
     ├── contact-app.spec.ts # ja/es/pt/ko Contact.app attrs on stock htmx 4: delete+confirm+push-url, include,
     │                      #   indicator, post, boost:inherited — asserts htmx BEHAVIOR, not sibling attrs
+    ├── sse-ws.spec.ts     # es SSE/WebSocket attrs on htmx 4's hx-sse/hx-ws: connect, swap, send, no legacy warning
     ├── fixtures/*.html
-    └── vendor/            # htmx 4.0.0, htmx 2.0.10, _hyperscript 0.9.93 + ground-truth README
+    └── vendor/            # htmx 4.0.0 (+ its hx-sse, hx-ws), htmx 2.0.10, _hyperscript 0.9.93 + ground-truth README
 docs/
 └── UPSTREAM_HOOK_PROPOSAL.md  # Mechanism (c): the attribute-name resolver seam for htmx core
 ```
@@ -53,7 +54,7 @@ docs/
 npm run typecheck          # TypeScript validation
 npm run test:run           # Vitest (jsdom environment)
 npm run test:browser       # Playwright e2e vs real htmx v4/v2 + _hyperscript (build dist first)
-npm run build              # ESM + CJS + browser IIFE (~2 KB gz)
+npm run build              # ESM + CJS + browser IIFE (~3.6 KB gz)
 npm run generate:vocab     # regenerate vocab/{lang}.js (semantic + i18n built first)
 npm run check:vocab        # exit 1 if a committed module is stale
 ```
@@ -134,6 +135,18 @@ npm run check:vocab        # exit 1 if a committed module is stale
   4.0.0's 14-member surface was evaluated and passed over — see the
   rationale on `createExtension` in extension.ts (notably `htmxProp`'s
   private `onInitialized` flag vs. the typed cancelable event).
+- **SSE/WebSocket names by htmx generation** (owner, 2026-10-18): htmx 4's
+  `hx-sse`/`hx-ws` extensions read `hx-sse:connect`, `hx-ws:connect` and
+  `hx-ws:send`, and still read htmx 2's `sse-connect`/`ws-*` with a
+  "legacy attribute … is deprecated" warning; htmx 2 reads only its own. So
+  `canonicalize.ts` writes `sse-connect` as `hx-sse<metaCharacter>connect` on
+  htmx 4 and as `sse-connect` on htmx 2 (`setHtmxGeneration`, set by
+  `registerWith` from the API's shape, accepted or not; htmx 2's names until
+  then). It reads htmx 4's spelling of a localized name too (`hx-sse:conectar`
+  is `sse-conectar`). `sse-swap` is removed in htmx 4 with no successor, so it
+  stays `sse-swap` and htmx says so. The vocab is unchanged: it maps localized
+  → htmx-2 keys. `test/browser/sse-ws.spec.ts` runs it on htmx 4.0.0's own
+  extensions (vendored).
 - **Zero workspace deps** — builds standalone anywhere in CI's build order.
   The generator reads the built semantic and i18n `dist/` by path, so only
   `generate:vocab`, `check:vocab` and the drift test need those two built.

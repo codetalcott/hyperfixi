@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`@lokascript/htmx-adapter`: localized SSE and WebSocket attributes take the page's htmx's names.**
+  On htmx 4, `sse-conectar` canonicalized to htmx 2's `sse-connect`. htmx 4's `hx-sse` and `hx-ws`
+  extensions read that, but copy each one with a "legacy attribute … is deprecated" warning: three
+  on a page with one connection of each. The adapter now writes `hx-sse:connect`, `hx-ws:connect` and
+  `hx-ws:send` (in htmx's `metaCharacter`) on htmx 4, and htmx 2's names on htmx 2, which reads only
+  those. The generation comes from the htmx `registerWith` is given, accepted or not; before that the
+  adapter writes htmx 2's names, which both read. htmx 4's spelling of a localized name works too
+  (`hx-sse:conectar`, `hx-ws:enviar`). `sse-swap` has no htmx 4 name (htmx 4 removed it), so a
+  localized one stays `sse-swap`, and htmx 4 warns about it. A new browser test runs it on htmx
+  4.0.0's own extensions: connect, swap and send, with no warning.
+
 ## [6.2.0] - 2026-10-18
 
 The `@lokascript/semantic/core` path weighs about a third less, and its lexicons now register with

@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { register, resetRegistry } from '../src/registry.js';
 import {
   canonicalizeElement,
   canonicalizeTree,
+  setHtmxGeneration,
   translateTriggerValue,
 } from '../src/canonicalize.js';
 
@@ -237,6 +238,82 @@ describe('canonicalizeTree', () => {
     expect(document.querySelector('section')!.hasAttribute('sse-connect')).toBe(true);
     expect(document.querySelector('button')!.getAttribute('hx-get')).toBe('/a');
     expect(document.querySelector('form')!.hasAttribute('ws-send')).toBe(true);
+  });
+
+  describe("SSE and WebSocket names, in the page's htmx generation", () => {
+    afterEach(() => setHtmxGeneration(null));
+    const page = (attrs: string) => {
+      register('es', {
+        hyperfixi: {
+          attrs: {
+            ...ES.hyperfixi.attrs,
+            'ws-conectar': 'ws-connect',
+            'sse-intercambio': 'sse-swap',
+          },
+        },
+      });
+      document.body.innerHTML = `<div lang="es" ${attrs}></div>`;
+      canonicalizeTree(document.body);
+      const div = document.querySelector('div')!;
+      return Object.fromEntries(Array.from(div.attributes, a => [a.name, a.value]));
+    };
+
+    it('writes htmx 2 names until an htmx is seen, and on htmx 2', () => {
+      expect(page('sse-conectar="/events"')).toEqual({
+        lang: 'es',
+        'sse-conectar': '/events',
+        'sse-connect': '/events',
+      });
+      setHtmxGeneration('v2');
+      expect(page('ws-conectar="/ws" ws-enviar=""')).toMatchObject({
+        'ws-connect': '/ws',
+        'ws-send': '',
+      });
+    });
+
+    it("writes htmx 4's names on htmx 4, in its metaCharacter", () => {
+      setHtmxGeneration('v4');
+      expect(page('sse-conectar="/events"')).toEqual({
+        lang: 'es',
+        'sse-conectar': '/events',
+        'hx-sse:connect': '/events',
+      });
+      expect(page('ws-conectar="/ws" ws-enviar=""')).toEqual({
+        lang: 'es',
+        'ws-conectar': '/ws',
+        'ws-enviar': '',
+        'hx-ws:connect': '/ws',
+        'hx-ws:send': '',
+      });
+      setHtmxGeneration('v4', '-');
+      expect(page('sse-conectar="/events"')).toHaveProperty('hx-sse-connect', '/events');
+    });
+
+    it('keeps sse-swap, which htmx 4 removed and warns about itself', () => {
+      setHtmxGeneration('v4');
+      expect(page('sse-intercambio="message"')).toHaveProperty('sse-swap', 'message');
+    });
+
+    it("reads htmx 4's spelling of a localized name, and writes it for the page's htmx", () => {
+      expect(page('hx-sse:conectar="/events"')).toHaveProperty('sse-connect', '/events');
+      setHtmxGeneration('v4');
+      expect(page('hx-sse:conectar="/events" hx-ws:enviar=""')).toEqual({
+        lang: 'es',
+        'hx-sse:conectar': '/events',
+        'hx-ws:enviar': '',
+        'hx-sse:connect': '/events',
+        'hx-ws:send': '',
+      });
+    });
+
+    it('leaves an authored canonical name alone', () => {
+      setHtmxGeneration('v4');
+      expect(page('sse-conectar="/a" hx-sse:connect="/b"')).toEqual({
+        lang: 'es',
+        'sse-conectar': '/a',
+        'hx-sse:connect': '/b',
+      });
+    });
   });
 
   it('is a cheap no-op with no vocab registered', () => {

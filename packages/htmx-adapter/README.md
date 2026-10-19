@@ -5,7 +5,7 @@ attributes in 24 languages against the stock htmx library.
 
 ```html
 <script src="htmx-i18n.global.js"></script>
-<!-- this adapter (2.3 KB gz) -->
+<!-- this adapter (3.6 KB gz) -->
 <script src="vocab/es.js"></script>
 <!-- vocab module(s) -->
 <script src="htmx.js"></script>
@@ -196,6 +196,19 @@ family) and **event values** in `hx-trigger` / `hx-on:` suffixes
 mode (above). The `hx-`/`sse-`/`ws-` prefixes are preserved across languages —
 only the suffix is localized. The `_=` attribute is
 `@lokascript/hyperscript-adapter`'s job, not this package's.
+
+**SSE and WebSocket names follow the page's htmx.** htmx 4's `hx-sse` and
+`hx-ws` extensions read `hx-sse:connect`, `hx-ws:connect` and `hx-ws:send`;
+they also read htmx 2's `sse-connect` and `ws-*`, but copy each one with a
+"legacy attribute … is deprecated" warning. htmx 2 reads only its own names.
+So a localized `sse-conectar="/eventos"` gains `hx-sse:connect` on htmx 4
+(in htmx's `metaCharacter`) and `sse-connect` on htmx 2. The generation
+comes from the htmx that `registerWith` is given, whether or not it accepts the
+extension; until then the adapter writes htmx 2's names, which both read.
+htmx 4's spelling of a localized name works too (`hx-sse:conectar`,
+`hx-ws:enviar`). `sse-swap` has no htmx 4 name (htmx 4 removed it; unnamed
+messages swap on their own), so a localized one becomes `sse-swap`, and htmx
+4 warns about it.
 
 Anything read off an attribute **name** is matched the way HTML matches names:
 the parser lowercases ASCII letters in them, so Portuguese's camelCase events

@@ -72,6 +72,40 @@ export function setTriggerSpecSplitter(fn: TriggerSpecSplitter | null): void {
   splitSpecs = fn ?? mirrorSplit;
 }
 
+/**
+ * What SSE and WebSocket names canonicalize to, by htmx generation. htmx 4's extensions read
+ * `hx-sse:connect`, `hx-ws:connect` and `hx-ws:send` (in htmx's `metaCharacter`). They still read
+ * htmx 2's `sse-connect`, `ws-connect` and `ws-send`, copying each with a console warning, and htmx
+ * 2 reads only those. `sse-swap` has no htmx 4 name (removed: unnamed messages swap on their own),
+ * so it stays `sse-swap` and htmx 4 says why. Until `registerWith` sees an htmx, the htmx-2 names,
+ * which both generations read.
+ */
+const HTMX4_NAMES: Record<string, readonly [string, string]> = {
+  'sse-connect': ['sse', 'connect'],
+  'ws-connect': ['ws', 'connect'],
+  'ws-send': ['ws', 'send'],
+};
+
+/** htmx 4's `hx-sse:<name>` / `hx-ws:<name>`: a localized `<name>` reads as `sse-<name>` / `ws-<name>`. */
+const HTMX4_SPELLING_RE = /^hx-(sse|ws):(.+)$/;
+
+/** htmx 4's metaCharacter while the page runs htmx 4; `null` for htmx 2 or none seen. */
+let htmx4MetaCharacter: string | null = null;
+
+/**
+ * Set the htmx generation SSE and WebSocket names are written for. `registerWith` calls it from
+ * the htmx it is given, whether or not htmx 4 accepts the registration.
+ */
+export function setHtmxGeneration(generation: 'v4' | 'v2' | null, metaCharacter?: string): void {
+  htmx4MetaCharacter = generation === 'v4' ? metaCharacter || ':' : null;
+}
+
+/** The name `canonical` is written as on this page's htmx. */
+function emittedName(canonical: string): string {
+  const v4 = htmx4MetaCharacter === null ? undefined : HTMX4_NAMES[canonical];
+  return v4 ? `hx-${v4[0]}${htmx4MetaCharacter}${v4[1]}` : canonical;
+}
+
 /** `hx-trigger` and its v4 modifier forms (`hx-trigger:inherited`, …). */
 function isTriggerAttr(name: string): boolean {
   return name === 'hx-trigger' || name.startsWith('hx-trigger:');
@@ -200,6 +234,11 @@ export function canonicalizeElement(elt: Element): boolean {
     // attribute NAME, which HTML has lowercased (lookupByAttrName).
     let canonical = lookupByAttrName(attrs, name);
 
+    // htmx 4's spelling of a localized SSE/WebSocket name: hx-sse:conectar is sse-conectar.
+    const htmx4Spelling = canonical ? null : HTMX4_SPELLING_RE.exec(name);
+    if (htmx4Spelling)
+      canonical = lookupByAttrName(attrs, `${htmx4Spelling[1]}-${htmx4Spelling[2]}`);
+
     // Colon family: the base is looked up in attrs; what the suffix
     // means depends on the base. For hx-on the suffix is an EVENT name
     // (hx-en:clic → hx-on:click) and translates through events. For
@@ -234,6 +273,8 @@ export function canonicalizeElement(elt: Element): boolean {
       continue;
     }
 
+    // sse-connect is written hx-sse:connect on htmx 4 (emittedName).
+    canonical = emittedName(canonical);
     if (canonical === name || elt.hasAttribute(canonical)) continue;
 
     let value = attr.value;

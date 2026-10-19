@@ -255,7 +255,9 @@ A refused pair that starts to render can come out silent: the command-shape dry 
 - **Community-review badges and ledgers** (PR1) wait for real reviewer inflow.
 - **The behavior boundary validator** (PR2) waits for third-party behavior authoring.
 - **htmx v4 attribute names** (PR5): the htmx adapter's vocabulary localizes htmx 2's
-  `sse-connect`/`ws-connect`, where htmx 4 ships `hx-sse`/`hx-ws`.
+  `sse-connect`/`ws-connect`, where htmx 4 ships `hx-sse`/`hx-ws`. **Done 2026-10-18** (owner: align,
+  with names chosen by the detected htmx). The adapter writes `hx-sse:connect` / `hx-ws:*` on htmx 4 and
+  htmx 2's names on htmx 2, and it reads htmx 4's spelling of a localized name (`hx-sse:conectar`).
 - **The Arc B dictionary flip** (derive the dictionaries from the profiles, PR6). The V1 vocabulary
   gate holds the two consistent today.
 - **Weight (S4):** a single-language page loads ~150 KB gz (the engine and a per-language adapter

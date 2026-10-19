@@ -1,6 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { register, resetRegistry } from '../src/registry.js';
-import { setTriggerSpecSplitter, translateTriggerValue } from '../src/canonicalize.js';
+import {
+  canonicalizeTree,
+  setHtmxGeneration,
+  setTriggerSpecSplitter,
+  translateTriggerValue,
+} from '../src/canonicalize.js';
 import {
   EXTENSION_NAME,
   createExtension,
@@ -24,6 +29,7 @@ const ES = {
 beforeEach(() => {
   resetRegistry();
   resetBodyHooks();
+  setHtmxGeneration(null);
   document.body.innerHTML = '';
 });
 
@@ -70,6 +76,40 @@ describe('registerWith', () => {
     expect(registerWith(null)).toBeNull();
     expect(registerWith(undefined)).toBeNull();
     expect(registerWith({})).toBeNull();
+  });
+});
+
+describe('registerWith sets the names SSE and WebSocket attributes take, from the htmx it is given', () => {
+  const sseName = () => {
+    register('es', { hyperfixi: { attrs: { 'sse-conectar': 'sse-connect' } } });
+    document.body.innerHTML = `<div lang="es" sse-conectar="/events"></div>`;
+    canonicalizeTree(document.body);
+    return Array.from(document.querySelector('div')!.attributes, a => a.name).filter(
+      n => n !== 'lang' && n !== 'sse-conectar'
+    );
+  };
+
+  it('htmx 4: hx-sse:connect, in its metaCharacter, accepted or not', () => {
+    registerWith({ registerExtension: vi.fn() });
+    expect(sseName()).toEqual(['hx-sse:connect']);
+    registerWith({ registerExtension: vi.fn(), config: { metaCharacter: '-' } });
+    expect(sseName()).toEqual(['hx-sse-connect']);
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    registerWith({ registerExtension: vi.fn(() => false) });
+    expect(sseName()).toEqual(['hx-sse:connect']);
+    vi.restoreAllMocks();
+  });
+
+  it('htmx 2: sse-connect', () => {
+    registerWith({ registerExtension: vi.fn() });
+    registerWith({ defineExtension: vi.fn() });
+    expect(sseName()).toEqual(['sse-connect']);
+  });
+
+  it('no htmx: unchanged (htmx 2 names, which both generations read)', () => {
+    registerWith(null);
+    registerWith({});
+    expect(sseName()).toEqual(['sse-connect']);
   });
 });
 

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>
+      htmx v4 + adapter — localized SSE and WebSocket attributes (htmx 4's hx-sse / hx-ws)
+    </title>
+    <script src="/packages/htmx-adapter/dist/htmx-i18n.global.js"></script>
+    <script src="/packages/htmx-adapter/vocab/es.js"></script>
+    <script src="/packages/htmx-adapter/test/browser/vendor/htmx-4.0.0.js"></script>
+    <script src="/packages/htmx-adapter/test/browser/vendor/hx-sse-4.0.0.js"></script>
+    <script src="/packages/htmx-adapter/test/browser/vendor/hx-ws-4.0.0.js"></script>
+  </head>
+  <body>
+    <div id="sse" sse-conectar="/api/eventos"></div>
+    <div id="sse-v4" hx-sse:conectar="/api/eventos-v4"></div>
+    <div id="ws" ws-conectar="ws://localhost:3009/api/socket" hx-objetivo="#ws-out">
+      <form id="form" ws-enviar>
+        <input name="mensaje" value="hola" />
+        <button id="enviar">Enviar</button>
+      </form>
+      <div id="ws-out"></div>
+    </div>
+  </body>
+</html>
