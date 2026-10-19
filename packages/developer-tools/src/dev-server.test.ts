@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs-extra';
-import { DevServer, startDevServer } from './dev-server';
+import { DevServer, startDevServer, isIgnoredByLiveReload } from './dev-server';
 
 // Mock fs-extra
 vi.mock('fs-extra', async () => {
@@ -381,8 +381,11 @@ describe('DevServer', () => {
 
       await server.start();
 
-      // Chokidar should be configured with ignore patterns
-      expect(chokidar.watch).toHaveBeenCalled();
+      // chokidar 4 reads no globs: the root, and the rule as a function
+      expect(chokidar.watch).toHaveBeenCalledWith(
+        '.',
+        expect.objectContaining({ ignored: isIgnoredByLiveReload })
+      );
     });
   });
 
