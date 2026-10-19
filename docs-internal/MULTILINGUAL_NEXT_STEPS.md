@@ -219,9 +219,16 @@ end word had nine readers. The stories are in the PR bodies; the plans are in `A
 - **The Arc B dictionary flip** (derive the dictionaries from the profiles, PR6). The V1 vocabulary
   gate holds the two consistent today.
 - **Weight (S4):** packaging went first (6.2.0: semantic's `./core` with ten languages, 275 → 180 KB gz).
-  A single-language bundle is ~129–137 KB gz, of which 112 KB is the shared parser no packaging change
-  removes (measured 2026-10-18 on 6.1.0's IIFE builds). So a lighter page means a parse-only bundle or a
-  smaller parser. Is either worth more to users than correctness work?
+  **Measured 2026-10-19** (`node scripts/measure-weight.mjs` in hyperscript-adapter; de, gzip -9; ja and
+  ar within 2 KB): a single-language page loads the engine (34 KB) and the adapter bundle (132 KB). A
+  parse-only build (the page's language parsed, no English render, no loss check) is 105 KB, 20% under
+  the bundle and 16% under the page, and the shared parser alone is 98.5 KB. But the engine reads English
+  text, so a parse-only page needs a new step from the semantic IR to the engine's nodes, and it drops the
+  loss check that refuses a lossy translation (F1/F2). Packaging can still take ~5%: the same bundle built
+  on semantic's source instead of its prebundled `core.js` is 127 KB, with the same answers on 1,133 of
+  1,133 command-shape cases in de, ja and ar. **Recommended:** no parse-only bundle and no parser-shrink
+  arc now; correctness first (the 86 refused lanes); the packaging ~5% and the schema-validator `define`
+  (~2.5%) as one small PR alongside other work. Owner decides.
 - **Approaching upstream** (PR8): when to offer the multilingual tools and the MCP server to
   hyperscript.org, and in what order.
 
