@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/developer-tools",
-  "version": "6.1.0",
+  "version": "6.2.0",
   "private": true,
   "sideEffects": false,
   "description": "CLI tools and visual builder API for LokaScript development",
@@ -17,11 +17,6 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
-    },
-    "./cli": {
-      "types": "./dist/cli.d.ts",
-      "import": "./dist/cli.mjs",
-      "require": "./dist/cli.js"
     },
     "./builder": {
       "types": "./dist/builder.d.ts",
@@ -76,8 +71,8 @@
   "author": "LokaScript Contributors",
   "license": "MIT",
   "dependencies": {
-    "@hyperfixi/core": "^6.1.0",
-    "@lokascript/i18n": "^6.1.0",
+    "@hyperfixi/core": "^6.2.0",
+    "@lokascript/i18n": "^6.2.0",
     "boxen": "^9.0.0",
     "chalk": "^6.0.0",
     "chokidar": "^3.5.0",

@@ -35,7 +35,20 @@ export default defineConfig([
       'prism-hyperscript-i18n/index': 'src/prism-hyperscript-i18n/index.ts',
     },
     format: ['cjs', 'esm'],
-    dts: true,
+    // Types for each entry a consumer imports. Not the CLI: it runs on import, and the exports map
+    // has no `./cli`. The browser bundle's types are emitted here, not by its own config below,
+    // whose output this config's `clean` would race.
+    dts: {
+      entry: {
+        index: 'src/index.ts',
+        analyzer: 'src/analyzer.ts',
+        builder: 'src/builder.ts',
+        generator: 'src/generator.ts',
+        'dev-server': 'src/dev-server.ts',
+        'prism-hyperscript-i18n/index': 'src/prism-hyperscript-i18n/index.ts',
+        'prism-hyperscript-i18n/browser': 'src/prism-hyperscript-i18n/browser.ts',
+      },
+    },
     clean: true,
     sourcemap: true,
     target: 'es2020',
@@ -74,7 +87,7 @@ export default defineConfig([
       'prism-hyperscript-i18n/browser': 'src/prism-hyperscript-i18n/browser.ts',
     },
     format: ['cjs', 'esm'],
-    dts: false, // Skip dts for browser build since it will be bundled differently
+    dts: false, // emitted by the config above
     sourcemap: true,
     target: 'es2020',
     minify: false,

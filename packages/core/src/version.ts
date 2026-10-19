@@ -12,4 +12,4 @@
  * is supposed to catch drift — `version.test.ts`, which compares it against
  * `package.json` and fails if the two ever diverge.
  */
-export const VERSION = '6.1.0';
+export const VERSION = '6.2.0';
