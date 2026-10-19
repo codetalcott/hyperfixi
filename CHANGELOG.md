@@ -7,9 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.3.0] - 2026-10-18
+
+The htmx adapter writes localized SSE and WebSocket attributes under the names the page's htmx
+reads: htmx 4's `hx-sse:` / `hx-ws:` on htmx 4, without its deprecation warnings, and htmx 2's on
+htmx 2.
+
 ### Changed
 
-- **`@lokascript/htmx-adapter`: localized SSE and WebSocket attributes take the page's htmx's names.**
+- **`@lokascript/htmx-adapter`: localized SSE and WebSocket attributes take the page's htmx's names**
+  (#1582).
   On htmx 4, `sse-conectar` canonicalized to htmx 2's `sse-connect`. htmx 4's `hx-sse` and `hx-ws`
   extensions read that, but copy each one with a "legacy attribute … is deprecated" warning: three
   on a page with one connection of each. The adapter now writes `hx-sse:connect`, `hx-ws:connect` and
@@ -2086,7 +2093,8 @@ _Synchronized version release. See git history for details._
 - npm access token stored in GitHub Secrets
 - 2FA recommended for npm organization
 
-[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v6.2.0...HEAD
+[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v6.3.0...HEAD
+[6.3.0]: https://github.com/codetalcott/hyperfixi/compare/v6.2.0...v6.3.0
 [6.2.0]: https://github.com/codetalcott/hyperfixi/compare/v6.1.0...v6.2.0
 [6.1.0]: https://github.com/codetalcott/hyperfixi/compare/v6.0.0...v6.1.0
 [6.0.0]: https://github.com/codetalcott/hyperfixi/compare/v5.1.0...v6.0.0
