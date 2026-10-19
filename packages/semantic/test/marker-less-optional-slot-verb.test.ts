@@ -231,3 +231,28 @@ describe('a marker-less slot yields only when skipping consumes the whole clause
     expect(role(transition, 'duration')?.value).toBe('300ms');
   });
 });
+
+describe('a marker-less duration slot does not take a quoted string', () => {
+  // `transition … to 100px using "width 2s ease-in"`: in the SOV languages the
+  // duration slot has no marker and sits right before the style group, so it took
+  // the style's string, the pattern failed, and the body walker read the goal as a
+  // destination the read-back then dropped (refused in six languages).
+  const SOURCE = `on click transition #foo's *width from 0px to 100px using "width 2s ease-in"`;
+
+  it.each(['bn', 'hi', 'ja', 'ko', 'qu', 'tr'] as const)('%s round-trips it', language => {
+    expect(translate(translate(SOURCE, 'en', language), language, 'en')).toBe(SOURCE);
+  });
+
+  it('the bare ja command keeps its goal and its style (it did not parse)', () => {
+    const node = find(parse('*widthを 100pxに "ease-in"で 遷移', 'ja'), 'transition');
+    expect(role(node, 'goal')?.raw).toBe('100px');
+    expect(role(node, 'style')?.value).toBe('ease-in');
+    expect(role(node, 'duration')).toBeUndefined();
+  });
+
+  it('a time still fills it', () => {
+    const node = find(parse('*widthを 100pxに 2s "ease-in"で 遷移', 'ja'), 'transition');
+    expect(role(node, 'duration')?.value).toBe('2s');
+    expect(role(node, 'style')?.value).toBe('ease-in');
+  });
+});
