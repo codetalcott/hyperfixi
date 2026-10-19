@@ -18,7 +18,7 @@ What the gates measure. Each claim carries its re-check command:
 | --------------------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | Corpus fidelity, 11 ratchet signals     | 1.000 in all 24 languages (baseline 2026-09-25)                     | `cd packages/testing-framework && npx tsx src/multilingual/cli.ts --full --bundle browser-priority --regression` (after `populate`) |
 | Value matrix (4,537 cells × 48 lanes)   | 6 failing, all ACCEPTED, 0 open (2026-10-07)                        | `npx tsx tools/regen-value-matrix-baseline.ts --dry-run` (testing-framework)                                                        |
-| Command shapes (1,135 scripts × 24)     | 26,531 pass, 709 refused, 0 silent; en 1,109 / 26 / 0 (10-13)       | `npx tsx tools/regen-command-shapes-baseline.ts --report` (testing-framework)                                                       |
+| Command shapes (1,135 scripts × 24)     | 26,537 pass, 703 refused, 0 silent; en 1,109 / 26 / 0 (10-19)       | `npx tsx tools/regen-command-shapes-baseline.ts --report` (testing-framework)                                                       |
 | English left in renders: words / events / `me` case | corpus 5.4% / 0.0% / 9.0% of renders; command shapes 10.8% / 0.0% / 16.3%. Words counted toward the target (kept English out), per language: corpus 0.7–4.6%, shapes 3.9–6.2%, met in 23/23 (10-10) | `npx tsx tools/regen-english-leaks-baseline.ts --report` (testing-framework; corpus after `populate`) |
 | Canonical validity (upstream parses it) | both allowlists empty (3174/3174 foreign, 138/138 en on 2026-09-23) | `npm run test:canonical --prefix packages/testing-framework`                                                                        |
 | English reference preserved             | 162/163 units (1 allowlisted: async-block, by design; 2026-10-06)   | same                                                                                                                                |
@@ -158,8 +158,9 @@ queries (`<:checked/>`; done 2026-10-12: 161 lanes; the two cases left are P62's
 semantic models went 911 → 86, and the gate reads 26,528 pass / 712 refused (626 of them LOUD) / 0 silent. The 86
 left are in the baseline, each pair listed, and go to M4:
 
-- two-property `transition` in SOV (bn/hi/ja/ko/pl/qu/tr, 13 lanes). **Owner, 2026-10-18 (O6):** a transition
-  carries several properties, as the engine's loop does (not a change to `maySkipVerbSlot`'s lock);
+- two-property `transition` in SOV (bn/hi/ja/ko/pl/qu/tr, 7 lanes). **Owner, 2026-10-18 (O6):** a transition
+  carries several properties, as the engine's loop does (not a change to `maySkipVerbSlot`'s lock). The other 6
+  lanes this row held were `transition … using "…"`, a separate defect, closed 2026-10-19;
 - P62's residue, `<:checked/> in the next <tbody/>` (bn/hi/it/ja/ko/tl/vi/zh, 15 lanes, and bn's `in #list-scope`);
 - ko commands in sequence without `then` (`blur #search blur me`, `open`, `close`, `focus`, `scroll`, `trigger`,
   `wait`: 7 lanes) and hi's bare one-word commands (`close`, `hide`, `show`, `reset`, `return`, `halt`: 6 lanes);
@@ -199,7 +200,8 @@ end word had nine readers. The stories are in the PR bodies; the plans are in `A
 - **Render items:** R1–R4.
 - **Vocabulary:** V5–V7.
 - **Gate items:** G2–G6, G9, G10.
-- **The 86 refused lanes** Reliability row (2) left (listed there; the regen tool's family table orders them).
+- **The refused lanes** Reliability row (2) left: 86 then, 77 on 2026-10-19 (listed there; the regen tool's family
+  table orders them).
 
 ## 4. Parked, and decisions waiting on the owner
 

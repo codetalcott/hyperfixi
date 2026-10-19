@@ -1491,6 +1491,18 @@ export class HyperscriptValueReader implements ValueReader {
           return patternToken.optional || false;
         }
       }
+      // A time is never a quoted string. Where a literal-only duration slot has no
+      // marker (SOV transition: `… 100pxに [{duration}] [{style} で] 遷移`), it took
+      // the style's `"width 2s ease-in"`, the verb was never reached, and the goal
+      // fell to the body walker as a `destination`, lost in the read-back.
+      if (
+        patternToken.role === 'duration' &&
+        value.type === 'literal' &&
+        (value as { quoted?: boolean }).quoted === true &&
+        patternToken.expectedTypes.every(t => t === 'literal')
+      ) {
+        return patternToken.optional || false;
+      }
     }
 
     // A `keyword`-shaped slot holds a FIXED keyword phrase, so its value type is

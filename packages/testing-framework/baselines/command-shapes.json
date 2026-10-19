@@ -3,8 +3,8 @@
   "upstream": "0.9.93",
   "cases": 1135,
   "pairs": 27240,
-  "pass": 26531,
-  "refused": 709,
+  "pass": 26537,
+  "refused": 703,
   "silent": 0,
   "entries": {
     "6f60177037": {
@@ -123,11 +123,6 @@
       "src": "on click transition *width from 0px to 100px *height from 0px to 100px",
       "family": "transition",
       "refused": "bn hi ja ko pl qu tr"
-    },
-    "b6d4332c89": {
-      "src": "on click transition #foo's *width from 0px to 100px using \"width 2s ease-in\"",
-      "family": "transition",
-      "refused": "bn hi ja ko qu tr"
     },
     "3d6f0303b4": {
       "src": "on click trigger foo.bar end on foo.bar add .foo-set end",
