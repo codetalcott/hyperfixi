@@ -13,7 +13,7 @@
  *   - Pings every 25s to keep idle connections warm through proxies.
  *
  * Requires the `ws` package. The hyperfixi workspace already lists it as a
- * transitive devDep (developer-tools, vscode-extension). If you're running
+ * dependency of developer-tools. If you're running
  * this outside the workspace: `npm install ws`.
  */
 import { WebSocketServer } from 'ws';
