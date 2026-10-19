@@ -9,6 +9,8 @@ API change fails here first.
 | -------------------------------- | ----------------- | ------------- | -------------------------------------------------------------------- |
 | `htmx-4.0.0.js`                  | `htmx.org`        | 4.0.0         | npm tarball, `dist/htmx.js`                                          |
 | `htmx-4.0.0-resolver-patched.js` | `htmx.org`        | 4.0.0 + patch | above + `docs/reference-patches/htmx-4.0.0-attribute-resolver.patch` |
+| `hx-sse-4.0.0.js`                | `htmx.org`        | 4.0.0         | npm tarball, `dist/ext/hx-sse.js`                                    |
+| `hx-ws-4.0.0.js`                 | `htmx.org`        | 4.0.0         | npm tarball, `dist/ext/hx-ws.js`                                     |
 | `htmx-2.0.10.js`                 | `htmx.org`        | 2.0.10        | npm tarball, `dist/htmx.js`                                          |
 | `_hyperscript-0.9.93.min.js`     | `hyperscript.org` | 0.9.93        | npm tarball, `dist/_hyperscript.min.js`                              |
 
@@ -54,5 +56,13 @@ unchanged or now formally documented:
 - **New verb in 4.0.0:** `hx-query` (`#verbs` and the action selector).
   The localized vocab modules do not translate it yet; an authored
   `hx-query` passes through untouched as its own canonical name.
+- **SSE and WebSocket (`dist/ext/hx-sse.js`, `hx-ws.js`, 2026-10-18):** they read
+  `hx-sse:connect` / `hx-sse:close` and `hx-ws:connect` / `hx-ws:send`
+  (`config.prefix` and `metaCharacter` apply). On `htmx:after:process` each copies
+  htmx 2's `sse-connect` / `sse-close` / `ws-connect` / `ws-send` onto those names
+  (prefixed: `data-hx-sse:connect`) with a "legacy attribute … is deprecated" warning.
+  `sse-swap` is removed: "Unnamed SSE messages are swapped automatically. Named
+  events are dispatched as DOM events." A raw-string WebSocket message swaps
+  into `hx-target` (or the element); a form with `hx-ws:send` sends on submit.
 - htmx 2.0.10 keeps `defineExtension` + `onEvent`, and fires
   `htmx:beforeProcessNode` — the adapter's v2 fallback path.

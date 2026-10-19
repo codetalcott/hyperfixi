@@ -32,7 +32,7 @@
  * ahead of htmx's.
  */
 
-import { canonicalizeTree, setTriggerSpecSplitter } from './canonicalize.js';
+import { canonicalizeTree, setHtmxGeneration, setTriggerSpecSplitter } from './canonicalize.js';
 import { onVocabUpdate } from './registry.js';
 import {
   claimedAttrNames,
@@ -177,6 +177,13 @@ export function createExtension(htmx?: HtmxLike | null): object {
 export function registerWith(htmx: HtmxLike | undefined | null): 'v4' | 'v2' | null {
   if (!htmx) return null;
   const ext = createExtension(htmx);
+  // The page runs this htmx whether or not it accepts the extension: SSE and WebSocket names
+  // canonicalize to its generation's (hx-sse:connect on htmx 4, sse-connect on htmx 2).
+  if (typeof htmx.registerExtension === 'function') {
+    setHtmxGeneration('v4', htmx.config?.metaCharacter);
+  } else if (typeof htmx.defineExtension === 'function') {
+    setHtmxGeneration('v2');
+  }
   if (typeof htmx.registerExtension === 'function') {
     // v4 REJECTS the registration (returns false) when
     // `htmx.config.extensions` is an allowlist that omits us, or on a
