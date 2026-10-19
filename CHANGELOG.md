@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed (BREAKING)
+
+- **`@hyperfixi/mcp-server`: `validate_hyperscript`, `translate_hyperscript` and
+  `parse_multilingual`**, deprecated in 6.1.0 and 6.2.0. `validate_and_compile` and
+  `translate_code` replace them (MIGRATION.md has the 7.0 table). 93 tools defined, 88 listed by
+  default (96, 91).
+- **`@lokascript/compilation-service/http`** (`createApp`, `serve`, `POST /validate` and the other
+  routes). Its one user, the chat app, now serves its own routes (lokascript-examples #23). `hono`
+  and `@hono/node-server` leave the package, so no mcp-server install carries them.
+- **`CompilationService.generate()`** (the `intent-element` target) and `POST /generate`: nothing
+  called them.
+- **`packages/vscode-extension`**, the LokaScript VS Code extension, which was never published. The
+  language server stays.
+
+### Added
+
+- **`@lokascript/compilation-service` exports `VERSION`.**
+
 ### Changed
 
 - **`@hyperfixi/mcp-server` requires `@lokascript/domains` ^5.0.3.** 5.0.3's BehaviorSpec lets `given`
