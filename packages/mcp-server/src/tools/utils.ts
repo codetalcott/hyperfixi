@@ -212,25 +212,3 @@ export function translationRefusal(error: unknown): TranslationRefusal | null {
     partial: e.partial,
   };
 }
-
-/**
- * A deprecated tool's result: the result as it was, plus a second text block naming the
- * replacement. `content[0]` stays the tool's JSON, so a caller that parses it is unaffected.
- */
-export function withDeprecation<T extends { content: Array<{ type: string; text: string }> }>(
-  result: T,
-  tool: string,
-  replacement: string,
-  why: string
-): T {
-  return {
-    ...result,
-    content: [
-      ...result.content,
-      {
-        type: 'text',
-        text: `Deprecated: ${tool} is removed in 7.0. Use ${replacement}: ${why}`,
-      },
-    ],
-  };
-}
