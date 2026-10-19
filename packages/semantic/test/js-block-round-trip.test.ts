@@ -137,15 +137,6 @@ describe('a BARE block is as opaque as one inside a handler', () => {
   });
 });
 
-/**
- * Languages whose `js(args) … end` round-trips today. The other twelve (es, id,
- * it, ms, pl, pt, ru, sw, th, tl, uk, vi) stop the opaque walk at the `(` of the
- * argument list and come back as `js (` — a separate, pre-existing defect in the
- * head-form body walk, not one this change introduces. Pinned as a list rather
- * than omitted, so clearing it shows up here as a failing exclusion.
- */
-const ARGS_FORM_OK = ['ar', 'bn', 'de', 'fr', 'he', 'hi', 'ja', 'ko', 'qu', 'tr', 'zh'] as const;
-
 describe('the `js(args) … end` form', () => {
   const WITH_ARGS = 'on click js(me) if (!window.confirm("x")) return "cancel"; end';
 
@@ -158,7 +149,7 @@ describe('the `js(args) … end` form', () => {
     );
   });
 
-  it.each(ARGS_FORM_OK)('%s round-trips it', language => {
+  it.each(LANGUAGES)('%s round-trips it', language => {
     const reference = parseSemantic(WITH_ARGS, 'en')!.node!;
     const rendered = render(reference, language);
     const reparsed = parseSemantic(rendered, language)?.node;

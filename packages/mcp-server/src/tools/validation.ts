@@ -8,13 +8,8 @@
 import type { Tool } from '@modelcontextprotocol/server';
 
 // Import error fixes registry
-import {
-  getFixesForError,
-  getFixesForDiagnostic,
-  getFixableErrorCodes,
-  hasFixesForError,
-} from './error-fixes.js';
-import { translationRefusal, withDeprecation } from './utils.js';
+import { getFixesForError, getFixesForDiagnostic, getFixableErrorCodes } from './error-fixes.js';
+import { translationRefusal } from './utils.js';
 
 // Try to import semantic package for multilingual support
 let semanticPackage: any = null;
@@ -22,19 +17,6 @@ try {
   semanticPackage = await import('@lokascript/semantic');
 } catch {
   // semantic not available - will use English-only fallback
-}
-
-// The engine that EXECUTES hyperscript (@hyperfixi/engine: hyperfixi-hs.js, and
-// hyperfixi.js since 4.0). validate_hyperscript used to consult only the semantic
-// parser, so it called lines valid that the runtime rejects. Until Phase C4 this was
-// @hyperfixi/core's parser. Optional peer: absent, the check is skipped.
-let engineParse: ((code: string) => { errors: Array<{ message: string }> }) | null = null;
-try {
-  const engine = await import('@hyperfixi/engine');
-  engine.register(...engine.everything);
-  engineParse = engine.api.parse;
-} catch {
-  // engine not installed
 }
 
 // =============================================================================
@@ -51,9 +33,6 @@ let cachedAnalyzer: {
     confidence: number;
     command?: { name: string; roles: Map<string, unknown> };
     errors?: string[];
-    tokensConsumed?: number;
-    /** The parser's own unconsumed-input messages (tokens bound to no role). */
-    unconsumed?: string[];
   };
   supportsLanguage: (language: string) => boolean;
   supportedLanguages: () => string[];
@@ -80,18 +59,8 @@ function getSemanticAnalyzer(): typeof cachedAnalyzer {
         const out: ReturnType<NonNullable<typeof cachedAnalyzer>['analyze']> = {
           confidence: result.confidence,
         };
-        if (result.tokensConsumed !== undefined) out.tokensConsumed = result.tokensConsumed;
         if (result.node) {
           out.command = { name: result.node.action, roles: result.node.roles };
-          const unconsumed = (
-            (result.node.diagnostics ?? []) as Array<{ code?: string; message?: string }>
-          )
-            // A clause kept as written is read by no role either.
-            .filter(
-              d => (d.code === 'unconsumed-input' || d.code === 'verbatim-clause') && d.message
-            )
-            .map(d => d.message as string);
-          if (unconsumed.length > 0) out.unconsumed = unconsumed;
         }
         if (result.error) out.errors = [result.error];
         return out;
@@ -112,26 +81,6 @@ function getSemanticAnalyzer(): typeof cachedAnalyzer {
 // =============================================================================
 
 export const validationTools: Tool[] = [
-  {
-    name: 'validate_hyperscript',
-    description:
-      'Deprecated (removed in 7.0): use validate_and_compile, which gives the verdict of the engine that runs the code, the semantic IR, and the same NAME_COLLISION warnings; measured on 672 inputs, this tool caught nothing validate_and_compile missed, and its event-name and if/end checks gave only false alarms. Checks hyperscript code for syntax errors and role warnings. English is also checked against the engine (errors with source "engine"); tokens the semantic parser could not bind are warned as UNCONSUMED_INPUT. For line/column positions, use get_diagnostics.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        code: {
-          type: 'string',
-          description: 'The hyperscript code to validate',
-        },
-        language: {
-          type: 'string',
-          description: 'Language code if not English',
-          default: 'en',
-        },
-      },
-      required: ['code'],
-    },
-  },
   {
     name: 'validate_schema',
     description:
@@ -213,25 +162,6 @@ export const validationTools: Tool[] = [
           default: 'auto',
         },
       },
-    },
-  },
-  {
-    name: 'parse_multilingual',
-    description:
-      'Deprecated (removed in 7.0): use validate_and_compile, which returns the whole semantic IR and, for English, the verdict of the engine that runs the code; measured on 672 inputs, this tool returned only the top node (every handler as `on` and its event) and reported success on 21 of the 27 English inputs the engine rejects. Parse hyperscript in any supported language using semantic analysis. Returns parsed structure with confidence score and semantic roles.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        code: {
-          type: 'string',
-          description: 'Hyperscript code to parse (can be in any supported language)',
-        },
-        language: {
-          type: 'string',
-          description: 'Language code (en, ja, ko, es, ar, zh, tr, pt, fr, de, id, qu, sw, etc.)',
-        },
-      },
-      required: ['code', 'language'],
     },
   },
   {
@@ -321,17 +251,6 @@ export async function handleValidationTool(
 ): Promise<{ content: Array<{ type: string; text: string }>; isError?: boolean }> {
   try {
     switch (name) {
-      case 'validate_hyperscript': {
-        const code = args.code as string;
-        const language = (args.language as string) || 'en';
-        return withDeprecation(
-          validateHyperscript(code, language),
-          'validate_hyperscript',
-          'validate_and_compile',
-          'the engine verdict, the semantic IR, and the same NAME_COLLISION warnings.'
-        );
-      }
-
       case 'validate_schema': {
         const action = args.action as string | undefined;
         const includeNotes = (args.includeNotes as boolean) || false;
@@ -352,17 +271,6 @@ export async function handleValidationTool(
         const positional = (args.positional as boolean) || false;
         const runtime = (args.runtime as string) || 'auto';
         return getBundleConfig(commands, blocks, languages, positional, runtime);
-      }
-
-      case 'parse_multilingual': {
-        const code = args.code as string;
-        const language = args.language as string;
-        return withDeprecation(
-          parseMultilingual(code, language),
-          'parse_multilingual',
-          'validate_and_compile',
-          'the whole semantic IR and, for English, the verdict of the engine that runs the code.'
-        );
       }
 
       case 'translate_to_english': {
@@ -404,489 +312,6 @@ export async function handleValidationTool(
       isError: true,
     };
   }
-}
-
-// =============================================================================
-// Validation Implementation
-// =============================================================================
-
-/**
- * Get valid command keywords for a language from semantic package.
- */
-function getValidCommandsForLanguage(language: string): string[] {
-  const englishCommands = [
-    'toggle',
-    'add',
-    'remove',
-    'show',
-    'hide',
-    'set',
-    'get',
-    'put',
-    'append',
-    'prepend',
-    'increment',
-    'decrement',
-    'log',
-    'send',
-    'trigger',
-    'wait',
-    'fetch',
-    'call',
-    'go',
-    'focus',
-    'blur',
-    'return',
-    'break',
-    'continue',
-    'exit',
-    'halt',
-    'throw',
-    'transition',
-    'settle',
-    'measure',
-    'take',
-    'ask',
-    'answer',
-  ];
-
-  if (!semanticPackage || language === 'en') {
-    return englishCommands;
-  }
-
-  try {
-    const profile = semanticPackage.tryGetProfile(language);
-    if (profile && profile.keywords) {
-      const commands: string[] = [...englishCommands]; // Always include English for compatibility
-      for (const [, translation] of Object.entries(profile.keywords)) {
-        const trans = translation as { primary?: string; alternatives?: string[] };
-        if (trans.primary) {
-          commands.push(trans.primary.toLowerCase());
-        }
-        if (trans.alternatives) {
-          commands.push(...trans.alternatives.map((a: string) => a.toLowerCase()));
-        }
-      }
-      return [...new Set(commands)];
-    }
-  } catch {
-    // Profile not available for this language
-  }
-
-  return englishCommands;
-}
-
-/**
- * Get event handler keyword variants for a language (e.g., "on" in Korean).
- */
-function getEventHandlerKeywords(language: string): string[] {
-  const variants = ['on'];
-
-  if (!semanticPackage || language === 'en') {
-    return variants;
-  }
-
-  try {
-    const profile = semanticPackage.tryGetProfile(language);
-    if (profile && profile.keywords && profile.keywords['on']) {
-      const trans = profile.keywords['on'] as { primary?: string; alternatives?: string[] };
-      if (trans.primary) {
-        variants.push(trans.primary.toLowerCase());
-      }
-      if (trans.alternatives) {
-        variants.push(...trans.alternatives.map((a: string) => a.toLowerCase()));
-      }
-    }
-  } catch {
-    // Profile not available
-  }
-
-  return variants;
-}
-
-function validateHyperscript(
-  code: string,
-  language: string
-): { content: Array<{ type: string; text: string }>; isError?: boolean } {
-  const errors: Array<{ message: string; suggestion?: string; source?: string; code?: string }> =
-    [];
-  const warnings: Array<{ message: string; suggestion?: string; source?: string; code?: string }> =
-    [];
-
-  // Get language-specific commands
-  const validCommands = getValidCommandsForLanguage(language);
-  const eventKeywords = getEventHandlerKeywords(language);
-
-  // Try semantic parsing first for better validation (Phase 5)
-  let semanticInfo: {
-    confidence: number;
-    command?: string;
-    roles?: Record<string, unknown>;
-    usedSemanticParsing: boolean;
-  } | null = null;
-  // The event name the semantic parse resolved (a localized `carga` → `load`,
-  // a namespaced `htmx:beforeRequest` as written), when it found a handler.
-  let semanticEvent: string | undefined;
-
-  const analyzer = getSemanticAnalyzer();
-  if (analyzer) {
-    try {
-      const result = analyzer.analyze(code, language);
-
-      // Convert roles Map to object
-      let rolesObj: Record<string, unknown> | undefined;
-      if (result.command?.roles) {
-        rolesObj = {};
-        for (const [role, value] of result.command.roles) {
-          rolesObj[role] = value;
-        }
-      }
-
-      semanticInfo = {
-        confidence: result.confidence,
-        command: result.command?.name,
-        roles: rolesObj,
-        usedSemanticParsing: result.confidence >= 0.5,
-      };
-
-      // Add semantic-level errors
-      if (result.errors && result.errors.length > 0) {
-        for (const err of result.errors) {
-          errors.push({ message: err, source: 'semantic-parser' });
-        }
-      }
-
-      const ev = result.command?.roles?.get('event') as
-        { value?: unknown; raw?: unknown } | undefined;
-      const evName = ev?.value ?? ev?.raw;
-      if (result.command?.name === 'on' && typeof evName === 'string') semanticEvent = evName;
-
-      // Tokens the parser read but bound to no role. The line may still be
-      // valid hyperscript — but the semantic IR, and so any translation made
-      // from it, silently lacks them (the book's `on load click() me` rendered
-      // as the empty `ロード を で` until the parser learned pseudo-commands).
-      for (const msg of result.unconsumed ?? []) {
-        warnings.push({
-          code: 'UNCONSUMED_INPUT',
-          message: `Semantic parser ${msg.replace(/^body clause /, 'left part of the body unbound: ')}`,
-          suggestion:
-            'translate_code and the semantic IR drop these tokens. Rephrase with an explicit ' +
-            "command or role marker (e.g. `call me.click()`), or check the translation's " +
-            'verification.referenceComplete.',
-          source: 'semantic-parser',
-        });
-      }
-
-      // A variable spelled like a word of the code's language (es `si`, tr
-      // `i`): its readers tell the two apart only by where it stands. The
-      // editor's warning, from the same semantic finder.
-      if (language !== 'en' && result.confidence >= 0.5) {
-        const findings = (semanticPackage?.findNameCollisions?.(code, language) ?? []) as Array<{
-          name: string;
-          occurrences: unknown[];
-          rename?: string;
-          message: string;
-        }>;
-        for (const finding of findings) {
-          warnings.push({
-            code: 'NAME_COLLISION',
-            message: finding.message,
-            suggestion: finding.rename
-              ? `Rename \`${finding.name}\` to \`${finding.rename}\` in the ${finding.occurrences.length} place(s) the parse reads it as the variable.`
-              : `Rename \`${finding.name}\`.`,
-            source: 'semantic-parser',
-          });
-        }
-      }
-
-      // Add confidence warning if parsing succeeded but with low confidence
-      if (result.confidence > 0 && result.confidence < 0.5) {
-        warnings.push({
-          message: `Low parsing confidence (${(result.confidence * 100).toFixed(0)}%)`,
-          suggestion: 'Code may have syntax issues or use unsupported patterns',
-          source: 'semantic-parser',
-        });
-      }
-
-      // Phase 6: Expanded semantic role validation for all commands
-      if (result.confidence >= 0.5 && result.command) {
-        const cmd = result.command.name;
-        const roles = result.command.roles;
-
-        // Commands requiring patient (target class/attribute/value)
-        const patientRequired = [
-          'toggle',
-          'add',
-          'remove',
-          'show',
-          'hide',
-          'increment',
-          'decrement',
-        ];
-        if (patientRequired.includes(cmd) && !roles.has('patient')) {
-          warnings.push({
-            message: `${cmd} command missing target`,
-            suggestion: 'Add a class (.class), attribute (@attr), or element selector',
-            source: 'semantic-validator',
-          });
-        }
-
-        // Commands requiring both patient (content) and destination (target)
-        const contentCommands = ['put', 'append', 'prepend'];
-        if (contentCommands.includes(cmd)) {
-          if (!roles.has('patient')) {
-            warnings.push({
-              message: `${cmd} command missing content`,
-              suggestion: 'Add content/value to put',
-              source: 'semantic-validator',
-            });
-          }
-          if (!roles.has('destination')) {
-            warnings.push({
-              message: `${cmd} command missing destination`,
-              suggestion: 'Add "into #element" or "into .class"',
-              source: 'semantic-validator',
-            });
-          }
-        }
-
-        // Set command: requires destination (property) and patient (value)
-        if (cmd === 'set') {
-          if (!roles.has('destination')) {
-            warnings.push({
-              message: 'set command missing target property',
-              suggestion: 'Add property or variable to set (e.g., :count)',
-              source: 'semantic-validator',
-            });
-          }
-          if (!roles.has('patient')) {
-            warnings.push({
-              message: 'set command missing value',
-              suggestion: 'Add value to set (e.g., "to 10")',
-              source: 'semantic-validator',
-            });
-          }
-        }
-
-        // Fetch command: requires destination (URL)
-        if (cmd === 'fetch' && !roles.has('destination')) {
-          warnings.push({
-            message: 'fetch command missing URL',
-            suggestion: 'Add URL to fetch from (e.g., fetch /api/data)',
-            source: 'semantic-validator',
-          });
-        }
-      }
-    } catch {
-      // Semantic parsing failed - continue with regex validation
-    }
-  }
-
-  // Basic syntax checks
-
-  // Check for common issues
-  if (code.includes('onclick') || code.includes('onClick')) {
-    errors.push({
-      message: 'Use hyperscript event syntax instead of onclick attribute',
-      suggestion: 'Replace onclick="..." with _="on click ..."',
-    });
-  }
-
-  // Check for unbalanced quotes
-  // Exclude possessive apostrophes (word's) from single quote count
-  // Pattern: count quotes that are NOT part of possessive pattern (letter + 's + space/end/punctuation)
-  const possessivePattern = /\w's(?=\s|$|[.,;:!?)}\]])/g;
-  const possessiveCount = (code.match(possessivePattern) || []).length;
-  const allSingleQuotes = (code.match(/'/g) || []).length;
-  const singleQuotes = allSingleQuotes - possessiveCount;
-  const doubleQuotes = (code.match(/"/g) || []).length;
-  if (singleQuotes % 2 !== 0) {
-    errors.push({ message: 'Unbalanced single quotes' });
-  }
-  if (doubleQuotes % 2 !== 0) {
-    errors.push({ message: 'Unbalanced double quotes' });
-  }
-
-  // Check for unclosed blocks (multilingual)
-  const ifVariants = ['if'];
-  const endVariants = ['end'];
-  if (semanticPackage && language !== 'en') {
-    try {
-      const profile = semanticPackage.tryGetProfile(language);
-      if (profile?.keywords?.['if']?.primary) {
-        ifVariants.push(profile.keywords['if'].primary);
-      }
-      if (profile?.keywords?.['end']?.primary) {
-        endVariants.push(profile.keywords['end'].primary);
-      }
-    } catch {
-      /* ignore */
-    }
-  }
-  const ifPattern = new RegExp(`\\b(${ifVariants.join('|')})\\b`, 'gi');
-  const endPattern = new RegExp(`\\b(${endVariants.join('|')})\\b`, 'gi');
-  const ifCount = (code.match(ifPattern) || []).length;
-  const endCount = (code.match(endPattern) || []).length;
-  if (ifCount > endCount) {
-    warnings.push({
-      message: `Found ${ifCount} 'if' statements but only ${endCount} 'end' keywords`,
-      suggestion: 'Add missing end keywords or use inline if syntax',
-    });
-  }
-
-  // Check for valid event handlers (multilingual)
-  // Only match at start of code, after newline, or after command separators (then, ;)
-  const eventPattern = new RegExp(
-    `(?:^|\\n|;|\\bthen\\b)\\s*(${eventKeywords.join('|')})\\s+([\\w:.-]+)`,
-    'gim'
-  );
-  const eventMatches = code.matchAll(eventPattern);
-  const validEvents = [
-    'click',
-    'dblclick',
-    'mouseenter',
-    'mouseleave',
-    'mouseover',
-    'mouseout',
-    'mousedown',
-    'mouseup',
-    'mousemove',
-    'keydown',
-    'keyup',
-    'keypress',
-    'focus',
-    'blur',
-    'focusin',
-    'focusout',
-    'input',
-    'change',
-    'submit',
-    'reset',
-    'load',
-    'unload',
-    'scroll',
-    'resize',
-    'touchstart',
-    'touchend',
-    'touchmove',
-    'dragstart',
-    'dragend',
-    'drag',
-    'drop',
-    'intersection',
-    'mutation',
-    'every', // timer
-  ];
-  // Target keywords that should not be confused with event types
-  const targetKeywords = [
-    'me',
-    'you',
-    'it',
-    'my',
-    'its',
-    'the',
-    'this',
-    'that',
-    'body',
-    'window',
-    'document',
-  ];
-  // Judge the event the SEMANTIC parse resolved when there is one: the regex
-  // below sees raw words, so a localized name (es `carga` = load) looked
-  // unknown, and its `\w+` capture cut `htmx:beforeRequest` to `htmx`. A
-  // namespaced event (`htmx:*`, `draggable:start`) is a custom event by
-  // construction and never "unknown".
-  const judged = semanticEvent
-    ? [semanticEvent.toLowerCase().split('[')[0]]
-    : [...eventMatches].map(m => m[2].toLowerCase());
-  for (const event of judged) {
-    if (
-      !validEvents.includes(event) &&
-      !event.includes('.') &&
-      !event.includes(':') &&
-      !targetKeywords.includes(event)
-    ) {
-      warnings.push({
-        message: `Unknown event type: ${event}`,
-        suggestion: `Did you mean one of: ${validEvents.slice(0, 5).join(', ')}...?`,
-      });
-    }
-  }
-
-  // Does the engine (the runtime) read the line? English as written; another
-  // language as the English @lokascript/hyperscript-adapter hands the engine on a
-  // page (semantic's render of its parse). The checks above measure the semantic
-  // front-end, whose grammar is more permissive.
-  const isEnglish = language === 'en' || language.startsWith('en-');
-  let engineSource: string | null = isEnglish ? code : null;
-  if (!isEnglish && semanticPackage) {
-    try {
-      const node = semanticPackage.parseSemantic(code, language)?.node;
-      if (node) engineSource = semanticPackage.render(node, 'en');
-    } catch {
-      engineSource = null;
-    }
-  }
-  if (engineParse && engineSource !== null) {
-    try {
-      for (const err of engineParse(engineSource).errors ?? []) {
-        errors.push({
-          message: err.message.split('\n')[0] ?? err.message,
-          source: 'engine',
-          suggestion:
-            (isEnglish ? '' : `As English (${engineSource}): `) +
-            'the engine rejects this, so it cannot run as written (get_diagnostics gives the position).',
-        });
-      }
-    } catch (e) {
-      errors.push({ message: e instanceof Error ? e.message : String(e), source: 'engine' });
-    }
-  }
-
-  // Build command pattern for matching (now multilingual). Every command the
-  // language knows: a `slice(0, 30)` here meant `take` (#33) and later were
-  // never listed.
-  const commandPattern = new RegExp(`\\b(${validCommands.join('|')})\\b`, 'gi');
-  const commandMatches = code.match(commandPattern);
-
-  // Validate command usage patterns (check for toggle without class/attr)
-  // Skip if semantic parsing already handled this
-  if (!semanticInfo?.usedSemanticParsing) {
-    const toggleVariants = ['toggle'];
-    if (semanticPackage && language !== 'en') {
-      try {
-        const profile = semanticPackage.tryGetProfile(language);
-        if (profile?.keywords?.toggle?.primary) {
-          toggleVariants.push(profile.keywords.toggle.primary);
-        }
-      } catch {
-        /* ignore */
-      }
-    }
-    const hasToggle = toggleVariants.some(t => code.toLowerCase().includes(t.toLowerCase()));
-    if (hasToggle && !code.includes('.') && !code.includes('@')) {
-      warnings.push({
-        message: 'toggle command typically needs a class (.class) or attribute (@attr)',
-        suggestion: 'Example: toggle .active or toggle @disabled',
-      });
-    }
-  }
-
-  const result = {
-    valid: errors.length === 0,
-    errors,
-    warnings,
-    code,
-    language,
-    commandsFound: commandMatches ? [...new Set(commandMatches.map(c => c.toLowerCase()))] : [],
-    // Phase 5: Include semantic parsing info when available
-    semantic: semanticInfo,
-  };
-
-  return {
-    content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-    isError: errors.length > 0,
-  };
 }
 
 // =============================================================================
@@ -1565,95 +990,6 @@ function validateSchema(
 // =============================================================================
 // Semantic Parsing Tools (Phase 5)
 // =============================================================================
-
-/**
- * Parse hyperscript using semantic analyzer for full syntax-level parsing.
- * Returns confidence score, command name, and semantic roles.
- */
-function parseMultilingual(
-  code: string,
-  language: string
-): { content: Array<{ type: string; text: string }>; isError?: boolean } {
-  if (!semanticPackage) {
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify(
-            {
-              error: '@lokascript/semantic package not available',
-              suggestion: 'Install with: npm install @lokascript/semantic',
-              fallback: 'Using regex-based validation only',
-              language,
-              confidence: 0,
-            },
-            null,
-            2
-          ),
-        },
-      ],
-      isError: true,
-    };
-  }
-
-  try {
-    // Use cached semantic analyzer for confidence-scored parsing (Phase 6)
-    const analyzer = getSemanticAnalyzer();
-    if (!analyzer) {
-      throw new Error('Semantic analyzer not available');
-    }
-    const result = analyzer.analyze(code, language);
-
-    // Convert roles Map to object for JSON serialization
-    let rolesObj: Record<string, unknown> | null = null;
-    if (result.command?.roles) {
-      rolesObj = {};
-      for (const [role, value] of result.command.roles) {
-        rolesObj[role] = value;
-      }
-    }
-
-    const response = {
-      success: result.confidence >= 0.5,
-      confidence: result.confidence,
-      command: result.command
-        ? {
-            name: result.command.name,
-            roles: rolesObj,
-          }
-        : null,
-      errors: result.errors || [],
-      tokensConsumed: result.tokensConsumed,
-      language,
-      supportedLanguages: analyzer.supportedLanguages(),
-    };
-
-    return {
-      content: [{ type: 'text', text: JSON.stringify(response, null, 2) }],
-      isError: result.confidence < 0.5,
-    };
-  } catch (error) {
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify(
-            {
-              success: false,
-              confidence: 0,
-              error: error instanceof Error ? error.message : String(error),
-              code,
-              language,
-            },
-            null,
-            2
-          ),
-        },
-      ],
-      isError: true,
-    };
-  }
-}
 
 /**
  * Translate hyperscript from any supported language to English.

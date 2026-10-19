@@ -44,8 +44,7 @@ packages/
 ├── server-bridge/      # @hyperfixi/server-bridge — Server-side route extraction
 │
 ├── language-server-hyperscript/ # @hyperscript-tools/language-server — LSP for original _hyperscript
-├── multilingual-hyperscript/    # @hyperscript-tools/multilingual — Plugin for original _hyperscript
-└── vscode-extension/            # VSCode extension for LokaScript
+└── multilingual-hyperscript/    # @hyperscript-tools/multilingual — Plugin for original _hyperscript
 ```
 
 ## Bundle Tiers

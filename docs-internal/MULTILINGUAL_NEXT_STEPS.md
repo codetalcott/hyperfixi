@@ -199,7 +199,6 @@ end word had nine readers. The stories are in the PR bodies; the plans are in `A
 - **Render items:** R1–R4.
 - **Vocabulary:** V5–V7.
 - **Gate items:** G2–G6, G9, G10.
-- **G11** is a one-line win: widen `ARGS_FORM_OK` to 23 languages.
 - **The 86 refused lanes** Reliability row (2) left (listed there; the regen tool's family table orders them).
 
 ## 4. Parked, and decisions waiting on the owner
@@ -207,7 +206,7 @@ end word had nine readers. The stories are in the PR bodies; the plans are in `A
 - **Decided 2026-10-18 (owner, all as recommended):** `hx-query` stays English until native review (V4);
   the htmx adapter's vocabulary follows the page's htmx, done in 6.3.0 (PR5); weight is semantic's packaging
   first, done in 6.2.0 (S4, below); the LokaScript VS Code extension leaves the product story, removed in 7.0
-  if still unpublished (S1); `apps/docs-site` is deleted, done in 6.2.0 (D6); a transition carries several
+  (S1; it was never published); `apps/docs-site` is deleted, done in 6.2.0 (D6); a transition carries several
   properties (O6, in Reliability's list).
 
 - **M1 calls taken:** fail-loud by default (F1 `translate()` throws, F2 the adapter refuses at run time;

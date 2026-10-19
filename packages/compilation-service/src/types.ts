@@ -119,44 +119,6 @@ export interface Diagnostic {
 }
 
 // =============================================================================
-// Generate Types (LSE → target output)
-// =============================================================================
-
-/**
- * Generate request — converts LSE to a target-specific output.
- *
- * Accepts LSE in bracket syntax or protocol JSON, then renders to the requested target.
- * Use the `lse_generate_with_correction` MCP tool to produce the LSE via LLM; then
- * POST the result here to get the final artifact.
- */
-export interface GenerateRequest {
-  /** LSE attempt — bracket syntax `[command role:value ...]` or protocol JSON string */
-  lse: string;
-  /**
-   * Output target (required since 4.0, when the default, 'js', retired with the
-   * AOT compiler; 'react', 'vue' and 'svelte' were removed in 6.0):
-   * - 'intent-element' — HTML snippet with `<lse-intent>` and embedded JSON
-   */
-  target: 'intent-element';
-  /** Optional task description — included as a comment in intent-element output */
-  task?: string;
-}
-
-/**
- * Generate response.
- */
-export interface GenerateResponse {
-  /** Whether generation succeeded */
-  ok: boolean;
-  /** Rendered output (an HTML snippet) */
-  output?: string;
-  /** Normalized protocol JSON (always present on success) */
-  protocol?: SemanticJSON;
-  /** Diagnostics from parsing and validation */
-  diagnostics: Diagnostic[];
-}
-
-// =============================================================================
 // Diff Types
 // =============================================================================
 

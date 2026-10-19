@@ -1,15 +1,20 @@
 # Migration Guide
 
-## Deprecated in 6.x, removed in 7.0
+## Migrating from 6.x to 7.0
 
-Three MCP tools duplicate the ones the server tells agents to use. All still work in 6.x; their
-descriptions and results say they are deprecated.
+7.0 removes what 6.x deprecated or never shipped. Nothing else changes: the engine, the
+multilingual packages and the remaining MCP tools behave as in 6.3.0.
 
-| Deprecated                  | Instead                                                                                                               |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| MCP `validate_hyperscript`  | `validate_and_compile`: the engine's verdict, the semantic IR, and the same `NAME_COLLISION` warnings                 |
-| MCP `translate_hyperscript` | `translate_code`: the same text, plus a fidelity `verification` and `NAME_COLLISION` warnings (arguments `from`/`to`) |
-| MCP `parse_multilingual`    | `validate_and_compile`: the whole semantic IR (not only the top node) and, for English, the engine's verdict          |
+| Removed                                                                            | Instead                                                                                                               |
+| ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| MCP `validate_hyperscript`                                                         | `validate_and_compile`: the engine's verdict, the semantic IR, and the same `NAME_COLLISION` warnings                 |
+| MCP `translate_hyperscript`                                                        | `translate_code`: the same text, plus a fidelity `verification` and `NAME_COLLISION` warnings (arguments `from`/`to`) |
+| MCP `parse_multilingual`                                                           | `validate_and_compile`: the whole semantic IR (not only the top node) and, for English, the engine's verdict          |
+| `@lokascript/compilation-service/http` (`createApp`, `serve`)                      | Call `CompilationService` from your own server; it takes a request object and returns the response to send            |
+| `CompilationService.generate()` and `POST /generate` (the `intent-element` target) | — (no caller was found)                                                                                               |
+| The LokaScript VS Code extension (`packages/vscode-extension`, never published)    | Any LSP client extension, started on `@lokascript/language-server` (its README)                                       |
+
+`@lokascript/compilation-service` no longer depends on `hono`. It now exports `VERSION`.
 
 ## Migrating from 5.x to 6.0
 
