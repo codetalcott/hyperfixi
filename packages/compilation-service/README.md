@@ -4,10 +4,11 @@ Validate, translate, compare and score hyperscript. Input can be in any of 24 la
 explicit bracket syntax, or in LLM JSON.
 
 This is the library behind `@hyperfixi/mcp-server`'s `validate_and_compile`, `translate_code`,
-`diff_behaviors` and `score_fidelity` tools. It also ships a small HTTP server.
+`diff_behaviors` and `score_fidelity` tools.
 
-The name is older than what the package does now. It stopped compiling to JavaScript in 4.0, and
-6.0 removed test and component generation (see the repo's `MIGRATION.md`).
+The name is older than what the package does now. It stopped compiling to JavaScript in 4.0, 6.0
+removed test and component generation, and 7.0 removed `generate()` and the HTTP server (see the
+repo's `MIGRATION.md`).
 
 ## Install
 
@@ -23,6 +24,8 @@ import { CompilationService } from '@lokascript/compilation-service';
 
 const service = await CompilationService.create(); // { confidenceThreshold?: number } (default 0.7)
 ```
+
+`VERSION`, also exported, is the installed package's version.
 
 ### `validate(request)`
 
@@ -110,35 +113,6 @@ service.scoreFidelity({
 // { ok: true, faithful: false, missingActions: ['wait'],
 //   scores: { actionRecall: 0.67, multisetRecall: 0.67, precision: 1, roleFidelity: 0.75, valueRecall: 0.67 }, … }
 ```
-
-### `generate({ lse, target: 'intent-element', task? })`
-
-`generate` renders LSE (bracket syntax or protocol JSON) as an `<lse-intent>` HTML element. It is
-async.
-
-## HTTP
-
-```ts
-import { createApp, serve } from '@lokascript/compilation-service/http';
-
-serve({ port: 3001 }); // Node
-const app = createApp({ apiKey, corsOrigin, production: true }); // any Hono runtime
-```
-
-| Route             | Body                  |
-| ----------------- | --------------------- |
-| `POST /validate`  | `validate`'s request  |
-| `POST /translate` | `translate`'s request |
-| `POST /diff`      | `diff`'s request      |
-| `POST /generate`  | `generate`'s request  |
-| `GET /health`     | —                     |
-
-`createApp` takes these options:
-
-- `apiKey`: requires `Authorization: Bearer <apiKey>` on every route except `/health`.
-- `production: true`: adds a body limit (`maxBodyBytes`, default 50 KB), a timeout (`timeoutMs`,
-  default 10 s) and structured logs.
-- `service`: passes in an instance created up front.
 
 ## License
 

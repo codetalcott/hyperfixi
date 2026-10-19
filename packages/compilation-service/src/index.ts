@@ -4,11 +4,12 @@
  * Semantic service for LokaScript.
  * Validates and translates hyperscript from 24 languages, explicit syntax, or LLM JSON.
  * Diffs two behaviors and scores a translation's fidelity. (Test and component generation were
- * removed in 6.0.)
+ * removed in 6.0; `generate()` and the HTTP layer, `./http`, in 7.0.)
  */
 
 // Main service
 export { CompilationService } from './service.js';
+export { VERSION } from './version.js';
 
 // Types
 export type {
