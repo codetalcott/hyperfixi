@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/mcp-server",
-  "version": "6.3.0",
+  "version": "7.0.0",
   "description": "Model Context Protocol server for HyperFixi hyperscript development",
   "type": "module",
   "main": "dist/index.js",
@@ -37,24 +37,24 @@
   "author": "LokaScript Contributors",
   "license": "MIT",
   "dependencies": {
-    "@hyperfixi/patterns-reference": "^6.3.0",
-    "@lokascript/compilation-service": "^6.3.0",
+    "@hyperfixi/patterns-reference": "^7.0.0",
+    "@lokascript/compilation-service": "^7.0.0",
     "@lokascript/domains": "^5.0.4",
-    "@lokascript/framework": "^6.3.0",
-    "@lokascript/planner": "^6.3.0",
-    "@lokascript/semantic": "^6.3.0",
+    "@lokascript/framework": "^7.0.0",
+    "@lokascript/planner": "^7.0.0",
+    "@lokascript/semantic": "^7.0.0",
     "@modelcontextprotocol/server": "^2.1.0",
     "glob": "^13.0.6",
     "yaml": "^2.9.1"
   },
   "peerDependencies": {
-    "@hyperfixi/core": "^6.3.0",
-    "@hyperfixi/engine": "^6.3.0",
-    "@hyperfixi/patterns-reference": "^6.3.0",
-    "@hyperfixi/server-bridge": "^6.3.0",
-    "@lokascript/compilation-service": "^6.3.0",
-    "@lokascript/framework": "^6.3.0",
-    "@lokascript/semantic": "^6.3.0"
+    "@hyperfixi/core": "^7.0.0",
+    "@hyperfixi/engine": "^7.0.0",
+    "@hyperfixi/patterns-reference": "^7.0.0",
+    "@hyperfixi/server-bridge": "^7.0.0",
+    "@lokascript/compilation-service": "^7.0.0",
+    "@lokascript/framework": "^7.0.0",
+    "@lokascript/semantic": "^7.0.0"
   },
   "peerDependenciesMeta": {
     "@lokascript/compilation-service": {
@@ -80,13 +80,13 @@
     }
   },
   "devDependencies": {
-    "@hyperfixi/core": "^6.3.0",
-    "@hyperfixi/engine": "^6.3.0",
-    "@hyperfixi/patterns-reference": "^6.3.0",
-    "@hyperfixi/server-bridge": "^6.3.0",
-    "@lokascript/compilation-service": "^6.3.0",
-    "@lokascript/framework": "^6.3.0",
-    "@lokascript/semantic": "^6.3.0",
+    "@hyperfixi/core": "^7.0.0",
+    "@hyperfixi/engine": "^7.0.0",
+    "@hyperfixi/patterns-reference": "^7.0.0",
+    "@hyperfixi/server-bridge": "^7.0.0",
+    "@lokascript/compilation-service": "^7.0.0",
+    "@lokascript/framework": "^7.0.0",
+    "@lokascript/semantic": "^7.0.0",
     "@types/node": "^26.6.3",
     "tsup": "^9.0.0",
     "tsx": "^4.23.15",
