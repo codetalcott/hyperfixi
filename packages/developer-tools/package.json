@@ -18,11 +18,6 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
     },
-    "./cli": {
-      "types": "./dist/cli.d.ts",
-      "import": "./dist/cli.mjs",
-      "require": "./dist/cli.js"
-    },
     "./builder": {
       "types": "./dist/builder.d.ts",
       "import": "./dist/builder.mjs",
