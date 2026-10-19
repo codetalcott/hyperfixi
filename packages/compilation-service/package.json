@@ -12,11 +12,6 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
-    },
-    "./http": {
-      "types": "./dist/http.d.ts",
-      "import": "./dist/http.js",
-      "require": "./dist/http.cjs"
     }
   },
   "files": [
@@ -29,17 +24,14 @@
     "pretest": "../../scripts/ensure-fresh.sh ../semantic ../engine",
     "test": "vitest run",
     "test:watch": "vitest",
-    "serve": "tsx src/serve.ts",
     "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@lokascript/framework": "^6.3.0",
-    "hono": "^4.13.9"
+    "@lokascript/framework": "^6.3.0"
   },
   "devDependencies": {
-    "@hono/node-server": "^2.1.1",
     "@hyperfixi/engine": "^6.3.0",
     "@lokascript/semantic": "^6.3.0",
     "@types/node": "^26.6.3",

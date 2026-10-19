@@ -189,39 +189,6 @@ describe('get_document_symbols multilingual', () => {
   });
 });
 
-describe('validate_hyperscript multilingual', () => {
-  it('includes language in response', async () => {
-    const result = await handleValidationTool('validate_hyperscript', {
-      code: 'on click toggle .active',
-      language: 'ko',
-    });
-
-    const parsed = JSON.parse(getTextContent(result));
-    expect(parsed.language).toBe('ko');
-  });
-
-  it('validates English code as valid', async () => {
-    const result = await handleValidationTool('validate_hyperscript', {
-      code: 'on click toggle .active',
-      language: 'en',
-    });
-
-    const parsed = JSON.parse(getTextContent(result));
-    expect(parsed.valid).toBe(true);
-  });
-
-  it('detects unbalanced quotes in any language', async () => {
-    const result = await handleValidationTool('validate_hyperscript', {
-      code: "on click put 'hello into #output",
-      language: 'ja',
-    });
-
-    const parsed = JSON.parse(getTextContent(result));
-    expect(parsed.valid).toBe(false);
-    expect(parsed.errors.some((e: any) => e.message.includes('quote'))).toBe(true);
-  });
-});
-
 describe('suggest_command multilingual', () => {
   it('includes language in response', async () => {
     const result = await handleValidationTool('suggest_command', {

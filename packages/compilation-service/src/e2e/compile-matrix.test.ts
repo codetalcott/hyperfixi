@@ -1,40 +1,32 @@
 /**
  * Compile Matrix E2E Tests
  *
- * Tests the full validation pipeline (POST /validate) across:
+ * Tests the full validation pipeline (`validate`, and `translate` and `diff`) across:
  * - 3 input formats (natural language, explicit syntax, LLM JSON)
  * - Multi-language support (SVO, SOV, VSO)
  * - Confidence thresholds
- * - Cross-format diff equivalence, test and component generation
+ * - Cross-format diff equivalence
  *
  * (The file name is from when the service compiled to JavaScript through
  * `@hyperfixi/aot-compiler`; the compile options and cache retired with it in 4.0.)
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
-import { createApp } from '../http.js';
 import { CompilationService } from '../service.js';
-import type { Hono } from 'hono';
 
 // =============================================================================
 // Setup
 // =============================================================================
 
-let app: Hono;
+let service: CompilationService;
 
 beforeAll(async () => {
-  const service = await CompilationService.create();
-  app = createApp({ service });
+  service = await CompilationService.create();
 }, 30000);
 
-/** POST helper — returns parsed JSON body and status */
-async function post(path: string, body: unknown) {
-  const res = await app.request(path, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  return { status: res.status, body: await res.json() };
+/** One operation's result, read as freely as the JSON body these tests once read over HTTP */
+function call(op: 'validate' | 'translate' | 'diff', request: unknown): any {
+  return (service[op] as (request: unknown) => unknown).call(service, request);
 }
 
 // =============================================================================
@@ -43,11 +35,10 @@ async function post(path: string, body: unknown) {
 
 describe('Input format matrix', () => {
   it('validates explicit syntax with multiple roles', async () => {
-    const { status, body } = await post('/validate', {
+    const body = call('validate', {
       explicit: '[toggle patient:.active destination:#btn]',
     });
 
-    expect(status).toBe(200);
     expect(body.ok).toBe(true);
     expect(body.semantic).toBeDefined();
     expect(body.semantic.action).toBe('toggle');
@@ -55,7 +46,7 @@ describe('Input format matrix', () => {
   });
 
   it('validates LLM JSON format', async () => {
-    const { status, body } = await post('/validate', {
+    const body = call('validate', {
       semantic: {
         action: 'toggle',
         roles: { patient: { type: 'selector', value: '.active' } },
@@ -63,7 +54,6 @@ describe('Input format matrix', () => {
       },
     });
 
-    expect(status).toBe(200);
     expect(body.ok).toBe(true);
     expect(body.semantic.action).toBe('toggle');
     expect(body.semantic.trigger).toBeDefined();
@@ -71,24 +61,22 @@ describe('Input format matrix', () => {
   });
 
   it('auto-detects JSON in code field', async () => {
-    const { status, body } = await post('/validate', {
+    const body = call('validate', {
       code: JSON.stringify({
         action: 'add',
         roles: { patient: { type: 'selector', value: '.highlight' } },
       }),
     });
 
-    expect(status).toBe(200);
     expect(body.ok).toBe(true);
     expect(body.semantic.action).toBe('add');
   });
 
   it('auto-detects explicit syntax in code field', async () => {
-    const { status, body } = await post('/validate', {
+    const body = call('validate', {
       code: '[add patient:.highlight destination:#panel]',
     });
 
-    expect(status).toBe(200);
     expect(body.ok).toBe(true);
     expect(body.semantic.action).toBe('add');
   });
@@ -121,7 +109,7 @@ describe('Multi-language validation', () => {
 
   for (const lang of svoLanguages) {
     it(`validates ${lang.name} (SVO) through full pipeline`, async () => {
-      const { body } = await post('/validate', {
+      const body = call('validate', {
         code: lang.input,
         language: lang.code,
       });
@@ -139,7 +127,7 @@ describe('Multi-language validation', () => {
 
   for (const lang of sovLanguages) {
     it(`validates ${lang.name} (SOV) through full pipeline`, async () => {
-      const { body } = await post('/validate', {
+      const body = call('validate', {
         code: lang.input,
         language: lang.code,
       });
@@ -154,7 +142,7 @@ describe('Multi-language validation', () => {
 
   for (const lang of vsoLanguages) {
     it(`validates ${lang.name} (VSO) through full pipeline`, async () => {
-      const { body } = await post('/validate', {
+      const body = call('validate', {
         code: lang.input,
         language: lang.code,
       });
@@ -174,7 +162,7 @@ describe('Multi-language validation', () => {
 
 describe('Confidence threshold', () => {
   it('rejects low-confidence parse with default threshold', async () => {
-    const { body } = await post('/validate', {
+    const body = call('validate', {
       code: 'xyzzy blorp wibble',
       language: 'en',
     });
@@ -184,7 +172,7 @@ describe('Confidence threshold', () => {
   });
 
   it('strict threshold rejects borderline parse', async () => {
-    const { body } = await post('/validate', {
+    const body = call('validate', {
       code: 'toggle active',
       language: 'en',
       confidence: 0.99,
@@ -200,7 +188,7 @@ describe('Confidence threshold', () => {
   });
 
   it('lenient threshold accepts weaker parse', async () => {
-    const { body } = await post('/validate', {
+    const body = call('validate', {
       code: 'toggle .active',
       language: 'en',
       confidence: 0.1,
@@ -215,50 +203,46 @@ describe('Confidence threshold', () => {
 // Validate Endpoint (all formats)
 // =============================================================================
 
-describe('Validate endpoint — all formats', () => {
+describe('validate — all formats', () => {
   it('validates explicit syntax', async () => {
-    const { status, body } = await post('/validate', {
+    const body = call('validate', {
       explicit: '[add patient:.highlight destination:#panel]',
     });
 
-    expect(status).toBe(200);
     expect(body.ok).toBe(true);
     expect(body.semantic).toBeDefined();
     expect(body.semantic.action).toBe('add');
   });
 
   it('validates LLM JSON', async () => {
-    const { status, body } = await post('/validate', {
+    const body = call('validate', {
       semantic: {
         action: 'remove',
         roles: { patient: { type: 'selector', value: '.loading' } },
       },
     });
 
-    expect(status).toBe(200);
     expect(body.ok).toBe(true);
     expect(body.semantic.action).toBe('remove');
   });
 
   it('validates natural language', async () => {
-    const { status, body } = await post('/validate', {
+    const body = call('validate', {
       code: 'on click toggle .active',
       language: 'en',
     });
 
-    expect(status).toBe(200);
     expect(body.ok).toBe(true);
     expect(body.confidence).toBeGreaterThan(0);
   });
 
-  it('returns 422 for invalid input', async () => {
-    const { status, body } = await post('/validate', {
+  it('refuses invalid input', async () => {
+    const body = call('validate', {
       code: 'xyzzy blorp',
       language: 'en',
       confidence: 0.9,
     });
 
-    expect(status).toBe(422);
     expect(body.ok).toBe(false);
     expect(body.diagnostics.length).toBeGreaterThan(0);
   });
@@ -268,34 +252,32 @@ describe('Validate endpoint — all formats', () => {
 // Translate Endpoint
 // =============================================================================
 
-describe('Translate endpoint', () => {
+describe('translate', () => {
   it('translates English to Spanish', async () => {
-    const { status, body } = await post('/translate', {
+    const body = call('translate', {
       code: 'toggle .active',
       from: 'en',
       to: 'es',
     });
 
-    expect(status).toBe(200);
     expect(body.ok).toBe(true);
     expect(body.code).toBeDefined();
     expect(body.code.length).toBeGreaterThan(0);
   });
 
   it('translates English to Japanese', async () => {
-    const { status, body } = await post('/translate', {
+    const body = call('translate', {
       code: 'toggle .active',
       from: 'en',
       to: 'ja',
     });
 
-    expect(status).toBe(200);
     expect(body.ok).toBe(true);
     expect(body.code).toBeDefined();
   });
 
-  it('returns 422 for invalid translation', async () => {
-    const { body } = await post('/translate', {
+  it('refuses an invalid translation', async () => {
+    const body = call('translate', {
       code: '',
       from: 'en',
       to: 'xx',
@@ -312,9 +294,9 @@ describe('Translate endpoint', () => {
 // Diff Endpoint — Cross-Format Equivalence
 // =============================================================================
 
-describe('Diff endpoint — cross-format', () => {
+describe('diff — cross-format', () => {
   it('explicit vs explicit — identical semantics', async () => {
-    const { body } = await post('/diff', {
+    const body = call('diff', {
       a: { explicit: '[toggle patient:.active]' },
       b: { explicit: '[toggle patient:.active]' },
     });
@@ -325,7 +307,7 @@ describe('Diff endpoint — cross-format', () => {
   });
 
   it('explicit vs explicit — different operations', async () => {
-    const { body } = await post('/diff', {
+    const body = call('diff', {
       a: { explicit: '[toggle patient:.active]' },
       b: { explicit: '[add patient:.highlight destination:#btn]' },
     });
@@ -337,7 +319,7 @@ describe('Diff endpoint — cross-format', () => {
   });
 
   it('explicit vs LLM JSON — same semantics', async () => {
-    const { body } = await post('/diff', {
+    const body = call('diff', {
       a: { explicit: '[toggle patient:.active]' },
       b: {
         semantic: {
@@ -353,7 +335,7 @@ describe('Diff endpoint — cross-format', () => {
   });
 
   it('LLM JSON vs LLM JSON — different actions', async () => {
-    const { body } = await post('/diff', {
+    const body = call('diff', {
       a: {
         semantic: {
           action: 'add',
@@ -373,7 +355,7 @@ describe('Diff endpoint — cross-format', () => {
   });
 
   it('returns ok=false when one side fails to parse', async () => {
-    const { body } = await post('/diff', {
+    const body = call('diff', {
       a: { code: 'xyzzy blorp', language: 'en', confidence: 0.9 },
       b: { explicit: '[toggle patient:.active]' },
     });
@@ -384,7 +366,7 @@ describe('Diff endpoint — cross-format', () => {
   });
 
   it('diff summary contains operation counts', async () => {
-    const { body } = await post('/diff', {
+    const body = call('diff', {
       a: { explicit: '[toggle patient:.active]' },
       b: { explicit: '[toggle patient:.highlight]' },
     });
@@ -437,7 +419,7 @@ describe('Operation type coverage via explicit syntax', () => {
   for (const { name, explicit, expectedOp } of cases) {
     it(`extracts ${name} operation from explicit syntax`, async () => {
       // /diff of an input against itself returns its operations, each unchanged
-      const { body } = await post('/diff', { a: { explicit }, b: { explicit } });
+      const body = call('diff', { a: { explicit }, b: { explicit } });
 
       expect(body.ok).toBe(true);
       expect(body.operations.length).toBeGreaterThan(0);

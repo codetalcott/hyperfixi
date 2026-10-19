@@ -7,8 +7,8 @@ import { describe, it, expect } from 'vitest';
 import { handlePatternTool, patternTools } from '../tools/patterns.js';
 
 describe('patternTools', () => {
-  it('exports 4 tools', () => {
-    expect(patternTools).toHaveLength(4);
+  it('exports 3 tools', () => {
+    expect(patternTools).toHaveLength(3);
   });
 
   it('has get_examples tool', () => {
@@ -21,14 +21,6 @@ describe('patternTools', () => {
     const tool = patternTools.find(t => t.name === 'search_patterns');
     expect(tool).toBeDefined();
     expect(tool?.inputSchema.required).toContain('query');
-  });
-
-  it('has translate_hyperscript tool', () => {
-    const tool = patternTools.find(t => t.name === 'translate_hyperscript');
-    expect(tool).toBeDefined();
-    expect(tool?.inputSchema.required).toContain('code');
-    expect(tool?.inputSchema.required).toContain('fromLanguage');
-    expect(tool?.inputSchema.required).toContain('toLanguage');
   });
 
   it('has get_pattern_stats tool', () => {
@@ -206,74 +198,6 @@ describe('search_patterns against the pattern database', () => {
     for (const category of [...inDescription, ...inHelp]) {
       expect((await ref.getPatternsByCategory(category)).length, category).toBeGreaterThan(0);
     }
-  });
-});
-
-describe('translate_hyperscript', () => {
-  it('is deprecated in favor of translate_code (removed in 7.0)', async () => {
-    const tool = patternTools.find(t => t.name === 'translate_hyperscript');
-    expect(tool?.description).toMatch(/^Deprecated \(removed in 7\.0\): use translate_code/);
-    for (const code of ['on click toggle .active', 'on click halt default then put 1 into me']) {
-      // Both the translation and a refusal carry the notice after the tool's own JSON.
-      const result = await handlePatternTool('translate_hyperscript', {
-        code,
-        fromLanguage: 'en',
-        toLanguage: 'ja',
-      });
-      expect(() => JSON.parse(result.content[0].text)).not.toThrow();
-      expect(result.content.at(-1)?.text).toMatch(
-        /^Deprecated: translate_hyperscript is removed in 7\.0\. Use translate_code/
-      );
-    }
-    // Other pattern tools carry no notice.
-    const examples = await handlePatternTool('get_examples', { prompt: 'toggle a class' });
-    expect(examples.content.some(c => c.text.startsWith('Deprecated:'))).toBe(false);
-  });
-
-  it('attempts translation', async () => {
-    const result = await handlePatternTool('translate_hyperscript', {
-      code: 'on click toggle .active',
-      fromLanguage: 'en',
-      toLanguage: 'ja',
-    });
-
-    const parsed = JSON.parse(result.content[0].text);
-    // Should have original and translation info
-    expect(parsed.original || parsed.code).toBe('on click toggle .active');
-    expect(parsed.fromLanguage).toBe('en');
-    expect(parsed.toLanguage).toBe('ja');
-  });
-
-  // A translation that would drop part of the script is refused, with what it
-  // drops; the partial text never comes back as `translated` (M1 fail-loud).
-  it('refuses a translation that would drop part of the script', async () => {
-    const result = await handlePatternTool('translate_hyperscript', {
-      // `halt default` (P56, halt's modes) has no reader yet: the mode is dropped.
-      code: 'on click halt default then put 1 into me',
-      fromLanguage: 'en',
-      toLanguage: 'ja',
-    });
-
-    expect(result.isError).toBe(true);
-    const parsed = JSON.parse(result.content[0].text);
-    expect(parsed.refused).toBe(true);
-    expect(parsed.lost).toContain('default');
-    expect(parsed.translated).toBeUndefined();
-    expect(typeof parsed.partial).toBe('string');
-  });
-
-  it('handles missing semantic package gracefully', async () => {
-    const result = await handlePatternTool('translate_hyperscript', {
-      code: 'toggle .active',
-      fromLanguage: 'en',
-      toLanguage: 'ko',
-    });
-
-    // Should not throw, either returns translation or error message
-    expect(result.content).toBeDefined();
-    const parsed = JSON.parse(result.content[0].text);
-    expect(parsed.fromLanguage).toBe('en');
-    expect(parsed.toLanguage).toBe('ko');
   });
 });
 

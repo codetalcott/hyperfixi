@@ -1,37 +1,28 @@
 /**
  * Error Path E2E Tests
  *
- * Tests error handling and edge cases across the full HTTP pipeline:
+ * Tests error handling and edge cases across the service's operations:
  * - Missing/invalid inputs
- * - Malformed requests
  * - Diagnostic quality (actionable messages)
  * - Empty operations
- * - 500 error handler
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
-import { createApp } from '../http.js';
 import { CompilationService } from '../service.js';
-import type { Hono } from 'hono';
 
 // =============================================================================
 // Setup
 // =============================================================================
 
-let app: Hono;
+let service: CompilationService;
 
 beforeAll(async () => {
-  const service = await CompilationService.create();
-  app = createApp({ service });
+  service = await CompilationService.create();
 }, 30000);
 
-async function post(path: string, body: unknown) {
-  const res = await app.request(path, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  return { status: res.status, body: await res.json() };
+/** One operation's result, read as freely as the JSON body these tests once read over HTTP */
+function call(op: 'validate' | 'translate' | 'diff', request: unknown): any {
+  return (service[op] as (request: unknown) => unknown).call(service, request);
 }
 
 // =============================================================================
@@ -39,17 +30,16 @@ async function post(path: string, body: unknown) {
 // =============================================================================
 
 describe('Missing input', () => {
-  it('/validate with empty body returns diagnostics', async () => {
-    const { status, body } = await post('/validate', {});
+  it('validate with an empty request returns diagnostics', async () => {
+    const body = call('validate', {});
 
-    expect(status).toBe(422);
     expect(body.ok).toBe(false);
     expect(body.diagnostics.length).toBeGreaterThan(0);
     expect(body.diagnostics[0].severity).toBe('error');
   });
 
-  it('/diff with empty a and b returns diagnostics', async () => {
-    const { body } = await post('/diff', {
+  it('diff with empty a and b returns diagnostics', async () => {
+    const body = call('diff', {
       a: {},
       b: {},
     });
@@ -61,42 +51,12 @@ describe('Missing input', () => {
 });
 
 // =============================================================================
-// Invalid JSON Payloads
-// =============================================================================
-
-describe('Invalid JSON payloads', () => {
-  it('malformed JSON on /validate returns 500', async () => {
-    const res = await app.request('/validate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: '{not valid json!!!}',
-    });
-
-    expect(res.status).toBe(500);
-    const body = await res.json();
-    expect(body.ok).toBe(false);
-    expect(body.diagnostics).toBeDefined();
-    expect(body.diagnostics[0].code).toBe('INTERNAL_ERROR');
-  });
-
-  it('malformed JSON on /diff returns 500', async () => {
-    const res = await app.request('/diff', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: '{{{}}}',
-    });
-
-    expect(res.status).toBe(500);
-  });
-});
-
-// =============================================================================
 // Invalid LLM JSON Structure
 // =============================================================================
 
 describe('Invalid LLM JSON input', () => {
   it('missing action field in semantic JSON', async () => {
-    const { body } = await post('/validate', {
+    const body = call('validate', {
       semantic: {
         roles: { patient: { type: 'selector', value: '.active' } },
       },
@@ -107,7 +67,7 @@ describe('Invalid LLM JSON input', () => {
   });
 
   it('invalid role value type in semantic JSON', async () => {
-    const { body } = await post('/validate', {
+    const body = call('validate', {
       semantic: {
         action: 'toggle',
         roles: { patient: { type: 'banana', value: '.active' } },
@@ -119,7 +79,7 @@ describe('Invalid LLM JSON input', () => {
   });
 
   it('missing role value in semantic JSON', async () => {
-    const { body } = await post('/validate', {
+    const body = call('validate', {
       semantic: {
         action: 'toggle',
         roles: { patient: { type: 'selector' } },
@@ -136,7 +96,7 @@ describe('Invalid LLM JSON input', () => {
 
 describe('Diagnostic quality', () => {
   it('diagnostics have required fields (severity, code, message)', async () => {
-    const { body } = await post('/validate', {
+    const body = call('validate', {
       code: 'xyzzy blorp',
       language: 'en',
     });
@@ -155,7 +115,7 @@ describe('Diagnostic quality', () => {
   });
 
   it('low confidence diagnostic mentions threshold', async () => {
-    const { body } = await post('/validate', {
+    const body = call('validate', {
       code: 'toggle active',
       language: 'en',
       confidence: 0.99,
@@ -176,7 +136,7 @@ describe('Diagnostic quality', () => {
 
 describe('Edge cases', () => {
   it('explicit syntax with no roles', async () => {
-    const { body } = await post('/validate', {
+    const body = call('validate', {
       explicit: '[toggle]',
     });
 
@@ -186,7 +146,7 @@ describe('Edge cases', () => {
   });
 
   it('natural language with missing language code', async () => {
-    const { body } = await post('/validate', {
+    const body = call('validate', {
       code: 'on click toggle .active',
       // No language field
     });
@@ -196,7 +156,7 @@ describe('Edge cases', () => {
   });
 
   it('diff with both sides identical across formats (explicit vs JSON)', async () => {
-    const { body } = await post('/diff', {
+    const body = call('diff', {
       a: { explicit: '[toggle patient:.active]' },
       b: {
         semantic: {
@@ -209,17 +169,6 @@ describe('Edge cases', () => {
     expect(body.ok).toBe(true);
     expect(body.identical).toBe(true);
   });
-
-  it('health endpoint returns before service init', async () => {
-    // Create a fresh app without pre-initialized service
-    const freshApp = createApp();
-    const res = await freshApp.request('/health');
-
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.ok).toBe(true);
-    expect(body.ready).toBe(false);
-  });
 });
 
 // =============================================================================
@@ -227,8 +176,8 @@ describe('Edge cases', () => {
 // =============================================================================
 
 describe('Response shape contracts', () => {
-  it('/validate success has required fields', async () => {
-    const { body } = await post('/validate', {
+  it('validate success has required fields', async () => {
+    const body = call('validate', {
       explicit: '[toggle patient:.active]',
     });
 
@@ -239,8 +188,8 @@ describe('Response shape contracts', () => {
     expect(Array.isArray(body.diagnostics)).toBe(true);
   });
 
-  it('/validate failure has required fields', async () => {
-    const { body } = await post('/validate', {});
+  it('validate failure has required fields', async () => {
+    const body = call('validate', {});
 
     expect(body).toHaveProperty('ok');
     expect(body).toHaveProperty('diagnostics');
@@ -248,8 +197,8 @@ describe('Response shape contracts', () => {
     expect(Array.isArray(body.diagnostics)).toBe(true);
   });
 
-  it('/diff success has required fields', async () => {
-    const { body } = await post('/diff', {
+  it('diff success has required fields', async () => {
+    const body = call('diff', {
       a: { explicit: '[toggle patient:.active]' },
       b: { explicit: '[toggle patient:.active]' },
     });
