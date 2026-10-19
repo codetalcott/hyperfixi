@@ -199,7 +199,6 @@ end word had nine readers. The stories are in the PR bodies; the plans are in `A
 - **Render items:** R1–R4.
 - **Vocabulary:** V5–V7.
 - **Gate items:** G2–G6, G9, G10.
-- **G11** is a one-line win: widen `ARGS_FORM_OK` to 23 languages.
 - **The 86 refused lanes** Reliability row (2) left (listed there; the regen tool's family table orders them).
 
 ## 4. Parked, and decisions waiting on the owner
