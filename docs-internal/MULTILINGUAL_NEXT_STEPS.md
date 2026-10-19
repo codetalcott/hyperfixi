@@ -29,8 +29,8 @@ What **no** gate measures (measured 2026-09-30 unless a row is dated):
 | Gap                                          | Size                                                                                                                               | Items  |
 | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------ |
 | Commands outside every gate's input          | 36 filed parser items (2026-10-07); since 4.2.0 a translation that would lose part of a script is refused, so most are now loud     | P2–P55 |
-| User docs that match the product             | example pages pin i18n 2.3.0; a never-deployed docs app; no package chooser; README examples run only for the adapter (2026-10-06) | D5–D8  |
-| Shipping                                     | 6.0.0 on npm 2026-10-18 (`npm view @hyperfixi/core version`; unreleased: `git log v6.0.0..origin/main -- packages`)                | —      |
+| User docs that match the product             | no multilingual quick start or package chooser; README examples run only for the adapter (2026-10-06)                              | D7–D8  |
+| Shipping                                     | 6.3.0 on npm 2026-10-18 (`npm view @hyperfixi/core version`; unreleased: `git log v6.3.0..origin/main -- packages`)                | —      |
 
 ## 2. How we choose work now
 
@@ -158,8 +158,8 @@ queries (`<:checked/>`; done 2026-10-12: 161 lanes; the two cases left are P62's
 semantic models went 911 → 86, and the gate reads 26,528 pass / 712 refused (626 of them LOUD) / 0 silent. The 86
 left are in the baseline, each pair listed, and go to M4:
 
-- two-property `transition` in SOV (bn/hi/ja/ko/pl/qu/tr, 13 lanes). **Needs an owner call:** a transition that
-  carries several properties, or a change to `maySkipVerbSlot`'s lock that keeps ja's goal reading;
+- two-property `transition` in SOV (bn/hi/ja/ko/pl/qu/tr, 13 lanes). **Owner, 2026-10-18 (O6):** a transition
+  carries several properties, as the engine's loop does (not a change to `maySkipVerbSlot`'s lock);
 - P62's residue, `<:checked/> in the next <tbody/>` (bn/hi/it/ja/ko/tl/vi/zh, 15 lanes, and bn's `in #list-scope`);
 - ko commands in sequence without `then` (`blur #search blur me`, `open`, `close`, `focus`, `scroll`, `trigger`,
   `wait`: 7 lanes) and hi's bare one-word commands (`close`, `hide`, `show`, `reset`, `return`, `halt`: 6 lanes);
@@ -170,64 +170,27 @@ left are in the baseline, each pair listed, and go to M4:
 
 A refused pair that starts to render can come out silent: the command-shape dry run shows each move.
 
-### M3: complexity down
+### M3: complexity down (closed 2026-10-18)
 
-**Why.**
+**Why.** `semantic-parser.ts` had grown 19% in a week (8,871 lines on 2026-10-06), the handcrafted patterns
+copied 158 `expectedTypes` lists by hand (a drifted copy cost German every `get` of a literal, PR 130), and an
+end word had nine readers. The stories are in the PR bodies; the plans are in `ARCHIVE.md`.
 
-- `semantic-parser.ts` is 8,871 lines (2026-10-06, `wc -l`), and grew 19% in the week of 2026-09-23.
-- The handcrafted patterns hold 158 hand-written `expectedTypes` lists; only 5 files derive theirs from
-  a schema. A copied list that drifted is why German lost every `get` of a literal (PR 130).
-- An end word had nine readers (C3, below).
+**Exit, against the stamp taken when it started (2026-10-12):**
 
-**Work:**
-
-- (a) Where a handcrafted pattern copies a schema's type list, derive it (as `put.ts`, `get.ts` and
-  `hide.ts` do). Where it narrows the list deliberately, say why in a comment.
-- (b) An explicit render/parse-only flag on patterns (R6), so the render surface is chosen rather than
-  inherited. Four parse-only patterns became the render by accident. **Done 2026-10-13:** the flag is `parseOnly` (P52); qu's
-  prefixed until-head, still the render whenever the loop had a source, is read-only now, and
-  `test/parse-only-patterns.test.ts` lists every read-only pattern.
-- (c) Arc D: penalize unconsumed input in the confidence score (G1). Then try deleting `parseInternal`'s
-  stages 0 and 0.5. **Measured 2026-10-13, superseded:** confidence only breaks ties
-  between patterns of equal priority, and over the command-shape cases in every language a coverage
-  penalty would change no choice (1 rival consumed more in 81,272 `matchBest` calls, never within 0.1
-  confidence). Stages 0/0.5 do not compare confidence, so a penalty cannot retire them. An unread tail
-  is already refused (F1, F2) and reported (MCP). OPEN_ITEMS G1 has the numbers.
-- (d) Split `semantic-parser.ts` by responsibility, behavior-preserving and checked against a parity
-  oracle. **Done 2026-10-13, in nine PRs (from #1488):** 9,680 → 751 lines, each phase 0 differences
-  on the oracle (`packages/semantic/scripts/parse-parity.ts`: 27,194 parses of every command-shape
-  case and its render in every language). 22 new modules under `parser/`; the parse state is one
-  `ParserState` (`parser-state.ts`) the moved functions take first; `SemanticParserImpl` keeps its
-  public surface. `clause-walk.ts` (1,617) is the one module over ~1,500: its members call each
-  other. Optional: name `parseInternal`'s stages as functions.
-- (e) The semantic/framework `PatternMatcher` fork. **Decided 2026-10-13:** one matcher, built from semantic's,
-  and the domain family cut down and rebuilt on it, after the semantic work: [`DOMAINS_RETHINK.md`](DOMAINS_RETHINK.md).
-  Its decisions D1–D6 were taken 2026-10-14; Phase 1 (domains 4.0.0: the cuts, and the family on framework 4.x)
-  is lokascript-domains #21.
-  Closed by its Phase 6 (#1552, 2026-10-17): framework's copy and the classic engine deleted; released in 5.0.0
-  (2026-10-17). The rethink's plan is archived at `archived/domains-rethink-2026-10-18` (see [`ARCHIVE.md`](ARCHIVE.md)).
-
-**Exit metrics** (stamp them when the arc starts):
-
-- `semantic-parser.ts` line count;
-- the number of copied type lists;
-- the number of readers per question in `VALUE_READING.md`.
-
-**Stamped 2026-10-12, when M3 started (after the reliability rows: rare values #1480, P57 #1481, P62):**
-
-- `semantic-parser.ts`: 9,680 lines (`wc -l`; 9,494 on 2026-10-11, 8,871 on 2026-10-06). After (d): 751.
-- Copied type lists: 139 literal `expectedTypes: [...]` in `src/patterns/*.ts` (158 on 2026-10-06), 5 files reading
-  shared lists (`generators/role-types.ts`). After (a)'s first PR: 63; after its second: 46 (the `for` loop, the
-  `on` heads, `if`/`unless`, wait's event, fetch's options, viewTransition's style); after its third: 28 (the
-  copies narrower or wider than their list, each measured: zh `put`'s value and en `repeat N times`'s count had
-  drifted and lost a property). Of the 28, 8 are narrower than their schema on purpose (es/qu/zh set values,
-  `set.ts` says why), pick's 6 wait for pick's own refusals, and the rest are roles their schema lacks (repeat's
-  and wait's conditions, wait's source and value, qu set's source, hi's `जब` event).
-- Readers per question (`VALUE_READING.md` C3): 9 definitions of an end word, 26 sites with their own test.
-  **C3 done 2026-10-13 (#1513–#1518):** one definition (`endWordKind`), one function per question
-  (`closesBlockAt`, `endsClauseAt`, `endWordIsValue`), four named exceptions (`parser/end-words.ts`). P58
-  fixed; P53's `end` half needs the render. Plan at `archived/end-word-readers-2026-10-13`. With C3 the
-  semantic work is done (the owner's definition); next: [`DOMAINS_RETHINK.md`](DOMAINS_RETHINK.md).
+- `semantic-parser.ts`: 9,680 → 751 lines ((d), nine PRs from #1488, each 0 differences on
+  `packages/semantic/scripts/parse-parity.ts`'s 27,194 parses; 22 modules under `parser/`).
+- Copied type lists ((a), #1483–#1485): 139 → 28. Of the 28, 8 are narrower than their schema on purpose
+  (es/qu/zh set values, `set.ts` says why), pick's 6 wait for pick's own refusals, and the rest are roles
+  their schema lacks.
+- Readers per question (C3, #1513–#1518): 9 definitions of an end word → one (`endWordKind`), one
+  function per question, four named exceptions (`parser/end-words.ts`). P53's `end` half needs the render.
+- (b) `parseOnly` patterns (R6, #1486), listed by `test/parse-only-patterns.test.ts`. (c) the coverage
+  penalty (G1) was measured and superseded (#1487; the numbers are in OPEN_ITEMS G1).
+- (e) The semantic/framework `PatternMatcher` fork: one matcher, built from semantic's, and the domain
+  family cut from 16 packages to 7 DSLs and rebuilt on it (decisions D1–D6, 2026-10-14). Closed by its
+  Phase 6 (#1552): framework's copy and the classic engine deleted, released in 5.0.0 (2026-10-17). The
+  plan is at the tag `archived/domains-rethink-2026-10-18` (see [`ARCHIVE.md`](ARCHIVE.md)).
 
 ### M4: the small queue (take items opportunistically)
 
@@ -242,31 +205,23 @@ A refused pair that starts to render can come out silent: the command-shape dry 
 ## 4. Parked, and decisions waiting on the owner
 
 - **Decided 2026-10-18 (owner, all as recommended):** `hx-query` stays English until native review (V4);
-  the htmx adapter's vocabulary moves to htmx 4's `hx-sse`/`hx-ws` (PR5); weight is semantic's packaging first
-  (S4); the LokaScript VS Code extension leaves the product story, removed in 7.0 if unpublished (S1);
-  `apps/docs-site` is deleted (D6). The entries below keep the questions as they were asked.
+  the htmx adapter's vocabulary follows the page's htmx, done in 6.3.0 (PR5); weight is semantic's packaging
+  first, done in 6.2.0 (S4, below); the LokaScript VS Code extension leaves the product story, removed in 7.0
+  if still unpublished (S1); `apps/docs-site` is deleted, done in 6.2.0 (D6); a transition carries several
+  properties (O6, in Reliability's list).
 
 - **M1 calls taken:** fail-loud by default (F1 `translate()` throws, F2 the adapter refuses at run time;
   2026-10-06, shipped in 4.2.0). `swap innerHTML of …` and a naked `${}` URL keep core's meaning in
   translation, and the docs teach upstream's (2026-10-07).
 - **AOT** retired (owner, 2026-10-04): `packages/aot-compiler` and MCP `compile_hyperscript` were removed for 4.0 (it was parked from 2026-09-27).
-- **`hx-query`** (htmx 4's new verb, V4): core's htmx-compat layer retired in Phase C3, so this is
-  vocabulary only now. Give it a localized name in the htmx adapter's vocabulary, or leave it English?
 - **Community-review badges and ledgers** (PR1) wait for real reviewer inflow.
 - **The behavior boundary validator** (PR2) waits for third-party behavior authoring.
-- **htmx v4 attribute names** (PR5): the htmx adapter's vocabulary localizes htmx 2's
-  `sse-connect`/`ws-connect`, where htmx 4 ships `hx-sse`/`hx-ws`. **Done 2026-10-18** (owner: align,
-  with names chosen by the detected htmx). The adapter writes `hx-sse:connect` / `hx-ws:*` on htmx 4 and
-  htmx 2's names on htmx 2, and it reads htmx 4's spelling of a localized name (`hx-sse:conectar`).
 - **The Arc B dictionary flip** (derive the dictionaries from the profiles, PR6). The V1 vocabulary
   gate holds the two consistent today.
-- **Weight (S4):** a single-language page loads ~150 KB gz (the engine and a per-language adapter
-  bundle, 4.1.0). Is a lighter, render-free, parse-only single-language bundle worth more to users than
-  further correctness work?
-- **The LokaScript VS Code extension** (S1): publish it, or drop it from the product story? (The
-  standalone `_hyperscript` extension was retired 2026-10-04: upstream ships its own.)
-- **The docs site** (D6): lokascript.org and hyperfixi.org build from `_hyper_min` (on 4.x since
-  2026-10-05); this repo's `apps/docs-site` was never deployed. Delete it, or make it the site?
+- **Weight (S4):** packaging went first (6.2.0: semantic's `./core` with ten languages, 275 → 180 KB gz).
+  A single-language bundle is ~129–137 KB gz, of which 112 KB is the shared parser no packaging change
+  removes (measured 2026-10-18 on 6.1.0's IIFE builds). So a lighter page means a parse-only bundle or a
+  smaller parser. Is either worth more to users than correctness work?
 - **Approaching upstream** (PR8): when to offer the multilingual tools and the MCP server to
   hyperscript.org, and in what order.
 

@@ -14,7 +14,7 @@
 > **Maintenance:** a PR that fixes an item deletes its line (the PR body keeps the story). A new filing
 > gets the next ID in its section and one line: what breaks, a repro, the date, whether a gate pins it.
 
-## 2. Open items (71 in 2a–2e): parser 36 · render 5 · vocab/owner 7 · gate 14 · product 9
+## 2. Open items (70 in 2a–2e): parser 36 · render 5 · vocab/owner 7 · gate 14 · product 8
 
 Plus the unnumbered sections: naturalness N1–N8 (2h), core-only syntax U2 and U5 (2j), and user docs and
 surfaces (2i, 11). Counts re-checked 2026-10-13.
@@ -114,12 +114,11 @@ silent; the others marked *refused* are loud.
 64. **G13 · Optional: split V4's vocab tier** (marker words that appear in patterns → warn, profile keywords → error) · 8117–8118 · 07-12 · no · gate · optional.
 65. **G14 · Pronoun collisions (accepted limitation)**: 802 of 893 differing read-backs in the extended names oracle are a variable spelled like a value word (tl `ako`, fr `je`, id `aku`, pl `cel`, de `ich`, tr `o`). No spelling tells them apart; rename is the only fix. `findTranslationCollisions` reports them (MCP `translate_code` warns `NAME_COLLISION`) · 7143–7155, 7241–7251, 7296–7298 · 09-29 · yes (diagnostic) · other/limitation · standing.
 
-### 2e. Product / release (9)
+### 2e. Product / release (8)
 
 66. **PR1 · Community review: the badge arc**: hash-pinned "verified by native speakers" badges, `verifications.json` / `vocab-verifications.json` ledgers, `verified_native*` columns plus the sync join, the text-hash util, an agent sweep/triage harness, changeset fan-out, and a per-language status ladder. "Needs a real inflow of reviewer sign-offs first" · 8602–8608 · 08-01 · n/a · product · deferred.
 67. **PR2 · Behavior boundary validator** (MCP/programmatic, rejects component-shaped behaviors). SKIPPED until third-party behavior authoring exists · 3965–3968 · 06-16 · n/a · product · deferred.
 68. **PR3 · python-client CI job** (mirror of go-client). Deferred post-release; still absent from `ci.yml` · 8434–8435 · 07-13 · n/a · release/CI · open.
-69. **PR5 · htmx v4 attribute names**: the htmx adapter's vocabulary localizes the htmx-2 extension names (`KEYS.sse` `connect`/`swap`, `KEYS.ws` `connect`/`send` in `packages/htmx-adapter/scripts/gen-htmx-vocab.mjs`), where htmx 4 ships `hx-sse`/`hx-ws`. Core's SSE/WS compat layer, where this was filed, retired in Phase C3 · 3986–3988 · 06-17 · no · product · open (re-checked 2026-10-06). **Owner, 2026-10-18: align the vocabulary with htmx 4's `hx-sse`/`hx-ws`**, after measuring what htmx 4 reads. **Done 2026-10-18:** htmx 4 reads htmx 2's names with a deprecation warning and dropped `sse-swap`, and htmx 2 reads only its own. So the adapter writes the detected generation's names (`hx-sse:connect` on 4, `sse-connect` on 2) and reads `hx-sse:conectar` as well as `sse-conectar` (`packages/htmx-adapter/test/browser/sse-ws.spec.ts`, on htmx 4's own extensions) · done.
 70. **PR6 · Arc B: the `derive.ts` dictionary flip**. The dictionaries are "generated/merged from semantic profiles — hand-written entries are preserved" (`generate:language-assets`), not the generated path. The ~4k-entry duplication stays and is held consistent by the V1 vocab gate. Note that 1409–1411 overstates this ("GENERATED from semantic profiles") · 8329–8334 · 07-12 · yes (vocab gate, lexicon-parity) · product/tech-debt · open.
 71. **PR8 · OWNER: approaching upstream.** When to offer the multilingual tools and the MCP server to hyperscript.org (Big Sky), and whether together or the MCP server first. The material is `docs-internal/hyperscript-org-offer/` (not sent; refreshed against 4.1.0 on 2026-10-06, #1400) and `~/projects/ideas/hypermedia-systems-outreach-draft.md`; the owner holds both until the code is ready · `HYPERSCRIPT_TOOLS_NEXT_STEPS.md` §6 (archived 2026-10-06) · 08-27 · n/a · product/owner · open.
 72. **PR9 · Arc 6: generalize via the framework** (`createMultilingualDSL` + `DomainRegistry`; `@lokascript/domains` is the proof of concept): a tutorial-grade guide and one non-UI example domain, only if the agent-facing arcs show traction · `AGENT_ERA_ROADMAP.md` (archived 2026-10-06) · 08-25 · n/a · product · deferred.
@@ -158,8 +157,6 @@ which clashed with 2i's.) Still read and written as written:
 
 ### 2i. User-facing docs and surfaces (found by the 2026-09-30 product survey)
 
-- **D5 · Five `examples/multilingual/` pages pin `@lokascript/i18n@2.3.0`** and call the retired translate helpers; `error-playground.html` pins semantic@2.3.0; `showcase`/`semantic-demo` say 13 languages. **Done 2026-10-18 (owner): dynamic-injection, error-playground, multilingual-sync and polyglot-playground deleted; playground ported to the semantic bundle; adaptive-rtl-ltr's dead i18n tag dropped; showcase fixed (it wrote foreign scripts with no adapter loaded, so every non-English choice broke its demos).**
-- ~~**D6 · `apps/docs-site/`**~~ **Deleted 2026-10-18 (owner).** It was VitePress, never deployed, and two majors stale; the sites build from `_hyper_min`.
 - **D7 · No multilingual quick start, package chooser or limitations statement**: the entry points are the adapter (the lite build beside a semantic bundle, or a per-language or regional bundle), its `@hyperscript-tools/multilingual` copy, build-time `@hyperscript-tools/i18n`, the Vite plugin, and the htmx adapter (`hyperfixi-multilingual.js` and core's `MultilingualHyperscript` retired in 4.0). Entry points re-listed 2026-10-06; whether the 4.0 docs now give a chooser is not re-checked.
 - **D8 · README examples run only for the adapter**: `packages/hyperscript-adapter/test/readme-examples.test.ts` executes that README's examples (3.2.0); no other package's README examples are executed, so they can rot silently (left from the roadmap's M0 exit, 2026-09-30).
 - **S1 · VS Code extensions are not published** (Marketplace and Open VSX: not found; no workflow). Owner: publish or drop from the product story. **Partly decided 2026-10-04:** the standalone `_hyperscript` extension (`vscode-extension-hyperscript`) is retired, since upstream ships its own; the LokaScript extension's fate is still open. **Owner, 2026-10-18: dropped from the product story; removed in 7.0 if still unpublished.**
