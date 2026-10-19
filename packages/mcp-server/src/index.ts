@@ -214,21 +214,15 @@ function buildServer(): Server {
     }
 
     // Pattern tools (from patterns-reference)
-    if (
-      name === 'search_patterns' ||
-      name === 'translate_hyperscript' ||
-      name === 'get_pattern_stats'
-    ) {
+    if (name === 'search_patterns' || name === 'get_pattern_stats') {
       return handlePatternTool(name, args as Record<string, unknown>);
     }
 
     // Validation tools
     if (
-      name === 'validate_hyperscript' ||
       name === 'validate_schema' ||
       name === 'suggest_command' ||
       name === 'get_bundle_config' ||
-      name === 'parse_multilingual' ||
       name === 'translate_to_english' ||
       name === 'explain_in_language' ||
       name === 'get_code_fixes'

@@ -7,7 +7,6 @@
 
 import type { Tool } from '@modelcontextprotocol/server';
 import type { Pattern } from '@hyperfixi/patterns-reference';
-import { translationRefusal, withDeprecation } from './utils.js';
 
 // =============================================================================
 // Tool Definitions
@@ -64,29 +63,6 @@ export const patternTools: Tool[] = [
     },
   },
   {
-    name: 'translate_hyperscript',
-    description:
-      'Deprecated (removed in 7.0): use translate_code, which returns the same text (measured: 471 of 471 pairs identical, the same refusals) plus a fidelity verification and name-collision warnings; its arguments are from/to. Translates hyperscript between any of 24 languages with @lokascript/semantic; a translation that would lose part of the script is refused (refused: true, with `lost` and the `partial` text), never returned as `translated`.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        code: {
-          type: 'string',
-          description: 'The hyperscript code to translate',
-        },
-        fromLanguage: {
-          type: 'string',
-          description: 'Source language code',
-        },
-        toLanguage: {
-          type: 'string',
-          description: 'Target language code',
-        },
-      },
-      required: ['code', 'fromLanguage', 'toLanguage'],
-    },
-  },
-  {
     name: 'get_pattern_stats',
     description: 'Get statistics about available patterns and languages',
     inputSchema: {
@@ -101,21 +77,6 @@ export const patternTools: Tool[] = [
 // =============================================================================
 
 export async function handlePatternTool(
-  name: string,
-  args: Record<string, unknown>
-): Promise<{ content: Array<{ type: string; text: string }>; isError?: boolean }> {
-  const result = await patternTool(name, args);
-  return name === 'translate_hyperscript'
-    ? withDeprecation(
-        result,
-        'translate_hyperscript',
-        'translate_code',
-        'the same text, plus a fidelity verification and name-collision warnings (arguments from/to).'
-      )
-    : result;
-}
-
-async function patternTool(
   name: string,
   args: Record<string, unknown>
 ): Promise<{ content: Array<{ type: string; text: string }>; isError?: boolean }> {
@@ -212,64 +173,6 @@ async function patternTool(
       } catch {
         // Database error - fall back to built-in
         return handleWithBuiltinExamples(name, args);
-      }
-    }
-
-    case 'translate_hyperscript': {
-      const code = args.code as string;
-      const fromLanguage = args.fromLanguage as string;
-      const toLanguage = args.toLanguage as string;
-
-      // Try semantic package for translation
-      let semantic: typeof import('@lokascript/semantic');
-      try {
-        semantic = await import('@lokascript/semantic');
-      } catch {
-        return handleWithBuiltinExamples(name, args);
-      }
-      try {
-        const translated = semantic.translate(code, fromLanguage, toLanguage);
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(
-                {
-                  original: code,
-                  translated,
-                  fromLanguage,
-                  toLanguage,
-                },
-                null,
-                2
-              ),
-            },
-          ],
-        };
-      } catch (error) {
-        // A translation that would lose part of the script is refused, with
-        // what it loses; the partial text is never reported as `translated`.
-        const refusal = translationRefusal(error);
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(
-                refusal
-                  ? { ...refusal, original: code, fromLanguage, toLanguage }
-                  : {
-                      error: error instanceof Error ? error.message : String(error),
-                      original: code,
-                      fromLanguage,
-                      toLanguage,
-                    },
-                null,
-                2
-              ),
-            },
-          ],
-          isError: true,
-        };
       }
     }
 
@@ -565,30 +468,6 @@ function handleWithBuiltinExamples(
             ),
           },
         ],
-      };
-    }
-
-    case 'translate_hyperscript': {
-      const code = args.code as string;
-      const fromLanguage = args.fromLanguage as string;
-      const toLanguage = args.toLanguage as string;
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(
-              {
-                error: 'Translation requires @lokascript/semantic package',
-                original: code,
-                fromLanguage,
-                toLanguage,
-              },
-              null,
-              2
-            ),
-          },
-        ],
-        isError: true,
       };
     }
 

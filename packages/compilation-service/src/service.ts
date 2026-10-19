@@ -265,7 +265,7 @@ export class CompilationService {
   /**
    * A variable spelled like a word of the code's own language (es `si`, tr `i`): its readers
    * tell the two apart only by where it stands, so the warning suggests a rename. Moved here
-   * from MCP `validate_hyperscript`, with its wording and its confidence floor.
+   * from MCP `validate_hyperscript` (removed in 7.0), with its wording and its confidence floor.
    */
   private nameCollisions(request: CompileRequest, normalized: NormalizeResult): Diagnostic[] {
     const language = request.language ?? 'en';

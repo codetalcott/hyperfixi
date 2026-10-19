@@ -1,6 +1,6 @@
 # @hyperfixi/mcp-server
 
-MCP (Model Context Protocol) server for hyperscript and multilingual DSL development. Provides **91 tools** by default (**96** defined — the 5 MCP-sampling tools are opt-in and hidden unless `LOKASCRIPT_MCP_LLM_TOOLS=1`), **9 resources**, and **9 prompts** spanning: GRAIL workflow orchestration, validation, compilation, analysis, patterns, LSP bridge, language profiles, code generation, route extraction, 7 domain DSLs, IR conversion, cross-domain dispatch, MCP sampling (opt-in), AI-assisted debugging, template inventory, and the LSE round-trip pipeline.
+MCP (Model Context Protocol) server for hyperscript and multilingual DSL development. Provides **88 tools** by default (**93** defined — the 5 MCP-sampling tools are opt-in and hidden unless `LOKASCRIPT_MCP_LLM_TOOLS=1`), **9 resources**, and **9 prompts** spanning: GRAIL workflow orchestration, validation, compilation, analysis, patterns, LSP bridge, language profiles, code generation, route extraction, 7 domain DSLs, IR conversion, cross-domain dispatch, MCP sampling (opt-in), AI-assisted debugging, template inventory, and the LSE round-trip pipeline.
 
 ## The agent loop
 
@@ -80,17 +80,15 @@ See **[GRAIL.md](GRAIL.md)** for full documentation, schema reference, and examp
 
 ## Available Tools
 
-The **91** tools below, plus the **5** GRAIL tools above, total **96** defined. The 5 MCP-sampling tools among them are hidden from `tools/list` unless `LOKASCRIPT_MCP_LLM_TOOLS=1`, so a default connection sees **91**.
+The **88** tools below, plus the **5** GRAIL tools above, total **93** defined. The 5 MCP-sampling tools among them are hidden from `tools/list` unless `LOKASCRIPT_MCP_LLM_TOOLS=1`, so a default connection sees **88**.
 
-### Validation & Semantic Tools (8)
+### Validation & Semantic Tools (6)
 
 | Tool                   | Description                                                    |
 | ---------------------- | -------------------------------------------------------------- |
-| `validate_hyperscript` | Deprecated (removed in 7.0): use `validate_and_compile`        |
 | `validate_schema`      | Validate internal command schema definitions (not user code)   |
 | `suggest_command`      | Suggest the best command for a task (multilingual)             |
 | `get_bundle_config`    | Get recommended bundle configuration based on usage            |
-| `parse_multilingual`   | Deprecated (removed in 7.0): use `validate_and_compile`        |
 | `translate_to_english` | Normalize non-English hyperscript to English + explicit syntax |
 | `explain_in_language`  | Explain code with grammar rules, roles, and translations       |
 | `get_code_fixes`       | Get auto-fixes for specific error codes                        |
@@ -113,14 +111,13 @@ The **91** tools below, plus the **5** GRAIL tools above, total **96** defined. 
 | `explain_code`       | Plain English explanation for beginner/intermediate/expert    |
 | `recognize_intent`   | Classify code purpose (dom-manipulation, form-handling, etc.) |
 
-### Pattern Lookup (4)
+### Pattern Lookup (3)
 
-| Tool                    | Description                                                                                    |
-| ----------------------- | ---------------------------------------------------------------------------------------------- |
-| `get_examples`          | Get working code examples matching a task description                                          |
-| `search_patterns`       | Search pattern database by keyword or category                                                 |
-| `translate_hyperscript` | Deprecated (removed in 7.0): use `translate_code`, which returns the same text and verifies it |
-| `get_pattern_stats`     | Get statistics about patterns and languages                                                    |
+| Tool                | Description                                           |
+| ------------------- | ----------------------------------------------------- |
+| `get_examples`      | Get working code examples matching a task description |
+| `search_patterns`   | Search pattern database by keyword or category        |
+| `get_pattern_stats` | Get statistics about patterns and languages           |
 
 ### LSP Bridge (4)
 
