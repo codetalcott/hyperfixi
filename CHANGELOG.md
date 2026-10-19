@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.0.0] - 2026-10-19
+
+Removes what 6.x deprecated or never shipped: three MCP tools that duplicated `validate_and_compile`
+and `translate_code`, `@lokascript/compilation-service`'s HTTP layer and `generate()`, and the
+unpublished VS Code extension. For every other package 7.0 is a renumber: `@lokascript/domains`
+5.0.4 accepts it. MIGRATION.md has the 6.x → 7.0 table.
+
 ### Removed (BREAKING)
 
 - **`@hyperfixi/mcp-server`: `validate_hyperscript`, `translate_hyperscript` and
@@ -25,12 +32,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`@lokascript/compilation-service` exports `VERSION`.**
 
+### Fixed
+
+- **`@lokascript/semantic`: `transition … using "<css transition>"` translates in the verb-final
+  languages** (#1589). In bn, hi, ja, ko, qu and tr the duration slot, which has no marker there,
+  took the style's quoted string, so `translate()` refused the script, and the bare command did not
+  parse. A duration slot that takes only literals now leaves a quoted string to the style.
+
 ### Changed
 
-- **`@hyperfixi/mcp-server` requires `@lokascript/domains` ^5.0.3.** 5.0.3's BehaviorSpec lets `given`
-  set every state `expect` can check, and refuses an `expect` assertion it does not know (5.0.2
-  compiled it to a comment). Installs already resolved 5.0.3; the repository's lock held 5.0.2, so
-  its tests now run what users install.
+- **`@hyperfixi/mcp-server` requires `@lokascript/domains` ^5.0.4**, which peers framework, semantic
+  and intent `^5.0.0 || ^6.0.0 || ^7.0.0` (lokascript-domains #60): the bridge that lets 7.0.0
+  publish. 5.0.3, which it required before, lets BehaviorSpec's `given` set every state `expect`
+  can check, and refuses an `expect` assertion it does not know (5.0.2 compiled it to a comment).
 
 ## [6.3.0] - 2026-10-18
 
