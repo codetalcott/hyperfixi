@@ -266,7 +266,8 @@ npm run test:domains
    contract needs a real domains major, cut after hyperfixi's is on npm.
 5. **The domain gate** (`scripts/domain-gate.sh`, 2026-10-20) is the cross-repo
    half of the behavior story. The seven domain DSLs read on framework's matcher
-   skeleton and semantic's language profiles, and no other gate here parses one.
+   skeleton and its language grammars (`framework/languages`; learn also writes
+   with semantic), and no other gate here parses one.
    It runs lokascript-domains' own round-trip gate (`gate-upstream.sh`) on this
    tree's intent/framework/semantic and fails on a case worse than the domains'
    baseline; moved parses and better cases are reported, not failed. That pass
