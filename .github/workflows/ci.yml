@@ -82,6 +82,7 @@ jobs:
       protocol: ${{ steps.filter.outputs.protocol }}
       goclient: ${{ steps.filter.outputs.goclient }}
       docsources: ${{ steps.docsources.outputs.docsources }}
+      domaingate: ${{ steps.domaingate.outputs.domaingate }}
     steps:
       - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v4
@@ -139,6 +140,17 @@ jobs:
               - 'examples/**'
               - 'docs/**'
               - 'packages/core/docs/**'
+      # The packages lokascript-domains reads on (see `domain-gate`). Its own
+      # step for the same reason as `docsources`: several positive patterns.
+      - uses: dorny/paths-filter@v4
+        id: domaingate
+        with:
+          filters: |
+            domaingate:
+              - 'packages/intent/**'
+              - 'packages/framework/**'
+              - 'packages/semantic/**'
+              - 'scripts/domain-gate.sh'
 
   # ============================================
   # Job 1: Build All Packages (runs once, shared by all jobs)
@@ -1692,6 +1704,42 @@ jobs:
         run: go test ./...
 
   # ============================================
+  # Job 14: Domain gate
+  #
+  # lokascript-domains' seven DSLs read on framework's matcher skeleton and take
+  # their grammar from semantic's language profiles, and no other job here
+  # parses one: parse parity and the multilingual ratchets cover hyperscript
+  # only. This runs the domains' own round-trip gate on intent, framework and
+  # semantic packed from this PR's build (scripts/domain-gate.sh, which pins
+  # the domains ref), and fails on a case worse than the domains' baseline.
+  # Gated on those three packages; it installs only the domains repo (~1 min).
+  # ============================================
+  domain-gate:
+    name: Domain Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [changes, build]
+    if: github.event_name == 'pull_request' && needs.changes.outputs.domaingate == 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: build-artifacts
+          path: packages
+
+      - name: Domain round-trip gate
+        run: bash scripts/domain-gate.sh
+
+  # ============================================
   # Job 12: CI Gate — the one required check
   #
   # Added 2026-07-30 with the `bundles` split, because that split introduced a
@@ -1736,6 +1784,7 @@ jobs:
       - bundle-size
       - protocol-conformance
       - go-client
+      - domain-gate
 
     steps:
       - name: Fail if any job failed or was cancelled
