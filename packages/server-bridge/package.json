@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "@lokascript/domains": "^5.0.0",
-    "@types/node": "^26.6.3",
+    "@types/node": "^26.6.5",
     "tsup": "^9.0.0",
     "typescript": "^5.0.0",
     "vitest": "^5.0.2"
