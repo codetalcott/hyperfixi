@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/compilation-service",
-  "version": "7.0.0",
+  "version": "7.1.0",
   "description": "Semantic service for LokaScript - validates, translates, diffs and scores hyperscript from 24 languages, explicit syntax, or LLM JSON",
   "type": "module",
   "sideEffects": false,
@@ -29,19 +29,19 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@lokascript/framework": "^7.0.0"
+    "@lokascript/framework": "^7.1.0"
   },
   "devDependencies": {
-    "@hyperfixi/engine": "^7.0.0",
-    "@lokascript/semantic": "^7.0.0",
+    "@hyperfixi/engine": "^7.1.0",
+    "@lokascript/semantic": "^7.1.0",
     "@types/node": "^26.6.5",
     "tsup": "^9.0.0",
     "typescript": "^5.3.3",
     "vitest": "^5.0.5"
   },
   "peerDependencies": {
-    "@lokascript/semantic": "^7.0.0",
-    "@hyperfixi/engine": "^7.0.0"
+    "@lokascript/semantic": "^7.1.0",
+    "@hyperfixi/engine": "^7.1.0"
   },
   "peerDependenciesMeta": {
     "@lokascript/semantic": {
