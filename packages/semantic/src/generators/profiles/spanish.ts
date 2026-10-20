@@ -7,10 +7,10 @@
 
 import { spanishGrammar } from '@lokascript/framework/languages/es';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const spanishProfile: LanguageProfile = {
-  // Word order, role markers, script: @lokascript/framework/languages/es.
-  ...spanishGrammar,
+// Word order, role markers, script: @lokascript/framework/languages/es.
+export const spanishProfile: LanguageProfile = /* @__PURE__ */ withGrammar(spanishGrammar, {
   regions: ['western', 'priority'],
   references: {
     me: 'yo', // "I/me" (mí, mi are alternatives handled in possessive)
@@ -38,7 +38,6 @@ export const spanishProfile: LanguageProfile = {
     },
   },
   possessive: {
-    ...spanishGrammar.possessive,
     specialForms: {
       me: 'mi', // "my" (possessive adjective)
       it: 'su', // "its"
@@ -326,4 +325,4 @@ export const spanishProfile: LanguageProfile = {
     eventMarker: { primary: 'al', alternatives: ['cuando', 'en'], position: 'before' },
     temporalMarkers: ['cuando', 'al'], // temporal conjunctions (when)
   },
-};
+});

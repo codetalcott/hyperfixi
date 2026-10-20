@@ -7,10 +7,10 @@
 
 import { turkishGrammar } from '@lokascript/framework/languages/tr';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const turkishProfile: LanguageProfile = {
-  // Word order, role markers, script: @lokascript/framework/languages/tr.
-  ...turkishGrammar,
+// Word order, role markers, script: @lokascript/framework/languages/tr.
+export const turkishProfile: LanguageProfile = /* @__PURE__ */ withGrammar(turkishGrammar, {
   regions: ['priority'],
   // Colloquial Turkish frequently drops the accusative/case suffix
   // (`.active değiştir` for `.active i değiştir`). Accept both — the marked form
@@ -49,7 +49,6 @@ export const turkishProfile: LanguageProfile = {
   // A query's scope before it (`#list içindeki <li/>`, `bendeki <p/>`; M2 N3).
   queryScopeFirst: { marker: 'içindeki', queryIn: 'içinde' },
   possessive: {
-    ...turkishGrammar.possessive,
     specialForms: {
       me: 'benim', // "my" (genitive of "ben")
       it: 'onun', // "its"
@@ -258,4 +257,4 @@ export const turkishProfile: LanguageProfile = {
     // as ja's does (M2 N4, OPEN_ITEMS P60).
     headOutranksFused: true,
   },
-};
+});

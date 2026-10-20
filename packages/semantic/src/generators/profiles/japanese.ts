@@ -7,10 +7,10 @@
 
 import { japaneseGrammar } from '@lokascript/framework/languages/ja';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const japaneseProfile: LanguageProfile = {
-  // Word order, role markers, script: @lokascript/framework/languages/ja.
-  ...japaneseGrammar,
+// Word order, role markers, script: @lokascript/framework/languages/ja.
+export const japaneseProfile: LanguageProfile = /* @__PURE__ */ withGrammar(japaneseGrammar, {
   regions: ['east-asian', 'priority'],
   references: {
     me: '自分', // "self" - in hyperscript context, refers to current element
@@ -27,7 +27,6 @@ export const japaneseProfile: LanguageProfile = {
   // A query's scope before it (`#list の中の <li/>`; M2 N3).
   queryScopeFirst: { marker: 'の中の', queryIn: 'の中' },
   possessive: {
-    ...japaneseGrammar.possessive,
     // In Japanese: 自分の value (jibun no value) = "my value"
     keywords: {
       私の: 'me', // watashi no (my)
@@ -248,4 +247,4 @@ export const japaneseProfile: LanguageProfile = {
     // otherwise read every handler, with their hand-built body.
     headOutranksFused: true,
   },
-};
+});

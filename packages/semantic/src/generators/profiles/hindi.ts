@@ -7,10 +7,10 @@
 
 import { hindiGrammar } from '@lokascript/framework/languages/hi';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const hindiProfile: LanguageProfile = {
-  // Word order, role markers, script: @lokascript/framework/languages/hi.
-  ...hindiGrammar,
+// Word order, role markers, script: @lokascript/framework/languages/hi.
+export const hindiProfile: LanguageProfile = /* @__PURE__ */ withGrammar(hindiGrammar, {
   references: {
     me: 'मैं',
     it: 'यह',
@@ -44,7 +44,6 @@ export const hindiProfile: LanguageProfile = {
   // A query's scope before it (`#list में स्थित <li/>`, `मुझ में स्थित <p/>`; M2 N3).
   queryScopeFirst: { marker: 'में', participle: 'स्थित', queryIn: 'में' },
   possessive: {
-    ...hindiGrammar.possessive,
     // In Hindi: मेरा value (mera value) = "my value"
     // Or with का: X का Y = "X's Y"
     keywords: {
@@ -244,4 +243,4 @@ export const hindiProfile: LanguageProfile = {
     eventMarker: { primary: 'पर', alternatives: [], position: 'after' },
     temporalMarkers: ['जब', 'जब भी'], // temporal conjunctions (when, whenever)
   },
-};
+});

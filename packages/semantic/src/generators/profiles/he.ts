@@ -8,10 +8,10 @@
 
 import { hebrewGrammar } from '@lokascript/framework/languages/he';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const hebrewProfile: LanguageProfile = {
-  // Word order, role markers, script: @lokascript/framework/languages/he.
-  ...hebrewGrammar,
+// Word order, role markers, script: @lokascript/framework/languages/he.
+export const hebrewProfile: LanguageProfile = /* @__PURE__ */ withGrammar(hebrewGrammar, {
   references: {
     me: 'אני', // "I/me"
     it: 'זה', // "it" (masculine) / "this"
@@ -39,7 +39,6 @@ export const hebrewProfile: LanguageProfile = {
     },
   },
   possessive: {
-    ...hebrewGrammar.possessive,
     specialForms: {
       // Hebrew: "property שלי" (property of-me) - possessive follows property
       me: 'שלי', // "of me" / "mine"
@@ -198,4 +197,4 @@ export const hebrewProfile: LanguageProfile = {
     eventMarker: { primary: 'ב', alternatives: ['כש'], position: 'before' },
     temporalMarkers: ['כאשר', 'כש'], // temporal conjunctions (when); עם is the WITH marker, not temporal
   },
-};
+});

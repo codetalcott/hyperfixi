@@ -7,10 +7,10 @@
 
 import { portugueseGrammar } from '@lokascript/framework/languages/pt';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const portugueseProfile: LanguageProfile = {
-  // Word order, role markers, script: @lokascript/framework/languages/pt.
-  ...portugueseGrammar,
+// Word order, role markers, script: @lokascript/framework/languages/pt.
+export const portugueseProfile: LanguageProfile = /* @__PURE__ */ withGrammar(portugueseGrammar, {
   regions: ['western', 'priority'],
   references: {
     me: 'eu', // "I/me"
@@ -40,7 +40,6 @@ export const portugueseProfile: LanguageProfile = {
     it: { em: 'nele', de: 'dele' },
   },
   possessive: {
-    ...portugueseGrammar.possessive,
     specialForms: {
       me: 'meu', // "my"
       it: 'seu', // "its"
@@ -277,4 +276,4 @@ export const portugueseProfile: LanguageProfile = {
     eventMarker: { primary: 'ao', alternatives: ['no', 'em'], position: 'before' },
     temporalMarkers: ['quando', 'ao'], // temporal conjunctions (when)
   },
-};
+});

@@ -7,10 +7,10 @@
 
 import { indonesianGrammar } from '@lokascript/framework/languages/id';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const indonesianProfile: LanguageProfile = {
-  // Word order, role markers, script: @lokascript/framework/languages/id.
-  ...indonesianGrammar,
+// Word order, role markers, script: @lokascript/framework/languages/id.
+export const indonesianProfile: LanguageProfile = /* @__PURE__ */ withGrammar(indonesianGrammar, {
   regions: ['priority'],
   references: {
     me: 'saya', // "I/me"
@@ -25,7 +25,6 @@ export const indonesianProfile: LanguageProfile = {
     detail: 'detail',
   },
   possessive: {
-    ...indonesianGrammar.possessive,
     specialForms: {
       me: 'saya', // Possessor follows: "value saya" = "my value"
       it: 'nya', // Suffix: "valueny" = "its value"
@@ -204,4 +203,4 @@ export const indonesianProfile: LanguageProfile = {
     eventMarker: { primary: 'saat', alternatives: ['ketika', 'pada'], position: 'before' },
     temporalMarkers: ['ketika', 'saat'], // temporal conjunctions (when)
   },
-};
+});

@@ -7,10 +7,10 @@
 
 import { frenchGrammar } from '@lokascript/framework/languages/fr';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const frenchProfile: LanguageProfile = {
-  // Word order, role markers, script: @lokascript/framework/languages/fr.
-  ...frenchGrammar,
+// Word order, role markers, script: @lokascript/framework/languages/fr.
+export const frenchProfile: LanguageProfile = /* @__PURE__ */ withGrammar(frenchGrammar, {
   regions: ['western', 'priority'],
   references: {
     me: 'moi', // "I/me"
@@ -42,7 +42,6 @@ export const frenchProfile: LanguageProfile = {
     },
   },
   possessive: {
-    ...frenchGrammar.possessive,
     specialForms: {
       me: 'ma', // "my" (feminine; "mon" for masculine)
       it: 'sa', // "its" (feminine; "son" for masculine)
@@ -245,4 +244,4 @@ export const frenchProfile: LanguageProfile = {
     eventMarker: { primary: 'au', alternatives: ['lors du', 'lors de', 'sur'], position: 'before' },
     temporalMarkers: ['quand', 'lorsque'], // temporal conjunctions (when)
   },
-};
+});

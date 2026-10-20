@@ -1,9 +1,10 @@
 /**
  * A profile's grammar is framework's (`@lokascript/framework/languages/<code>`),
- * spread under hyperscript's vocabulary. A profile that set a grammar field
- * after the spread would read and render a language differently from every
+ * under hyperscript's vocabulary (`withGrammar`). A profile with its own value
+ * for a grammar field would read and render a language differently from every
  * domain that injects the same grammar, so each field must be framework's own
- * value: the same object, not a copy that could drift.
+ * value: the same object, not a copy that could drift. (`ProfileVocabulary`
+ * rejects a grammar field at compile time; this holds the built objects.)
  */
 import { describe, it, expect } from 'vitest';
 import * as languages from '@lokascript/framework/languages';

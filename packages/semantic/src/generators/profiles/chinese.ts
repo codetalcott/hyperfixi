@@ -7,10 +7,10 @@
 
 import { chineseGrammar } from '@lokascript/framework/languages/zh';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const chineseProfile: LanguageProfile = {
-  // Word order, role markers, script: @lokascript/framework/languages/zh.
-  ...chineseGrammar,
+// Word order, role markers, script: @lokascript/framework/languages/zh.
+export const chineseProfile: LanguageProfile = /* @__PURE__ */ withGrammar(chineseGrammar, {
   regions: ['east-asian', 'priority'],
   references: {
     me: '我', // "I/me"
@@ -25,7 +25,6 @@ export const chineseProfile: LanguageProfile = {
     detail: '详情',
   },
   possessive: {
-    ...chineseGrammar.possessive,
     // Chinese: 我的 value (wǒ de value) = "my value"
     keywords: {
       // Compound possessive forms (pronoun + 的)
@@ -189,4 +188,4 @@ export const chineseProfile: LanguageProfile = {
     // handler only where a handler head is already expected.
     temporalMarkers: ['当', '在...时', '一'], // temporal conjunctions (when)
   },
-};
+});

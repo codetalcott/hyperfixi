@@ -9,8 +9,8 @@
  *     --wordOrder=SVO --direction=ltr --marking=preposition --usesSpaces=true [--script=latin]
  *
  * The language's grammar (word order, markers, script) goes to framework
- * (`packages/framework/src/languages/<code>.ts`); semantic's profile spreads it
- * and adds hyperscript's vocabulary.
+ * (`packages/framework/src/languages/<code>.ts`); semantic's profile is that
+ * grammar with hyperscript's vocabulary over it (`withGrammar`).
  *
  * Example:
  *   npm run add-language -- --code=sw --name=Swahili --native=Kiswahili \
@@ -20,6 +20,10 @@
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
+
+// The package is ESM: no CommonJS __dirname.
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // =============================================================================
 // Types
@@ -429,10 +433,10 @@ function generateProfile(config: LanguageConfig): string {
 
 import { ${varName}Grammar } from '@lokascript/framework/languages/${code}';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const ${varName}Profile: LanguageProfile = {
-  // Word order, role markers, script: @lokascript/framework/languages/${code}.
-  ...${varName}Grammar,
+// Word order, role markers, script: @lokascript/framework/languages/${code}.
+export const ${varName}Profile: LanguageProfile = /* @__PURE__ */ withGrammar(${varName}Grammar, {
   references: {
     me: 'TODO',      // "I/me"
     it: 'TODO',      // "it"
@@ -517,7 +521,7 @@ export const ${varName}Profile: LanguageProfile = {
     keyword: { primary: 'TODO', normalized: 'on' },
     sourceMarker: { primary: 'TODO', position: '${markerPosition}' },
   },
-};
+});
 `;
 }
 

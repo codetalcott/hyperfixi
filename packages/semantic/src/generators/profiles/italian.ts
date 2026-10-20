@@ -8,10 +8,10 @@
 
 import { italianGrammar } from '@lokascript/framework/languages/it';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const italianProfile: LanguageProfile = {
-  // Word order, role markers, script: @lokascript/framework/languages/it.
-  ...italianGrammar,
+// Word order, role markers, script: @lokascript/framework/languages/it.
+export const italianProfile: LanguageProfile = /* @__PURE__ */ withGrammar(italianGrammar, {
   regions: ['western'],
   references: {
     me: 'io', // "I/me"
@@ -39,7 +39,6 @@ export const italianProfile: LanguageProfile = {
     },
   },
   possessive: {
-    ...italianGrammar.possessive,
     specialForms: {
       me: 'mio', // "my" (possessive adjective)
       it: 'suo', // "its"
@@ -221,4 +220,4 @@ export const italianProfile: LanguageProfile = {
     eventMarker: { primary: 'al', alternatives: ['allo', 'alla', 'su'], position: 'before' },
     temporalMarkers: ['quando', 'al'], // temporal conjunctions (when)
   },
-};
+});

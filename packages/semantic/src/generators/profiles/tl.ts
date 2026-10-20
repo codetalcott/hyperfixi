@@ -6,10 +6,10 @@
 
 import { tagalogGrammar } from '@lokascript/framework/languages/tl';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const tagalogProfile: LanguageProfile = {
-  // Word order, role markers, script: @lokascript/framework/languages/tl.
-  ...tagalogGrammar,
+// Word order, role markers, script: @lokascript/framework/languages/tl.
+export const tagalogProfile: LanguageProfile = /* @__PURE__ */ withGrammar(tagalogGrammar, {
   references: {
     me: 'ako', // "I/me"
     it: 'ito', // "it"
@@ -33,7 +33,6 @@ export const tagalogProfile: LanguageProfile = {
     it: { sa: 'dito' },
   },
   possessive: {
-    ...tagalogGrammar.possessive,
     keywords: {
       // Tagalog uses postposed possessive pronouns
       // "my" - ko (clitic), akin (emphatic), aking (adjectival genitive)
@@ -199,4 +198,4 @@ export const tagalogProfile: LanguageProfile = {
     sourceMarker: { primary: 'mula_sa', alternatives: ['galing_sa'], position: 'before' },
     eventMarker: { primary: 'kapag', position: 'before' },
   },
-};
+});

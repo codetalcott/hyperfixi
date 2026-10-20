@@ -6,10 +6,10 @@
 
 import { malayGrammar } from '@lokascript/framework/languages/ms';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const malayProfile: LanguageProfile = {
-  // Word order, role markers, script: @lokascript/framework/languages/ms.
-  ...malayGrammar,
+// Word order, role markers, script: @lokascript/framework/languages/ms.
+export const malayProfile: LanguageProfile = /* @__PURE__ */ withGrammar(malayGrammar, {
   references: {
     me: 'saya',
     it: 'ia',
@@ -23,7 +23,6 @@ export const malayProfile: LanguageProfile = {
     detail: 'perincian',
   },
   possessive: {
-    ...malayGrammar.possessive,
     keywords: {
       // Full pronoun forms (also serve as possessives)
       saya: 'me', // my (formal)
@@ -198,4 +197,4 @@ export const malayProfile: LanguageProfile = {
     // the only language besides en in that state (the swap/if recovery split).
     eventMarker: { primary: 'apabila', alternatives: ['ketika'], position: 'before' },
   },
-};
+});

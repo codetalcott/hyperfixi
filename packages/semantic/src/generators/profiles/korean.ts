@@ -7,10 +7,10 @@
 
 import { koreanGrammar } from '@lokascript/framework/languages/ko';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const koreanProfile: LanguageProfile = {
-  // Word order, role markers, script: @lokascript/framework/languages/ko.
-  ...koreanGrammar,
+// Word order, role markers, script: @lokascript/framework/languages/ko.
+export const koreanProfile: LanguageProfile = /* @__PURE__ */ withGrammar(koreanGrammar, {
   regions: ['east-asian', 'priority'],
   references: {
     me: '나', // "I/me" (informal)
@@ -27,7 +27,6 @@ export const koreanProfile: LanguageProfile = {
   // A query's scope before it (`#list 안의 <li/>`; M2 N3).
   queryScopeFirst: { marker: '안의', queryIn: '안에' },
   possessive: {
-    ...koreanGrammar.possessive,
     specialForms: {
       me: '내', // Contracted form of 나의 (my)
       it: '그것의', // "its"
@@ -214,4 +213,4 @@ export const koreanProfile: LanguageProfile = {
     eventMarker: { primary: '할 때', alternatives: ['할때', '때', '에'], position: 'after' },
     temporalMarkers: ['할 때', '할때', '때'], // temporal markers (with and without space)
   },
-};
+});

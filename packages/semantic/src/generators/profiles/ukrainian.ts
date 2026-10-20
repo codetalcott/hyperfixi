@@ -8,10 +8,10 @@
 
 import { ukrainianGrammar } from '@lokascript/framework/languages/uk';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const ukrainianProfile: LanguageProfile = {
-  // Word order, role markers, script: @lokascript/framework/languages/uk.
-  ...ukrainianGrammar,
+// Word order, role markers, script: @lokascript/framework/languages/uk.
+export const ukrainianProfile: LanguageProfile = /* @__PURE__ */ withGrammar(ukrainianGrammar, {
   references: {
     me: 'я',
     it: 'це',
@@ -49,7 +49,6 @@ export const ukrainianProfile: LanguageProfile = {
     },
   },
   possessive: {
-    ...ukrainianGrammar.possessive,
     specialForms: {
       me: 'мій',
       it: 'його',
@@ -417,4 +416,4 @@ export const ukrainianProfile: LanguageProfile = {
     eventMarker: { primary: 'при', position: 'before' },
     temporalMarkers: ['коли', 'якщо'], // temporal conjunctions (when, if)
   },
-};
+});

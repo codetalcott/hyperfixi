@@ -8,10 +8,10 @@
 
 import { polishGrammar } from '@lokascript/framework/languages/pl';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const polishProfile: LanguageProfile = {
-  // Word order, role markers, script: @lokascript/framework/languages/pl.
-  ...polishGrammar,
+// Word order, role markers, script: @lokascript/framework/languages/pl.
+export const polishProfile: LanguageProfile = /* @__PURE__ */ withGrammar(polishGrammar, {
   references: {
     me: 'ja', // "I/me"
     it: 'to', // "it"
@@ -48,7 +48,6 @@ export const polishProfile: LanguageProfile = {
     },
   },
   possessive: {
-    ...polishGrammar.possessive,
     specialForms: {
       me: 'mój', // "my" (masculine)
       it: 'jego', // "its"
@@ -354,4 +353,4 @@ export const polishProfile: LanguageProfile = {
     eventMarker: { primary: 'przy', alternatives: ['na', 'gdy'], position: 'before' },
     temporalMarkers: ['kiedy', 'gdy', 'przy'], // temporal conjunctions (when, at)
   },
-};
+});

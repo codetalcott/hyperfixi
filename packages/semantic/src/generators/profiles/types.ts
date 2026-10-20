@@ -73,9 +73,10 @@ export interface PossessiveConfig extends PossessiveGrammar {
 /**
  * Complete language profile for pattern generation.
  *
- * A profile spreads its language's grammar (`@lokascript/framework/languages/<code>`:
- * framework's `GrammarProfile`, the fields from `code` to `possessive.marker`) and
- * adds hyperscript's vocabulary. This interface still declares every field.
+ * A profile is its language's grammar (`@lokascript/framework/languages/<code>`:
+ * framework's `GrammarProfile`, the fields from `code` to `possessive.marker`) with
+ * hyperscript's vocabulary over it (`../with-grammar.ts`). This interface still
+ * declares every field.
  *
  * Canonical field mapping (Phase 4.1 — single source of truth):
  *

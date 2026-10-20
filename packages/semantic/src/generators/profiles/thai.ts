@@ -7,10 +7,10 @@
 
 import { thaiGrammar } from '@lokascript/framework/languages/th';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const thaiProfile: LanguageProfile = {
-  // Word order, role markers, script: @lokascript/framework/languages/th.
-  ...thaiGrammar,
+// Word order, role markers, script: @lokascript/framework/languages/th.
+export const thaiProfile: LanguageProfile = /* @__PURE__ */ withGrammar(thaiGrammar, {
   references: {
     me: 'ฉัน',
     it: 'มัน',
@@ -23,7 +23,6 @@ export const thaiProfile: LanguageProfile = {
     window: 'หน้าต่าง',
   },
   possessive: {
-    ...thaiGrammar.possessive,
     keywords: {
       // Thai uses ของ (khong) + pronoun, but also full possessive phrases
       // "my" - ของฉัน (khong chan), ของผม (khong phom, male speaker)
@@ -187,4 +186,4 @@ export const thaiProfile: LanguageProfile = {
     eventMarker: { primary: 'เมื่อ', alternatives: ['ตอน'], position: 'before' },
     temporalMarkers: ['เมื่อ', 'ตอน'], // temporal conjunctions (when)
   },
-};
+});

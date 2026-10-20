@@ -7,10 +7,10 @@
 
 import { germanGrammar } from '@lokascript/framework/languages/de';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const germanProfile: LanguageProfile = {
-  // Word order, role markers, script: @lokascript/framework/languages/de.
-  ...germanGrammar,
+// Word order, role markers, script: @lokascript/framework/languages/de.
+export const germanProfile: LanguageProfile = /* @__PURE__ */ withGrammar(germanGrammar, {
   regions: ['western', 'priority'],
   references: {
     me: 'ich', // "I"
@@ -54,7 +54,6 @@ export const germanProfile: LanguageProfile = {
     },
   },
   possessive: {
-    ...germanGrammar.possessive,
     specialForms: {
       me: 'mein', // "my"
       it: 'sein', // "its"
@@ -260,4 +259,4 @@ export const germanProfile: LanguageProfile = {
     eventMarker: { primary: 'bei', alternatives: ['beim'], position: 'before' },
     temporalMarkers: ['wenn', 'bei'], // temporal conjunctions (when, at)
   },
-};
+});

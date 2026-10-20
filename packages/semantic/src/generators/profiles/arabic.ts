@@ -7,10 +7,10 @@
 
 import { arabicGrammar } from '@lokascript/framework/languages/ar';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const arabicProfile: LanguageProfile = {
-  // Word order, role markers, script: @lokascript/framework/languages/ar.
-  ...arabicGrammar,
+// Word order, role markers, script: @lokascript/framework/languages/ar.
+export const arabicProfile: LanguageProfile = /* @__PURE__ */ withGrammar(arabicGrammar, {
   regions: ['priority'],
   references: {
     me: 'أنا', // "I/me" - first person
@@ -67,7 +67,6 @@ export const arabicProfile: LanguageProfile = {
     },
   },
   possessive: {
-    ...arabicGrammar.possessive,
     specialForms: {
       // Arabic: "value لي" (value for-me) - possessive pronoun follows property
       me: 'لي', // "for me" / "mine"
@@ -252,4 +251,4 @@ export const arabicProfile: LanguageProfile = {
     // Example: عند عدم التركيز أخف #tooltip = "on blur hide #tooltip"
     negationMarker: { primary: 'عدم', alternatives: ['عدم'], position: 'before' },
   },
-};
+});

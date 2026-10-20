@@ -6,10 +6,10 @@
 
 import { englishGrammar } from '@lokascript/framework/languages/en';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const englishProfile: LanguageProfile = {
-  // Word order, role markers, script: @lokascript/framework/languages/en.
-  ...englishGrammar,
+// Word order, role markers, script: @lokascript/framework/languages/en.
+export const englishProfile: LanguageProfile = /* @__PURE__ */ withGrammar(englishGrammar, {
   regions: ['western', 'priority'],
   references: {
     me: 'me',
@@ -24,7 +24,6 @@ export const englishProfile: LanguageProfile = {
     detail: 'detail',
   },
   possessive: {
-    ...englishGrammar.possessive,
     specialForms: {
       me: 'my',
       it: 'its',
@@ -130,4 +129,4 @@ export const englishProfile: LanguageProfile = {
     worker: { primary: 'worker', normalized: 'worker' },
     intercept: { primary: 'intercept', normalized: 'intercept' },
   },
-};
+});

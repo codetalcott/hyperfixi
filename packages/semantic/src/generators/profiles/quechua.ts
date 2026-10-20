@@ -7,10 +7,10 @@
 
 import { quechuaGrammar } from '@lokascript/framework/languages/qu';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const quechuaProfile: LanguageProfile = {
-  // Word order, role markers, script: @lokascript/framework/languages/qu.
-  ...quechuaGrammar,
+// Word order, role markers, script: @lokascript/framework/languages/qu.
+export const quechuaProfile: LanguageProfile = /* @__PURE__ */ withGrammar(quechuaGrammar, {
   references: {
     // Aligned to the i18n dict's emitted surface forms (the corpus-canonical
     // words the parser must recognize — §7l). The dict emits noqa/punta/kurku;
@@ -30,7 +30,6 @@ export const quechuaProfile: LanguageProfile = {
     detail: 'sut_iy',
   },
   possessive: {
-    ...quechuaGrammar.possessive,
     // Quechua: ñuqapa value = "my value"
     keywords: {
       // Genitive forms (pronoun + -pa suffix)
@@ -219,4 +218,4 @@ export const quechuaProfile: LanguageProfile = {
     sourceMarker: { primary: 'manta', position: 'after' },
     eventMarker: { primary: 'pi', alternatives: ['kaqtin', 'kaqpi'], position: 'after' },
   },
-};
+});

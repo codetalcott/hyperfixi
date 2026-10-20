@@ -23,10 +23,6 @@ const codes = readdirSync(DIR)
 const grammars = Object.values(languages) as GrammarProfile[];
 
 describe('language grammars', () => {
-  it('has one module per language', () => {
-    expect(codes).toHaveLength(24);
-  });
-
   it('exports each module from the barrel, under its own code', () => {
     expect(grammars.map(g => g.code).sort()).toEqual(codes);
   });

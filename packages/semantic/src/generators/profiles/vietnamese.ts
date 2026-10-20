@@ -8,10 +8,10 @@
 
 import { vietnameseGrammar } from '@lokascript/framework/languages/vi';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const vietnameseProfile: LanguageProfile = {
-  // Word order, role markers, script: @lokascript/framework/languages/vi.
-  ...vietnameseGrammar,
+// Word order, role markers, script: @lokascript/framework/languages/vi.
+export const vietnameseProfile: LanguageProfile = /* @__PURE__ */ withGrammar(vietnameseGrammar, {
   references: {
     me: 'tôi', // "I/me"
     it: 'nó', // "it"
@@ -24,7 +24,6 @@ export const vietnameseProfile: LanguageProfile = {
     window: 'cửa sổ',
   },
   possessive: {
-    ...vietnameseGrammar.possessive,
     specialForms: {
       me: 'của tôi', // "my"
       it: 'của nó', // "its"
@@ -197,4 +196,4 @@ export const vietnameseProfile: LanguageProfile = {
     eventMarker: { primary: 'khi', alternatives: ['lúc'], position: 'before' },
     temporalMarkers: ['khi', 'lúc'], // temporal conjunctions (when)
   },
-};
+});

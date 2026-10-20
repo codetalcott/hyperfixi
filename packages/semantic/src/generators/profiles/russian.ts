@@ -8,10 +8,10 @@
 
 import { russianGrammar } from '@lokascript/framework/languages/ru';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const russianProfile: LanguageProfile = {
-  // Word order, role markers, script: @lokascript/framework/languages/ru.
-  ...russianGrammar,
+// Word order, role markers, script: @lokascript/framework/languages/ru.
+export const russianProfile: LanguageProfile = /* @__PURE__ */ withGrammar(russianGrammar, {
   references: {
     me: 'я',
     it: 'это',
@@ -48,7 +48,6 @@ export const russianProfile: LanguageProfile = {
     },
   },
   possessive: {
-    ...russianGrammar.possessive,
     specialForms: {
       me: 'мой',
       it: 'его',
@@ -394,4 +393,4 @@ export const russianProfile: LanguageProfile = {
     eventMarker: { primary: 'при', position: 'before' },
     temporalMarkers: ['когда', 'если'], // temporal conjunctions (when, if)
   },
-};
+});

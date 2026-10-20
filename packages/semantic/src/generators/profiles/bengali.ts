@@ -7,10 +7,10 @@
 
 import { bengaliGrammar } from '@lokascript/framework/languages/bn';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const bengaliProfile: LanguageProfile = {
-  // Word order, role markers, script: @lokascript/framework/languages/bn.
-  ...bengaliGrammar,
+// Word order, role markers, script: @lokascript/framework/languages/bn.
+export const bengaliProfile: LanguageProfile = /* @__PURE__ */ withGrammar(bengaliGrammar, {
   references: {
     me: 'আমি',
     it: 'এটি',
@@ -33,7 +33,6 @@ export const bengaliProfile: LanguageProfile = {
   // A query's scope before it (`#list এ থাকা <li/>`, `আমাতে থাকা <p/>`; M2 N3).
   queryScopeFirst: { marker: 'এ', participle: 'থাকা', queryIn: 'এ' },
   possessive: {
-    ...bengaliGrammar.possessive,
     keywords: {
       // "my" - আমার (amar)
       আমার: 'me',
@@ -201,4 +200,4 @@ export const bengaliProfile: LanguageProfile = {
     eventMarker: { primary: 'তে', alternatives: ['এ'], position: 'after' },
     temporalMarkers: ['যখন', 'যখনই'], // temporal conjunctions (when, whenever)
   },
-};
+});
