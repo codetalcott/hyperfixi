@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`@hyperfixi/mcp-server` no longer reports a stale build when it runs from npm.** At startup it
+  compares each `@hyperfixi/*` / `@lokascript/*` dependency's `src/` against its `dist/`, which
+  catches a monorepo package edited and not rebuilt. An npm or npx install ships `src/` too, and
+  writes it a few milliseconds after `dist/`, so every `npx @hyperfixi/mcp-server` launch (the
+  hyperfixi plugin's) called five packages stale and printed `npm run build` commands for the npx
+  cache. The check now runs only for packages that resolve outside `node_modules` (workspace
+  links); the check that refuses a tool call when a `dist/` changes under the running server is
+  unchanged.
+
 ### Changed
 
 - **`@lokascript/i18n` no longer installs `vite`, `esbuild` and `happy-dom`.** They were runtime
