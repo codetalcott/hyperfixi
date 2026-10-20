@@ -1,4 +1,12 @@
+import { readdirSync } from 'fs';
 import { defineConfig } from 'tsup';
+
+// One entry per language module (src/languages/<code>.ts), plus the barrel.
+const languageEntries = Object.fromEntries(
+  readdirSync('src/languages')
+    .filter(f => f.endsWith('.ts') && !f.endsWith('.test.ts') && f !== 'types.ts')
+    .map(f => [`languages/${f.slice(0, -3)}`, `src/languages/${f}`])
+);
 
 export default defineConfig([
   // Node.js builds (CJS + ESM)
@@ -28,5 +36,16 @@ export default defineConfig([
     format: ['esm'],
     splitting: false,
     sourcemap: true,
+  },
+  // Language grammars: data modules, one per language. Splitting keeps one copy
+  // of each object between `languages/<code>` and the `languages` barrel.
+  {
+    entry: languageEntries,
+    format: ['esm'],
+    splitting: true,
+    sourcemap: true,
+    esbuildOptions(options) {
+      options.chunkNames = 'languages/chunks/[name]-[hash]';
+    },
   },
 ]);

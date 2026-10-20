@@ -6,23 +6,12 @@
  * Uses infinitive form in software UI (industry standard).
  */
 
+import { ukrainianGrammar } from '@lokascript/framework/languages/uk';
 import type { LanguageProfile } from './types';
 
 export const ukrainianProfile: LanguageProfile = {
-  code: 'uk',
-  name: 'Ukrainian',
-  nativeName: 'Українська',
-  direction: 'ltr',
-  script: 'cyrillic',
-  wordOrder: 'SVO',
-  markingStrategy: 'preposition',
-  usesSpaces: true,
-  defaultVerbForm: 'infinitive',
-  verb: {
-    position: 'start',
-    subjectDrop: true,
-    suffixes: ['ти', 'тися', 'ити', 'итися', 'ати', 'атися', 'іти', 'ітися'],
-  },
+  // Word order, role markers, script: @lokascript/framework/languages/uk.
+  ...ukrainianGrammar,
   references: {
     me: 'я',
     it: 'це',
@@ -60,9 +49,7 @@ export const ukrainianProfile: LanguageProfile = {
     },
   },
   possessive: {
-    marker: '',
-    markerPosition: 'after-object',
-    usePossessiveAdjectives: true,
+    ...ukrainianGrammar.possessive,
     specialForms: {
       me: 'мій',
       it: 'його',
@@ -83,12 +70,6 @@ export const ukrainianProfile: LanguageProfile = {
       його: 'it', // his/its
       її: 'it', // her/its (feminine)
     },
-  },
-  roleMarkers: {
-    destination: { primary: 'в', alternatives: ['на', 'до'], position: 'before' },
-    source: { primary: 'з', alternatives: ['від', 'із'], position: 'before' },
-    patient: { primary: '', position: 'before' },
-    style: { primary: 'з', alternatives: ['із'], position: 'before' },
   },
   keywords: {
     // Class/Attribute operations (infinitive form)

@@ -37,6 +37,8 @@ const SEMANTIC_PROFILES_DIR = path.resolve(__dirname, '../../semantic/src/genera
 // Detection still wants those words — `resultado`/`最初`/`первый` mark a file as
 // non-English just as well as a command verb does — so both files are scraped.
 const SEMANTIC_LEXICONS_DIR = path.resolve(__dirname, '../../semantic/src/lexicons');
+// A language's name is grammar, which the profile spreads from framework's module.
+const FRAMEWORK_LANGUAGES_DIR = path.resolve(__dirname, '../../framework/src/languages');
 const KEYWORDS_FILE = path.resolve(__dirname, '../src/language-keywords.ts');
 
 // Keywords to extract for detection (most distinctive for language detection)
@@ -305,8 +307,9 @@ the primary and alternative keywords for detection.
       continue;
     }
 
-    // Get language info from profile
-    const content = fs.readFileSync(profilePath, 'utf-8');
+    // Get language info from the language's grammar module
+    const grammarPath = path.join(FRAMEWORK_LANGUAGES_DIR, `${isoCode}.ts`);
+    const content = fs.existsSync(grammarPath) ? fs.readFileSync(grammarPath, 'utf-8') : '';
     const nameMatch = content.match(/name:\s*['"]([^'"]+)['"]/);
     const name = nameMatch ? nameMatch[1] : code.toUpperCase();
 

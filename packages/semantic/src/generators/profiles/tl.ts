@@ -4,22 +4,12 @@
  * VSO word order, prepositions, space-separated.
  */
 
+import { tagalogGrammar } from '@lokascript/framework/languages/tl';
 import type { LanguageProfile } from './types';
 
 export const tagalogProfile: LanguageProfile = {
-  code: 'tl',
-  name: 'Tagalog',
-  nativeName: 'Tagalog',
-  direction: 'ltr',
-  script: 'latin',
-  wordOrder: 'VSO',
-  markingStrategy: 'preposition',
-  usesSpaces: true,
-  defaultVerbForm: 'base',
-  verb: {
-    position: 'start',
-    subjectDrop: true,
-  },
+  // Word order, role markers, script: @lokascript/framework/languages/tl.
+  ...tagalogGrammar,
   references: {
     me: 'ako', // "I/me"
     it: 'ito', // "it"
@@ -43,8 +33,7 @@ export const tagalogProfile: LanguageProfile = {
     it: { sa: 'dito' },
   },
   possessive: {
-    marker: 'ng', // Linker used in possessive constructions
-    markerPosition: 'between',
+    ...tagalogGrammar.possessive,
     keywords: {
       // Tagalog uses postposed possessive pronouns
       // "my" - ko (clitic), akin (emphatic), aking (adjectival genitive)
@@ -59,16 +48,6 @@ export const tagalogProfile: LanguageProfile = {
       nito: 'it',
       kaniya: 'it',
     },
-  },
-  roleMarkers: {
-    // `bago` (before) / `matapos` (after) are positional destination markers for
-    // `put X before/after Y`, mirroring how Arabic lists قبل/بعد as destination
-    // alternatives. Without them the generated put pattern can't match a
-    // before/after target.
-    destination: { primary: 'sa', alternatives: ['bago', 'matapos'], position: 'before' }, // "to/into"
-    source: { primary: 'mula_sa', position: 'before' }, // "from"
-    patient: { primary: '', position: 'before' },
-    style: { primary: 'nang', position: 'before' }, // manner marker
   },
   keywords: {
     // Class/Attribute operations

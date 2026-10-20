@@ -6,23 +6,12 @@
  * Uses infinitive form in software UI (industry standard).
  */
 
+import { russianGrammar } from '@lokascript/framework/languages/ru';
 import type { LanguageProfile } from './types';
 
 export const russianProfile: LanguageProfile = {
-  code: 'ru',
-  name: 'Russian',
-  nativeName: 'Русский',
-  direction: 'ltr',
-  script: 'cyrillic',
-  wordOrder: 'SVO',
-  markingStrategy: 'preposition',
-  usesSpaces: true,
-  defaultVerbForm: 'infinitive',
-  verb: {
-    position: 'start',
-    subjectDrop: true,
-    suffixes: ['ть', 'ться', 'ить', 'иться', 'ать', 'аться', 'еть', 'еться'],
-  },
+  // Word order, role markers, script: @lokascript/framework/languages/ru.
+  ...russianGrammar,
   references: {
     me: 'я',
     it: 'это',
@@ -59,9 +48,7 @@ export const russianProfile: LanguageProfile = {
     },
   },
   possessive: {
-    marker: '',
-    markerPosition: 'after-object',
-    usePossessiveAdjectives: true,
+    ...russianGrammar.possessive,
     specialForms: {
       me: 'мой',
       it: 'его',
@@ -82,12 +69,6 @@ export const russianProfile: LanguageProfile = {
       его: 'it', // his/its
       её: 'it', // her/its (feminine)
     },
-  },
-  roleMarkers: {
-    destination: { primary: 'в', alternatives: ['на', 'к', 'во', 'ко'], position: 'before' },
-    source: { primary: 'из', alternatives: ['от', 'с'], position: 'before' },
-    patient: { primary: '', position: 'before' },
-    style: { primary: 'с', alternatives: ['со'], position: 'before' },
   },
   keywords: {
     // Class/Attribute operations (infinitive form)

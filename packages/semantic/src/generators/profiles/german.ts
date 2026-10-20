@@ -5,25 +5,13 @@
  * Features case system, compound words, and verb-second word order in main clauses.
  */
 
+import { germanGrammar } from '@lokascript/framework/languages/de';
 import type { LanguageProfile } from './types';
 
 export const germanProfile: LanguageProfile = {
-  code: 'de',
-  name: 'German',
-  nativeName: 'Deutsch',
+  // Word order, role markers, script: @lokascript/framework/languages/de.
+  ...germanGrammar,
   regions: ['western', 'priority'],
-  direction: 'ltr',
-  script: 'latin',
-  wordOrder: 'SVO',
-  markingStrategy: 'preposition',
-  usesSpaces: true,
-  // Infinitive is standard for German software UI (Speichern, Öffnen, Schließen)
-  // Also used in written instructions ("Bitte nicht stören")
-  defaultVerbForm: 'infinitive',
-  verb: {
-    position: 'start',
-    subjectDrop: false,
-  },
   references: {
     me: 'ich', // "I"
     it: 'es', // "it"
@@ -66,9 +54,7 @@ export const germanProfile: LanguageProfile = {
     },
   },
   possessive: {
-    marker: '', // German uses possessive pronouns directly
-    markerPosition: 'before-property',
-    usePossessiveAdjectives: true,
+    ...germanGrammar.possessive,
     specialForms: {
       me: 'mein', // "my"
       it: 'sein', // "its"
@@ -85,12 +71,6 @@ export const germanProfile: LanguageProfile = {
       seine: 'it',
       seinen: 'it',
     },
-  },
-  roleMarkers: {
-    destination: { primary: 'auf', alternatives: ['zu', 'in'], position: 'before' },
-    source: { primary: 'von', alternatives: ['aus'], position: 'before' },
-    patient: { primary: '', position: 'before' },
-    style: { primary: 'mit', position: 'before' },
   },
   keywords: {
     toggle: { primary: 'umschalten', alternatives: ['wechseln'], normalized: 'toggle' },

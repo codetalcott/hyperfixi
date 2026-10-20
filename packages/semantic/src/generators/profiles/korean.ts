@@ -5,23 +5,13 @@
  * Agglutinative language with particles attaching to words.
  */
 
+import { koreanGrammar } from '@lokascript/framework/languages/ko';
 import type { LanguageProfile } from './types';
 
 export const koreanProfile: LanguageProfile = {
-  code: 'ko',
-  name: 'Korean',
-  nativeName: '한국어',
+  // Word order, role markers, script: @lokascript/framework/languages/ko.
+  ...koreanGrammar,
   regions: ['east-asian', 'priority'],
-  direction: 'ltr',
-  script: 'hangul',
-  wordOrder: 'SOV',
-  markingStrategy: 'particle',
-  usesSpaces: true, // Korean uses spaces between words, but particles attach
-  verb: {
-    position: 'end',
-    suffixes: ['다', '요', '니다', '세요'],
-    subjectDrop: true,
-  },
   references: {
     me: '나', // "I/me" (informal)
     it: '그것', // "it"
@@ -37,8 +27,7 @@ export const koreanProfile: LanguageProfile = {
   // A query's scope before it (`#list 안의 <li/>`; M2 N3).
   queryScopeFirst: { marker: '안의', queryIn: '안에' },
   possessive: {
-    marker: '의', // Possessive particle
-    markerPosition: 'between',
+    ...koreanGrammar.possessive,
     specialForms: {
       me: '내', // Contracted form of 나의 (my)
       it: '그것의', // "its"
@@ -49,19 +38,6 @@ export const koreanProfile: LanguageProfile = {
       네: 'you', // ne (your)
       그의: 'it', // geu-ui (its/his)
     },
-  },
-  roleMarkers: {
-    patient: { primary: '을', alternatives: ['를'], position: 'after' },
-    // 에서 is deliberately NOT a destination alternative: it is the SOURCE
-    // primary ("at/from"), and listing it here let an unconsumed wait-line
-    // tail (`문서 에서` — from document) satisfy the next SOV clause's
-    // optional destination group (behavior-draggable's add captured
-    // destination=문서 instead of the schema `me` default). A real Korean
-    // destination renders 에/으로/로/의.
-    destination: { primary: '에', alternatives: ['으로', '로', '의'], position: 'after' },
-    source: { primary: '에서', alternatives: ['부터'], position: 'after' },
-    style: { primary: '로', alternatives: ['으로'], position: 'after' },
-    event: { primary: '을', alternatives: ['를'], position: 'after' }, // Event as object marker
   },
   // Imperative command forms are accepted on INPUT only — `primary` stays the
   // dictionary form, so rendering is unchanged (see LanguageProfile.defaultVerbForm:
@@ -229,15 +205,6 @@ export const koreanProfile: LanguageProfile = {
       alternatives: ['이벤트소스'],
       normalized: 'eventsource',
     },
-  },
-  tokenization: {
-    particles: ['을', '를', '이', '가', '은', '는', '에', '에서', '으로', '로', '와', '과', '도'],
-    boundaryStrategy: 'space',
-  },
-  // Korean writes a particle onto its noun (`#out에`, `나를`; M2 N5).
-  attachedMarkers: {
-    markers: ['을', '를', '에', '으로', '로', '의', '에서', '부터', '에게'],
-    afterWords: 'all',
   },
   eventHandler: {
     // Event marker: 할 때 (when/at the time of), used in SOV pattern

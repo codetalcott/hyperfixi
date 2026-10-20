@@ -6,25 +6,12 @@
  * Unlike most languages, Polish software UI uses IMPERATIVE form.
  */
 
+import { polishGrammar } from '@lokascript/framework/languages/pl';
 import type { LanguageProfile } from './types';
 
 export const polishProfile: LanguageProfile = {
-  code: 'pl',
-  name: 'Polish',
-  nativeName: 'Polski',
-  direction: 'ltr',
-  script: 'latin',
-  wordOrder: 'SVO',
-  markingStrategy: 'preposition',
-  usesSpaces: true,
-  // Polish uses imperative form for commands in software UI
-  // (unlike most languages that use infinitive)
-  defaultVerbForm: 'imperative',
-  verb: {
-    position: 'start',
-    subjectDrop: true,
-    suffixes: ['ać', 'eć', 'ić', 'yć', 'ąć', 'ować'],
-  },
+  // Word order, role markers, script: @lokascript/framework/languages/pl.
+  ...polishGrammar,
   references: {
     me: 'ja', // "I/me"
     it: 'to', // "it"
@@ -61,9 +48,7 @@ export const polishProfile: LanguageProfile = {
     },
   },
   possessive: {
-    marker: '', // Polish uses genitive case, not a marker
-    markerPosition: 'after-object',
-    usePossessiveAdjectives: true,
+    ...polishGrammar.possessive,
     specialForms: {
       me: 'mój', // "my" (masculine)
       it: 'jego', // "its"
@@ -82,12 +67,6 @@ export const polishProfile: LanguageProfile = {
       jego: 'it', // his/its
       jej: 'it', // her/its (feminine)
     },
-  },
-  roleMarkers: {
-    destination: { primary: 'do', alternatives: ['w', 'na', 'we'], position: 'before' },
-    source: { primary: 'z', alternatives: ['od', 'ze'], position: 'before' },
-    patient: { primary: '', position: 'before' },
-    style: { primary: 'z', alternatives: ['ze'], position: 'before' },
   },
   keywords: {
     // Class/Attribute operations (imperative form)

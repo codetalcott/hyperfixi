@@ -5,23 +5,12 @@
  * Agglutinative language similar to Hindi.
  */
 
+import { bengaliGrammar } from '@lokascript/framework/languages/bn';
 import type { LanguageProfile } from './types';
 
 export const bengaliProfile: LanguageProfile = {
-  code: 'bn',
-  name: 'Bengali',
-  nativeName: 'বাংলা',
-  direction: 'ltr',
-  script: 'bengali',
-  wordOrder: 'SOV',
-  markingStrategy: 'postposition',
-  usesSpaces: true,
-  defaultVerbForm: 'imperative',
-  verb: {
-    position: 'end',
-    suffixes: ['ুন', 'ো', 'া', 'ে', 'ি'],
-    subjectDrop: true,
-  },
+  // Word order, role markers, script: @lokascript/framework/languages/bn.
+  ...bengaliGrammar,
   references: {
     me: 'আমি',
     it: 'এটি',
@@ -44,8 +33,7 @@ export const bengaliProfile: LanguageProfile = {
   // A query's scope before it (`#list এ থাকা <li/>`, `আমাতে থাকা <p/>`; M2 N3).
   queryScopeFirst: { marker: 'এ', participle: 'থাকা', queryIn: 'এ' },
   possessive: {
-    marker: 'র',
-    markerPosition: 'between',
+    ...bengaliGrammar.possessive,
     keywords: {
       // "my" - আমার (amar)
       আমার: 'me',
@@ -56,13 +44,6 @@ export const bengaliProfile: LanguageProfile = {
       তার: 'it',
       এর: 'it',
     },
-  },
-  roleMarkers: {
-    patient: { primary: 'কে', position: 'after' },
-    destination: { primary: 'তে', alternatives: ['এ'], position: 'after' },
-    source: { primary: 'থেকে', position: 'after' },
-    style: { primary: 'দিয়ে', position: 'after' },
-    event: { primary: 'তে', position: 'after' },
   },
   keywords: {
     // Class/Attribute operations
@@ -211,15 +192,6 @@ export const bengaliProfile: LanguageProfile = {
       normalized: 'eventsource',
     },
   },
-  tokenization: {
-    particles: ['কে', 'তে', 'থেকে', 'র', 'এর', 'দিয়ে', 'জন্য', 'পর্যন্ত'],
-    boundaryStrategy: 'space',
-  },
-  // Bengali writes a case ending onto its noun (`#outকে`, `#outএ`; M2 N5).
-  // After a Bengali word only `কে`, which never changes: the locative is `তে`
-  // after a vowel and the vowel sign `ে` after a consonant (`ক্লিকে`), which
-  // the reader does not split.
-  attachedMarkers: { markers: ['কে', 'তে', 'এ'], afterWords: ['কে'] },
   eventHandler: {
     keyword: { primary: 'তে', alternatives: ['এ', 'যখন'], normalized: 'on' },
     sourceMarker: { primary: 'থেকে', position: 'after' },

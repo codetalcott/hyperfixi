@@ -65,6 +65,8 @@ export type {
   DomainTokenizerOptions,
   LanguageConfigMeta,
 } from './multilingual';
+// A language's grammar (the data lives in `@lokascript/framework/languages/<code>`)
+export type { GrammarProfile } from './languages/types';
 
 // Core - export classes and utilities
 export * from './core';

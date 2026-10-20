@@ -6,25 +6,13 @@
  * Very similar to Spanish but with Italian-specific vocabulary.
  */
 
+import { italianGrammar } from '@lokascript/framework/languages/it';
 import type { LanguageProfile } from './types';
 
 export const italianProfile: LanguageProfile = {
-  code: 'it',
-  name: 'Italian',
-  nativeName: 'Italiano',
+  // Word order, role markers, script: @lokascript/framework/languages/it.
+  ...italianGrammar,
   regions: ['western'],
-  direction: 'ltr',
-  script: 'latin',
-  wordOrder: 'SVO',
-  markingStrategy: 'preposition',
-  usesSpaces: true,
-  // Infinitive is standard for Italian software UI (Salvare, Annullare, Aprire)
-  // This matches macOS, Windows, and web app conventions
-  defaultVerbForm: 'infinitive',
-  verb: {
-    position: 'start',
-    subjectDrop: true,
-  },
   references: {
     me: 'io', // "I/me"
     it: 'esso', // "it"
@@ -51,9 +39,7 @@ export const italianProfile: LanguageProfile = {
     },
   },
   possessive: {
-    marker: 'di', // Italian uses "di" for general possession
-    markerPosition: 'before-property',
-    usePossessiveAdjectives: true,
+    ...italianGrammar.possessive,
     specialForms: {
       me: 'mio', // "my" (possessive adjective)
       it: 'suo', // "its"
@@ -76,12 +62,6 @@ export const italianProfile: LanguageProfile = {
       suoi: 'it',
       sue: 'it',
     },
-  },
-  roleMarkers: {
-    destination: { primary: 'in', alternatives: ['su', 'a'], position: 'before' },
-    source: { primary: 'da', alternatives: ['di'], position: 'before' },
-    patient: { primary: '', position: 'before' },
-    style: { primary: 'con', position: 'before' },
   },
   keywords: {
     // Class/Attribute operations

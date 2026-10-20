@@ -5,22 +5,13 @@
  * Features rich verb conjugation with pro-drop (subject omission).
  */
 
+import { portugueseGrammar } from '@lokascript/framework/languages/pt';
 import type { LanguageProfile } from './types';
 
 export const portugueseProfile: LanguageProfile = {
-  code: 'pt',
-  name: 'Portuguese',
-  nativeName: 'Português',
+  // Word order, role markers, script: @lokascript/framework/languages/pt.
+  ...portugueseGrammar,
   regions: ['western', 'priority'],
-  direction: 'ltr',
-  script: 'latin',
-  wordOrder: 'SVO',
-  markingStrategy: 'preposition',
-  usesSpaces: true,
-  verb: {
-    position: 'start',
-    subjectDrop: true,
-  },
   references: {
     me: 'eu', // "I/me"
     it: 'ele', // "it"
@@ -49,9 +40,7 @@ export const portugueseProfile: LanguageProfile = {
     it: { em: 'nele', de: 'dele' },
   },
   possessive: {
-    marker: 'de', // Uses "de" for general possession
-    markerPosition: 'before-property',
-    usePossessiveAdjectives: true,
+    ...portugueseGrammar.possessive,
     specialForms: {
       me: 'meu', // "my"
       it: 'seu', // "its"
@@ -65,12 +54,6 @@ export const portugueseProfile: LanguageProfile = {
       seu: 'it',
       sua: 'it',
     },
-  },
-  roleMarkers: {
-    destination: { primary: 'em', alternatives: ['para', 'a'], position: 'before' },
-    source: { primary: 'de', alternatives: ['desde'], position: 'before' },
-    patient: { primary: '', position: 'before' },
-    style: { primary: 'com', position: 'before' },
   },
   // Imperative command forms are accepted on INPUT only — `primary` stays the
   // dictionary form, so rendering is unchanged (see LanguageProfile.defaultVerbForm:

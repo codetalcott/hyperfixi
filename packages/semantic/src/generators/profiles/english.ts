@@ -4,24 +4,13 @@
  * SVO word order, prepositions, space-separated.
  */
 
+import { englishGrammar } from '@lokascript/framework/languages/en';
 import type { LanguageProfile } from './types';
 
 export const englishProfile: LanguageProfile = {
-  code: 'en',
-  name: 'English',
-  nativeName: 'English',
+  // Word order, role markers, script: @lokascript/framework/languages/en.
+  ...englishGrammar,
   regions: ['western', 'priority'],
-  direction: 'ltr',
-  script: 'latin',
-  wordOrder: 'SVO',
-  markingStrategy: 'preposition',
-  usesSpaces: true,
-  // English infinitive and imperative are identical ("toggle", "save", "open")
-  defaultVerbForm: 'base',
-  verb: {
-    position: 'start',
-    subjectDrop: false,
-  },
   references: {
     me: 'me',
     it: 'it',
@@ -35,8 +24,7 @@ export const englishProfile: LanguageProfile = {
     detail: 'detail',
   },
   possessive: {
-    marker: "'s",
-    markerPosition: 'after-object',
+    ...englishGrammar.possessive,
     specialForms: {
       me: 'my',
       it: 'its',
@@ -47,14 +35,6 @@ export const englishProfile: LanguageProfile = {
       your: 'you',
       its: 'it',
     },
-  },
-  roleMarkers: {
-    destination: { primary: 'on', alternatives: ['to', 'from'], position: 'before' },
-    source: { primary: 'from', position: 'before' },
-    patient: { primary: '', position: 'before' },
-    style: { primary: 'with', alternatives: ['by', 'using'], position: 'before' },
-    responseType: { primary: 'as', position: 'before' },
-    method: { primary: 'via', alternatives: ['using'], position: 'before' },
   },
   keywords: {
     toggle: { primary: 'toggle' },

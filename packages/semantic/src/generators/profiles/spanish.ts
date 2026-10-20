@@ -5,25 +5,13 @@
  * Features rich verb conjugation with pro-drop (subject omission).
  */
 
+import { spanishGrammar } from '@lokascript/framework/languages/es';
 import type { LanguageProfile } from './types';
 
 export const spanishProfile: LanguageProfile = {
-  code: 'es',
-  name: 'Spanish',
-  nativeName: 'Español',
+  // Word order, role markers, script: @lokascript/framework/languages/es.
+  ...spanishGrammar,
   regions: ['western', 'priority'],
-  direction: 'ltr',
-  script: 'latin',
-  wordOrder: 'SVO',
-  markingStrategy: 'preposition',
-  usesSpaces: true,
-  // Infinitive is standard for Spanish software UI (Guardar, Cancelar, Abrir)
-  // This matches macOS, Windows, and web app conventions
-  defaultVerbForm: 'infinitive',
-  verb: {
-    position: 'start',
-    subjectDrop: true,
-  },
   references: {
     me: 'yo', // "I/me" (mí, mi are alternatives handled in possessive)
     it: 'ello', // "it"
@@ -50,9 +38,7 @@ export const spanishProfile: LanguageProfile = {
     },
   },
   possessive: {
-    marker: 'de', // Spanish uses "de" for general possession
-    markerPosition: 'before-property',
-    usePossessiveAdjectives: true,
+    ...spanishGrammar.possessive,
     specialForms: {
       me: 'mi', // "my" (possessive adjective)
       it: 'su', // "its"
@@ -63,15 +49,6 @@ export const spanishProfile: LanguageProfile = {
       tu: 'you',
       su: 'it',
     },
-  },
-  roleMarkers: {
-    // `hacia` is the i18n grammar's optional destination render form ("towards");
-    // without it here a rendered/user `hacia` clause silently dropped the
-    // destination (add → default `me`, put → null parse). Vocab Batch 1 (V2+V4).
-    destination: { primary: 'en', alternatives: ['sobre', 'a', 'hacia'], position: 'before' },
-    source: { primary: 'de', alternatives: ['desde'], position: 'before' },
-    patient: { primary: '', position: 'before' },
-    style: { primary: 'con', position: 'before' },
   },
   // Imperative command forms are accepted on INPUT only — `primary` stays the
   // dictionary form, so rendering is unchanged (see LanguageProfile.defaultVerbForm:
