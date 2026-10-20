@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.1.0] - 2026-10-20
+
+Each language's grammar is framework's data now (`@lokascript/framework/languages/<code>`), and
+semantic's profiles extend it unchanged, so a domain can take a language's grammar without
+hyperscript's. Installs get smaller: i18n and testing-framework stop pulling bundlers, browsers and
+the repo's own gates.
+
 ### Added
 
 - **`@lokascript/framework/languages/<code>`: each language's grammar, as data.** 24 modules, and a
@@ -20,13 +27,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   tokenizer and patterns. No profile changed: all 24 are deep-equal to 7.0.0's, the 27,194 parses
   of the command-shape corpus are unchanged, and the domains' gate reads every sentence as before.
   Semantic's ESM files are smaller (the data is framework's); its browser bundles grew by at most
-  0.6 KB gzipped (0.3%).
+  0.6 KB gzipped (0.3%) (#1602).
 
 ### Fixed
 
 - **`npm run add-language` runs again.** The scaffolder read `__dirname` in an ES module and threw
   before writing a file. It now also writes the language's grammar to framework (`--script` sets
-  the writing system, default `latin`) and the profile over it.
+  the writing system, default `latin`) and the profile over it (#1602).
 
 - **`@hyperfixi/mcp-server` no longer reports a stale build when it runs from npm.** At startup it
   compares each `@hyperfixi/*` / `@lokascript/*` dependency's `src/` against its `dist/`, which
@@ -35,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   hyperfixi plugin's) called five packages stale and printed `npm run build` commands for the npx
   cache. The check now runs only for packages that resolve outside `node_modules` (workspace
   links); the check that refuses a tool call when a `dist/` changes under the running server is
-  unchanged.
+  unchanged (#1599).
 
 ### Changed
 
@@ -45,7 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   optional one included, pulled a bundler and a DOM: 145 MB and 40 packages for i18n 7.0.0, against
   about 74 MB and 11 without them (macOS arm64). They are devDependencies now, and `vite` is an
   optional peer (`>=4.0.0`, as `@hyperfixi/vite-plugin` declares it), so the plugin's types
-  resolve where vite is installed.
+  resolve where vite is installed (#1597).
 
 - **`@hyperfixi/testing-framework` installs what its published files import: `diff` and `jsdom`.**
   Its three entries (`.`, `./runner`, `./assertions`) import those two, and `runner` loads
@@ -54,13 +61,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   tsx, url-parse, and both browsers) back the repo's own gates, which are not in `dist/`: an
   install was 262 MB in 116 packages, and puppeteer's install script downloaded Chrome on top
   (`--ignore-scripts`, macOS arm64). Now about 28 MB in 38. `playwright` and `puppeteer` are
-  optional peers: install the one a browser run uses. The built files are byte-identical.
+  optional peers: install the one a browser run uses. The built files are byte-identical (#1598).
 
 ### Removed
 
 - **`@hyperfixi/testing-framework`'s `hyperfixi-test` and `hyperfixi-test-multilingual` bins.**
   They named `dist/cli.js` and `dist/multilingual/cli.js`, which the build has never produced, so
-  neither command ever ran from the package.
+  neither command ever ran from the package (#1598).
 
 ## [7.0.0] - 2026-10-19
 
@@ -2187,7 +2194,9 @@ _Synchronized version release. See git history for details._
 - npm access token stored in GitHub Secrets
 - 2FA recommended for npm organization
 
-[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v6.3.0...HEAD
+[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v7.1.0...HEAD
+[7.1.0]: https://github.com/codetalcott/hyperfixi/compare/v7.0.0...v7.1.0
+[7.0.0]: https://github.com/codetalcott/hyperfixi/compare/v6.3.0...v7.0.0
 [6.3.0]: https://github.com/codetalcott/hyperfixi/compare/v6.2.0...v6.3.0
 [6.2.0]: https://github.com/codetalcott/hyperfixi/compare/v6.1.0...v6.2.0
 [6.1.0]: https://github.com/codetalcott/hyperfixi/compare/v6.0.0...v6.1.0
