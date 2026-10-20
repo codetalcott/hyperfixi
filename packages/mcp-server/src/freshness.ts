@@ -33,12 +33,13 @@
  *     ask, and which an src-vs-dist check cannot answer (a freshly-rebuilt dist looks
  *     perfectly fresh to that rule while this process still holds the previous one).
  * The startup probe below covers the src-vs-dist half for the launch instant, so the two
- * questions together close the window.
+ * questions together close the window. It asks it of workspace links only: an installed
+ * package's `src/` is shipped source, not what a build reads (`isInstalledCopy`).
  */
 
 import { createRequire } from 'node:module';
-import { statSync, existsSync, readdirSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { statSync, existsSync, readdirSync, realpathSync } from 'node:fs';
+import { dirname, join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const require_ = createRequire(import.meta.url);
@@ -156,8 +157,45 @@ function hasNewerTs(dir: string, builtAt: number): boolean {
 }
 
 /**
- * Watched packages that were ALREADY stale (src/ newer than dist/) when we launched, each
- * with the on-disk directory to rebuild.
+ * True when `marker` belongs to a copy an installer wrote (npm, npx, pnpm, yarn), not to a
+ * workspace link.
+ *
+ * The src-vs-dist rule only means something where `src/` is what the next build reads: in
+ * the monorepo, whose workspace symlink resolves to `packages/<pkg>/dist/…`. Most of these
+ * packages also publish `src/`, and an installer writes it at extraction time, often a few
+ * milliseconds after `dist/`, so every `npx @hyperfixi/mcp-server` launch called five
+ * packages stale and told the user to run `npm run build` inside the npx cache. The path is
+ * resolved through symlinks first, so a workspace link reached as `node_modules/@scope/pkg`
+ * (Node's `--preserve-symlinks`) still counts as a link.
+ */
+export function isInstalledCopy(marker: string): boolean {
+  let real = marker;
+  try {
+    real = realpathSync(marker);
+  } catch {
+    // unreadable → judge the path as given
+  }
+  return real.split(sep).includes('node_modules');
+}
+
+/**
+ * True when a workspace package's built entry `marker` (`<pkg>/dist/…`) is older than a .ts
+ * under `<pkg>/src`. Never true for an installed copy (`isInstalledCopy`).
+ */
+export function bornStale(marker: string): boolean {
+  if (isInstalledCopy(marker)) return false;
+  const srcDir = join(dirname(dirname(marker)), 'src');
+  if (!existsSync(srcDir)) return false;
+  try {
+    return hasNewerTs(srcDir, statSync(marker).mtimeMs);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Watched workspace packages that were ALREADY stale (src/ newer than dist/) when we
+ * launched, each with the on-disk directory to rebuild.
  *
  * The mtime snapshot cannot see these: nothing changes while we run, so the process serves
  * stale code forever and reports itself healthy. Same rule as `scripts/ensure-fresh.sh`
@@ -172,15 +210,7 @@ function hasNewerTs(dir: string, builtAt: number): boolean {
  */
 export function staleAtStartup(): Array<{ pkg: string; dir: string }> {
   return watched
-    .filter(w => {
-      const srcDir = join(dirname(dirname(w.marker)), 'src');
-      if (!existsSync(srcDir)) return false;
-      try {
-        return hasNewerTs(srcDir, statSync(w.marker).mtimeMs);
-      } catch {
-        return false;
-      }
-    })
+    .filter(w => bornStale(w.marker))
     .map(w => ({ pkg: w.pkg, dir: dirname(dirname(w.marker)) }));
 }
 
