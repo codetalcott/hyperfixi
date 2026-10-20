@@ -268,10 +268,16 @@ npm run test:domains
    skeleton and semantic's language profiles, and no other gate here parses one.
    It runs lokascript-domains' own round-trip gate (`gate-upstream.sh`) on this
    tree's intent/framework/semantic and fails on a case worse than the domains'
-   baseline; moved parses and better cases are reported, not failed. The domains
-   ref is pinned in the script: bump it when the domains relock and regenerate
-   their baseline. Blind spot: it renders each command and reads it back, so a
-   change both sides share (a marker swapped in a profile) moves nothing.
+   baseline; moved parses and better cases are reported, not failed. That pass
+   renders each command and reads it back with the same packages, so a change
+   both sides share moves nothing in it (semantic's ja を → お, measured). A
+   second pass (`domain-gate-read-back.mjs`) reads the sentences the domains'
+   LOCKED packages render (1,676) with this tree's, and fails on one that reads
+   differently: the ja swap fails 13 learn sentences. A deliberate change to what
+   old input means is listed in `scripts/domain-gate-accepted.json`, one entry
+   per sentence with a reason, shrink-only; the domains' relock onto the release
+   clears it. The domains ref is pinned in the script: bump it when the domains
+   relock and regenerate their baseline.
 
 #### Stale-dist auto-rebuild
 
@@ -393,7 +399,7 @@ As of 2026-01-23, all CI testing has been consolidated into a single `.github/wo
 | 11  | `bundle-size`             | ✓   | —                 | —       | Size report; PR-only (slim post-merge)                               |
 | 12  | `protocol-conformance`    | ✓   | —                 | —       | 4 reference parsers; gated on `protocol/**` paths                    |
 | 13  | `go-client`               | ✓   | —                 | —       | `go build` + `go test`; gated on go-client paths                     |
-| 14  | `domain-gate`             | ✓   | —                 | —       | lokascript-domains' round trip; gated on intent/framework/semantic   |
+| 14  | `domain-gate`             | ✓   | —                 | —       | round trip + old-input read-back; gated on intent/framework/semantic |
 | 15  | `ci-gate`                 | ✓   | ✓                 | ✓       | `always()` aggregate; fails if any job failed/cancelled (skip is OK) |
 
 The PR-only jobs already ran against the merged-as-PR code (`strict` branch protection means the PR validated the exact merged tree), so re-running them on the post-merge push would be redundant — the push run keeps only the build tier (`changes`, `build`, `bundles`, and the `always()` `ci-gate`). For the reasoning see the job comments in `.github/workflows/ci.yml`.
