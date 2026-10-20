@@ -43,7 +43,7 @@
     "@lokascript/framework": "^7.0.0",
     "@lokascript/planner": "^7.0.0",
     "@lokascript/semantic": "^7.0.0",
-    "@modelcontextprotocol/server": "^2.1.0",
+    "@modelcontextprotocol/server": "^2.3.1",
     "glob": "^13.0.6",
     "yaml": "^2.9.1"
   },
@@ -87,7 +87,7 @@
     "@lokascript/compilation-service": "^7.0.0",
     "@lokascript/framework": "^7.0.0",
     "@lokascript/semantic": "^7.0.0",
-    "@types/node": "^26.6.3",
+    "@types/node": "^26.6.5",
     "tsup": "^9.0.0",
     "tsx": "^4.23.15",
     "typescript": "^5.0.0",
