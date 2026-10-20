@@ -150,7 +150,7 @@ jobs:
               - 'packages/intent/**'
               - 'packages/framework/**'
               - 'packages/semantic/**'
-              - 'scripts/domain-gate.sh'
+              - 'scripts/domain-gate*'
 
   # ============================================
   # Job 1: Build All Packages (runs once, shared by all jobs)
@@ -1712,6 +1712,9 @@ jobs:
   # only. This runs the domains' own round-trip gate on intent, framework and
   # semantic packed from this PR's build (scripts/domain-gate.sh, which pins
   # the domains ref), and fails on a case worse than the domains' baseline.
+  # That pass renders and reads with the same packages, so a second one reads
+  # the sentences the domains' LOCKED packages render with this build's, and
+  # fails on one that reads differently (old input still reads).
   # Gated on those three packages; it installs only the domains repo (~1 min).
   # ============================================
   domain-gate:
