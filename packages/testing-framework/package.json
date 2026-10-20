@@ -54,7 +54,7 @@
   "license": "MIT",
   "dependencies": {
     "diff": "^8.0.3",
-    "jsdom": "^30.1.1"
+    "jsdom": "^30.1.3"
   },
   "devDependencies": {
     "@hyperfixi/engine": "^7.0.0",
@@ -64,18 +64,18 @@
     "@lokascript/i18n": "^7.0.0",
     "@lokascript/semantic": "^7.0.0",
     "@types/diff": "^5.0.0",
-    "@types/node": "^26.6.3",
+    "@types/node": "^26.6.5",
     "@vitest/coverage-v8": "^5.0.5",
-    "esbuild": "^0.25.12",
-    "happy-dom": "^21.0.1",
+    "esbuild": "^0.28.2",
+    "happy-dom": "^21.0.3",
     "hyperscript.org": "0.9.93",
     "playwright": "^1.40.0",
-    "puppeteer": "^25.12.0",
+    "puppeteer": "^25.14.0",
     "tsup": "^9.0.0",
     "tsx": "^4.23.15",
     "typescript": "^5.0.0",
     "url-parse": "^1.5.10",
-    "vite": "^8.3.1",
+    "vite": "^8.3.4",
     "vitest": "^5.0.2"
   },
   "peerDependencies": {
