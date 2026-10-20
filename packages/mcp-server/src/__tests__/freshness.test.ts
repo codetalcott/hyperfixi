@@ -6,14 +6,24 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, utimesSync, statSync } from 'node:fs';
+import {
+  mkdtempSync,
+  mkdirSync,
+  writeFileSync,
+  rmSync,
+  utimesSync,
+  statSync,
+  symlinkSync,
+} from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 
 import {
+  bornStale,
   captureFreshnessBaseline,
+  isInstalledCopy,
   staleSinceStartup,
   staleAtStartup,
   staleToolError,
@@ -125,6 +135,64 @@ describe('freshness guard: staleness detection', () => {
       expect(s.dir).not.toContain('@'); // a directory, not a package name
       expect(s.dir.startsWith('/')).toBe(true);
     }
+  });
+});
+
+describe('freshness guard: born stale means a workspace link, never an installed copy', () => {
+  let dir: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'freshness-born-'));
+  });
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  /** `<root>/dist/index.js` + `<root>/src/index.ts`, src `srcLagMs` after dist (negative: before). */
+  function pkgAt(root: string, srcLagMs: number): string {
+    mkdirSync(join(root, 'dist'), { recursive: true });
+    mkdirSync(join(root, 'src'), { recursive: true });
+    const marker = join(root, 'dist', 'index.js');
+    const source = join(root, 'src', 'index.ts');
+    writeFileSync(marker, 'export const v = 1;');
+    writeFileSync(source, 'export const v = 1;');
+    const builtAt = Date.now() / 1000 - 100;
+    utimesSync(marker, builtAt, builtAt);
+    utimesSync(source, builtAt + srcLagMs / 1000, builtAt + srcLagMs / 1000);
+    return marker;
+  }
+
+  it('a workspace package whose src/ is newer than its dist/ is born stale', () => {
+    const marker = pkgAt(join(dir, 'packages', 'semantic'), 60_000);
+    expect(isInstalledCopy(marker)).toBe(false);
+    expect(bornStale(marker)).toBe(true);
+  });
+
+  it('a workspace package built after its last edit is not', () => {
+    expect(bornStale(pkgAt(join(dir, 'packages', 'semantic'), -60_000))).toBe(false);
+  });
+
+  it('an installed copy is not, though the installer wrote src/ after dist/', () => {
+    // What `npx @hyperfixi/mcp-server` saw on 7.0.0: the tarball's src/ extracted a few ms
+    // after its dist/, and the server told the user to rebuild five packages in the npx cache.
+    const marker = pkgAt(join(dir, 'node_modules', '@lokascript', 'semantic'), 5);
+    expect(isInstalledCopy(marker)).toBe(true);
+    expect(bornStale(marker)).toBe(false);
+  });
+
+  it('a workspace link reached through node_modules/ is still a link', () => {
+    // npm's workspace symlink, as Node sees it under --preserve-symlinks: the path runs
+    // through node_modules, the file lives in packages/.
+    const marker = pkgAt(join(dir, 'packages', 'semantic'), 60_000);
+    mkdirSync(join(dir, 'node_modules', '@lokascript'), { recursive: true });
+    symlinkSync(
+      join(dir, 'packages', 'semantic'),
+      join(dir, 'node_modules', '@lokascript', 'semantic')
+    );
+    const viaLink = join(dir, 'node_modules', '@lokascript', 'semantic', 'dist', 'index.js');
+    expect(isInstalledCopy(viaLink)).toBe(false);
+    expect(bornStale(viaLink)).toBe(true);
+    expect(bornStale(marker)).toBe(true);
   });
 });
 
