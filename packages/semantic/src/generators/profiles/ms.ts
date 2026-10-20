@@ -4,22 +4,12 @@
  * SVO word order, prepositions, space-separated.
  */
 
+import { malayGrammar } from '@lokascript/framework/languages/ms';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const malayProfile: LanguageProfile = {
-  code: 'ms',
-  name: 'Malay',
-  nativeName: 'Melayu',
-  direction: 'ltr',
-  script: 'latin',
-  wordOrder: 'SVO',
-  markingStrategy: 'preposition',
-  usesSpaces: true,
-  defaultVerbForm: 'base',
-  verb: {
-    position: 'start',
-    subjectDrop: true,
-  },
+// Word order, role markers, script: @lokascript/framework/languages/ms.
+export const malayProfile: LanguageProfile = /* @__PURE__ */ withGrammar(malayGrammar, {
   references: {
     me: 'saya',
     it: 'ia',
@@ -33,8 +23,6 @@ export const malayProfile: LanguageProfile = {
     detail: 'perincian',
   },
   possessive: {
-    marker: '', // Malay often uses suffix or juxtaposition
-    markerPosition: 'after-object',
     keywords: {
       // Full pronoun forms (also serve as possessives)
       saya: 'me', // my (formal)
@@ -61,12 +49,6 @@ export const malayProfile: LanguageProfile = {
       '-mu': 'you', // your (suffix)
       '-nya': 'it', // his/her/its (suffix)
     },
-  },
-  roleMarkers: {
-    destination: { primary: 'ke', alternatives: ['pada'], position: 'before' },
-    source: { primary: 'dari', position: 'before' },
-    patient: { primary: '', position: 'before' },
-    style: { primary: 'dengan', position: 'before' },
   },
   keywords: {
     // Class/Attribute operations
@@ -215,4 +197,4 @@ export const malayProfile: LanguageProfile = {
     // the only language besides en in that state (the swap/if recovery split).
     eventMarker: { primary: 'apabila', alternatives: ['ketika'], position: 'before' },
   },
-};
+});

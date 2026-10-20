@@ -7,7 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`@lokascript/framework/languages/<code>`: each language's grammar, as data.** 24 modules, and a
+  `languages` barrel, export what holds for a language whatever a DSL says in it: its names,
+  direction, script, word order, marking strategy, spacing, role markers, verb placement,
+  tokenization particles, the default command-verb form, the markers it writes onto their word, and
+  how it builds "X's Y" (framework's new `GrammarProfile` type, a superset of `GrammarProfileSlice`).
+  They are plain objects with no side effects, in ESM and CJS. `@lokascript/semantic`'s 24 profiles
+  are now that grammar with hyperscript's vocabulary over it, so a domain can take a language's
+  grammar without importing semantic, whose `languages/<code>` also registers hyperscript's
+  tokenizer and patterns. No profile changed: all 24 are deep-equal to 7.0.0's, the 27,194 parses
+  of the command-shape corpus are unchanged, and the domains' gate reads every sentence as before.
+  Semantic's ESM files are smaller (the data is framework's); its browser bundles grew by at most
+  0.6 KB gzipped (0.3%).
+
 ### Fixed
+
+- **`npm run add-language` runs again.** The scaffolder read `__dirname` in an ES module and threw
+  before writing a file. It now also writes the language's grammar to framework (`--script` sets
+  the writing system, default `latin`) and the profile over it.
 
 - **`@hyperfixi/mcp-server` no longer reports a stale build when it runs from npm.** At startup it
   compares each `@hyperfixi/*` / `@lokascript/*` dependency's `src/` against its `dist/`, which

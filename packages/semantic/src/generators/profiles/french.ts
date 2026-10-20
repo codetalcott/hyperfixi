@@ -5,24 +5,13 @@
  * Features rich verb conjugation and gendered articles.
  */
 
+import { frenchGrammar } from '@lokascript/framework/languages/fr';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const frenchProfile: LanguageProfile = {
-  code: 'fr',
-  name: 'French',
-  nativeName: 'Français',
+// Word order, role markers, script: @lokascript/framework/languages/fr.
+export const frenchProfile: LanguageProfile = /* @__PURE__ */ withGrammar(frenchGrammar, {
   regions: ['western', 'priority'],
-  direction: 'ltr',
-  script: 'latin',
-  wordOrder: 'SVO',
-  markingStrategy: 'preposition',
-  usesSpaces: true,
-  // Infinitive is standard for French software UI (Enregistrer, Ouvrir, Fermer)
-  defaultVerbForm: 'infinitive',
-  verb: {
-    position: 'start',
-    subjectDrop: false,
-  },
   references: {
     me: 'moi', // "I/me"
     it: 'il', // "it"
@@ -53,9 +42,6 @@ export const frenchProfile: LanguageProfile = {
     },
   },
   possessive: {
-    marker: 'de', // Uses "de" for general possession
-    markerPosition: 'before-property',
-    usePossessiveAdjectives: true,
     specialForms: {
       me: 'ma', // "my" (feminine; "mon" for masculine)
       it: 'sa', // "its" (feminine; "son" for masculine)
@@ -72,12 +58,6 @@ export const frenchProfile: LanguageProfile = {
       sa: 'it',
       ses: 'it',
     },
-  },
-  roleMarkers: {
-    destination: { primary: 'sur', alternatives: ['à', 'dans'], position: 'before' },
-    source: { primary: 'de', alternatives: ['depuis'], position: 'before' },
-    patient: { primary: '', position: 'before' },
-    style: { primary: 'avec', position: 'before' },
   },
   // Imperative command forms are accepted on INPUT only — `primary` stays the
   // dictionary form, so rendering is unchanged (see LanguageProfile.defaultVerbForm:
@@ -264,4 +244,4 @@ export const frenchProfile: LanguageProfile = {
     eventMarker: { primary: 'au', alternatives: ['lors du', 'lors de', 'sur'], position: 'before' },
     temporalMarkers: ['quand', 'lorsque'], // temporal conjunctions (when)
   },
-};
+});

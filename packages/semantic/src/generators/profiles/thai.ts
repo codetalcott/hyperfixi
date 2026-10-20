@@ -5,22 +5,12 @@
  * Isolating language (like Chinese) with no inflection.
  */
 
+import { thaiGrammar } from '@lokascript/framework/languages/th';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const thaiProfile: LanguageProfile = {
-  code: 'th',
-  name: 'Thai',
-  nativeName: 'ไทย',
-  direction: 'ltr',
-  script: 'thai',
-  wordOrder: 'SVO',
-  markingStrategy: 'preposition',
-  usesSpaces: false, // Thai doesn't use spaces between words
-  defaultVerbForm: 'base',
-  verb: {
-    position: 'second',
-    subjectDrop: true,
-  },
+// Word order, role markers, script: @lokascript/framework/languages/th.
+export const thaiProfile: LanguageProfile = /* @__PURE__ */ withGrammar(thaiGrammar, {
   references: {
     me: 'ฉัน',
     it: 'มัน',
@@ -33,8 +23,6 @@ export const thaiProfile: LanguageProfile = {
     window: 'หน้าต่าง',
   },
   possessive: {
-    marker: 'ของ',
-    markerPosition: 'between',
     keywords: {
       // Thai uses ของ (khong) + pronoun, but also full possessive phrases
       // "my" - ของฉัน (khong chan), ของผม (khong phom, male speaker)
@@ -47,19 +35,6 @@ export const thaiProfile: LanguageProfile = {
       ของเขา: 'it', // his
       ของเธอ: 'it', // her
     },
-  },
-  roleMarkers: {
-    patient: { primary: '', position: 'before' }, // Thai is isolating - no case markers
-    destination: { primary: 'ใน', alternatives: ['ไปยัง'], position: 'before' },
-    source: { primary: 'จาก', position: 'before' },
-    style: { primary: 'ด้วย', position: 'before' },
-    // No `event` role marker: a command's event argument (`trigger foo` /
-    // `send foo`) is an UNMARKED object in Thai, like every other SVO profile
-    // (es/zh/id/…). `เมื่อ` is the temporal "when/on" marker and belongs only on
-    // the event-HANDLER head — which uses `eventHandler.eventMarker` (below),
-    // not this role marker. Carrying it here generated `ทริกเกอร์ เมื่อ {event}`,
-    // which never matched the transformer's `ทริกเกอร์ {event}` → trigger/send
-    // dropped (th behavior-draggable/removable/resizable/sortable lossy).
   },
   keywords: {
     // Class/Attribute operations
@@ -202,9 +177,6 @@ export const thaiProfile: LanguageProfile = {
     // for future i18n dictionary support)
     bind: { primary: 'ผูก', alternatives: ['bind'], normalized: 'bind' },
   },
-  tokenization: {
-    boundaryStrategy: 'character', // Character-based like Chinese/Japanese
-  },
   eventHandler: {
     keyword: { primary: 'เมื่อ', alternatives: ['ตอน'], normalized: 'on' },
     sourceMarker: { primary: 'จาก', position: 'before' },
@@ -214,4 +186,4 @@ export const thaiProfile: LanguageProfile = {
     eventMarker: { primary: 'เมื่อ', alternatives: ['ตอน'], position: 'before' },
     temporalMarkers: ['เมื่อ', 'ตอน'], // temporal conjunctions (when)
   },
-};
+});

@@ -5,21 +5,12 @@
  * Features noun class system (18 classes) and verb agreement prefixes.
  */
 
+import { swahiliGrammar } from '@lokascript/framework/languages/sw';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const swahiliProfile: LanguageProfile = {
-  code: 'sw',
-  name: 'Swahili',
-  nativeName: 'Kiswahili',
-  direction: 'ltr',
-  script: 'latin',
-  wordOrder: 'SVO',
-  markingStrategy: 'preposition',
-  usesSpaces: true,
-  verb: {
-    position: 'start',
-    subjectDrop: true,
-  },
+// Word order, role markers, script: @lokascript/framework/languages/sw.
+export const swahiliProfile: LanguageProfile = /* @__PURE__ */ withGrammar(swahiliGrammar, {
   references: {
     me: 'mimi', // "I/me"
     it: 'hiyo', // "it"
@@ -33,9 +24,6 @@ export const swahiliProfile: LanguageProfile = {
     detail: 'maelezo',
   },
   possessive: {
-    marker: '', // Swahili uses possessive pronouns
-    markerPosition: 'after-object',
-    usePossessiveAdjectives: true,
     specialForms: {
       me: 'yangu', // "my" (class-dependent: wangu/yangu/langu...)
       it: 'yake', // "its"
@@ -58,12 +46,6 @@ export const swahiliProfile: LanguageProfile = {
       lake: 'it',
       chake: 'it',
     },
-  },
-  roleMarkers: {
-    destination: { primary: 'kwenye', alternatives: ['kwa'], position: 'before' },
-    source: { primary: 'kutoka', position: 'before' },
-    patient: { primary: '', position: 'before' },
-    style: { primary: 'na', position: 'before' },
   },
   keywords: {
     toggle: { primary: 'badilisha', normalized: 'toggle' },
@@ -203,4 +185,4 @@ export const swahiliProfile: LanguageProfile = {
       position: 'before',
     },
   },
-};
+});

@@ -5,21 +5,12 @@
  * Indigenous language of the Andean region with rich morphology.
  */
 
+import { quechuaGrammar } from '@lokascript/framework/languages/qu';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const quechuaProfile: LanguageProfile = {
-  code: 'qu',
-  name: 'Quechua',
-  nativeName: 'Runasimi',
-  direction: 'ltr',
-  script: 'latin',
-  wordOrder: 'SOV',
-  markingStrategy: 'postposition',
-  usesSpaces: true,
-  verb: {
-    position: 'end',
-    subjectDrop: true,
-  },
+// Word order, role markers, script: @lokascript/framework/languages/qu.
+export const quechuaProfile: LanguageProfile = /* @__PURE__ */ withGrammar(quechuaGrammar, {
   references: {
     // Aligned to the i18n dict's emitted surface forms (the corpus-canonical
     // words the parser must recognize — §7l). The dict emits noqa/punta/kurku;
@@ -39,8 +30,6 @@ export const quechuaProfile: LanguageProfile = {
     detail: 'sut_iy',
   },
   possessive: {
-    marker: '-pa', // Genitive suffix
-    markerPosition: 'after-object',
     // Quechua: ñuqapa value = "my value"
     keywords: {
       // Genitive forms (pronoun + -pa suffix)
@@ -67,13 +56,6 @@ export const quechuaProfile: LanguageProfile = {
       chay: 'it',
     },
     connectors: ['paq', 'pa'],
-  },
-  roleMarkers: {
-    patient: { primary: 'ta', position: 'after' },
-    destination: { primary: 'man', alternatives: ['pa'], position: 'after' },
-    source: { primary: 'manta', position: 'after' },
-    style: { primary: 'wan', position: 'after' },
-    event: { primary: 'pi', position: 'after' }, // Locative: event occurs "at" (pi)
   },
   keywords: {
     toggle: { primary: "t'ikray", alternatives: ['tikray'], normalized: 'toggle' },
@@ -236,4 +218,4 @@ export const quechuaProfile: LanguageProfile = {
     sourceMarker: { primary: 'manta', position: 'after' },
     eventMarker: { primary: 'pi', alternatives: ['kaqtin', 'kaqpi'], position: 'after' },
   },
-};
+});

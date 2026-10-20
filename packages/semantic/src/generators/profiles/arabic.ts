@@ -5,22 +5,13 @@
  * Features root-based morphology and rich verb conjugation.
  */
 
+import { arabicGrammar } from '@lokascript/framework/languages/ar';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const arabicProfile: LanguageProfile = {
-  code: 'ar',
-  name: 'Arabic',
-  nativeName: 'العربية',
+// Word order, role markers, script: @lokascript/framework/languages/ar.
+export const arabicProfile: LanguageProfile = /* @__PURE__ */ withGrammar(arabicGrammar, {
   regions: ['priority'],
-  direction: 'rtl',
-  script: 'arabic',
-  wordOrder: 'VSO',
-  markingStrategy: 'preposition',
-  usesSpaces: true,
-  verb: {
-    position: 'start',
-    subjectDrop: true,
-  },
   references: {
     me: 'أنا', // "I/me" - first person
     it: 'هو', // "it" (masculine)
@@ -76,9 +67,6 @@ export const arabicProfile: LanguageProfile = {
     },
   },
   possessive: {
-    marker: '', // No explicit marker - uses possessive pronouns
-    markerPosition: 'after-object',
-    usePossessiveAdjectives: true,
     specialForms: {
       // Arabic: "value لي" (value for-me) - possessive pronoun follows property
       me: 'لي', // "for me" / "mine"
@@ -94,16 +82,6 @@ export const arabicProfile: LanguageProfile = {
       له: 'it', // his/its (masculine)
       لها: 'it', // her/its (feminine)
     },
-  },
-  roleMarkers: {
-    destination: {
-      primary: 'على',
-      alternatives: ['في', 'إلى', 'ب', 'قبل', 'بعد'],
-      position: 'before',
-    },
-    source: { primary: 'من', position: 'before' },
-    patient: { primary: '', position: 'before' },
-    style: { primary: 'بـ', alternatives: ['باستخدام'], position: 'before' },
   },
   keywords: {
     // Class/Attribute operations
@@ -257,9 +235,6 @@ export const arabicProfile: LanguageProfile = {
       normalized: 'eventsource',
     },
   },
-  tokenization: {
-    prefixes: ['ال', 'و', 'ف', 'ب', 'ك', 'ل'],
-  },
   eventHandler: {
     // Event marker: عند (at/upon), used in VSO pattern
     // Pattern: عند [event] [action] [patient] [على destination]
@@ -276,4 +251,4 @@ export const arabicProfile: LanguageProfile = {
     // Example: عند عدم التركيز أخف #tooltip = "on blur hide #tooltip"
     negationMarker: { primary: 'عدم', alternatives: ['عدم'], position: 'before' },
   },
-};
+});

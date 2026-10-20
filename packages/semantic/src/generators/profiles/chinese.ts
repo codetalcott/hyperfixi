@@ -5,22 +5,13 @@
  * Isolating language with topic-comment structure and optional BA construction.
  */
 
+import { chineseGrammar } from '@lokascript/framework/languages/zh';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const chineseProfile: LanguageProfile = {
-  code: 'zh',
-  name: 'Chinese',
-  nativeName: '中文',
+// Word order, role markers, script: @lokascript/framework/languages/zh.
+export const chineseProfile: LanguageProfile = /* @__PURE__ */ withGrammar(chineseGrammar, {
   regions: ['east-asian', 'priority'],
-  direction: 'ltr',
-  script: 'cjk',
-  wordOrder: 'SVO',
-  markingStrategy: 'preposition', // Uses prepositions but often implicit
-  usesSpaces: false,
-  verb: {
-    position: 'second',
-    subjectDrop: true,
-  },
   references: {
     me: '我', // "I/me"
     it: '它', // "it"
@@ -34,8 +25,6 @@ export const chineseProfile: LanguageProfile = {
     detail: '详情',
   },
   possessive: {
-    marker: '的', // Possessive particle (de)
-    markerPosition: 'between',
     // Chinese: 我的 value (wǒ de value) = "my value"
     keywords: {
       // Compound possessive forms (pronoun + 的)
@@ -45,12 +34,6 @@ export const chineseProfile: LanguageProfile = {
       他的: 'it', // tā de (his)
       她的: 'it', // tā de (her)
     },
-  },
-  roleMarkers: {
-    destination: { primary: '在', alternatives: ['到', '于'], position: 'before' },
-    source: { primary: '从', alternatives: ['由'], position: 'before' },
-    patient: { primary: '把', position: 'before' }, // BA construction
-    style: { primary: '用', alternatives: ['以'], position: 'before' },
   },
   keywords: {
     // Class/Attribute operations
@@ -192,9 +175,6 @@ export const chineseProfile: LanguageProfile = {
     worker: { primary: '工作线程', alternatives: ['工作者', 'worker'], normalized: 'worker' },
     eventsource: { primary: 'eventsource', alternatives: ['事件源'], normalized: 'eventsource' },
   },
-  tokenization: {
-    boundaryStrategy: 'character',
-  },
   eventHandler: {
     keyword: { primary: '当', alternatives: ['在...时'], normalized: 'on' },
     sourceMarker: { primary: '从', position: 'before' },
@@ -208,4 +188,4 @@ export const chineseProfile: LanguageProfile = {
     // handler only where a handler head is already expected.
     temporalMarkers: ['当', '在...时', '一'], // temporal conjunctions (when)
   },
-};
+});

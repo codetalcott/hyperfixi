@@ -11,6 +11,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { existsSync, statSync } from 'fs';
+import { createRequire } from 'module';
 import { resolve } from 'path';
 
 const PKG_ROOT = resolve(__dirname, '..');
@@ -77,6 +78,20 @@ describe('build artifacts', () => {
         expect(statSync(abs).size, `${relPath} should be non-empty`).toBeGreaterThan(0);
       },
     );
+  });
+
+  // A file that exists can still fail to load: dist/index.cjs requires each
+  // `@lokascript/framework/languages/<code>`, which an `import`-only export broke.
+  describe('require entries load in Node', () => {
+    const requirePaths = extractExportPaths(pkg.exports || {}).filter(e =>
+      e.key.endsWith('[require]')
+    );
+
+    it.each(requirePaths.map(e => [e.key, e.path]))('%s → %s', (_key, relPath) => {
+      if (!hasDist) return; // skip if not built
+      const load = createRequire(resolve(PKG_ROOT, 'package.json'));
+      expect(Object.keys(load(resolve(PKG_ROOT, relPath))).length).toBeGreaterThan(0);
+    });
   });
 
   // Declaration files specifically — the ones that were previously missing

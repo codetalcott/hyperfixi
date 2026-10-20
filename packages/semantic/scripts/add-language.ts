@@ -6,7 +6,11 @@
  *
  * Usage:
  *   npm run add-language -- --code=XX --name=Name --native=NativeName \
- *     --wordOrder=SVO --direction=ltr --marking=preposition --usesSpaces=true
+ *     --wordOrder=SVO --direction=ltr --marking=preposition --usesSpaces=true [--script=latin]
+ *
+ * The language's grammar (word order, markers, script) goes to framework
+ * (`packages/framework/src/languages/<code>.ts`); semantic's profile is that
+ * grammar with hyperscript's vocabulary over it (`withGrammar`).
  *
  * Example:
  *   npm run add-language -- --code=sw --name=Swahili --native=Kiswahili \
@@ -16,6 +20,10 @@
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
+
+// The package is ESM: no CommonJS __dirname.
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // =============================================================================
 // Types
@@ -29,7 +37,11 @@ interface LanguageConfig {
   direction: 'ltr' | 'rtl';
   markingStrategy: 'preposition' | 'postposition' | 'particle' | 'case-suffix';
   usesSpaces: boolean;
+  script: (typeof SCRIPTS)[number];
 }
+
+/** framework's `ScriptType` */
+const SCRIPTS = ['latin', 'cyrillic', 'arabic', 'cjk', 'devanagari', 'hangul', 'bengali', 'thai', 'hebrew'] as const;
 
 // =============================================================================
 // Argument Parsing
@@ -37,7 +49,7 @@ interface LanguageConfig {
 
 function parseArgs(): LanguageConfig {
   const args = process.argv.slice(2);
-  const config: Partial<LanguageConfig> = {};
+  const config: Partial<LanguageConfig> = { script: 'latin' };
 
   for (const arg of args) {
     const match = arg.match(/^--(\w+)=(.+)$/);
@@ -77,6 +89,13 @@ function parseArgs(): LanguageConfig {
         case 'usesSpaces':
           config.usesSpaces = value === 'true';
           break;
+        case 'script':
+          if (!(SCRIPTS as readonly string[]).includes(value)) {
+            console.error(`Invalid script: ${value}. Must be one of ${SCRIPTS.join(', ')}.`);
+            process.exit(1);
+          }
+          config.script = value as LanguageConfig['script'];
+          break;
       }
     }
   }
@@ -99,6 +118,7 @@ Options:
   --direction   ltr or rtl
   --marking     preposition, postposition, particle, or case-suffix
   --usesSpaces  true or false
+  --script      ${SCRIPTS.join(', ')} (default: latin)
 `);
     process.exit(1);
   }
@@ -113,6 +133,7 @@ Options:
 const SEMANTIC_SRC = path.resolve(__dirname, '../src');
 const I18N_SRC = path.resolve(__dirname, '../../i18n/src');
 const VITE_PLUGIN_SRC = path.resolve(__dirname, '../../vite-plugin/src');
+const FRAMEWORK = path.resolve(__dirname, '../../framework');
 
 // =============================================================================
 // Utility Functions
@@ -356,25 +377,31 @@ export const ${varName}Tokenizer = new ${className}Tokenizer();
 `;
 }
 
-function generateProfile(config: LanguageConfig): string {
-  const { code, name, nativeName, direction, wordOrder, markingStrategy, usesSpaces } = config;
+function markerPositionOf(config: LanguageConfig): 'before' | 'after' {
+  return config.markingStrategy === 'postposition' || config.markingStrategy === 'case-suffix' ? 'after' : 'before';
+}
+
+/** framework's `languages/<code>.ts`: the language's grammar, as data. */
+function generateGrammar(config: LanguageConfig): string {
+  const { code, name, nativeName, direction, script, wordOrder, markingStrategy, usesSpaces } = config;
   const varName = name.toLowerCase();
-  const verbPosition = wordOrder === 'SOV' ? 'end' : wordOrder === 'VSO' ? 'start' : 'start';
-  const markerPosition = markingStrategy === 'postposition' || markingStrategy === 'case-suffix' ? 'after' : 'before';
+  const verbPosition = wordOrder === 'SOV' ? 'end' : 'start';
+  const markerPosition = markerPositionOf(config);
 
   return `/**
- * ${name} Language Profile
+ * ${name} Grammar
  *
  * ${wordOrder} word order, ${markingStrategy}s, ${usesSpaces ? 'space-separated' : 'no spaces'}.
  */
 
-import type { LanguageProfile } from './types';
+import type { GrammarProfile } from './types';
 
-export const ${varName}Profile: LanguageProfile = {
+export const ${varName}Grammar = {
   code: '${code}',
   name: '${name}',
   nativeName: '${nativeName}',
   direction: '${direction}',
+  script: '${script}',
   wordOrder: '${wordOrder}',
   markingStrategy: '${markingStrategy}',
   usesSpaces: ${usesSpaces},
@@ -383,6 +410,33 @@ export const ${varName}Profile: LanguageProfile = {
     position: '${verbPosition}',
     subjectDrop: true,
   },
+  roleMarkers: {
+    destination: { primary: 'TODO', position: '${markerPosition}' },
+    source: { primary: 'TODO', position: '${markerPosition}' },
+    patient: { primary: '', position: '${markerPosition}' },
+    style: { primary: 'TODO', position: '${markerPosition}' },
+  },
+} satisfies GrammarProfile;
+`;
+}
+
+function generateProfile(config: LanguageConfig): string {
+  const { code, name, wordOrder, markingStrategy, usesSpaces } = config;
+  const varName = name.toLowerCase();
+  const markerPosition = markerPositionOf(config);
+
+  return `/**
+ * ${name} Language Profile
+ *
+ * ${wordOrder} word order, ${markingStrategy}s, ${usesSpaces ? 'space-separated' : 'no spaces'}.
+ */
+
+import { ${varName}Grammar } from '@lokascript/framework/languages/${code}';
+import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
+
+// Word order, role markers, script: @lokascript/framework/languages/${code}.
+export const ${varName}Profile: LanguageProfile = /* @__PURE__ */ withGrammar(${varName}Grammar, {
   references: {
     me: 'TODO',      // "I/me"
     it: 'TODO',      // "it"
@@ -391,12 +445,6 @@ export const ${varName}Profile: LanguageProfile = {
     event: 'TODO',
     target: 'TODO',
     body: 'body',
-  },
-  roleMarkers: {
-    destination: { primary: 'TODO', position: '${markerPosition}' },
-    source: { primary: 'TODO', position: '${markerPosition}' },
-    patient: { primary: '', position: '${markerPosition}' },
-    style: { primary: 'TODO', position: '${markerPosition}' },
   },
   keywords: {
     // Class/Attribute operations
@@ -473,7 +521,7 @@ export const ${varName}Profile: LanguageProfile = {
     keyword: { primary: 'TODO', normalized: 'on' },
     sourceMarker: { primary: 'TODO', position: '${markerPosition}' },
   },
-};
+});
 `;
 }
 
@@ -680,6 +728,44 @@ export const ${code} = ${varName};
 // =============================================================================
 // Index File Updates
 // =============================================================================
+
+/** framework's `languages` barrel and its package exports (tsup reads the directory). */
+function updateFrameworkLanguages(code: string, name: string): void {
+  const barrel = path.join(FRAMEWORK, 'src/languages/index.ts');
+  const lines = fs.readFileSync(barrel, 'utf-8').trimEnd().split('\n');
+  const isExport = (l: string) => /^export \{ \w+Grammar \} from '\.\/[\w-]+';$/.test(l);
+  const first = lines.findIndex(isExport);
+  const exports = [...lines.filter(isExport), `export { ${name.toLowerCase()}Grammar } from './${code}';`];
+  const codeOf = (l: string) => l.slice(l.lastIndexOf('/') + 1);
+  exports.sort((a, b) => codeOf(a).localeCompare(codeOf(b)));
+  const rest = lines.filter(l => !isExport(l));
+  rest.splice(first, 0, ...exports);
+  fs.writeFileSync(barrel, rest.join('\n') + '\n');
+  console.log(`  Updated: ${barrel}`);
+
+  // `./languages/<code>` entries sit after `./languages`, sorted by code.
+  const pkgPath = path.join(FRAMEWORK, 'package.json');
+  const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+  const isLanguage = (k: string) => k.startsWith('./languages/');
+  const languages: Record<string, unknown> = {
+    [`./languages/${code}`]: {
+      types: `./dist/languages/${code}.d.ts`,
+      import: `./dist/languages/${code}.js`,
+      require: `./dist/languages/${code}.cjs`,
+    },
+  };
+  for (const [k, v] of Object.entries(pkg.exports)) if (isLanguage(k)) languages[k] = v;
+  const sorted: [string, unknown][] = Object.keys(languages).sort().map(k => [k, languages[k]]);
+  const entries: [string, unknown][] = [];
+  for (const [k, v] of Object.entries(pkg.exports)) {
+    if (isLanguage(k)) continue;
+    entries.push([k, v]);
+    if (k === './languages') entries.push(...sorted);
+  }
+  pkg.exports = Object.fromEntries(entries);
+  fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
+  console.log(`  Updated: ${pkgPath}`);
+}
 
 function updateLanguagesAll(code: string): void {
   const filePath = path.join(SEMANTIC_SRC, 'languages/_all.ts');
@@ -1122,7 +1208,10 @@ function main() {
   fs.writeFileSync(tokenizerPath, generateTokenizer(config));
   console.log(`  Created: ${tokenizerPath}`);
 
-  // 3. Profile
+  // 3. Grammar (framework) and profile (semantic)
+  const grammarPath = path.join(FRAMEWORK, `src/languages/${config.code}.ts`);
+  fs.writeFileSync(grammarPath, generateGrammar(config));
+  console.log(`  Created: ${grammarPath}`);
   const profilePath = path.join(SEMANTIC_SRC, `generators/profiles/${config.code}.ts`);
   fs.writeFileSync(profilePath, generateProfile(config));
   console.log(`  Created: ${profilePath}`);
@@ -1147,6 +1236,7 @@ function main() {
   // Update index files
   console.log('\nUpdating index files...');
 
+  updateFrameworkLanguages(config.code, config.name);
   updateLanguagesAll(config.code);
   updateTokenizersIndex(config.code, config.name);
   updateProfilesIndex(config.code, config.name);
@@ -1177,6 +1267,7 @@ Language ${config.name} (${config.code}) scaffolded successfully!
 
 Next steps:
 1. Fill in TODO translations in:
+   - ${grammarPath} (role markers, verb, tokenization)
    - ${profilePath}
    - ${tokenizerPath} (add keywords from profile)
    - ${dictPath}
@@ -1188,7 +1279,9 @@ Next steps:
 4. Sync keywords to vite-plugin (after filling in profile):
    npm run sync-keywords --prefix packages/vite-plugin
 
-5. Run TypeScript checks:
+5. Build framework (semantic imports its dist), then run TypeScript checks:
+   npm run build --prefix packages/framework
+   npm run typecheck --prefix packages/framework
    npm run typecheck --prefix packages/semantic
    npm run typecheck --prefix packages/vite-plugin
 

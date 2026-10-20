@@ -6,23 +6,12 @@
  * Uses Latin script with extensive diacritics for tone marking.
  */
 
+import { vietnameseGrammar } from '@lokascript/framework/languages/vi';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const vietnameseProfile: LanguageProfile = {
-  code: 'vi',
-  name: 'Vietnamese',
-  nativeName: 'Tiếng Việt',
-  direction: 'ltr',
-  script: 'latin',
-  wordOrder: 'SVO',
-  markingStrategy: 'preposition',
-  usesSpaces: true,
-  // Vietnamese uses base/dictionary form for commands
-  defaultVerbForm: 'base',
-  verb: {
-    position: 'start',
-    subjectDrop: true,
-  },
+// Word order, role markers, script: @lokascript/framework/languages/vi.
+export const vietnameseProfile: LanguageProfile = /* @__PURE__ */ withGrammar(vietnameseGrammar, {
   references: {
     me: 'tôi', // "I/me"
     it: 'nó', // "it"
@@ -35,8 +24,6 @@ export const vietnameseProfile: LanguageProfile = {
     window: 'cửa sổ',
   },
   possessive: {
-    marker: 'của', // Vietnamese uses "của" for possession (của tôi = my)
-    markerPosition: 'between',
     specialForms: {
       me: 'của tôi', // "my"
       it: 'của nó', // "its"
@@ -56,12 +43,6 @@ export const vietnameseProfile: LanguageProfile = {
       'của chị': 'you', // your (female speaker, formal)
       'của nó': 'it', // its
     },
-  },
-  roleMarkers: {
-    destination: { primary: 'vào', alternatives: ['cho', 'đến'], position: 'before' },
-    source: { primary: 'từ', alternatives: ['khỏi'], position: 'before' },
-    patient: { primary: '', position: 'before' },
-    style: { primary: 'với', position: 'before' },
   },
   keywords: {
     // Class/Attribute operations
@@ -215,4 +196,4 @@ export const vietnameseProfile: LanguageProfile = {
     eventMarker: { primary: 'khi', alternatives: ['lúc'], position: 'before' },
     temporalMarkers: ['khi', 'lúc'], // temporal conjunctions (when)
   },
-};
+});

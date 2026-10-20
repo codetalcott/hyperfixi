@@ -5,48 +5,29 @@
  */
 
 import type { SemanticRole } from '../../types';
+import type {
+  WordOrder,
+  MarkingStrategy,
+  ScriptType,
+  RoleMarker,
+  VerbConfig,
+  VerbForm,
+  TokenizationConfig,
+  PossessiveGrammar,
+  AttachedMarkers,
+} from '@lokascript/framework/languages';
 
-/**
- * Word order in a language (for declarative statements).
- */
-export type WordOrder = 'SVO' | 'SOV' | 'VSO' | 'VOS' | 'OSV' | 'OVS';
-
-/**
- * How grammatical relationships are marked.
- */
-export type MarkingStrategy = 'preposition' | 'postposition' | 'particle' | 'case-suffix';
-
-/**
- * Writing system used by a language.
- * Non-latin scripts require AsciiIdentifierExtractor in their tokenizer
- * to handle mixed-script input (e.g., Arabic verb + CSS property name).
- */
-export type ScriptType =
-  'latin' | 'cyrillic' | 'arabic' | 'cjk' | 'devanagari' | 'hangul' | 'bengali' | 'thai' | 'hebrew';
-
-/**
- * A grammatical marker (preposition, particle, etc.) for a semantic role.
- */
-export interface RoleMarker {
-  /** Primary marker for this role */
-  readonly primary: string;
-  /** Alternative markers that also work */
-  readonly alternatives?: string[];
-  /** Position relative to the role value */
-  readonly position: 'before' | 'after';
-}
-
-/**
- * Verb form configuration for a language.
- */
-export interface VerbConfig {
-  /** Position of verb in the sentence */
-  readonly position: 'start' | 'end' | 'second';
-  /** Common verb suffixes/conjugations to recognize */
-  readonly suffixes?: string[];
-  /** Whether the language commonly drops subjects */
-  readonly subjectDrop?: boolean;
-}
+// A language's grammar is framework's (`@lokascript/framework/languages/<code>`);
+// these names stay exported here for semantic's consumers.
+export type {
+  WordOrder,
+  MarkingStrategy,
+  ScriptType,
+  RoleMarker,
+  VerbConfig,
+  VerbForm,
+  TokenizationConfig,
+};
 
 /**
  * Configuration for possessive expression construction.
@@ -70,15 +51,9 @@ export type ObliqueForm = string | { readonly direction?: string; readonly locat
  */
 export type CliticAttach = 'infinitive' | 'infinitive-drop-e' | 'hyphen' | 'suffix' | 'before';
 
-export interface PossessiveConfig {
-  /** Possessive marker (e.g., "'s" in English, "の" in Japanese) */
-  readonly marker: string;
-  /** Position of marker: 'after-object' (X's Y), 'between' (X の Y), 'before-property' */
-  readonly markerPosition: 'after-object' | 'between' | 'before-property';
+export interface PossessiveConfig extends PossessiveGrammar {
   /** Special possessive forms (e.g., 'me' → 'my' in English) */
   readonly specialForms?: Record<string, string>;
-  /** Whether to use possessive adjectives instead of marker (e.g., Spanish mi/tu/su) */
-  readonly usePossessiveAdjectives?: boolean;
   /**
    * Possessive keywords mapped to their corresponding reference.
    * Used by pattern-matcher to recognize possessive expressions.
@@ -97,6 +72,11 @@ export interface PossessiveConfig {
 
 /**
  * Complete language profile for pattern generation.
+ *
+ * A profile is its language's grammar (`@lokascript/framework/languages/<code>`:
+ * framework's `GrammarProfile`, the fields from `code` to `possessive.marker`) with
+ * hyperscript's vocabulary over it (`../with-grammar.ts`). This interface still
+ * declares every field.
  *
  * Canonical field mapping (Phase 4.1 — single source of truth):
  *
@@ -173,10 +153,7 @@ export interface LanguageProfile {
    * marker only where the reader reads it as the spaced one
    * (explicit/attached-markers.ts).
    */
-  readonly attachedMarkers?: {
-    readonly markers: readonly string[];
-    readonly afterWords?: 'all' | readonly string[];
-  };
+  readonly attachedMarkers?: AttachedMarkers;
   /**
    * A query's scope written before the query, as a verb-final language writes
    * a modifier (M2 N3): tr `bendeki <p/>` (the `<p/>` in me), hi `मुझ में
@@ -311,19 +288,6 @@ export interface EventHandlerConfig {
 }
 
 /**
- * Verb form used for command keywords.
- *
- * Based on software localization research:
- * - 'infinitive': Standard for most languages (Spanish, French, German, Russian)
- *   Example: "Guardar", "Enregistrer", "Speichern"
- * - 'imperative': Used by some languages (Polish)
- *   Example: "Zapisz", "Otwórz"
- * - 'base': For languages where forms are identical (English, Japanese, Korean)
- *   or where the distinction doesn't apply
- */
-export type VerbForm = 'infinitive' | 'imperative' | 'base';
-
-/**
  * Translation of a command keyword.
  */
 export interface KeywordTranslation {
@@ -341,16 +305,4 @@ export interface KeywordTranslation {
    * - 'base': Same form for both (toggle, トグル) - English, Japanese, Korean
    */
   readonly form?: VerbForm;
-}
-
-/**
- * Special tokenization configuration.
- */
-export interface TokenizationConfig {
-  /** Particles to recognize (for particle languages) */
-  readonly particles?: string[];
-  /** Prefixes to recognize (for prefixing languages) */
-  readonly prefixes?: string[];
-  /** Word boundary detection strategy */
-  readonly boundaryStrategy?: 'space' | 'particle' | 'character';
 }

@@ -5,22 +5,13 @@
  * Features affixation for verb derivation (me-, ber-, di-, -kan, -i).
  */
 
+import { indonesianGrammar } from '@lokascript/framework/languages/id';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const indonesianProfile: LanguageProfile = {
-  code: 'id',
-  name: 'Indonesian',
-  nativeName: 'Bahasa Indonesia',
+// Word order, role markers, script: @lokascript/framework/languages/id.
+export const indonesianProfile: LanguageProfile = /* @__PURE__ */ withGrammar(indonesianGrammar, {
   regions: ['priority'],
-  direction: 'ltr',
-  script: 'latin',
-  wordOrder: 'SVO',
-  markingStrategy: 'preposition',
-  usesSpaces: true,
-  verb: {
-    position: 'start',
-    subjectDrop: true,
-  },
   references: {
     me: 'saya', // "I/me"
     it: 'itu', // "it"
@@ -34,9 +25,6 @@ export const indonesianProfile: LanguageProfile = {
     detail: 'detail',
   },
   possessive: {
-    marker: '', // Indonesian: "X saya" (X of mine), possessor follows noun
-    markerPosition: 'after-object',
-    usePossessiveAdjectives: true,
     specialForms: {
       me: 'saya', // Possessor follows: "value saya" = "my value"
       it: 'nya', // Suffix: "valueny" = "its value"
@@ -71,12 +59,6 @@ export const indonesianProfile: LanguageProfile = {
     // connector between the possessor (saya→me) and the property. Skipped by the
     // possessive matcher so the property is reached (set-style set-text rows).
     connectors: ['punya'],
-  },
-  roleMarkers: {
-    destination: { primary: 'pada', alternatives: ['ke', 'di'], position: 'before' },
-    source: { primary: 'dari', position: 'before' },
-    patient: { primary: '', position: 'before' },
-    style: { primary: 'dengan', position: 'before' },
   },
   keywords: {
     toggle: { primary: 'alihkan', normalized: 'toggle' },
@@ -221,4 +203,4 @@ export const indonesianProfile: LanguageProfile = {
     eventMarker: { primary: 'saat', alternatives: ['ketika', 'pada'], position: 'before' },
     temporalMarkers: ['ketika', 'saat'], // temporal conjunctions (when)
   },
-};
+});

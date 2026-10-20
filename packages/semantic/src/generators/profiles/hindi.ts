@@ -5,24 +5,12 @@
  * Fusional language with verb conjugation patterns.
  */
 
+import { hindiGrammar } from '@lokascript/framework/languages/hi';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const hindiProfile: LanguageProfile = {
-  code: 'hi',
-  name: 'Hindi',
-  nativeName: 'हिन्दी',
-  direction: 'ltr',
-  script: 'devanagari',
-  wordOrder: 'SOV',
-  markingStrategy: 'postposition',
-  usesSpaces: true,
-  // Hindi uses imperative forms for commands in software UI
-  defaultVerbForm: 'imperative',
-  verb: {
-    position: 'end',
-    suffixes: ['ें', 'ा', 'ी', 'े', 'ो'],
-    subjectDrop: true,
-  },
+// Word order, role markers, script: @lokascript/framework/languages/hi.
+export const hindiProfile: LanguageProfile = /* @__PURE__ */ withGrammar(hindiGrammar, {
   references: {
     me: 'मैं',
     it: 'यह',
@@ -56,8 +44,6 @@ export const hindiProfile: LanguageProfile = {
   // A query's scope before it (`#list में स्थित <li/>`, `मुझ में स्थित <p/>`; M2 N3).
   queryScopeFirst: { marker: 'में', participle: 'स्थित', queryIn: 'में' },
   possessive: {
-    marker: 'का',
-    markerPosition: 'between',
     // In Hindi: मेरा value (mera value) = "my value"
     // Or with का: X का Y = "X's Y"
     keywords: {
@@ -81,16 +67,6 @@ export const hindiProfile: LanguageProfile = {
       इसकी: 'it', // iski (f)
       इसके: 'it', // iske (pl/obl)
     },
-  },
-  roleMarkers: {
-    patient: { primary: 'को', position: 'after' },
-    // `को` is the accusative/patient marker only — NOT a destination alternative.
-    // Listing it here made a `को`-marked patient mis-parse as a destination, the
-    // dominant source of phantom `into` commands in hi (precision audit 2026-06-15).
-    destination: { primary: 'में', alternatives: ['पर'], position: 'after' },
-    source: { primary: 'से', position: 'after' },
-    style: { primary: 'से', position: 'after' },
-    event: { primary: 'पर', position: 'after' },
   },
   keywords: {
     // Class/Attribute operations
@@ -256,10 +232,6 @@ export const hindiProfile: LanguageProfile = {
     bind: { primary: 'bind', alternatives: ['बाइंड', 'बांधें'], normalized: 'bind' },
     intercept: { primary: 'intercept', alternatives: ['इंटरसेप्ट'], normalized: 'intercept' },
   },
-  tokenization: {
-    particles: ['को', 'में', 'पर', 'से', 'का', 'की', 'के', 'तक', 'ने'],
-    boundaryStrategy: 'space',
-  },
   eventHandler: {
     keyword: { primary: 'पर', alternatives: [], normalized: 'on' },
     sourceMarker: { primary: 'से', position: 'after' },
@@ -271,4 +243,4 @@ export const hindiProfile: LanguageProfile = {
     eventMarker: { primary: 'पर', alternatives: [], position: 'after' },
     temporalMarkers: ['जब', 'जब भी'], // temporal conjunctions (when, whenever)
   },
-};
+});

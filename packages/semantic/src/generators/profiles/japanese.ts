@@ -5,26 +5,13 @@
  * Agglutinative language with rich verb conjugation.
  */
 
+import { japaneseGrammar } from '@lokascript/framework/languages/ja';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const japaneseProfile: LanguageProfile = {
-  code: 'ja',
-  name: 'Japanese',
-  nativeName: '日本語',
+// Word order, role markers, script: @lokascript/framework/languages/ja.
+export const japaneseProfile: LanguageProfile = /* @__PURE__ */ withGrammar(japaneseGrammar, {
   regions: ['east-asian', 'priority'],
-  direction: 'ltr',
-  script: 'cjk',
-  wordOrder: 'SOV',
-  markingStrategy: 'particle',
-  usesSpaces: false,
-  // Japanese uses verb stem/masu-stem form, no clear infinitive/imperative distinction
-  // for UI commands. Uses katakana loanwords (トグル) or native stems (切り替え)
-  defaultVerbForm: 'base',
-  verb: {
-    position: 'end',
-    suffixes: ['る', 'て', 'た', 'ます', 'ない'],
-    subjectDrop: true,
-  },
   references: {
     me: '自分', // "self" - in hyperscript context, refers to current element
     it: 'それ', // "it"
@@ -40,23 +27,12 @@ export const japaneseProfile: LanguageProfile = {
   // A query's scope before it (`#list の中の <li/>`; M2 N3).
   queryScopeFirst: { marker: 'の中の', queryIn: 'の中' },
   possessive: {
-    marker: 'の',
-    markerPosition: 'between',
     // In Japanese: 自分の value (jibun no value) = "my value"
     keywords: {
       私の: 'me', // watashi no (my)
       あなたの: 'you', // anata no (your)
       その: 'it', // sono (its)
     },
-  },
-  roleMarkers: {
-    patient: { primary: 'を', position: 'after' },
-    destination: { primary: 'に', alternatives: ['へ', 'で', 'の'], position: 'after' },
-    source: { primary: 'から', position: 'after' },
-    style: { primary: 'で', position: 'after' },
-    event: { primary: 'を', position: 'after' }, // Event as object marker
-    // Possession marker for "X's Y" patterns
-    // Note: の is used between target and patient: #button の .active
   },
   keywords: {
     // Class/Attribute operations
@@ -259,15 +235,6 @@ export const japaneseProfile: LanguageProfile = {
       normalized: 'eventsource',
     },
   },
-  tokenization: {
-    particles: ['を', 'に', 'で', 'から', 'の', 'が', 'は', 'も', 'へ', 'と'],
-    boundaryStrategy: 'particle',
-  },
-  // Japanese writes a particle onto its noun (`#outに`, `自分から`; M2 N5).
-  attachedMarkers: {
-    markers: ['を', 'に', 'へ', 'で', 'の', 'から', 'として', 'の間で'],
-    afterWords: 'all',
-  },
   eventHandler: {
     // Event marker: で (at/on/when), used in SOV pattern
     // Pattern: [event] で [destination] の [patient] を [action]
@@ -280,4 +247,4 @@ export const japaneseProfile: LanguageProfile = {
     // otherwise read every handler, with their hand-built body.
     headOutranksFused: true,
   },
-};
+});

@@ -6,21 +6,12 @@
  * Features optional vowel points (nikkud) which are typically omitted in modern text.
  */
 
+import { hebrewGrammar } from '@lokascript/framework/languages/he';
 import type { LanguageProfile } from './types';
+import { withGrammar } from '../with-grammar';
 
-export const hebrewProfile: LanguageProfile = {
-  code: 'he',
-  name: 'Hebrew',
-  nativeName: 'עברית',
-  direction: 'rtl',
-  script: 'hebrew',
-  wordOrder: 'SVO',
-  markingStrategy: 'preposition',
-  usesSpaces: true,
-  verb: {
-    position: 'second', // SVO - verb comes after subject
-    subjectDrop: true,
-  },
+// Word order, role markers, script: @lokascript/framework/languages/he.
+export const hebrewProfile: LanguageProfile = /* @__PURE__ */ withGrammar(hebrewGrammar, {
   references: {
     me: 'אני', // "I/me"
     it: 'זה', // "it" (masculine) / "this"
@@ -48,9 +39,6 @@ export const hebrewProfile: LanguageProfile = {
     },
   },
   possessive: {
-    marker: 'של', // "of" - used for general possession
-    markerPosition: 'before-property',
-    usePossessiveAdjectives: true,
     specialForms: {
       // Hebrew: "property שלי" (property of-me) - possessive follows property
       me: 'שלי', // "of me" / "mine"
@@ -66,12 +54,6 @@ export const hebrewProfile: LanguageProfile = {
       שלו: 'it', // his/its (masculine)
       שלה: 'it', // her/its (feminine)
     },
-  },
-  roleMarkers: {
-    destination: { primary: 'על', alternatives: ['ב', 'אל', 'ל'], position: 'before' },
-    source: { primary: 'מ', alternatives: ['מן', 'מאת'], position: 'before' },
-    patient: { primary: 'את', position: 'before' }, // Direct object marker
-    style: { primary: 'עם', alternatives: ['ב'], position: 'before' },
   },
   keywords: {
     // Class/Attribute operations
@@ -205,9 +187,6 @@ export const hebrewProfile: LanguageProfile = {
       normalized: 'eventsource',
     },
   },
-  tokenization: {
-    prefixes: ['ה', 'ו', 'ב', 'כ', 'ל', 'מ', 'ש'], // Common Hebrew prefixes
-  },
   eventHandler: {
     keyword: { primary: 'ב', normalized: 'on' },
     sourceMarker: { primary: 'מ', alternatives: ['מאת'], position: 'before' },
@@ -218,4 +197,4 @@ export const hebrewProfile: LanguageProfile = {
     eventMarker: { primary: 'ב', alternatives: ['כש'], position: 'before' },
     temporalMarkers: ['כאשר', 'כש'], // temporal conjunctions (when); עם is the WITH marker, not temporal
   },
-};
+});
