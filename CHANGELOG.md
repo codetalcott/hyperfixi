@@ -28,6 +28,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   optional peer (`>=4.0.0`, as `@hyperfixi/vite-plugin` declares it), so the plugin's types
   resolve where vite is installed.
 
+- **`@hyperfixi/testing-framework` installs what its published files import: `diff` and `jsdom`.**
+  Its three entries (`.`, `./runner`, `./assertions`) import those two, and `runner` loads
+  `playwright` or `puppeteer` with `import()` only for a browser run. The other eleven runtime
+  dependencies (semantic, i18n, compilation-service, patterns-reference, vite, esbuild, happy-dom,
+  tsx, url-parse, and both browsers) back the repo's own gates, which are not in `dist/`: an
+  install was 262 MB in 116 packages, and puppeteer's install script downloaded Chrome on top
+  (`--ignore-scripts`, macOS arm64). Now about 28 MB in 38. `playwright` and `puppeteer` are
+  optional peers: install the one a browser run uses. The built files are byte-identical.
+
+### Removed
+
+- **`@hyperfixi/testing-framework`'s `hyperfixi-test` and `hyperfixi-test-multilingual` bins.**
+  They named `dist/cli.js` and `dist/multilingual/cli.js`, which the build has never produced, so
+  neither command ever ran from the package.
+
 ## [7.0.0] - 2026-10-19
 
 Removes what 6.x deprecated or never shipped: three MCP tools that duplicated `validate_and_compile`
