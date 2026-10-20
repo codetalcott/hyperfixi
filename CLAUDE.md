@@ -53,7 +53,8 @@ packages/
 ├── htmx-adapter/    # Multilingual adapter for upstream htmx v4 (canonicalizing extension)
 │   └── src/         # See packages/htmx-adapter/CLAUDE.md
 │
-├── framework/       # Shared DSL framework (createMultilingualDSL, DomainRegistry, CrossDomainDispatcher)
+├── framework/       # Shared DSL framework (createMultilingualDSL, DomainRegistry, CrossDomainDispatcher);
+│                    #   languages/<code>: each language's grammar, as data
 ├── compilation-service/  # Validate, translate, diff, score hyperscript (library + HTTP; MCP's backend)
 ├── mcp-server/      # MCP server exposing all tools (hyperscript + domain DSLs via @lokascript/domains)
 ├── server-bridge/   # Server-side route extraction from HTML
@@ -878,6 +879,9 @@ Key files:
   "Name collisions"); for English it first rewrites core-only forms into upstream's spelling
   (`explicit/upstream-spelling.ts`: the reader accepts `prepend`, `X has .c`, `set @a … on X`;
   English writes `put … at start of`, `X matches .c`, `set @a of X …`)
+- `packages/framework/src/languages/` - each language's grammar (word order, role markers,
+  script, particles): semantic's profile is it with hyperscript's vocabulary over it
+  (`semantic/src/generators/with-grammar.ts`), and a domain injects it with its own
 - `packages/i18n/src/grammar/profiles/` - Language profiles with word order rules
 - `packages/i18n/src/grammar/types.ts` - Semantic roles, joinTokens for agglutinative suffixes
 
@@ -1009,8 +1013,10 @@ ported from upstream's source.
 
 ### Adding Semantic Language Support
 
-Use the CLI tool to scaffold a new language. It automatically generates all files and updates:
+Use the CLI tool to scaffold a new language. It automatically generates all files (the grammar
+in `packages/framework/src/languages/{code}.ts`, the profile over it in semantic) and updates:
 
+- `packages/framework/src/languages/index.ts` + framework's `package.json` exports
 - `src/languages/_all.ts` - language registration
 - `src/tokenizers/index.ts` - tokenizer export
 - `src/generators/profiles/index.ts` - profile export
@@ -1023,12 +1029,14 @@ Use the CLI tool to scaffold a new language. It automatically generates all file
 ```bash
 cd packages/semantic
 npm run add-language -- --code=xx --name=LanguageName --native=NativeName \
-  --wordOrder=SVO --direction=ltr --marking=preposition --usesSpaces=true
+  --wordOrder=SVO --direction=ltr --marking=preposition --usesSpaces=true [--script=latin]
 ```
 
 Then follow the post-scaffold steps:
 
-1. **Fill in keyword translations** in `src/generators/profiles/{code}.ts`
+1. **Fill in the grammar** (role markers, verb, tokenization) in
+   `packages/framework/src/languages/{code}.ts`, then `npm run build --prefix packages/framework`,
+   and the **keyword translations** in `src/generators/profiles/{code}.ts`
 2. **Add character classification** in `src/tokenizers/{code}.ts` (for non-Latin scripts)
 3. **Sync keywords to vite-plugin** (after filling in profile):
 

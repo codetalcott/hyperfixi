@@ -168,13 +168,16 @@ This generates:
 
 - `src/languages/{code}.ts` - Self-registering language module
 - `src/tokenizers/{code}.ts` - Tokenizer skeleton
-- `src/generators/profiles/{code}.ts` - Profile with keyword stubs
+- `packages/framework/src/languages/{code}.ts` - The language's grammar (word order, role markers, script)
+- `src/generators/profiles/{code}.ts` - Profile over that grammar, with keyword stubs
 - `src/patterns/{cmd}/{code}.ts` - Pattern files for 11 commands
 - Updates all index files automatically
 
 **Then fill in:**
 
-1. **Keyword translations** in `src/generators/profiles/{code}.ts`
+1. **Grammar** (role markers, verb, tokenization) in framework's `src/languages/{code}.ts`, then
+   rebuild framework; **keyword translations** in `src/generators/profiles/{code}.ts`. A profile is
+   `withGrammar(grammar, vocabulary)`: a grammar field in the vocabulary is a type error
 2. **Character classification** in `src/tokenizers/{code}.ts` (for non-Latin scripts)
 3. **Morphological normalizer** (optional) in `src/tokenizers/morphology/` if language has verb conjugation
 4. **Run tests**: `npm test -- --run`
@@ -216,7 +219,7 @@ this section will be reinstated alongside a worked example.
 
 > **`marker-templates.ts` is DEAD CODE — do not build on it.** It has **zero importers**
 > and has already drifted from the profiles it claims to template. Every profile spells
-> its markers out inline. Extend the profile directly (`src/generators/profiles/{code}.ts`);
+> its markers out inline. Role markers now live in framework's `src/languages/{code}.ts`;
 > treat the section below as historical until the file is either revived or removed.
 
 Language profiles can use shared marker templates from `src/generators/profiles/marker-templates.ts`:
