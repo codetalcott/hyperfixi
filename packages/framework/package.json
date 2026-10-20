@@ -30,103 +30,128 @@
     },
     "./languages": {
       "types": "./dist/languages/index.d.ts",
-      "import": "./dist/languages/index.js"
+      "import": "./dist/languages/index.js",
+      "require": "./dist/languages/index.cjs"
     },
     "./languages/ar": {
       "types": "./dist/languages/ar.d.ts",
-      "import": "./dist/languages/ar.js"
+      "import": "./dist/languages/ar.js",
+      "require": "./dist/languages/ar.cjs"
     },
     "./languages/bn": {
       "types": "./dist/languages/bn.d.ts",
-      "import": "./dist/languages/bn.js"
+      "import": "./dist/languages/bn.js",
+      "require": "./dist/languages/bn.cjs"
     },
     "./languages/de": {
       "types": "./dist/languages/de.d.ts",
-      "import": "./dist/languages/de.js"
+      "import": "./dist/languages/de.js",
+      "require": "./dist/languages/de.cjs"
     },
     "./languages/en": {
       "types": "./dist/languages/en.d.ts",
-      "import": "./dist/languages/en.js"
+      "import": "./dist/languages/en.js",
+      "require": "./dist/languages/en.cjs"
     },
     "./languages/es": {
       "types": "./dist/languages/es.d.ts",
-      "import": "./dist/languages/es.js"
+      "import": "./dist/languages/es.js",
+      "require": "./dist/languages/es.cjs"
     },
     "./languages/fr": {
       "types": "./dist/languages/fr.d.ts",
-      "import": "./dist/languages/fr.js"
+      "import": "./dist/languages/fr.js",
+      "require": "./dist/languages/fr.cjs"
     },
     "./languages/he": {
       "types": "./dist/languages/he.d.ts",
-      "import": "./dist/languages/he.js"
+      "import": "./dist/languages/he.js",
+      "require": "./dist/languages/he.cjs"
     },
     "./languages/hi": {
       "types": "./dist/languages/hi.d.ts",
-      "import": "./dist/languages/hi.js"
+      "import": "./dist/languages/hi.js",
+      "require": "./dist/languages/hi.cjs"
     },
     "./languages/id": {
       "types": "./dist/languages/id.d.ts",
-      "import": "./dist/languages/id.js"
+      "import": "./dist/languages/id.js",
+      "require": "./dist/languages/id.cjs"
     },
     "./languages/it": {
       "types": "./dist/languages/it.d.ts",
-      "import": "./dist/languages/it.js"
+      "import": "./dist/languages/it.js",
+      "require": "./dist/languages/it.cjs"
     },
     "./languages/ja": {
       "types": "./dist/languages/ja.d.ts",
-      "import": "./dist/languages/ja.js"
+      "import": "./dist/languages/ja.js",
+      "require": "./dist/languages/ja.cjs"
     },
     "./languages/ko": {
       "types": "./dist/languages/ko.d.ts",
-      "import": "./dist/languages/ko.js"
+      "import": "./dist/languages/ko.js",
+      "require": "./dist/languages/ko.cjs"
     },
     "./languages/ms": {
       "types": "./dist/languages/ms.d.ts",
-      "import": "./dist/languages/ms.js"
+      "import": "./dist/languages/ms.js",
+      "require": "./dist/languages/ms.cjs"
     },
     "./languages/pl": {
       "types": "./dist/languages/pl.d.ts",
-      "import": "./dist/languages/pl.js"
+      "import": "./dist/languages/pl.js",
+      "require": "./dist/languages/pl.cjs"
     },
     "./languages/pt": {
       "types": "./dist/languages/pt.d.ts",
-      "import": "./dist/languages/pt.js"
+      "import": "./dist/languages/pt.js",
+      "require": "./dist/languages/pt.cjs"
     },
     "./languages/qu": {
       "types": "./dist/languages/qu.d.ts",
-      "import": "./dist/languages/qu.js"
+      "import": "./dist/languages/qu.js",
+      "require": "./dist/languages/qu.cjs"
     },
     "./languages/ru": {
       "types": "./dist/languages/ru.d.ts",
-      "import": "./dist/languages/ru.js"
+      "import": "./dist/languages/ru.js",
+      "require": "./dist/languages/ru.cjs"
     },
     "./languages/sw": {
       "types": "./dist/languages/sw.d.ts",
-      "import": "./dist/languages/sw.js"
+      "import": "./dist/languages/sw.js",
+      "require": "./dist/languages/sw.cjs"
     },
     "./languages/th": {
       "types": "./dist/languages/th.d.ts",
-      "import": "./dist/languages/th.js"
+      "import": "./dist/languages/th.js",
+      "require": "./dist/languages/th.cjs"
     },
     "./languages/tl": {
       "types": "./dist/languages/tl.d.ts",
-      "import": "./dist/languages/tl.js"
+      "import": "./dist/languages/tl.js",
+      "require": "./dist/languages/tl.cjs"
     },
     "./languages/tr": {
       "types": "./dist/languages/tr.d.ts",
-      "import": "./dist/languages/tr.js"
+      "import": "./dist/languages/tr.js",
+      "require": "./dist/languages/tr.cjs"
     },
     "./languages/uk": {
       "types": "./dist/languages/uk.d.ts",
-      "import": "./dist/languages/uk.js"
+      "import": "./dist/languages/uk.js",
+      "require": "./dist/languages/uk.cjs"
     },
     "./languages/vi": {
       "types": "./dist/languages/vi.d.ts",
-      "import": "./dist/languages/vi.js"
+      "import": "./dist/languages/vi.js",
+      "require": "./dist/languages/vi.cjs"
     },
     "./languages/zh": {
       "types": "./dist/languages/zh.d.ts",
-      "import": "./dist/languages/zh.js"
+      "import": "./dist/languages/zh.js",
+      "require": "./dist/languages/zh.cjs"
     },
     "./schema": {
       "types": "./dist/schema/index.d.ts",

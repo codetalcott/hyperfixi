@@ -748,7 +748,11 @@ function updateFrameworkLanguages(code: string, name: string): void {
   const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
   const isLanguage = (k: string) => k.startsWith('./languages/');
   const languages: Record<string, unknown> = {
-    [`./languages/${code}`]: { types: `./dist/languages/${code}.d.ts`, import: `./dist/languages/${code}.js` },
+    [`./languages/${code}`]: {
+      types: `./dist/languages/${code}.d.ts`,
+      import: `./dist/languages/${code}.js`,
+      require: `./dist/languages/${code}.cjs`,
+    },
   };
   for (const [k, v] of Object.entries(pkg.exports)) if (isLanguage(k)) languages[k] = v;
   const sorted: [string, unknown][] = Object.keys(languages).sort().map(k => [k, languages[k]]);

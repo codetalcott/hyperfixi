@@ -38,10 +38,11 @@ export default defineConfig([
     sourcemap: true,
   },
   // Language grammars: data modules, one per language. Splitting keeps one copy
-  // of each object between `languages/<code>` and the `languages` barrel.
+  // of each object between `languages/<code>` and the `languages` barrel. CJS too:
+  // semantic's `dist/index.cjs` requires them.
   {
     entry: languageEntries,
-    format: ['esm'],
+    format: ['esm', 'cjs'],
     splitting: true,
     sourcemap: true,
     esbuildOptions(options) {

@@ -34,7 +34,10 @@ describe('language grammars', () => {
       .map(k => k.slice('./languages/'.length))
       .sort();
     expect(exported).toEqual(codes);
-    expect(pkg.exports['./languages']).toBeDefined();
+    // `require` too: semantic's dist/index.cjs requires each module.
+    for (const key of ['./languages', ...exported.map(code => `./languages/${code}`)]) {
+      expect(Object.keys(pkg.exports[key]), key).toEqual(['types', 'import', 'require']);
+    }
   });
 
   it.each(codes)('%s: is data (no imports but types)', code => {
