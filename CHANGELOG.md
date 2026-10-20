@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`@lokascript/i18n` no longer installs `vite`, `esbuild` and `happy-dom`.** They were runtime
+  `dependencies`, but nothing in the package imports them when it runs: the one use is a type, the
+  `Plugin` that `./plugins/vite` returns. So every install, `@lokascript/hyperscript-adapter`'s
+  optional one included, pulled a bundler and a DOM: 145 MB and 40 packages for i18n 7.0.0, against
+  about 74 MB and 11 without them (macOS arm64). They are devDependencies now, and `vite` is an
+  optional peer (`>=4.0.0`, as `@hyperfixi/vite-plugin` declares it), so the plugin's types
+  resolve where vite is installed.
+
 ## [7.0.0] - 2026-10-19
 
 Removes what 6.x deprecated or never shipped: three MCP tools that duplicated `validate_and_compile`
