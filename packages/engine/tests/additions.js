@@ -221,13 +221,15 @@ test.describe('fixi: content it swaps in runs', () => {
   });
 });
 
-test.describe('htmx: a page that also hands htmx content to the engine', () => {
-  // `htmx.onLoad(el => _hyperscript.process(el))` was the workaround while the engine had no htmx
-  // integration. On upstream it recurses until the stack runs out: the engine's hand-off to htmx
-  // marks what htmx then processes as htmx's.
+test.describe('htmx: a page with its own hooks between htmx and the engine', () => {
+  // The workarounds while the engine had no htmx integration: `htmx.onLoad(el =>
+  // _hyperscript.process(el))` for content htmx swaps in, `_hyperscript.addAfterProcessHook(el =>
+  // htmx.process(el))` for htmx content a script puts in. On upstream each recurses until the
+  // stack runs out. The engine's hand-off to htmx marks what htmx then processes as htmx's, and a
+  // root already being processed is not processed again (src/engine.ts, `processing`).
   const htmx = new URL('./vendor/htmx-4.0.0.min.js', import.meta.url).pathname;
 
-  test('does not recurse, and the swapped content runs once', async ({
+  test('htmx.onLoad: no recursion, and the swapped content runs once', async ({
     withScripts,
     page,
     html,
@@ -249,6 +251,39 @@ test.describe('htmx: a page that also hands htmx content to the engine', () => {
     await find('#load').click();
     await find('#in').click();
     await expect(find('#in')).toHaveText('1');
+    page.off('pageerror', onError);
+    expect(errors).toEqual([]);
+  });
+
+  test('both hooks: no recursion, and both directions work', async ({
+    withScripts,
+    page,
+    html,
+    find,
+    mock,
+    evaluate,
+  }) => {
+    const errors = [];
+    const onError = e => errors.push(e.message);
+    page.on('pageerror', onError);
+    await withScripts(htmx);
+    await evaluate(() => {
+      htmx.onLoad(el => _hyperscript.process(el));
+      _hyperscript.addAfterProcessHook(el => htmx.process(el));
+    });
+    await mock('GET', '/frag', `<button id="in" _="on click put 'swapped' into me">x</button>`);
+    await mock('GET', '/data', '<span>loaded</span>');
+    await html(
+      `<button id="load" hx-get="/frag" hx-target="#t">load</button><div id="t"></div>
+       <button id="add" _="on click put '<button id=req hx-get=/data hx-target=#u>go</button>' into #slot">add</button>
+       <div id="slot"></div><div id="u"></div>`
+    );
+    await find('#load').click();
+    await find('#in').click();
+    await expect(find('#in')).toHaveText('swapped');
+    await find('#add').click();
+    await find('#req').click();
+    await expect(find('#u span')).toHaveText('loaded');
     page.off('pageerror', onError);
     expect(errors).toEqual([]);
   });

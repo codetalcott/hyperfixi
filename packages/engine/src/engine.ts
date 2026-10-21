@@ -160,19 +160,33 @@ type ProcessHook = (root: ProcessRoot) => void;
 const beforeProcess: ProcessHook[] = [];
 const afterProcess: ProcessHook[] = [];
 
+/**
+ * The roots being processed now. A hook that leads back to one of them ends there: a page's own
+ * hand-off to htmx (`addAfterProcessHook(el => htmx.process(el))`) is answered by htmx's
+ * `htmx:after:process`, which processes the same root again. On upstream that recurses until
+ * the stack runs out; a second pass over a root finds nothing the first will not reach.
+ */
+const processing = new Set<ProcessRoot>();
+
 /** Initialise every scripted element in a subtree. Elements already initialised are skipped. */
 export function processNode(node: unknown): void {
   if (!(node instanceof Element || node instanceof Document || node instanceof DocumentFragment))
     return;
-  // A plugin may rewrite scripts before they are read (the multilingual adapter does).
-  for (const hook of beforeProcess) hook(node);
-  const selector =
-    attributes()
-      .map(a => `[${a}]`)
-      .join(', ') + ", [type='text/hyperscript']";
-  if (node instanceof Element && node.matches(selector)) initElement(node);
-  node.querySelectorAll(selector).forEach(initElement);
-  for (const hook of afterProcess) hook(node);
+  if (processing.has(node)) return;
+  processing.add(node);
+  try {
+    // A plugin may rewrite scripts before they are read (the multilingual adapter does).
+    for (const hook of beforeProcess) hook(node);
+    const selector =
+      attributes()
+        .map(a => `[${a}]`)
+        .join(', ') + ", [type='text/hyperscript']";
+    if (node instanceof Element && node.matches(selector)) initElement(node);
+    node.querySelectorAll(selector).forEach(initElement);
+    for (const hook of afterProcess) hook(node);
+  } finally {
+    processing.delete(node);
+  }
 }
 
 /** Remove everything an element's script installed: listeners, observers, timers, state. */
