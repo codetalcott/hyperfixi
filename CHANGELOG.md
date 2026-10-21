@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.3.0] - 2026-10-21
+
+`@hyperfixi/mcp-server` lists its 14 core tools by default and keeps the other 70 in toolsets
+that `LOKASCRIPT_MCP_TOOLSETS` lists, and five of its tools that were broken work. A minor, as
+when the sampling tools went opt-in (2.11.0): every tool still answers a call by name, and the
+variable lists any of them again.
+
 ### Changed
 
 - **`@hyperfixi/mcp-server` lists 14 core tools by default; the other 70 are in opt-in
