@@ -66,7 +66,8 @@ export default { plugins: [hyperfixi()] };
 ```
 
 For hypermedia attributes, add [fixi](https://github.com/bigskysoftware/fixi) or htmx 4 beside it
-(and `@lokascript/htmx-adapter` for `hx-*` names in other languages). `@hyperfixi/core` ships the
+(and `@lokascript/htmx-adapter` for `hx-*` names in other languages); the engine runs the
+hyperscript in content they swap in. `@hyperfixi/core` ships the
 same file as `dist/hyperfixi.js`; core's own bundles (the ~352 KB `hyperfixi.js`, `hyperfixi-hx.js`,
 `hyperfixi-multilingual.js`) retired in the 4.0 cycle.
 

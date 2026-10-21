@@ -11,7 +11,7 @@ core's `dist/hyperfixi.js` is this package's `hyperfixi-hs.js`. It is also publi
 
 ## Install
 
-The script-tag bundle, hyperscript and nothing else (34.1 KB gzipped). It installs as
+The script-tag bundle, hyperscript and nothing else (34.8 KB gzipped). It installs as
 `window._hyperscript` and `window.hyperfixi`, and reads the document when it is ready:
 
 ```html
@@ -164,7 +164,7 @@ commands) 18.4 KB, `full` 34.1 KB, `core` (no commands) 13.8 KB.
 
 ## The script-tag bundle: `hyperfixi-hs.js`
 
-`dist/hyperfixi-hs.js` (minified, 34.1 KB gzipped; `hyperfixi-hs.dev.js` is the readable build) is the first product on this engine:
+`dist/hyperfixi-hs.js` (minified, 34.8 KB gzipped; `hyperfixi-hs.dev.js` is the readable build) is the first product on this engine:
 hyperscript and nothing else, every module, no htmx attributes, English only. It installs
 `window._hyperscript`, as upstream does, and the same object as `window.hyperfixi`. The name
 paired with core's `hyperfixi-hx.js` (hyperscript plus htmx, retired in Phase C3). Since C-R4b

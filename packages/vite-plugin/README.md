@@ -187,9 +187,10 @@ htmx is not bundled. Load htmx 4 beside the generated bundle for `hx-get` and
 friends, `hx-sse` / `hx-ws` for streams, and
 [`@lokascript/htmx-adapter`](../htmx-adapter/README.md) for localized attribute
 names (the two stacks in [docs/BROWSER_BUNDLES.md](../../docs/BROWSER_BUNDLES.md)).
-When the scan finds htmx attributes (or `htmx: true` is set) the bundle hands
-swapped-in content to the engine on `htmx:load` / `htmx:afterSettle`. A
-hyperscript-bodied `hx-live` attribute is a `_="live … end"` block on the engine;
+The engine processes the content htmx (2 or 4) and fixi swap in, and hands htmx
+the content a script puts in, in every bundle: nothing to configure. (The `htmx`
+option did this with htmx 2's event names, which htmx 4 does not fire; it is
+deprecated and does nothing.) A hyperscript-bodied `hx-live` attribute is a `_="live … end"` block on the engine;
 `sse-connect` / `ws-connect` are htmx 4's `hx-sse` / `hx-ws`.
 
 ## Options
@@ -205,9 +206,6 @@ hyperfixi({
 
   // Always include positional expressions
   positional: true,
-
-  // Hand htmx-swapped content to the engine (on by default when hx-* attributes are found)
-  htmx: true,
 
   // Dev-server bundle: 'everything' (the whole engine, faster rebuilds) or 'auto' (the module list)
   devFallback: 'auto',

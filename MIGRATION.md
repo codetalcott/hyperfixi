@@ -309,7 +309,8 @@ The engine runs these as upstream does, which differs from core's 3.x behavior:
    for keywords the scan finds. A form the engine lacks fails with a parse error that names the
    token.
 5. **If you use `hx-*` attributes,** load htmx 4 yourself. The plugin no longer bundles an htmx
-   layer. With `hx-*` attributes (or `htmx: true`), it hands htmx-swapped content to the engine.
+   layer. The engine processes the content htmx swaps in, in every bundle (the plugin's `htmx`
+   option is deprecated and does nothing).
 6. **Expect a different size:** 18–34 KB gzipped, where 3.x produced 3.9–12.5 KB (or 352 KB on a
    `fetch` fallback). A non-English language adds semantic's parser and that language: 3 commands
    plus Spanish measured 209 KB.

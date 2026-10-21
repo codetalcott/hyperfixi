@@ -99,7 +99,6 @@ hyperfixi({
   extraCommands: [], // Always include these commands
   extraBlocks: [], // Always include these blocks
   positional: false, // Include positional expressions
-  htmx: false, // Enable htmx integration
   debug: false, // Verbose logging
   languages: ['en'], // Languages for semantic detection
 });
