@@ -21,6 +21,9 @@ import { jsonResponse, errorResponse } from './utils.js';
 
 type ToolResponse = { content: Array<{ type: string; text: string }>; isError?: boolean };
 
+/** A diagnostic the semantic parser attaches to the node it returns. */
+type ParseDiagnostic = { code?: string; message?: string };
+
 // =============================================================================
 // Tool Definitions
 // =============================================================================
@@ -176,17 +179,41 @@ async function handleFromHyperscript(args: Record<string, unknown>): Promise<Too
     });
   }
 
-  // Step 2: Convert semantic AST → InterchangeNode → SemanticNode (framework IR)
-  const { fromSemanticAST } = await import('@lokascript/semantic');
-  const { fromInterchangeNode, renderExplicit, toProtocolJSON } =
-    await import('@lokascript/framework');
+  // A clause the parse left unread is missing from the LSE, which would still read as whole.
+  const unread = (
+    (parseResult.node as { diagnostics?: ParseDiagnostic[] }).diagnostics ?? []
+  ).filter(d => d.code === 'unconsumed-input' || d.code === 'verbatim-clause');
+  if (unread.length > 0) {
+    return jsonResponse({
+      ok: false,
+      error: `The parse left input unread, so the LSE would drop it: ${unread.map(d => d.message).join('; ')}`,
+      confidence: parseResult.confidence,
+      language,
+    });
+  }
 
-  const interchangeNode = fromSemanticAST(parseResult.node as any);
-  const semanticNode = fromInterchangeNode(interchangeNode as any);
+  // Step 2: Render the semantic node as LSE. It is already the framework's IR (`kind`, `action`,
+  // `roles`). It used to pass through fromSemanticAST, which reads the AST builder's tree, not a
+  // semantic node, so every input rendered as `[get patient:null]` with ok: true.
+  const { parseExplicit, renderExplicit, toProtocolJSON } = await import('@lokascript/framework');
+  const explicit = renderExplicit(parseResult.node as any);
+  const protocol = toProtocolJSON(parseResult.node as any);
 
-  // Step 3: Render to both formats
-  const explicit = renderExplicit(semanticNode);
-  const protocol = toProtocolJSON(semanticNode);
+  // Step 3: The LSE must read back. Some shapes have no LSE form yet (a `then` chain inside a
+  // handler, a condition such as `me matches .x`) and render as text no LSE parser reads; refuse
+  // rather than hand back LSE that lse_to_hyperscript and validate_lse reject.
+  try {
+    parseExplicit(explicit);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return jsonResponse({
+      ok: false,
+      error: `This code has no LSE form yet: the rendered LSE does not parse back (${message}).`,
+      partial: { lse: explicit, protocol },
+      confidence: parseResult.confidence,
+      language,
+    });
+  }
 
   return jsonResponse({
     ok: true,
