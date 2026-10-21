@@ -6,6 +6,7 @@
  */
 import type { Cmd, Ctx, Expr, Program } from './ast';
 import { expr } from './expressions';
+import { installHtmxCompat } from './htmx-compat';
 import { ParseError, Parser, createGrammar, formatError, type Grammar } from './parser';
 import {
   config,
@@ -241,6 +242,7 @@ export function boot(): void {
   const start = () => {
     processNode(document.documentElement);
     document.dispatchEvent(new Event('hyperscript:ready'));
+    installHtmxCompat(api);
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else setTimeout(start);

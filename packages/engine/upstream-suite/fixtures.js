@@ -61,6 +61,27 @@ export const test = base.extend({
     await use(_hsPage);
   },
 
+  // A fresh page whose script tags load these files (paths) before the engine boots, as a
+  // page's own `<script src>` tags run before DOMContentLoaded. For htmx and fixi (own tests).
+  withScripts: async ({ page }, use) => {
+    await use(async (...files) => {
+      await page.route('http://localhost/__script/*', r =>
+        r.fulfill({
+          contentType: 'text/javascript',
+          path: files[Number(r.request().url().split('/').pop())],
+        })
+      );
+      const tags = files.map((_, i) => `<script src="/__script/${i}"></script>`).join('');
+      await page.route('http://localhost/__scripted', r =>
+        r.fulfill({ contentType: 'text/html', body: BLANK_PAGE.replace('<body>', `<body>${tags}`) })
+      );
+      await page.goto('http://localhost/__scripted');
+      // The engine installs its htmx and fixi listeners once it has processed the document.
+      await page.waitForFunction(() => document.readyState === 'complete');
+      await page.evaluate(() => new Promise(r => setTimeout(r, 0)));
+    });
+  },
+
   html: async ({ page }, use) => {
     await use(async markup => {
       await page.evaluate(h => {

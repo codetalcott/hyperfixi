@@ -1,5 +1,7 @@
-// Tests for the syntax upstream does not have (src/additions.ts), in the form of upstream's
-// own tests and on the same fixtures. `npm run test:own` runs them; every one must pass.
+// Tests for what upstream does not have, in the form of upstream's own tests and on the same
+// fixtures: the syntax in src/additions.ts, and the two additions in src/htmx-compat.ts (fixi,
+// and a hand-off to htmx that does not recurse). `npm run test:own` runs them; every one must
+// pass.
 import { test, expect } from '../fixtures.js';
 
 test.describe('new <Constructor>(...)', () => {
@@ -182,5 +184,72 @@ test.describe('toggle <element>', () => {
 
   test('reports a target that is not there', async ({ error }) => {
     expect(await error('toggle #missing')).toBe("'#missing' is null");
+  });
+});
+
+test.describe('fixi: content it swaps in runs', () => {
+  // Upstream has no fixi integration; the engine processes the content on `fx:swapped`.
+  const fixi = new URL('./vendor/fixi-0.9.4.js', import.meta.url).pathname;
+
+  test('into a target', async ({ withScripts, html, find, mock }) => {
+    await withScripts(fixi);
+    await mock(
+      'GET',
+      '/frag',
+      `<button id="in" _="on click increment :n then put :n into me">x</button>`
+    );
+    await html(`<button id="load" fx-action="/frag" fx-target="#t" fx-swap="innerHTML">load</button>
+                <div id="t"></div>`);
+    await find('#load').click();
+    await expect(find('#in')).toHaveCount(1);
+    await find('#in').click();
+    await expect(find('#in')).toHaveText('1');
+  });
+
+  test("in place of the element that asked (fixi's default swap)", async ({
+    withScripts,
+    html,
+    find,
+    mock,
+  }) => {
+    await withScripts(fixi);
+    await mock('GET', '/frag', `<button id="in" _="on click put 'swapped' into me">x</button>`);
+    await html(`<button id="load" fx-action="/frag">load</button>`);
+    await find('#load').click();
+    await find('#in').click();
+    await expect(find('#in')).toHaveText('swapped');
+  });
+});
+
+test.describe('htmx: a page that also hands htmx content to the engine', () => {
+  // `htmx.onLoad(el => _hyperscript.process(el))` was the workaround while the engine had no htmx
+  // integration. On upstream it recurses until the stack runs out: the engine's hand-off to htmx
+  // marks what htmx then processes as htmx's.
+  const htmx = new URL('./vendor/htmx-4.0.0.min.js', import.meta.url).pathname;
+
+  test('does not recurse, and the swapped content runs once', async ({
+    withScripts,
+    page,
+    html,
+    find,
+    mock,
+    evaluate,
+  }) => {
+    const errors = [];
+    const onError = e => errors.push(e.message);
+    page.on('pageerror', onError);
+    await withScripts(htmx);
+    await evaluate(() => htmx.onLoad(el => _hyperscript.process(el)));
+    await mock(
+      'GET',
+      '/frag',
+      `<button id="in" _="on click increment :n then put :n into me">x</button>`
+    );
+    await html(`<button id="load" hx-get="/frag" hx-target="#t">load</button><div id="t"></div>`);
+    await find('#load').click();
+    await find('#in').click();
+    await expect(find('#in')).toHaveText('1');
+    page.off('pageerror', onError);
+    expect(errors).toEqual([]);
   });
 });

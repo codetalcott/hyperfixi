@@ -66,3 +66,51 @@ test.describe('`beep!` as a command', () => {
     await expect(find('div')).toHaveText('done');
   });
 });
+
+test.describe('htmx 4.0.0, the release', () => {
+  // The engine had no htmx integration: content htmx swapped in never ran its script, and htmx
+  // content a script put in never issued a request. Upstream's tests for it
+  // (`integration/htmx.js`) were not vendored at first, and they load htmx 4.0.0-beta1; these
+  // load the release.
+  const htmx = new URL('./vendor/htmx-4.0.0.min.js', import.meta.url).pathname;
+
+  test('content it swaps in runs, once per event', async ({ withScripts, html, find, mock }) => {
+    await withScripts(htmx);
+    await mock(
+      'GET',
+      '/frag',
+      `<button id="in" _="on click increment :n then put :n into me">x</button>`
+    );
+    await html(`<button id="load" hx-get="/frag" hx-target="#t">load</button><div id="t"></div>`);
+    await find('#load').click();
+    await expect(find('#in')).toHaveCount(1);
+    await find('#in').click();
+    await expect(find('#in')).toHaveText('1');
+  });
+
+  test('an outerHTML swap of the element that asked', async ({ withScripts, html, find, mock }) => {
+    await withScripts(htmx);
+    await mock('GET', '/frag', `<button id="in" _="on click put 'swapped' into me">x</button>`);
+    await html(`<button id="load" hx-get="/frag" hx-swap="outerHTML">load</button>`);
+    await find('#load').click();
+    await find('#in').click();
+    await expect(find('#in')).toHaveText('swapped');
+  });
+
+  test('htmx content a script puts in issues its request', async ({
+    withScripts,
+    html,
+    find,
+    mock,
+  }) => {
+    await withScripts(htmx);
+    await mock('GET', '/data', '<span>loaded</span>');
+    await html(
+      `<button id="add" _="on click put '<button id=req hx-get=/data hx-target=#t>go</button>' into #slot">add</button>
+       <div id="slot"></div><div id="t"></div>`
+    );
+    await find('#add').click();
+    await find('#req').click();
+    await expect(find('#t span')).toHaveText('loaded');
+  });
+});

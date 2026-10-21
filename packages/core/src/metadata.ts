@@ -33,7 +33,7 @@ const ENGINE_COMMAND_COUNT = 53;
  * (which `test:upstream:update` rewrites), so a change there fails until this
  * follows. It replaced 3.x's hand-typed "~85% official _hyperscript".
  */
-const UPSTREAM_SUITE = { version: '0.9.93', passed: 1410, total: 1486 } as const;
+const UPSTREAM_SUITE = { version: '0.9.93', passed: 1420, total: 1486 } as const;
 
 // =============================================================================
 // PACKAGE INFO
@@ -123,8 +123,8 @@ export const bundleInfo: BundleInfo[] = [
     id: 'browser',
     name: 'Engine (hyperfixi-hs.js)',
     filename: 'hyperfixi.js',
-    gzipSize: '33.3 KB',
-    rawSize: '94 KB',
+    gzipSize: '34.0 KB',
+    rawSize: '96 KB',
     // The engine's command keywords: verify:reference re-derives it.
     commandCount: ENGINE_COMMAND_COUNT,
     parser: 'engine',
