@@ -201,7 +201,7 @@ test.describe('fixi: content it swaps in runs', () => {
     await html(`<button id="load" fx-action="/frag" fx-target="#t" fx-swap="innerHTML">load</button>
                 <div id="t"></div>`);
     await find('#load').click();
-    await expect(find('#in')).toHaveCount(1);
+    await expect(find('#in[data-hyperscript-powered]')).toHaveCount(1);
     await find('#in').click();
     await expect(find('#in')).toHaveText('1');
   });
@@ -216,8 +216,30 @@ test.describe('fixi: content it swaps in runs', () => {
     await mock('GET', '/frag', `<button id="in" _="on click put 'swapped' into me">x</button>`);
     await html(`<button id="load" fx-action="/frag">load</button>`);
     await find('#load').click();
+    await expect(find('#in[data-hyperscript-powered]')).toHaveCount(1);
     await find('#in').click();
     await expect(find('#in')).toHaveText('swapped');
+  });
+
+  test('into <html> (an innerHTML swap of the whole document, which has no parent)', async ({
+    withScripts,
+    page,
+    html,
+    mock,
+  }) => {
+    await withScripts(fixi);
+    await mock(
+      'GET',
+      '/doc',
+      `<head></head><body><button id="in" _="on click put 'whole' into me">x</button></body>`
+    );
+    await html(
+      `<button id="load" fx-action="/doc" fx-target="html" fx-swap="innerHTML">load</button>`
+    );
+    await page.locator('#load').click();
+    await expect(page.locator('#in[data-hyperscript-powered]')).toHaveCount(1);
+    await page.locator('#in').click();
+    await expect(page.locator('#in')).toHaveText('whole');
   });
 });
 
@@ -240,18 +262,22 @@ test.describe('htmx: a page with its own hooks between htmx and the engine', () 
     const errors = [];
     const onError = e => errors.push(e.message);
     page.on('pageerror', onError);
-    await withScripts(htmx);
-    await evaluate(() => htmx.onLoad(el => _hyperscript.process(el)));
-    await mock(
-      'GET',
-      '/frag',
-      `<button id="in" _="on click increment :n then put :n into me">x</button>`
-    );
-    await html(`<button id="load" hx-get="/frag" hx-target="#t">load</button><div id="t"></div>`);
-    await find('#load').click();
-    await find('#in').click();
-    await expect(find('#in')).toHaveText('1');
-    page.off('pageerror', onError);
+    try {
+      await withScripts(htmx);
+      await evaluate(() => htmx.onLoad(el => _hyperscript.process(el)));
+      await mock(
+        'GET',
+        '/frag',
+        `<button id="in" _="on click increment :n then put :n into me">x</button>`
+      );
+      await html(`<button id="load" hx-get="/frag" hx-target="#t">load</button><div id="t"></div>`);
+      await find('#load').click();
+      await expect(find('#in[data-hyperscript-powered]')).toHaveCount(1);
+      await find('#in').click();
+      await expect(find('#in')).toHaveText('1');
+    } finally {
+      page.off('pageerror', onError);
+    }
     expect(errors).toEqual([]);
   });
 
@@ -266,25 +292,29 @@ test.describe('htmx: a page with its own hooks between htmx and the engine', () 
     const errors = [];
     const onError = e => errors.push(e.message);
     page.on('pageerror', onError);
-    await withScripts(htmx);
-    await evaluate(() => {
-      htmx.onLoad(el => _hyperscript.process(el));
-      _hyperscript.addAfterProcessHook(el => htmx.process(el));
-    });
-    await mock('GET', '/frag', `<button id="in" _="on click put 'swapped' into me">x</button>`);
-    await mock('GET', '/data', '<span>loaded</span>');
-    await html(
-      `<button id="load" hx-get="/frag" hx-target="#t">load</button><div id="t"></div>
-       <button id="add" _="on click put '<button id=req hx-get=/data hx-target=#u>go</button>' into #slot">add</button>
-       <div id="slot"></div><div id="u"></div>`
-    );
-    await find('#load').click();
-    await find('#in').click();
-    await expect(find('#in')).toHaveText('swapped');
-    await find('#add').click();
-    await find('#req').click();
-    await expect(find('#u span')).toHaveText('loaded');
-    page.off('pageerror', onError);
+    try {
+      await withScripts(htmx);
+      await evaluate(() => {
+        htmx.onLoad(el => _hyperscript.process(el));
+        _hyperscript.addAfterProcessHook(el => htmx.process(el));
+      });
+      await mock('GET', '/frag', `<button id="in" _="on click put 'swapped' into me">x</button>`);
+      await mock('GET', '/data', '<span>loaded</span>');
+      await html(
+        `<button id="load" hx-get="/frag" hx-target="#t">load</button><div id="t"></div>
+         <button id="add" _="on click put '<button id=req hx-get=/data hx-target=#u>go</button>' into #slot">add</button>
+         <div id="slot"></div><div id="u"></div>`
+      );
+      await find('#load').click();
+      await expect(find('#in[data-hyperscript-powered]')).toHaveCount(1);
+      await find('#in').click();
+      await expect(find('#in')).toHaveText('swapped');
+      await find('#add').click();
+      await find('#req').click();
+      await expect(find('#u span')).toHaveText('loaded');
+    } finally {
+      page.off('pageerror', onError);
+    }
     expect(errors).toEqual([]);
   });
 });

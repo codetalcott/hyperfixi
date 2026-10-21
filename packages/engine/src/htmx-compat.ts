@@ -1,7 +1,7 @@
 /**
  * htmx and fixi: content they swap in is processed, and content a script puts in is handed to
  * htmx. `boot()` installs this once the document is processed, as upstream's boot installs its
- * `HtmxCompat`. Without htmx or fixi on the page it only adds two document listeners.
+ * `HtmxCompat`. Without htmx or fixi on the page it only adds three document listeners.
  *
  * Follows upstream _hyperscript 0.9.93's `src/core/runtime/htmx-compat.js` (its tests:
  * `integration/htmx.js`, `ext/hs-include.js`), with two additions upstream does not have:

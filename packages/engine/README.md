@@ -66,7 +66,10 @@ extension (`hs-include=":userId"` sends an element-scoped variable with the requ
 with `htmx.config.extensions = "hs-include"`). This is upstream's integration
 (`src/htmx-compat.ts`), with two additions: fixi (on `fx:swapped`), and a hand-off to htmx that
 does not recurse when a page also hands htmx's content to the engine itself
-(`htmx.onLoad(el => _hyperscript.process(el))`), as it does on upstream.
+(`htmx.onLoad(el => _hyperscript.process(el))`), as it does on upstream. As on upstream, the
+engine looks for htmx once, when it has processed the document: load htmx with a script tag
+(plain or `defer`, not `async`) for the hand-off and `hs-include`; swapped-in content is processed
+whenever htmx loads.
 
 ## Layout
 
@@ -200,8 +203,8 @@ Since 2026-10-21 the gate also runs upstream's htmx tests (`integration/htmx.js`
 `ext/hs-include.js`, 19), which the first vendoring left out, so the whole suite is 1,486. The
 engine failed 10 of them until it had upstream's htmx integration; it passes all 19.
 
-The 66 known failures: upstream's internal-API surface (`internals.tokenizer`,
-`evalStatically`, source info, error collection: 47), sockets and workers (17, upstream
+The 64 known failures: upstream's internal-API surface (`internals.tokenizer`,
+`evalStatically`, source info, error collection: 45), sockets and workers (17, upstream
 extensions that are not built), and two collection-expression tests that need upstream's
 component extension. Upstream's one failure is a test that expects its worker extension to be
 absent.

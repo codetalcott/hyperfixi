@@ -83,7 +83,7 @@ test.describe('htmx 4.0.0, the release', () => {
     );
     await html(`<button id="load" hx-get="/frag" hx-target="#t">load</button><div id="t"></div>`);
     await find('#load').click();
-    await expect(find('#in')).toHaveCount(1);
+    await expect(find('#in[data-hyperscript-powered]')).toHaveCount(1);
     await find('#in').click();
     await expect(find('#in')).toHaveText('1');
   });
@@ -93,6 +93,7 @@ test.describe('htmx 4.0.0, the release', () => {
     await mock('GET', '/frag', `<button id="in" _="on click put 'swapped' into me">x</button>`);
     await html(`<button id="load" hx-get="/frag" hx-swap="outerHTML">load</button>`);
     await find('#load').click();
+    await expect(find('#in[data-hyperscript-powered]')).toHaveCount(1);
     await find('#in').click();
     await expect(find('#in')).toHaveText('swapped');
   });

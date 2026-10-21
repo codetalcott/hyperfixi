@@ -63,6 +63,8 @@ export const test = base.extend({
 
   // A fresh page whose script tags load these files (paths) before the engine boots, as a
   // page's own `<script src>` tags run before DOMContentLoaded. For htmx and fixi (own tests).
+  // The engine itself is the context's init script, so it is defined before these run; it boots
+  // (and looks for htmx) on DOMContentLoaded, after them.
   withScripts: async ({ page }, use) => {
     await use(async (...files) => {
       await page.route('http://localhost/__script/*', r =>

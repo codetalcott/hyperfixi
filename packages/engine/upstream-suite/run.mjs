@@ -94,6 +94,7 @@ if (own) {
 } else {
   for (const d of DIRS) cpSync(join(testRoot, d), join(work, 'test', d), { recursive: true });
   for (const f of FILES) {
+    if (!existsSync(join(testRoot, f))) continue; // an upstream ref from before the file
     mkdirSync(dirname(join(work, 'test', f)), { recursive: true });
     cpSync(join(testRoot, f), join(work, 'test', f));
   }

@@ -164,7 +164,9 @@ const afterProcess: ProcessHook[] = [];
  * The roots being processed now. A hook that leads back to one of them ends there: a page's own
  * hand-off to htmx (`addAfterProcessHook(el => htmx.process(el))`) is answered by htmx's
  * `htmx:after:process`, which processes the same root again. On upstream that recurses until
- * the stack runs out; a second pass over a root finds nothing the first will not reach.
+ * the stack runs out. The nested pass would find only what the outer pass is already
+ * initialising, and scripted markup an `init` inserted without processing it (`put` processes
+ * what it inserts); the latter waits for the next pass over that root.
  */
 const processing = new Set<ProcessRoot>();
 
