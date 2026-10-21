@@ -4,18 +4,23 @@ Tools for teaching LLMs to produce and consume LokaScript Explicit Syntax (`[com
 
 ## MCP Tools
 
+These are in the MCP server's `lse` toolset, listed when the server is started with
+`LOKASCRIPT_MCP_TOOLSETS=lse` (comma-separated, or `all`); a tool also answers a call by name
+without it.
+
 ### Pipeline (LLM Round-Trip)
 
 | Tool                   | Description                                                                   |
 | ---------------------- | ----------------------------------------------------------------------------- |
 | `lse_from_hyperscript` | Parse hyperscript (any of 24 languages) to LSE bracket syntax + protocol JSON |
-| `lse_to_hyperscript`   | Validate/compile LSE from LLM response to normalized LSE + JavaScript         |
+| `lse_to_hyperscript`   | Validate LSE from an LLM response: diagnostics, normalized LSE, protocol JSON |
 
 **Typical round-trip workflow:**
 
 1. `lse_from_hyperscript({ code: "on click toggle .active" })` → get LSE + protocol JSON
 2. LLM modifies the LSE (e.g., adds a class, changes the target)
-3. `lse_to_hyperscript({ lse: "[toggle patient:.highlight]" })` → validates and compiles to JS
+3. `lse_to_hyperscript({ lse: "[toggle patient:.highlight]" })` → validated LSE and its protocol JSON
+   (compiling LSE to JavaScript retired with the AOT compiler in 4.0)
 
 ### Training & Feedback
 
@@ -37,14 +42,14 @@ These methods are available on `DomainRegistry` instances:
 
 ## MCP Sampling (LLM Domain)
 
-The `execute_llm` tool bridges LLM commands to MCP sampling:
+The `execute_llm` tool bridges LLM commands to MCP sampling. It and the four shortcuts below are
+opt-in: hidden and refused unless the server is started with `LOKASCRIPT_MCP_LLM_TOOLS=1`.
 
 ```json
 execute_llm({ command: "summarize this paragraph as bullets", language: "en" })
 ```
 
-Also available as direct sampling shortcuts (opt-in — the server must be
-started with `LOKASCRIPT_MCP_LLM_TOOLS=1`):
+Direct sampling shortcuts:
 
 - `ask_claude` -- General questions
 - `summarize_content` -- Summarization

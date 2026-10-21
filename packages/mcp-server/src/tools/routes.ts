@@ -7,30 +7,45 @@
  */
 
 import type { Tool } from '@modelcontextprotocol/server';
+// Types only: the package is an optional peer, loaded below on first use. Typed, so a change to
+// its return shapes fails the typecheck. (Untyped, both tools read `scanRoutes(...).routes` from
+// the array it returns, and threw on every input from the day they were added until 7.2.0.)
+import type * as ServerBridge from '@hyperfixi/server-bridge';
 import { validateRequired, getString, getBoolean, jsonResponse, errorResponse } from './utils.js';
 
-// Lazy-loaded ServerBridge modules
-let scanRoutesImpl: any = null;
-let generators: Record<string, any> = {};
+// Lazy-loaded ServerBridge module
+let serverBridge: typeof ServerBridge | null = null;
 
-async function getScanRoutes() {
-  if (scanRoutesImpl) return scanRoutesImpl;
+async function getServerBridge(): Promise<typeof ServerBridge> {
+  if (serverBridge) return serverBridge;
 
   try {
-    const mod = await import('@hyperfixi/server-bridge');
-    scanRoutesImpl = mod.scanRoutes;
-    generators = {
-      express: mod.ExpressGenerator,
-      hono: mod.HonoGenerator,
-      openapi: mod.OpenAPIGenerator,
-      django: mod.DjangoGenerator,
-      fastapi: mod.FastAPIGenerator,
-    };
-    return scanRoutesImpl;
+    serverBridge = await import('@hyperfixi/server-bridge');
+    return serverBridge;
   } catch {
     throw new Error(
       '@hyperfixi/server-bridge not available. Install it to use route extraction tools.'
     );
+  }
+}
+
+function generatorFor(
+  bridge: typeof ServerBridge,
+  framework: string
+): ServerBridge.RouteGenerator | null {
+  switch (framework) {
+    case 'express':
+      return new bridge.ExpressGenerator();
+    case 'hono':
+      return new bridge.HonoGenerator();
+    case 'openapi':
+      return new bridge.OpenAPIGenerator();
+    case 'django':
+      return new bridge.DjangoGenerator();
+    case 'fastapi':
+      return new bridge.FastAPIGenerator();
+    default:
+      return null;
   }
 }
 
@@ -128,13 +143,13 @@ async function extractRoutes(args: Record<string, unknown>): Promise<ToolRespons
   const html = getString(args, 'html');
   const filename = getString(args, 'filename', 'input.html');
 
-  const scanRoutes = await getScanRoutes();
-  const result = scanRoutes(html, filename);
+  const bridge = await getServerBridge();
+  const routes = bridge.scanRoutes(html, filename);
 
   return jsonResponse({
-    routes: result.routes,
-    count: result.routes.length,
-    errors: result.errors,
+    routes,
+    count: routes.length,
+    conflicts: bridge.detectConflicts(routes),
   });
 }
 
@@ -148,39 +163,36 @@ async function generateServerRoutes(args: Record<string, unknown>): Promise<Tool
   const typescript = getBoolean(args, 'typescript', true);
   const filename = getString(args, 'filename', 'input.html');
 
-  const scanRoutes = await getScanRoutes();
-  const result = scanRoutes(html, filename);
-
-  if (result.routes.length === 0) {
-    return jsonResponse({
-      files: [],
-      routes: 0,
-      message: 'No routes found in the provided HTML.',
-      errors: result.errors,
-    });
-  }
-
-  const GeneratorClass = generators[framework];
-  if (!GeneratorClass) {
+  const bridge = await getServerBridge();
+  const generator = generatorFor(bridge, framework);
+  if (!generator) {
     return errorResponse(
       `Unknown framework: ${framework}. Supported: express, hono, openapi, django, fastapi`
     );
   }
 
-  const generator = new GeneratorClass();
-  const generated = generator.generate(result.routes, {
+  const routes = bridge.scanRoutes(html, filename);
+  if (routes.length === 0) {
+    return jsonResponse({
+      files: [],
+      routes: 0,
+      message: 'No routes found in the provided HTML.',
+    });
+  }
+
+  const generated = generator.generate(routes, {
     outputDir: './server/routes',
     typescript,
   });
 
   return jsonResponse({
     framework: generator.framework,
-    routes: result.routes.length,
-    files: generated.files.map((f: any) => ({
+    routes: routes.length,
+    files: generated.files.map(f => ({
       path: f.path,
       content: f.content,
     })),
     warnings: generated.warnings,
-    scanErrors: result.errors,
+    conflicts: bridge.detectConflicts(routes),
   });
 }

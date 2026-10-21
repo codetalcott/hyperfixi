@@ -33,16 +33,11 @@ Identify: what DOM elements are involved, what events trigger the behavior, what
 
 ### 2. Find the Right Command
 
-Use `suggest_command` with a task description:
+Use `search_patterns` for working code, and `get_command_docs` for a command's roles:
 
 ```
-suggest_command({ task: "show a modal when button is clicked" })
-```
-
-Or use `get_examples` for working code:
-
-```
-get_examples({ prompt: "toggle a class on click" })
+search_patterns({ query: "dropdown" })
+get_command_docs({ command: "toggle" })
 ```
 
 Otherwise, consult the [Commands Reference](./references/commands.md).
@@ -117,72 +112,39 @@ core-only; `on click.prevent` now listens for an event named `click.prevent`.)
 If code doesn't work:
 
 1. Use `validate_and_compile` to check it (for English, the engine that runs it decides)
-2. Use `debug_explain_handler` to get a step-by-step breakdown
-3. Add `log` (`on click log me then toggle .active`) or `beep! x` (logs a value with its type), or `breakpoint`
-4. Check browser console for errors
-5. Verify selectors exist in DOM
+2. Add `log` (`on click log me then toggle .active`) or `beep! x` (logs a value with its type), or `breakpoint`
+3. Check browser console for errors
+4. Verify selectors exist in DOM
 
-With an execution state captured at a `breakpoint` command or from `log` output:
-
-- `debug_analyze_snapshot` -- understand current execution state at a breakpoint
-- `debug_suggest_fix` -- get fix suggestions from a failure snapshot
-- `debug_trace_variable` -- trace how a variable changed over an execution history
+With the `analysis` toolset, `explain_code` lists each step in the order it runs; with `debug`,
+`debug_explain_handler` adds where to put a `breakpoint`.
 
 ## MCP Tools
 
-### Writing & Validating Code
+### Core (listed by default)
 
-| Tool                   | When to Use                                   |
-| ---------------------- | --------------------------------------------- |
-| `suggest_command`      | Find the right command for a task             |
-| `get_examples`         | Get working code examples by task description |
-| `search_patterns`      | Search pattern database by keyword/category   |
-| `validate_and_compile` | **Always use before returning code**          |
-| `get_diagnostics`      | Detailed errors with line/column positions    |
-| `get_code_fixes`       | Auto-fix suggestions for specific error codes |
+| Tool                   | When to Use                                          |
+| ---------------------- | ---------------------------------------------------- |
+| `validate_and_compile` | **Always use before returning code**                 |
+| `get_diagnostics`      | Errors with line/column positions, typo fixes        |
+| `get_code_fixes`       | Fixes for the code of each diagnostic                |
+| `get_command_docs`     | Documentation for a specific command and its roles   |
+| `get_expression_docs`  | Documentation for expression types                   |
+| `search_patterns`      | Search the pattern database by keyword/category      |
+| `diff_behaviors`       | Check an edit left the behavior as it was            |
+| `score_fidelity`       | Score a candidate against a reference, name the gaps |
 
-### Understanding Code
+### In toolsets
 
-| Tool                 | When to Use                                      |
-| -------------------- | ------------------------------------------------ |
-| `explain_code`       | Explain existing code to user                    |
-| `recognize_intent`   | Identify what a snippet is trying to do          |
-| `analyze_complexity` | Assess complexity of a handler                   |
-| `analyze_metrics`    | Get quantitative metrics (commands, depth, etc.) |
+Listed when the server's `LOKASCRIPT_MCP_TOOLSETS` names the toolset (comma-separated, or
+`all`); a tool also answers a call by name without it.
 
-### Language Documentation
-
-| Tool                       | When to Use                                  |
-| -------------------------- | -------------------------------------------- |
-| `get_command_docs`         | Get documentation for a specific command     |
-| `get_expression_docs`      | Get documentation for expression types       |
-| `search_language_elements` | Search commands/expressions by keyword       |
-| `suggest_best_practices`   | Get best practices for a pattern or use case |
-
-### LSP Tools
-
-| Tool                   | When to Use                                       |
-| ---------------------- | ------------------------------------------------- |
-| `get_diagnostics`      | Detailed errors with line/column positions        |
-| `get_completions`      | Get autocomplete suggestions at a cursor position |
-| `get_hover_info`       | Get hover documentation for a token               |
-| `get_document_symbols` | List all symbols/handlers in a document           |
-
-### Debug Tools
-
-| Tool                     | When to Use                                      |
-| ------------------------ | ------------------------------------------------ |
-| `debug_analyze_snapshot` | Understand execution state at a debug breakpoint |
-| `debug_explain_handler`  | Step-by-step breakdown of an event handler       |
-| `debug_suggest_fix`      | Get fix suggestions from a failure snapshot      |
-| `debug_trace_variable`   | Trace variable changes over an execution history |
-
-### Project Inventory
-
-| Tool              | When to Use                                                |
-| ----------------- | ---------------------------------------------------------- |
-| `scan_inventory`  | Scan project templates for all hyperscript/htmx/fixi usage |
-| `query_inventory` | Filter/search within scanned inventory results             |
+| Toolset    | Tools                                                                                                                                                                |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `analysis` | `explain_code`, `suggest_command`, `get_examples`, `search_language_elements`, `suggest_best_practices`, `recognize_intent`, `analyze_complexity`, `analyze_metrics` |
+| `editor`   | `get_completions`, `get_hover_info`, `get_document_symbols`                                                                                                          |
+| `debug`    | `debug_explain_handler`; and over a snapshot you assemble at a `breakpoint`: `debug_analyze_snapshot`, `debug_suggest_fix`, `debug_trace_variable`                   |
+| `project`  | `scan_inventory`, `query_inventory` (hyperscript/htmx/fixi usage across a project's templates)                                                                       |
 
 ## References
 

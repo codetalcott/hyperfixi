@@ -28,7 +28,7 @@ Add 24-language support to the original `_hyperscript` runtime via the `@lokascr
 | `hyperscript-i18n.global.js`            | 568 KB    | All 24                           | Full multilingual support            |
 | `hyperscript-i18n-lite.global.js`       | 2 KB      | (needs external semantic bundle) | Minimal footprint                    |
 
-Use `get_bundle_config` with `runtime: "hyperscript"` for a recommendation:
+With the MCP server's `project` toolset, `get_bundle_config` with `runtime: "hyperscript"` recommends one:
 
 ```
 get_bundle_config({ runtime: "hyperscript", languages: ["es", "ja"], commands: ["toggle", "add"] })
@@ -150,13 +150,16 @@ If confidence is below the threshold, the original text passes through unchanged
 
 ## MCP Tools
 
-| Tool                       | When to Use                                                  |
-| -------------------------- | ------------------------------------------------------------ |
-| `get_bundle_config`        | Get adapter bundle recommendation (`runtime: "hyperscript"`) |
-| `translate_to_english`     | Preview what the adapter translates to                       |
-| `validate_and_compile`     | Validate code syntax (any language)                          |
-| `explain_in_language`      | Explain what code does, with translations                    |
-| `list_supported_languages` | List all 24 languages with metadata                          |
+| Tool                       | When to Use                                            |
+| -------------------------- | ------------------------------------------------------ |
+| `translate_to_english`     | Preview what the adapter translates to                 |
+| `validate_and_compile`     | Validate code syntax (any language)                    |
+| `translate_code`           | Show code in another of the 24 languages, verified     |
+| `list_supported_languages` | List all 24 languages with metadata                    |
+| `get_bundle_config`        | Adapter bundle recommendation (`project` toolset)      |
+| `explain_in_language`      | Explain what code does, with translations (`analysis`) |
+
+The last two are listed when the server's `LOKASCRIPT_MCP_TOOLSETS` names their toolset.
 
 ## References
 

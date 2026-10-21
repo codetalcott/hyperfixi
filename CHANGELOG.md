@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`@hyperfixi/mcp-server` lists 14 core tools by default; the other 70 are in opt-in
+  toolsets.** A connection listed all 84: about 13k tokens of definitions in each client that
+  loads them all, and a month of sessions called 7 of them. The default list is the agent loop
+  and what it leans on (`validate_and_compile`, `get_diagnostics`, `get_code_fixes`,
+  `get_command_docs`, `get_expression_docs`, `search_patterns`), translation (`translate_code`,
+  `translate_to_english`, `get_keyword_translations`, `list_supported_languages`), proof that
+  a change kept its meaning (`score_fidelity`, `diff_behaviors`), and `detect_domain` /
+  `compile_auto`: about 2.5k tokens. Set `LOKASCRIPT_MCP_TOOLSETS` to list more: `domains`
+  (26), `lse` (13), `grail` (5), `debug` (4), `editor` (3), `analysis` (9), `profiles` (5),
+  `project` (5), comma-separated, or `all`. Only the list changes: every tool still answers a
+  call by name. A client that picks tools from the list (Claude Code, Claude Desktop) needs
+  the variable to see a tool outside the core; the README lists each toolset's tools (#1607).
+
+### Fixed
+
+- **`lse_from_hyperscript` returned `[get patient:null]` for every input**, with `ok: true` and
+  confidence 1: it read the semantic parse as the AST builder's tree. It now renders the parse,
+  and refuses (`ok: false`, the rendered LSE under `partial`) a parse that left input unread or
+  a shape whose LSE does not parse back, such as a `then` chain inside a handler (#1607).
+- **`extract_routes` and `generate_server_routes` threw on every input** ("Cannot read
+  properties of undefined"), from the day they were added: they read `.routes` from the array
+  `scanRoutes` returns. They report server-bridge's route conflicts where they promised an
+  `errors` field it never had. The import that hid this from the typecheck (an untyped ambient
+  module) is gone (#1607).
+- **`get_code_fixes` had no fixes for the codes `validate_and_compile` emits**
+  (`ENGINE_PARSE_ERROR`, `UNCONSUMED_INPUT`, …), though the server's instructions send an agent
+  there from its diagnostics; `get_diagnostics`' `parse-error` and `low-confidence` mapped to
+  keys that did not exist. Every code compilation-service emits now has fixes, and a test holds
+  that (#1607).
+- **`explain_code` listed commands by kind, not in the order they run** (toggle → wait → add
+  came out "toggles … adds … waits") and dropped their targets. It explains the parse now: each
+  step rendered back to English with what it does, a block's body and an `if`'s two branches (#1607).
+- **`get_diagnostics`' typo fix was titled `Fix typo: ${suggestion}`**, unfilled, with no edit.
+  It now reads "Fix typo: toggle" with an edit that replaces the misspelled word (#1607).
+
 ## [7.2.0] - 2026-10-20
 
 `@hyperfixi/mcp-server` moves to `@lokascript/domains` 7.1.0: learn left the domains for
