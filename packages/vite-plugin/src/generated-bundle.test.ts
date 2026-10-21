@@ -100,6 +100,33 @@ describe('the emitted bundle runs', () => {
     expect(el.textContent).toBe('on');
   });
 
+  it('processes the content htmx and fixi announce: boot() installs the engine integration', async () => {
+    await load(generator.generate(usage(['put']), { globalName: 'hfxTestHtmx' }));
+    await tick(); // the engine processes the document, then installs its listeners
+
+    // htmx 4 announces processed content with `htmx:after:process` on it.
+    const swapped = document.createElement('div');
+    swapped.innerHTML = `<button _="on click put 'htmx' into me">x</button>`;
+    document.body.appendChild(swapped);
+    swapped.dispatchEvent(new Event('htmx:after:process', { bubbles: true }));
+    const fromHtmx = swapped.querySelector('button')!;
+    click(fromHtmx);
+    await tick();
+    expect(fromHtmx.textContent).toBe('htmx');
+
+    // fixi fires `fx:swapped` on the element that asked, with the swap's target in `cfg`.
+    const target = document.createElement('div');
+    target.innerHTML = `<button _="on click put 'fixi' into me">y</button>`;
+    document.body.appendChild(target);
+    target.dispatchEvent(
+      new CustomEvent('fx:swapped', { bubbles: true, detail: { cfg: { target } } })
+    );
+    const fromFixi = target.querySelector('button')!;
+    click(fromFixi);
+    await tick();
+    expect(fromFixi.textContent).toBe('fixi');
+  });
+
   it('runs a Spanish attribute through the source transform and leaves it as written', async () => {
     const english = 'on click toggle .active';
     const spanish = render(parseSemantic(english, 'en').node!, 'es');

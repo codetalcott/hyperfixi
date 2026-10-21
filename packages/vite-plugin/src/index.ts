@@ -25,7 +25,6 @@
  * // With options
  * hyperfixi({
  *   extraCommands: ['fetch', 'put'],  // Always include these commands
- *   htmx: true,                       // Enable htmx integration
  *   debug: true,                      // Enable verbose logging
  * })
  * ```

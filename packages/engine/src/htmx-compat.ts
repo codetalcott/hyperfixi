@@ -27,7 +27,12 @@ interface Htmx {
   registerExtension?(name: string, extension: Record<string, unknown>): void;
 }
 
+/** Hosts already wired, so a second `boot()` of the same engine adds nothing. */
+const installed = new WeakSet<CompatHost>();
+
 export function installHtmxCompat(hs: CompatHost): void {
+  if (installed.has(hs)) return;
+  installed.add(hs);
   let fromHtmx = false;
   const asHtmx = (f: () => void) => {
     const was = fromHtmx;

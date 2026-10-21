@@ -45,9 +45,10 @@ export interface HyperfixiPluginOptions {
   positional?: boolean;
 
   /**
-   * Hand content htmx swaps in to the engine (`htmx:load` / `htmx:afterSettle`
-   * → `processNode`). On by default when the scan finds htmx attributes.
-   * htmx itself is not bundled: load htmx 4 beside the generated bundle.
+   * @deprecated No effect. The engine processes content htmx (2 or 4) and fixi
+   * swap in, and hands htmx the content a script puts in, in every bundle
+   * (`@hyperfixi/engine`'s `src/htmx-compat.ts`). Accepted so existing configs
+   * keep building. htmx itself is not bundled: load it beside the bundle.
    */
   htmx?: boolean;
 

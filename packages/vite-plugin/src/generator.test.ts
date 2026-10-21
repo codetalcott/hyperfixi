@@ -178,21 +178,20 @@ describe('Generator', () => {
       expect(code).toContain('Expressions: positional');
     });
 
-    it('hands swapped-in content to the engine when htmx is in play', () => {
+    it('emits no htmx hook of its own: the engine processes what htmx and fixi swap in', () => {
+      // The `htmx` option is deprecated and does nothing; boot() installs the engine's integration.
       const scanned = generator.generate(
         createUsage(['toggle'], [], false, {
           htmx: { ...createUsage([]).htmx, hasHtmxAttributes: true },
         }),
         noOptions
       );
-      expect(scanned).toContain("'htmx:load'");
-      expect(scanned).toContain('api.processNode(target)');
-
       const opted = generator.generate(createUsage(['toggle']), { htmx: true });
-      expect(opted).toContain("'htmx:afterSettle'");
-
       const plain = generator.generate(createUsage(['toggle']), noOptions);
-      expect(plain).not.toContain('htmx:');
+      for (const code of [scanned, opted, plain]) {
+        expect(code).not.toContain('htmx:');
+        expect(code).toContain('boot();');
+      }
     });
   });
 
