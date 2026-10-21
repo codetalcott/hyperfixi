@@ -8,7 +8,7 @@
 
 **The engine (2026-10-03).** `@hyperfixi/engine` replaces core's engine (the migration plan is
 `~/.claude/plans/engine-replaces-core.md`; every tracked gallery page runs on it). Its script-tag
-bundle is **`hyperfixi-hs.js`** (34.8 KB gzipped): hyperscript and nothing else, every module,
+bundle is **`hyperfixi-hs.js`** (34.9 KB gzipped): hyperscript and nothing else, every module,
 upstream-faithful, with upstream's reactive features (`live`, `when`, `bind`) built in. For
 hypermedia attributes it pairs with an upstream library instead of reimplementing one:
 

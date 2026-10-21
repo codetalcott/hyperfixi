@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   recurse, where upstream recurses until the stack runs out. The workarounds can be removed. The
   first vendoring of upstream's suite left out its htmx tests (`integration/htmx.js`,
   `ext/hs-include.js`), which is how the gap shipped; the gate now runs them and passes all 19
-  (1422/1486). `hyperfixi-hs.js` grows 0.6 KB gzipped, to 34.8 KB.
+  (1422/1486). `hyperfixi-hs.js` grows 0.7 KB gzipped, to 34.9 KB.
 - **`@hyperfixi/engine`: loading the engine twice no longer binds every handler twice.** Element
   state was private to each copy of the engine, so the second copy initialised every element
   again and one click ran its handler twice. htmx 4's boosted swaps run body scripts again, so
