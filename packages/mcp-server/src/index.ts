@@ -16,6 +16,7 @@ import {
   staleSinceStartup,
   staleToolError,
 } from './freshness.js';
+import { TOOLSET_NAMES, listedTools, parseToolsets } from './toolsets.js';
 
 // Tool implementations
 import { analysisTools, handleAnalysisTool } from './tools/analysis.js';
@@ -110,6 +111,12 @@ const LLM_SAMPLING_ENABLED = process.env.LOKASCRIPT_MCP_LLM_TOOLS === '1';
 // Deriving the set keeps the two in sync if the sampling surface ever changes.
 const SAMPLING_TOOL_NAMES = new Set(samplingTools.map(t => t.name));
 
+// Which toolsets tools/list shows: core always, the rest when LOKASCRIPT_MCP_TOOLSETS names them
+// (see ./toolsets.ts). Read once at module scope, like the sampling flag above. Only the LIST is
+// filtered: tools/call below dispatches every tool, listed or not.
+const TOOLSETS = parseToolsets(process.env.LOKASCRIPT_MCP_TOOLSETS);
+const isDomainTool = (name: string) => registry.canHandle(name);
+
 // Served as MCP `instructions` so every connected agent gets the loop without
 // reading any docs. Keep in sync with AGENTS.md at the repo root.
 const SERVER_INSTRUCTIONS = `Deterministic tooling for hyperscript (a compact DOM-behavior DSL) in 24 human languages. No tool here calls an LLM — every check is a real parser you can trust, including the engine that runs the code (@hyperfixi/engine).
@@ -121,7 +128,9 @@ The core loop for GENERATING hyperscript:
 
 To PRESENT code to a user, translate_code renders it in any of 24 languages via deterministic grammar transformation (word-order faithful, not LLM translation); translate_to_english normalizes foreign input. diff_behaviors checks two snippets for behavioral equivalence, and score_fidelity scores a candidate against a reference (how faithful, what exactly is missing or hallucinated) — use it to prove an edit or translation preserved meaning.
 
-Prefer natural language input (code + language) for simple cases; use explicit bracket syntax ([toggle patient:.active]) or semantic JSON when you need unambiguous role control.`;
+Prefer natural language input (code + language) for simple cases; use explicit bracket syntax ([toggle patient:.active]) or semantic JSON when you need unambiguous role control.
+
+These are the core tools. More (each domain DSL's own tools, LSE/IR, GRAIL, debugging, editor features, analysis, language profiles, project scanning) are listed when the server is started with LOKASCRIPT_MCP_TOOLSETS naming them.`;
 
 // All list/read surfaces are static per process (tool/prompt/resource lists are
 // compile-time literals; resources are static docs). One hour rather than
@@ -162,8 +171,8 @@ function buildServer(): Server {
   // =============================================================================
 
   server.setRequestHandler('tools/list', async () => {
-    return {
-      tools: [
+    const tools = listedTools(
+      [
         ...analysisTools,
         ...patternTools,
         ...validationTools,
@@ -176,7 +185,6 @@ function buildServer(): Server {
         // as Record<string, unknown>, wider than the SDK's JSONValue index —
         // the values are plain JSON Schema literals at runtime.
         ...(registry.getToolDefinitions() as unknown as Tool[]),
-        ...(LLM_SAMPLING_ENABLED ? samplingTools : []),
         ...dispatcherTools,
         ...irTools,
         ...debugTools,
@@ -187,7 +195,10 @@ function buildServer(): Server {
         ...grailTools,
         ...lseCorrectionTools,
       ],
-    };
+      TOOLSETS.enabled,
+      isDomainTool
+    );
+    return { tools: [...tools, ...(LLM_SAMPLING_ENABLED ? samplingTools : [])] };
   });
 
   server.setRequestHandler('tools/call', async request => {
@@ -459,8 +470,17 @@ async function main() {
   // initialize dialect — legacy stays at its default 'serve' because current
   // clients (including Claude Code) still connect via initialize, and the
   // sampling tools only work on that era.
+  if (TOOLSETS.unknown.length > 0) {
+    console.error(
+      `⚠ LOKASCRIPT_MCP_TOOLSETS names no toolset called ${TOOLSETS.unknown.join(', ')}; ` +
+        `the toolsets are ${TOOLSET_NAMES.join(', ')} (or all).`
+    );
+  }
+
   serveStdio(() => buildServer());
-  console.error(`HyperFixi MCP server started (${freshnessSummary()})`);
+  console.error(
+    `HyperFixi MCP server started (${freshnessSummary()}; toolsets: ${[...TOOLSETS.enabled].join(', ')})`
+  );
 }
 
 main().catch(error => {

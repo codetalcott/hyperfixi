@@ -7,13 +7,15 @@
  * reader uses to judge the server's surface: it derives the counts from the
  * actual tool arrays and fails if the README disagrees.
  *
- * Two numbers, because they differ: 89 tools are DEFINED, but the 5
- * MCP-sampling tools are hidden from `tools/list` unless
- * LOKASCRIPT_MCP_LLM_TOOLS=1, so a default connection sees 84.
- * (108 / 103 until 4.0, when compile_hyperscript and execute_lse retired with
- * the AOT compiler; 106 / 101 until domains 4.0.0 retired jsx and its four tools;
- * 96 / 91 until 7.0 removed validate_hyperscript, translate_hyperscript and
- * parse_multilingual; 93 / 88 until domains 7.1.0 took learn and its four tools.)
+ * Three numbers, because they differ: 89 tools are DEFINED; a default
+ * connection lists the 14 core tools (see ../toolsets.ts); with every toolset
+ * on it lists 84, since the 5 MCP-sampling tools also need
+ * LOKASCRIPT_MCP_LLM_TOOLS=1. (Every tool was listed by default until the
+ * toolsets: 84. 108 / 103 until 4.0, when compile_hyperscript and execute_lse
+ * retired with the AOT compiler; 106 / 101 until domains 4.0.0 retired jsx and
+ * its four tools; 96 / 91 until 7.0 removed validate_hyperscript,
+ * translate_hyperscript and parse_multilingual; 93 / 88 until domains 7.1.0
+ * took learn and its four tools.)
  */
 
 import { describe, it, expect } from 'vitest';
@@ -40,6 +42,13 @@ import { lsePipelineTools } from '../tools/lse-pipeline.js';
 import { grailTools } from '../tools/grail-tools.js';
 import { lseCorrectionTools } from '../tools/lse-correction.js';
 import { createDomainRegistry } from '../tools/domain-registry-setup.js';
+import {
+  STATIC_TOOLSETS,
+  TOOLSET_NAMES,
+  listedTools,
+  parseToolsets,
+  toolsetOf,
+} from '../toolsets.js';
 
 // Every array spread into the `tools/list` response in index.ts. Keeping this
 // list complete is the test's one manual step; a missing entry shows up as a
@@ -70,15 +79,40 @@ const README = readFileSync(
 );
 
 describe('Tool count guard', () => {
-  const domainToolCount = createDomainRegistry().getToolDefinitions().length;
-  const staticCount = STATIC_TOOL_ARRAYS.reduce((n, arr) => n + arr.length, 0);
+  const registry = createDomainRegistry();
+  const isDomainTool = (name: string) => registry.canHandle(name);
+  const listable = [
+    ...STATIC_TOOL_ARRAYS.flat(),
+    ...(registry.getToolDefinitions() as unknown as Array<{ name: string }>),
+  ];
 
-  const definedCount = staticCount + domainToolCount + samplingTools.length;
-  const defaultListedCount = definedCount - samplingTools.length;
+  const definedCount = listable.length + samplingTools.length;
+  const defaultListedCount = listedTools(
+    listable,
+    parseToolsets(undefined).enabled,
+    isDomainTool
+  ).length;
+  const allListedCount = listedTools(listable, parseToolsets('all').enabled, isDomainTool).length;
 
-  it('defines 89 tools and lists 84 by default', () => {
+  it('defines 89 tools, lists 14 by default and 84 with every toolset', () => {
     expect(definedCount).toBe(89);
-    expect(defaultListedCount).toBe(84);
+    expect(defaultListedCount).toBe(14);
+    expect(allListedCount).toBe(84);
+  });
+
+  it('every listable tool belongs to a toolset', () => {
+    // A tool with no toolset is never listed: add it to STATIC_TOOLSETS.
+    expect(listable.filter(t => toolsetOf(t.name, isDomainTool) === undefined)).toEqual([]);
+  });
+
+  it('STATIC_TOOLSETS names no tool that is gone', () => {
+    const names = new Set(listable.map(t => t.name));
+    expect(Object.keys(STATIC_TOOLSETS).filter(name => !names.has(name))).toEqual([]);
+  });
+
+  it('every toolset holds a tool', () => {
+    const used = new Set(listable.map(t => toolsetOf(t.name, isDomainTool)));
+    expect(TOOLSET_NAMES.filter(name => !used.has(name))).toEqual([]);
   });
 
   it('the tools 7.0 removed stay removed', () => {
@@ -95,10 +129,19 @@ describe('Tool count guard', () => {
     expect(dupes).toEqual([]);
   });
 
-  it('README states both counts', () => {
+  it('README states the counts', () => {
     // Guards the prose a reader actually sees. If these fail, update README.md
     // rather than loosening the assertion.
     expect(README).toContain(`**${definedCount}** defined`);
     expect(README).toContain(`**${defaultListedCount} tools** by default`);
+    expect(README).toContain(`**${allListedCount}** with every toolset`);
+  });
+
+  it('README lists each toolset with its size', () => {
+    for (const name of TOOLSET_NAMES) {
+      const size = listable.filter(t => toolsetOf(t.name, isDomainTool) === name).length;
+      // Prettier pads table cells, so match the row loosely on whitespace.
+      expect(README).toMatch(new RegExp(`\\| \`${name}\`\\s*\\| ${size}\\s*\\|`));
+    }
   });
 });
