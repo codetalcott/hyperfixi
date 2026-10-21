@@ -3,4 +3,4 @@
  * (GENERATED_VERSION_FILES), and exported from the package root. `src/version.test.ts` keeps
  * this equal to package.json.
  */
-export const VERSION = '7.1.0';
+export const VERSION = '7.2.0';

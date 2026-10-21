@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/monorepo",
-  "version": "7.1.0",
+  "version": "7.2.0",
   "description": "LokaScript monorepo - multilingual hyperscript engine with 24-language support",
   "private": true,
   "type": "module",
