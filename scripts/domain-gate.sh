@@ -33,7 +33,7 @@
 
 set -euo pipefail
 
-DOMAINS_REF="${DOMAINS_REF:-6d49347e8c24650a02b666920a3024a3edae1fe7}"
+DOMAINS_REF="${DOMAINS_REF:-aadc4ee8a2603d5000671c715e942ba13e590d88}"
 DOMAINS_REPO="${DOMAINS_REPO:-https://github.com/codetalcott/lokascript-domains.git}"
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
