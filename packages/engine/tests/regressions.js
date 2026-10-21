@@ -114,3 +114,61 @@ test.describe('htmx 4.0.0, the release', () => {
     await expect(find('#t span')).toHaveText('loaded');
   });
 });
+
+test.describe('the engine loaded twice', () => {
+  // Element state was private to each copy of the engine, so a second copy initialised every
+  // element again and one click ran its handler twice. htmx 4's boosted swaps run body scripts
+  // again, so boost, then back, did it on an ordinary page. Upstream keeps the state on the
+  // element (`elt._hyperscript`), where the second copy finds it.
+  const htmx = new URL('./vendor/htmx-4.0.0.min.js', import.meta.url).pathname;
+
+  /** A context without the fixtures' engine: these pages load it with their own script tags. */
+  async function site(browser, pages) {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await page.route('http://localhost/js/*', r =>
+      r.fulfill({
+        contentType: 'text/javascript',
+        path: r.request().url().endsWith('/htmx.js') ? htmx : process.env.HS_BUNDLE,
+      })
+    );
+    for (const [path, body] of Object.entries(pages))
+      await page.route(`http://localhost${path}`, r =>
+        r.fulfill({ contentType: 'text/html', body })
+      );
+    return { context, page };
+  }
+
+  test('two script tags: an element is initialised once', async ({ browser }) => {
+    const { context, page } = await site(browser, {
+      '/twice': `<!DOCTYPE html><html><body>
+        <button _="on click increment window.clicks">count</button>
+        <script src="/js/hs.js"></script><script src="/js/hs.js"></script></body></html>`,
+    });
+    await page.goto('http://localhost/twice');
+    await page.waitForFunction(() => document.querySelector('[data-hyperscript-powered]'));
+    await page.evaluate(() => (window.clicks = 0));
+    await page.click('button');
+    await expect.poll(() => page.evaluate(() => window.clicks)).toBe(1);
+    await context.close();
+  });
+
+  test('htmx 4 boost, then back: a handler runs once per click', async ({ browser }) => {
+    const doc = body => `<!DOCTYPE html><html><head><script src="/js/htmx.js"></script></head>
+      <body hx-boost:inherited="true">${body}<script src="/js/hs.js"></script></body></html>`;
+    const { context, page } = await site(browser, {
+      '/one': doc(`<a id="go" href="/two">two</a>
+        <button id="count" _="on click increment window.clicks">count</button>`),
+      '/two': doc(`<p id="two">two</p>`),
+    });
+    await page.goto('http://localhost/one');
+    await page.click('#go');
+    await expect(page.locator('#two')).toHaveCount(1);
+    await page.goBack();
+    await expect(page.locator('#count[data-hyperscript-powered]')).toHaveCount(1);
+    await page.evaluate(() => (window.clicks = 0));
+    await page.click('#count');
+    await expect.poll(() => page.evaluate(() => window.clicks)).toBe(1);
+    await context.close();
+  });
+});

@@ -83,15 +83,23 @@ export interface ElementData {
   loops?: Record<string, LoopScope>;
 }
 
-const store = new WeakMap<object, ElementData>();
+/**
+ * An element's state is `elt._hyperscript`, where upstream keeps it, so a second copy of the
+ * engine on the page finds it and leaves the element alone: a script tag that runs twice (htmx
+ * 4's boosted swaps run body scripts again) would otherwise bind every handler twice. The
+ * window's state stays here, since `window._hyperscript` is the engine itself.
+ */
+type Holder = { _hyperscript?: ElementData; window?: unknown };
+const windowHolder: Holder = {};
+// A window (a browser's or a jsdom's) is the object whose `window` is itself.
+const holder = (elt: object): Holder =>
+  (elt as Holder).window === elt ? windowHolder : (elt as Holder);
 
-export const peekData = (elt: object): ElementData | undefined => store.get(elt);
-export const dropData = (elt: object): boolean => store.delete(elt);
+export const peekData = (elt: object): ElementData | undefined => holder(elt)._hyperscript;
+export const dropData = (elt: object): boolean => delete holder(elt)._hyperscript;
 
 export function dataOf(elt: object): ElementData {
-  let d = store.get(elt);
-  if (!d) store.set(elt, (d = {}));
-  return d;
+  return (holder(elt)._hyperscript ??= {});
 }
 
 // ---------------------------------------------------------------------------
