@@ -53,11 +53,13 @@ export function installHtmxCompat(hs: CompatHost): void {
   // fixi fires `fx:swapped` on the element that made the request, and on `document` too when
   // the swap removed that element. The target's parent holds every swap's new content but an
   // `outerHTML` one that replaced the target; then the body is read again (processed elements
-  // are skipped).
+  // are skipped). `<html>`, which fixi swaps with `innerHTML`, has no parent: it is read itself.
   document.addEventListener('fx:swapped', evt => {
     const target = (evt as CustomEvent).detail?.cfg?.target;
     hs.process(
-      target instanceof Element && target.isConnected ? target.parentElement : document.body
+      target instanceof Element && target.isConnected
+        ? (target.parentElement ?? target)
+        : document.body
     );
   });
 
