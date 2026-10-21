@@ -20,6 +20,12 @@ description: 'Parses, compiles, validates, and translates multilingual DSL comma
 
 ## Workflow
 
+The MCP server lists `detect_domain` and `compile_auto` by default. The per-domain tools below
+(`validate_sql`, `compile_sql`, …) and the composites are in its `domains` toolset, listed when
+the server is started with `LOKASCRIPT_MCP_TOOLSETS=domains` (comma-separated, or `all`); a tool
+also answers a call by name without it. Without the toolset, `compile_auto` detects the domain
+and compiles in one call, reporting errors.
+
 ### 1. Identify the Domain
 
 If the domain is obvious (e.g., "write a SQL query"), skip to step 2. Otherwise:
@@ -73,7 +79,7 @@ compile_composite({ input: "select name from users\ngiven #button exists", langu
 
 ## MCP Tools
 
-### Per-Domain (4 tools per domain)
+### Per-Domain (4 tools per domain): `domains` toolset
 
 Every domain generates 4 tools following the pattern `{operation}_{domain}`:
 
@@ -86,12 +92,12 @@ Every domain generates 4 tools following the pattern `{operation}_{domain}`:
 
 ### Cross-Domain
 
-| Tool                | When to Use                                   |
-| ------------------- | --------------------------------------------- |
-| `detect_domain`     | Domain is ambiguous -- auto-detect from input |
-| `compile_auto`      | Quick one-shot: auto-detect domain + compile  |
-| `parse_composite`   | Multi-line input spanning multiple domains    |
-| `compile_composite` | Compile multi-line multi-domain input         |
+| Tool                | When to Use                                                       |
+| ------------------- | ----------------------------------------------------------------- |
+| `detect_domain`     | Domain is ambiguous -- auto-detect from input (listed by default) |
+| `compile_auto`      | Quick one-shot: auto-detect domain + compile (listed by default)  |
+| `parse_composite`   | Multi-line input spanning multiple domains (`domains` toolset)    |
+| `compile_composite` | Compile multi-line multi-domain input (`domains` toolset)         |
 
 ### LLM Sampling
 
@@ -107,7 +113,7 @@ agent can do itself).
 | `analyze_content`   | Analyze via sampling                           |
 | `translate_content` | Translate via sampling                         |
 
-### LSE Pipeline (LLM Round-Trip)
+### LSE Pipeline (LLM Round-Trip): `lse` toolset
 
 | Tool                   | When to Use                                                            |
 | ---------------------- | ---------------------------------------------------------------------- |
@@ -116,7 +122,7 @@ agent can do itself).
 
 Typical round-trip: `lse_from_hyperscript` → LLM modifies LSE → `lse_to_hyperscript` → validated LSE and its protocol JSON.
 
-### LSE Training & Feedback
+### LSE Training & Feedback: `lse` toolset
 
 | Tool                        | When to Use                                       |
 | --------------------------- | ------------------------------------------------- |
@@ -124,7 +130,7 @@ Typical round-trip: `lse_from_hyperscript` → LLM modifies LSE → `lse_to_hype
 | `lse_validate_and_feedback` | Validate LSE input with structured error feedback |
 | `lse_pattern_stats`         | Hit-rate statistics by command/language           |
 
-### Server Routes
+### Server Routes: `project` toolset
 
 | Tool                     | When to Use                                          |
 | ------------------------ | ---------------------------------------------------- |
@@ -136,7 +142,7 @@ Typical round-trip: `lse_from_hyperscript` → LLM modifies LSE → `lse_to_hype
 1. **Omitting `language` parameter** -- always pass it; defaults vary by domain
 2. **Guessing the domain** -- use `detect_domain` when unsure rather than picking wrong tools
 3. **Skipping validation** -- `compile_*` may produce incorrect output from malformed input; validate first
-4. **Wrong tool granularity** -- `compile_auto` is convenient but less precise; prefer domain-specific tools when domain is known
+4. **Wrong tool granularity** -- `compile_auto` is convenient but less precise; prefer domain-specific tools (the `domains` toolset) when the domain is known
 5. **HATEOAS command order** -- `enter`/`follow`/`perform`/`capture` are sequential pipeline steps; order matters
 
 ## References

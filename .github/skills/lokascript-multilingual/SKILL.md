@@ -82,3 +82,6 @@ translate_to_english({ code: "toggle .active", sourceLanguage: "en", getAllLangu
 | `get_language_profile`      | Full language profile (keywords, markers, config)           |
 | `compare_language_profiles` | Find translation gaps between languages                     |
 | `get_role_markers`          | Get role markers (destination, source, etc.) for a language |
+
+The last three are in the server's `profiles` toolset, listed when `LOKASCRIPT_MCP_TOOLSETS`
+names it (comma-separated, or `all`); the first four are listed by default.

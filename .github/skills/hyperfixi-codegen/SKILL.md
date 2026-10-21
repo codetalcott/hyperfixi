@@ -76,6 +76,9 @@ The language-agnostic IR format `[command role:value ...]`:
 
 ### IR Format Conversion
 
+In the server's `lse` toolset, listed when `LOKASCRIPT_MCP_TOOLSETS` names it (comma-separated,
+or `all`); the tools above are listed by default.
+
 | Tool                | Description                                               |
 | ------------------- | --------------------------------------------------------- |
 | `convert_format`    | Convert between bracket syntax, protocol JSON, and AST    |

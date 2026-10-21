@@ -53,8 +53,11 @@ Tooling is exposed via the MCP server, `@hyperfixi/mcp-server`
 }
 ```
 
-The server also advertises this loop via MCP `instructions`, so a connected
-agent needs none of this file to find it:
+It lists 14 core tools, every one this loop names; the rest are in toolsets
+(`domains`, `lse`, `grail`, `debug`, `editor`, `analysis`, `profiles`,
+`project`) that `LOKASCRIPT_MCP_TOOLSETS` lists, comma-separated or `all`. The
+server also advertises this loop via MCP `instructions`, so a connected agent
+needs none of this file to find it:
 
 1. **Generate** a candidate — natural language hyperscript (any of 24
    languages), explicit bracket syntax (`[toggle patient:.active
@@ -73,8 +76,8 @@ destination:#btn]`), or semantic JSON.
 5. **Present** — `translate_code` renders your result in the user's language
    for review, and every result carries a `verification` report scored against
    the source: show the user `verification.faithful` alongside the translation
-   ("this rendering is structurally exact"). `explain_in_language` produces a
-   role-by-role explanation.
+   ("this rendering is structurally exact"). `explain_in_language` (in the
+   `analysis` toolset) produces a role-by-role explanation.
 
 ### Worked example
 
@@ -120,9 +123,10 @@ That attribute, `_="on click toggle .active on #panel"`, is the deliverable.
 
 ### Beyond single commands
 
-- **Domain DSLs** — the same validate/feedback loop exists for non-UI domains
-  (SQL, BDD, flow, and more) via `lse_validate_and_feedback`; the framework for
-  defining your own is
+- **Domain DSLs** — non-UI domains (SQL, behavior specs, flow, and more) compile
+  through `compile_auto`, which detects the domain; the `domains` toolset adds
+  each domain's own tools and the `lse` toolset `lse_validate_and_feedback`, the
+  same validate/feedback loop for them. The framework for defining your own is
   [`@lokascript/framework`](./packages/framework/docs/DOMAIN_AUTHOR_GUIDE.md).
 - **Test and component generation** (`generate_tests`, `generate_component`) were
   removed in 6.0: most tests they wrote did not check the behavior, and a
