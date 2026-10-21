@@ -129,7 +129,7 @@ export const compilationTools: Tool[] = [
 // the tool descriptions. Kept out of content[0], which stays pure JSON.
 const REPAIR_HINT =
   'Next step: apply the diagnostics above and re-run validate_and_compile. ' +
-  'If an error names a code (e.g. MISSING.ARGUMENT), get_code_fixes returns concrete fixes for it; ' +
+  "get_code_fixes returns concrete fixes for a diagnostic's code (e.g. UNCONSUMED_INPUT); " +
   'get_command_docs lists the roles each command accepts.';
 
 // A parse can succeed while silently dropping part of the input — the parser

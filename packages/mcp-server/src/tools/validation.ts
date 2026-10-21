@@ -225,7 +225,8 @@ export const validationTools: Tool[] = [
       properties: {
         errorCode: {
           type: 'string',
-          description: 'Error code from ErrorCodes (e.g., "MISSING.ARGUMENT", "NOT_FOUND.ELEMENT")',
+          description:
+            'A diagnostic code from validate_and_compile, translate_code or score_fidelity (e.g., "ENGINE_PARSE_ERROR", "UNCONSUMED_INPUT")',
         },
         diagnosticCode: {
           type: 'string',
@@ -1276,7 +1277,8 @@ function getCodeFixes(
     const fixesByCategory: Record<string, string[]> = {};
 
     for (const code of allCodes) {
-      const category = code.split('.')[0] || 'OTHER';
+      // validate_and_compile's codes are UPPER_SNAKE; the older catalog's are dotted.
+      const category = code.includes('.') ? code.split('.')[0]! : 'VALIDATE_AND_COMPILE';
       if (!fixesByCategory[category]) {
         fixesByCategory[category] = [];
       }
@@ -1383,12 +1385,13 @@ function getCodeFixes(
           {
             error: 'No error code or diagnostic code provided',
             usage: {
-              errorCode: 'Provide an error code like "MISSING.ARGUMENT" or "NOT_FOUND.ELEMENT"',
+              errorCode:
+                'Provide a code from validate_and_compile like "ENGINE_PARSE_ERROR" or "UNCONSUMED_INPUT"',
               diagnosticCode: 'Provide a diagnostic code like "parse-error" or "missing-role"',
               listAll: 'Set to true to list all fixable error codes',
             },
             examples: [
-              { errorCode: 'MISSING.ARGUMENT' },
+              { errorCode: 'UNCONSUMED_INPUT' },
               { diagnosticCode: 'parse-error' },
               { listAll: true },
             ],
