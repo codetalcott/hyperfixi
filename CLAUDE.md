@@ -198,7 +198,7 @@ semantic's renderer.) Run 1–2 whenever a change touches
 `packages/semantic/src/generators/command-schemas.ts`, a language profile, or R2's
 curated execution subset — run 3 whenever you touch **anything**, because it is
 a dozen cheap scripts that guard the whole repo — and run 4 whenever a change
-touches `packages/intent`, `packages/framework` or `packages/semantic`:
+touches `packages/intent` or `packages/framework`:
 
 ```bash
 # 1. Vocab consistency (V1–V4 cross-surface check)
@@ -265,17 +265,22 @@ npm run test:domains
    range here and relock, then publish hyperfixi. A major that changes the
    contract needs a real domains major, cut after hyperfixi's is on npm.
 5. **The domain gate** (`scripts/domain-gate.sh`, 2026-10-20) is the cross-repo
-   half of the behavior story. The seven domain DSLs read on framework's matcher
-   skeleton and its language grammars (`framework/languages`; learn also writes
-   with semantic), and no other gate here parses one.
+   half of the behavior story. The six domain DSLs read on framework's matcher
+   skeleton and its language grammars (`framework/languages`), and no other gate
+   here parses one. (learn, the one that wrote with semantic, moved into
+   lokascript-learn in domains 7.1.0; no domain reads semantic at run time.)
    It runs lokascript-domains' own round-trip gate (`gate-upstream.sh`) on this
-   tree's intent/framework/semantic and fails on a case worse than the domains'
+   tree's intent/framework (semantic is packed too) and fails on a case worse than the domains'
    baseline; moved parses and better cases are reported, not failed. That pass
    renders each command and reads it back with the same packages, so a change
    both sides share moves nothing in it (semantic's ja を → お, measured). A
    second pass (`domain-gate-read-back.mjs`) reads the sentences the domains'
-   LOCKED packages render (1,676) with this tree's, and fails on one that reads
-   differently: the ja swap fails 13 learn sentences. A deliberate change to what
+   LOCKED packages render (1,476) with this tree's, and fails on one that reads
+   differently: de's source marker `von` → `vonx` in `framework/languages` fails
+   4 sql sentences (and 4 cases in the first pass). A Japanese marker swap there
+   moves nothing: the domains author their ja markers per schema (sql, flow,
+   … derive markers from the grammar for de, pt and ru only); while learn was a
+   domain, semantic's ja を → お failed 13 of its sentences. A deliberate change to what
    old input means is listed in `scripts/domain-gate-accepted.json`, one entry
    per sentence with a reason, shrink-only; the domains' relock onto the release
    clears it. The domains ref is pinned in the script: bump it when the domains
@@ -379,7 +384,7 @@ As of 2026-01-23, all CI testing has been consolidated into a single `.github/wo
 - **Shared build artifacts**: Packages are built once and shared across all jobs (40% faster)
 - **Parallel execution**: jobs run in parallel after build completes
 - **Three-tier job set**: full matrix on `pull_request`; `changes` + `build` + `bundles` (+ the `always()` `ci-gate`) on `push` to main/develop (tree-skew detector); `coverage` on a nightly `schedule` (also `workflow_dispatch`)
-- **Path-gated npm fan-out**: the `changes` job classifies the diff (`code` / `protocol` / `goclient` / `docsources` / `domaingate`); `build` gates on `code` **or** `docsources` and every npm job inherits the gate through `needs: build`. (`docsources` is exactly `examples/**`, `docs/**`, `packages/core/docs/**` — the trees `shipped-sources` walks. All three are excluded from `code`, so without their own filter the one gate that reads them would never run on a diff that only touches them. Note it is **those trees, not markdown generally**: a root-level `*.md` edit — this file included — matches neither filter, so the entire workflow skips and `ci-gate` passes on skips alone.) Doc-only, `protocol/**`-only, and `clients/**`-only diffs skip the whole npm stack (~15–20 runner-min each — Dependabot gomod PRs were the motivating case). Skipped required checks report "skipped" and satisfy branch protection (the required `multilingual-validation` check has always relied on this for doc-only PRs). **As of 2026-07-29 `export-validation`, `lint-typecheck`, and `unit-tests` gate on `code` too** — they previously gated on `pull_request` alone, so a docs/examples-only PR ran the entire 27-package unit suite despite the claim above. `shipped-sources` stays ungated by design (it is the gate that walks `examples/` and `docs/`). `domaingate` is `packages/{intent,framework,semantic}/**` plus `scripts/domain-gate.sh`: the packages lokascript-domains reads on, which only `domain-gate` exercises against the domains.
+- **Path-gated npm fan-out**: the `changes` job classifies the diff (`code` / `protocol` / `goclient` / `docsources` / `domaingate`); `build` gates on `code` **or** `docsources` and every npm job inherits the gate through `needs: build`. (`docsources` is exactly `examples/**`, `docs/**`, `packages/core/docs/**` — the trees `shipped-sources` walks. All three are excluded from `code`, so without their own filter the one gate that reads them would never run on a diff that only touches them. Note it is **those trees, not markdown generally**: a root-level `*.md` edit — this file included — matches neither filter, so the entire workflow skips and `ci-gate` passes on skips alone.) Doc-only, `protocol/**`-only, and `clients/**`-only diffs skip the whole npm stack (~15–20 runner-min each — Dependabot gomod PRs were the motivating case). Skipped required checks report "skipped" and satisfy branch protection (the required `multilingual-validation` check has always relied on this for doc-only PRs). **As of 2026-07-29 `export-validation`, `lint-typecheck`, and `unit-tests` gate on `code` too** — they previously gated on `pull_request` alone, so a docs/examples-only PR ran the entire 27-package unit suite despite the claim above. `shipped-sources` stays ungated by design (it is the gate that walks `examples/` and `docs/`). `domaingate` is `packages/{intent,framework}/**` plus `scripts/domain-gate.sh`: the packages lokascript-domains reads on (semantic left the list with learn, domains 7.1.0), which only `domain-gate` exercises against the domains.
 - **Node 24 LTS**: Active LTS release (EOL April 2028)
 - **Smart failure handling**: the multilingual job is a real fidelity-ratchet gate (no `continue-on-error`). (The perf `benchmarks` job, the one `continue-on-error` trend job, timed core's runtime and left with it in 4.0.)
 
@@ -401,7 +406,7 @@ As of 2026-01-23, all CI testing has been consolidated into a single `.github/wo
 | 11  | `bundle-size`             | ✓   | —                 | —       | Size report; PR-only (slim post-merge)                               |
 | 12  | `protocol-conformance`    | ✓   | —                 | —       | 4 reference parsers; gated on `protocol/**` paths                    |
 | 13  | `go-client`               | ✓   | —                 | —       | `go build` + `go test`; gated on go-client paths                     |
-| 14  | `domain-gate`             | ✓   | —                 | —       | round trip + old-input read-back; gated on intent/framework/semantic |
+| 14  | `domain-gate`             | ✓   | —                 | —       | round trip + old-input read-back; gated on intent/framework          |
 | 15  | `ci-gate`                 | ✓   | ✓                 | ✓       | `always()` aggregate; fails if any job failed/cancelled (skip is OK) |
 
 The PR-only jobs already ran against the merged-as-PR code (`strict` branch protection means the PR validated the exact merged tree), so re-running them on the post-merge push would be redundant — the push run keeps only the build tier (`changes`, `build`, `bundles`, and the `always()` `ci-gate`). For the reasoning see the job comments in `.github/workflows/ci.yml`.

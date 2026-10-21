@@ -1,6 +1,6 @@
 # @hyperfixi/mcp-server
 
-MCP (Model Context Protocol) server for hyperscript and multilingual DSL development. Provides **88 tools** by default (**93** defined — the 5 MCP-sampling tools are opt-in and hidden unless `LOKASCRIPT_MCP_LLM_TOOLS=1`), **9 resources**, and **9 prompts** spanning: GRAIL workflow orchestration, validation, compilation, analysis, patterns, LSP bridge, language profiles, code generation, route extraction, 7 domain DSLs, IR conversion, cross-domain dispatch, MCP sampling (opt-in), AI-assisted debugging, template inventory, and the LSE round-trip pipeline.
+MCP (Model Context Protocol) server for hyperscript and multilingual DSL development. Provides **84 tools** by default (**89** defined — the 5 MCP-sampling tools are opt-in and hidden unless `LOKASCRIPT_MCP_LLM_TOOLS=1`), **9 resources**, and **9 prompts** spanning: GRAIL workflow orchestration, validation, compilation, analysis, patterns, LSP bridge, language profiles, code generation, route extraction, 6 domain DSLs, IR conversion, cross-domain dispatch, MCP sampling (opt-in), AI-assisted debugging, template inventory, and the LSE round-trip pipeline.
 
 ## The agent loop
 
@@ -80,7 +80,7 @@ See **[GRAIL.md](GRAIL.md)** for full documentation, schema reference, and examp
 
 ## Available Tools
 
-The **88** tools below, plus the **5** GRAIL tools above, total **93** defined. The 5 MCP-sampling tools among them are hidden from `tools/list` unless `LOKASCRIPT_MCP_LLM_TOOLS=1`, so a default connection sees **88**.
+The **84** tools below, plus the **5** GRAIL tools above, total **89** defined. The 5 MCP-sampling tools among them are hidden from `tools/list` unless `LOKASCRIPT_MCP_LLM_TOOLS=1`, so a default connection sees **84**.
 
 ### Validation & Semantic Tools (6)
 
@@ -227,23 +227,21 @@ The **88** tools below, plus the **5** GRAIL tools above, total **93** defined. 
 | ------------------------------ | --------------------------------------------------------------- |
 | `lse_generate_with_correction` | Stateless LSE generation + self-correction loop (prompt/schema) |
 
-### Domain DSL Tools (28)
+### Domain DSL Tools (24)
 
-Each of the 7 domains exposes `parse_`, `compile_`, `validate_`, and `translate_` tools (7 × 4 = 28). bdd's tools left with domains 4.2.0 and bdd itself with domains 5.0.0: behaviorspec reads its preconditions, actions and assertions. Language coverage comes in three tiers:
+Each of the 6 domains exposes `parse_`, `compile_`, `validate_`, and `translate_` tools (6 × 4 = 24). bdd's tools left with domains 4.2.0 and bdd itself with domains 5.0.0: behaviorspec reads its preconditions, actions and assertions. learn's left with domains 7.1.0: it moved into lokascript-learn, its only user, and its commanding sentence was `translate_code`'s. Language coverage comes in two tiers:
 
 - **Bridge (11):** en, es, ja, ar, ko, zh, tr, fr, de, pt, ru
 - **Classic (8):** en, es, ja, ar, ko, zh, tr, fr
-- **Learn (10):** Bridge minus ru
 
-| Domain         | Languages   | compile Output                  |
-| -------------- | ----------- | ------------------------------- |
-| `sql`          | Bridge (11) | SQL query string                |
-| `todo`         | Bridge (11) | Structured operation object     |
-| `behaviorspec` | Classic (8) | Playwright interaction test     |
-| `llm`          | Bridge (11) | LLMPromptSpec JSON              |
-| `flow`         | Bridge (11) | Reactive data flow JS           |
-| `voice`        | Bridge (11) | DOM interaction command         |
-| `learn`        | Learn (10)  | Rendered sentence w/ morphology |
+| Domain         | Languages   | compile Output              |
+| -------------- | ----------- | --------------------------- |
+| `sql`          | Bridge (11) | SQL query string            |
+| `todo`         | Bridge (11) | Structured operation object |
+| `behaviorspec` | Classic (8) | Playwright interaction test |
+| `llm`          | Bridge (11) | LLMPromptSpec JSON          |
+| `flow`         | Bridge (11) | Reactive data flow JS       |
+| `voice`        | Bridge (11) | DOM interaction command     |
 
 ## Available Resources (5)
 

@@ -10,16 +10,16 @@ import {
 // =============================================================================
 
 describe('DomainRegistry Integration', () => {
-  it('registers 7 domains: bdd is gone, behaviorspec reads its forms (domains 5.0.0)', () => {
+  it('registers 6 domains: bdd left in domains 5.0.0, learn in 7.1.0 (to lokascript-learn)', () => {
     const registry = createDomainRegistry();
     const names = registry.getDomainNames().sort();
-    expect(names).toEqual(['behaviorspec', 'flow', 'learn', 'llm', 'sql', 'todo', 'voice']);
+    expect(names).toEqual(['behaviorspec', 'flow', 'llm', 'sql', 'todo', 'voice']);
   });
 
-  it('generates 28 tool definitions (4 per domain)', () => {
+  it('generates 24 tool definitions (4 per domain)', () => {
     const registry = createDomainRegistry();
     const tools = registry.getToolDefinitions();
-    expect(tools).toHaveLength(28);
+    expect(tools).toHaveLength(24);
 
     const toolNames = tools.map(t => t.name).sort();
     expect(toolNames).toContain('parse_sql');
@@ -28,7 +28,7 @@ describe('DomainRegistry Integration', () => {
     expect(toolNames).toContain('translate_sql');
     expect(toolNames).not.toContain('parse_bdd');
     expect(toolNames).toContain('parse_behaviorspec');
-    expect(toolNames).toContain('parse_learn');
+    expect(toolNames).not.toContain('parse_learn');
   });
 
   it('tool descriptions advertise the expanded language sets', () => {
@@ -39,10 +39,10 @@ describe('DomainRegistry Integration', () => {
     const parseSql = tools.find(t => t.name === 'parse_sql')!;
     expect(parseSql.description).toContain('en, es, ja, ar, ko, zh, tr, fr, de, pt, ru');
 
-    // learn's 10-language set (no ru).
-    const parseLearn = tools.find(t => t.name === 'parse_learn')!;
-    expect(parseLearn.description).toContain('en, es, ja, ar, ko, zh, tr, fr, de, pt');
-    expect(parseLearn.description).not.toContain('ru');
+    // behaviorspec keeps the pre-bridge 8.
+    const parseBs = tools.find(t => t.name === 'parse_behaviorspec')!;
+    expect(parseBs.description).toContain('en, es, ja, ar, ko, zh, tr, fr');
+    expect(parseBs.description).not.toContain('ru');
   });
 
   it('uses correct inputLabel per domain', () => {
@@ -158,19 +158,6 @@ describe('DomainRegistry Integration', () => {
     const compiledData = JSON.parse(compiled!.content[0].text);
     expect(compiledData.ok).toBe(true);
     expect(compiledData.code).toMatch(/^SELECT /);
-  });
-
-  it('learn dispatches through the registry', async () => {
-    const registry = createDomainRegistry();
-    const result = await registry.handleToolCall('parse_learn', {
-      sentence: 'add .active to #button',
-      language: 'en',
-    });
-
-    expect(result).not.toBeNull();
-    expect(result!.isError).toBeUndefined();
-    const data = JSON.parse(result!.content[0].text);
-    expect(data.action).toBe('add');
   });
 });
 
