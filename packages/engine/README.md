@@ -185,11 +185,15 @@ gallery for `packages/core/test-pages/`. One behavior of core's is not in this e
 engine want `increment #count's textContent`. The examples write the second, which every
 bundle runs to the same count (the bundle matrix's Counter row).
 
-The 66 known failures: upstream's internal-API surface (`internals.tokenizer`,
+Since 2026-10-21 the gate also runs upstream's htmx tests (`integration/htmx.js` and
+`ext/hs-include.js`, 19), which the first vendoring left out, so the whole suite is 1,486.
+
+The 76 known failures: upstream's internal-API surface (`internals.tokenizer`,
 `evalStatically`, source info, error collection: 47), sockets and workers (17, upstream
-extensions that are not built), and two collection-expression tests that need upstream's
-component extension. Upstream's one failure is a test that expects its worker extension to be
-absent.
+extensions that are not built), two collection-expression tests that need upstream's
+component extension, and upstream's htmx integration (10: content htmx swaps in, htmx content
+a script puts in, and `hs-include`). Upstream's one failure is a test that expects its worker
+extension to be absent.
 
 As a host for the multilingual text path (semantic renders a translation, the adapter's
 `preprocess` turns it back into English, the engine runs the English):

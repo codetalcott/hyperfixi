@@ -1,7 +1,7 @@
 {
   "upstream": "0.9.93",
-  "passed": 1401,
-  "total": 1467,
+  "passed": 1410,
+  "total": 1486,
   "failing": [
     "core/bootstrap.js › _hyperscript bootstrapping › cleanup tracks listeners in elt._hyperscript",
     "core/bootstrap.js › _hyperscript bootstrapping › logAll config logs events to console",
@@ -52,6 +52,14 @@
     "core/tokenizer.js › the _hyperscript tokenizer › handles whitespace properly",
     "expressions/collectionExpressions.js › weak indirect binding › where in component init followed by on feature",
     "expressions/collectionExpressions.js › weak indirect binding › where with is not me in component template",
+    "ext/hs-include.js › hs-include extension › JSON-serializes object values",
+    "ext/hs-include.js › hs-include extension › direct hs-include takes precedence over inherited",
+    "ext/hs-include.js › hs-include extension › hs-include:inherited applies to descendant triggers",
+    "ext/hs-include.js › hs-include extension › includes a named element-scoped variable",
+    "ext/hs-include.js › hs-include extension › includes multiple named variables",
+    "ext/hs-include.js › hs-include extension › resolves inherited var via ^",
+    "ext/hs-include.js › hs-include extension › resolves var from another element via #selector",
+    "ext/hs-include.js › hs-include extension › wildcard includes all element-scoped vars",
     "features/socket.js › the socket feature › converts relative URL to ws:// on http pages",
     "features/socket.js › the socket feature › converts relative URL to wss:// on https pages",
     "features/socket.js › the socket feature › dispatchEvent sends JSON-encoded event over the socket",
@@ -68,6 +76,8 @@
     "features/socket.js › the socket feature › rpc proxy timeout(n) rejects after a custom window",
     "features/socket.js › the socket feature › rpc reconnects after the underlying socket closes",
     "features/socket.js › the socket feature › with timeout parses and uses the configured timeout",
-    "features/worker.js › the worker feature › raises a helpful error when the worker plugin is not installed"
+    "features/worker.js › the worker feature › raises a helpful error when the worker plugin is not installed",
+    "integration/htmx.js › htmx integration › htmx content added by hyperscript is processed and can issue requests",
+    "integration/htmx.js › htmx integration › hyperscript works on htmx-swapped content"
   ]
 }

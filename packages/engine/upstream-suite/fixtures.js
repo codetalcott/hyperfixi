@@ -19,6 +19,12 @@ const BLANK_PAGE = [
 
 export { expect };
 
+// Upstream's `htmx-fixtures.js` builds its own page (htmx, then the bundle from `.bundle/`) and
+// imports these three from `fixtures.js` for coverage, which is off here.
+export const COVERAGE = false;
+export const accumulateCoverage = map => map;
+export const flushCoverageShard = () => {};
+
 export const test = base.extend({
   _hsContext: [
     async ({ browser }, use) => {

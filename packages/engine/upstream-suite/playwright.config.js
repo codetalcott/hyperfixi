@@ -5,7 +5,7 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: './.work/test',
   testMatch: '**/*.js',
-  testIgnore: ['fixtures.js', '**/.bundle/**'],
+  testIgnore: ['fixtures.js', 'htmx-fixtures.js', '**/.bundle/**', '**/vendor/**'],
   fullyParallel: true,
   // CI runners are small: four workers there make the tests that assert on timing miss.
   workers: Number(process.env.HS_WORKERS || (process.env.CI ? 2 : 4)),
