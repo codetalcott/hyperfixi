@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.4.0] - 2026-10-21
+
+Content htmx or fixi swaps in runs its hyperscript, as it does on upstream `_hyperscript`: the
+engine has upstream's htmx integration in every bundle, and loading the engine twice no longer
+binds every handler twice. A minor: new behavior and a deprecated option, nothing removed.
+
 ### Fixed
 
 - **`@hyperfixi/engine`: content htmx or fixi swaps in runs its hyperscript, and htmx content a
@@ -31,6 +37,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   boost, then back, did it on a page that loads the engine at the end of its body. The state is
   now `elt._hyperscript`, where upstream keeps it and a second copy finds it (two more of
   upstream's tests pass).
+- **Examples: sortable-list's Add Task added a blank task and threw.** Its script read the input
+  with `first #new-item-input`, which is null (`first` of one element), and now reads the element
+  itself. tell-command's code sample shows its `on click`.
 
 ### Deprecated
 
