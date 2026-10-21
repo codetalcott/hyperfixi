@@ -4,7 +4,8 @@
 # and semantic, packed from their dist/.
 #
 # The seven domain DSLs read on framework's matcher skeleton and take their
-# grammar from semantic's language profiles, and no other gate here parses one:
+# grammar from framework's language modules (learn writes its commanding sentence
+# with semantic), and no other gate here parses one:
 # parse parity and the multilingual ratchets cover hyperscript only. So a matcher
 # or profile change made for hyperscript could regress a domain with every gate
 # here green. This runs the domains' own gate (their scripts/gate-upstream.sh) on
@@ -32,7 +33,7 @@
 
 set -euo pipefail
 
-DOMAINS_REF="${DOMAINS_REF:-eb926d1f38224304a4404fe8dd26e726b5444c46}"
+DOMAINS_REF="${DOMAINS_REF:-6d49347e8c24650a02b666920a3024a3edae1fe7}"
 DOMAINS_REPO="${DOMAINS_REPO:-https://github.com/codetalcott/lokascript-domains.git}"
 
 root="$(cd "$(dirname "$0")/.." && pwd)"

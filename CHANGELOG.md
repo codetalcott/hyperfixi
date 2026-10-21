@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`@hyperfixi/mcp-server` is on `@lokascript/domains` 7.0.0.** The domain DSLs take each
+  language's grammar from `@lokascript/framework/languages` (framework 7.1); they read and write
+  exactly as on 5.0.4 (the domains' round-trip gate: 0 worse, 0 better, 0 parses moved). Domains
+  7.0.0 peers framework, semantic and intent `^7.1.0`.
+
 ## [7.1.0] - 2026-10-20
 
 Each language's grammar is framework's data now (`@lokascript/framework/languages/<code>`), and
