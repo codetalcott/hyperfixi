@@ -487,7 +487,9 @@ async function getDiagnostics(
   for (let i = 0; i < diagnostics.length; i++) {
     const diagnostic = diagnostics[i];
     if (diagnostic.code) {
-      const fixes = getFixesForDiagnostic(diagnostic.code);
+      const fixes = getFixesForDiagnostic(diagnostic.code).flatMap(fix =>
+        fixForDiagnostic(fix, diagnostic, code)
+      );
       if (fixes.length > 0) {
         codeActions.push({ diagnosticIndex: i, fixes });
       }
@@ -515,6 +517,40 @@ async function getDiagnostics(
       },
     ],
   };
+}
+
+/**
+ * A registry fix made concrete for one diagnostic. A fix written around `${suggestion}` takes the
+ * diagnostic's suggestion and becomes an edit replacing the diagnostic's range; without a
+ * suggestion it is dropped. (It used to reach the caller as the literal title
+ * "Fix typo: ${suggestion}".)
+ */
+function fixForDiagnostic(fix: CodeFix, diagnostic: Diagnostic, code: string): CodeFix[] {
+  if (!fix.title.includes('${suggestion}')) return [fix];
+  const suggestion = diagnostic.data?.suggestion;
+  if (!suggestion) return [];
+  return [
+    {
+      ...fix,
+      title: fix.title.replace('${suggestion}', suggestion),
+      edit: {
+        type: 'replace',
+        range: {
+          start: offsetAt(code, diagnostic.range.start),
+          end: offsetAt(code, diagnostic.range.end),
+        },
+        text: suggestion,
+      },
+    },
+  ];
+}
+
+/** The character offset of a line/character position in `code`. */
+function offsetAt(code: string, position: Position): number {
+  const lines = code.split('\n');
+  let offset = 0;
+  for (let i = 0; i < position.line && i < lines.length; i++) offset += lines[i]!.length + 1;
+  return offset + position.character;
 }
 
 /**
@@ -719,6 +755,7 @@ function runSimpleDiagnostics(code: string, language: string = 'en'): Diagnostic
           code: 'possible-typo',
           source: 'hyperfixi-mcp',
           message: `Unknown command "${word}". Did you mean "${closestCommand.command}"?`,
+          data: { suggestion: closestCommand.command },
         });
       }
     }
@@ -1369,6 +1406,8 @@ interface Diagnostic {
   code?: string;
   source?: string;
   message: string;
+  /** LSP's free-form field: the replacement a typo diagnostic suggests. */
+  data?: { suggestion?: string };
 }
 
 interface CompletionItem {

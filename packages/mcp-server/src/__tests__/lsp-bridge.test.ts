@@ -133,6 +133,23 @@ describe('get_diagnostics', () => {
     ]);
   });
 
+  it("makes the typo's fix an edit that writes the suggestion (not `${suggestion}`)", async () => {
+    const code = 'on load log "hi"\non click toggel .active';
+    const parsed = JSON.parse(
+      getTextContent(await handleLspBridgeTool('get_diagnostics', { code }))
+    );
+    const typo = parsed.diagnostics.findIndex((d: any) => d.code === 'possible-typo');
+    const action = parsed.codeActions.find((a: any) => a.diagnosticIndex === typo);
+    expect(action.fixes[0]).toMatchObject({
+      title: 'Fix typo: toggle',
+      edit: { type: 'replace', text: 'toggle' },
+    });
+    const { start, end } = action.fixes[0].edit.range;
+    expect(code.slice(start, end)).toBe('toggel');
+    const titles = parsed.codeActions.flatMap((a: any) => a.fixes.map((f: any) => f.title));
+    expect(titles.filter((t: string) => t.includes('${'))).toEqual([]);
+  });
+
   it('suggests no typo for a word the engine did not stop on', async () => {
     // `and` is not a misspelled `add`: the engine stops on `"Loading"`.
     const ds = await diagnose('on click add .busy to me and put "Loading" into #output');
