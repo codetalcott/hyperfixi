@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/i18n",
-  "version": "7.2.0",
+  "version": "7.3.0",
   "description": "Keyword dictionaries, keyword providers and grammar profiles for hyperscript",
   "type": "module",
   "main": "dist/index.cjs",
@@ -64,7 +64,7 @@
   },
   "homepage": "https://github.com/codetalcott/hyperfixi/tree/main/packages/i18n#readme",
   "dependencies": {
-    "@lokascript/semantic": "^7.2.0"
+    "@lokascript/semantic": "^7.3.0"
   },
   "peerDependencies": {
     "vite": ">=4.0.0"

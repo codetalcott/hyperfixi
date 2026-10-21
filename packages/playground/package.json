@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/playground",
-  "version": "7.2.0",
+  "version": "7.3.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,8 +10,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@hyperfixi/engine": "^7.2.0",
-    "@lokascript/semantic": "^7.2.0"
+    "@hyperfixi/engine": "^7.3.0",
+    "@lokascript/semantic": "^7.3.0"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
