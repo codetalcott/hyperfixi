@@ -1,11 +1,9 @@
 {
   "upstream": "0.9.93",
-  "passed": 1401,
-  "total": 1467,
+  "passed": 1422,
+  "total": 1486,
   "failing": [
-    "core/bootstrap.js › _hyperscript bootstrapping › cleanup tracks listeners in elt._hyperscript",
     "core/bootstrap.js › _hyperscript bootstrapping › logAll config logs events to console",
-    "core/bootstrap.js › _hyperscript bootstrapping › stores state on elt._hyperscript",
     "core/evalStatically.js › evalStatically() › throws on math expressions",
     "core/evalStatically.js › evalStatically() › throws on symbol references",
     "core/evalStatically.js › evalStatically() › throws on template strings",

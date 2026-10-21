@@ -6,6 +6,7 @@
  */
 import type { Cmd, Ctx, Expr, Program } from './ast';
 import { expr } from './expressions';
+import { installHtmxCompat } from './htmx-compat';
 import { ParseError, Parser, createGrammar, formatError, type Grammar } from './parser';
 import {
   config,
@@ -159,19 +160,35 @@ type ProcessHook = (root: ProcessRoot) => void;
 const beforeProcess: ProcessHook[] = [];
 const afterProcess: ProcessHook[] = [];
 
+/**
+ * The roots being processed now. A hook that leads back to one of them ends there: a page's own
+ * hand-off to htmx (`addAfterProcessHook(el => htmx.process(el))`) is answered by htmx's
+ * `htmx:after:process`, which processes the same root again. On upstream that recurses until
+ * the stack runs out. The nested pass would find only what the outer pass is already
+ * initialising, and scripted markup an `init` inserted without processing it (`put` processes
+ * what it inserts); the latter waits for the next pass over that root.
+ */
+const processing = new Set<ProcessRoot>();
+
 /** Initialise every scripted element in a subtree. Elements already initialised are skipped. */
 export function processNode(node: unknown): void {
   if (!(node instanceof Element || node instanceof Document || node instanceof DocumentFragment))
     return;
-  // A plugin may rewrite scripts before they are read (the multilingual adapter does).
-  for (const hook of beforeProcess) hook(node);
-  const selector =
-    attributes()
-      .map(a => `[${a}]`)
-      .join(', ') + ", [type='text/hyperscript']";
-  if (node instanceof Element && node.matches(selector)) initElement(node);
-  node.querySelectorAll(selector).forEach(initElement);
-  for (const hook of afterProcess) hook(node);
+  if (processing.has(node)) return;
+  processing.add(node);
+  try {
+    // A plugin may rewrite scripts before they are read (the multilingual adapter does).
+    for (const hook of beforeProcess) hook(node);
+    const selector =
+      attributes()
+        .map(a => `[${a}]`)
+        .join(', ') + ", [type='text/hyperscript']";
+    if (node instanceof Element && node.matches(selector)) initElement(node);
+    node.querySelectorAll(selector).forEach(initElement);
+    for (const hook of afterProcess) hook(node);
+  } finally {
+    processing.delete(node);
+  }
 }
 
 /** Remove everything an element's script installed: listeners, observers, timers, state. */
@@ -241,6 +258,7 @@ export function boot(): void {
   const start = () => {
     processNode(document.documentElement);
     document.dispatchEvent(new Event('hyperscript:ready'));
+    installHtmxCompat(api);
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else setTimeout(start);

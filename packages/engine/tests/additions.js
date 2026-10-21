@@ -1,5 +1,7 @@
-// Tests for the syntax upstream does not have (src/additions.ts), in the form of upstream's
-// own tests and on the same fixtures. `npm run test:own` runs them; every one must pass.
+// Tests for what upstream does not have, in the form of upstream's own tests and on the same
+// fixtures: the syntax in src/additions.ts, and the two additions in src/htmx-compat.ts (fixi,
+// and a hand-off to htmx that does not recurse). `npm run test:own` runs them; every one must
+// pass.
 import { test, expect } from '../fixtures.js';
 
 test.describe('new <Constructor>(...)', () => {
@@ -182,5 +184,137 @@ test.describe('toggle <element>', () => {
 
   test('reports a target that is not there', async ({ error }) => {
     expect(await error('toggle #missing')).toBe("'#missing' is null");
+  });
+});
+
+test.describe('fixi: content it swaps in runs', () => {
+  // Upstream has no fixi integration; the engine processes the content on `fx:swapped`.
+  const fixi = new URL('./vendor/fixi-0.9.4.js', import.meta.url).pathname;
+
+  test('into a target', async ({ withScripts, html, find, mock }) => {
+    await withScripts(fixi);
+    await mock(
+      'GET',
+      '/frag',
+      `<button id="in" _="on click increment :n then put :n into me">x</button>`
+    );
+    await html(`<button id="load" fx-action="/frag" fx-target="#t" fx-swap="innerHTML">load</button>
+                <div id="t"></div>`);
+    await find('#load').click();
+    await expect(find('#in[data-hyperscript-powered]')).toHaveCount(1);
+    await find('#in').click();
+    await expect(find('#in')).toHaveText('1');
+  });
+
+  test("in place of the element that asked (fixi's default swap)", async ({
+    withScripts,
+    html,
+    find,
+    mock,
+  }) => {
+    await withScripts(fixi);
+    await mock('GET', '/frag', `<button id="in" _="on click put 'swapped' into me">x</button>`);
+    await html(`<button id="load" fx-action="/frag">load</button>`);
+    await find('#load').click();
+    await expect(find('#in[data-hyperscript-powered]')).toHaveCount(1);
+    await find('#in').click();
+    await expect(find('#in')).toHaveText('swapped');
+  });
+
+  test('into <html> (an innerHTML swap of the whole document, which has no parent)', async ({
+    withScripts,
+    page,
+    html,
+    mock,
+  }) => {
+    await withScripts(fixi);
+    await mock(
+      'GET',
+      '/doc',
+      `<head></head><body><button id="in" _="on click put 'whole' into me">x</button></body>`
+    );
+    await html(
+      `<button id="load" fx-action="/doc" fx-target="html" fx-swap="innerHTML">load</button>`
+    );
+    await page.locator('#load').click();
+    await expect(page.locator('#in[data-hyperscript-powered]')).toHaveCount(1);
+    await page.locator('#in').click();
+    await expect(page.locator('#in')).toHaveText('whole');
+  });
+});
+
+test.describe('htmx: a page with its own hooks between htmx and the engine', () => {
+  // The workarounds while the engine had no htmx integration: `htmx.onLoad(el =>
+  // _hyperscript.process(el))` for content htmx swaps in, `_hyperscript.addAfterProcessHook(el =>
+  // htmx.process(el))` for htmx content a script puts in. On upstream each recurses until the
+  // stack runs out. The engine's hand-off to htmx marks what htmx then processes as htmx's, and a
+  // root already being processed is not processed again (src/engine.ts, `processing`).
+  const htmx = new URL('./vendor/htmx-4.0.0.min.js', import.meta.url).pathname;
+
+  test('htmx.onLoad: no recursion, and the swapped content runs once', async ({
+    withScripts,
+    page,
+    html,
+    find,
+    mock,
+    evaluate,
+  }) => {
+    const errors = [];
+    const onError = e => errors.push(e.message);
+    page.on('pageerror', onError);
+    try {
+      await withScripts(htmx);
+      await evaluate(() => htmx.onLoad(el => _hyperscript.process(el)));
+      await mock(
+        'GET',
+        '/frag',
+        `<button id="in" _="on click increment :n then put :n into me">x</button>`
+      );
+      await html(`<button id="load" hx-get="/frag" hx-target="#t">load</button><div id="t"></div>`);
+      await find('#load').click();
+      await expect(find('#in[data-hyperscript-powered]')).toHaveCount(1);
+      await find('#in').click();
+      await expect(find('#in')).toHaveText('1');
+    } finally {
+      page.off('pageerror', onError);
+    }
+    expect(errors).toEqual([]);
+  });
+
+  test('both hooks: no recursion, and both directions work', async ({
+    withScripts,
+    page,
+    html,
+    find,
+    mock,
+    evaluate,
+  }) => {
+    const errors = [];
+    const onError = e => errors.push(e.message);
+    page.on('pageerror', onError);
+    try {
+      await withScripts(htmx);
+      await evaluate(() => {
+        htmx.onLoad(el => _hyperscript.process(el));
+        _hyperscript.addAfterProcessHook(el => htmx.process(el));
+      });
+      await mock('GET', '/frag', `<button id="in" _="on click put 'swapped' into me">x</button>`);
+      await mock('GET', '/data', '<span>loaded</span>');
+      await html(
+        `<button id="load" hx-get="/frag" hx-target="#t">load</button><div id="t"></div>
+         <button id="add" _="on click put '<button id=req hx-get=/data hx-target=#u>go</button>' into #slot">add</button>
+         <div id="slot"></div><div id="u"></div>`
+      );
+      await find('#load').click();
+      await expect(find('#in[data-hyperscript-powered]')).toHaveCount(1);
+      await find('#in').click();
+      await expect(find('#in')).toHaveText('swapped');
+      await find('#add').click();
+      await find('#req').click();
+      await expect(find('#u span')).toHaveText('loaded');
+    } finally {
+      page.off('pageerror', onError);
+    }
+    expect(errors).toEqual([]);
   });
 });

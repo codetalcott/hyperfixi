@@ -29,7 +29,13 @@ import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const VENDORED = '0.9.93';
-const DIRS = ['commands', 'core', 'expressions', 'features', 'templates'];
+const DIRS = ['commands', 'core', 'expressions', 'features', 'templates', 'integration'];
+// Single test files from directories not taken whole: `ext/`'s other files test upstream's
+// optional extensions (components, event sources, tailwind), which this engine does not build.
+const FILES = ['ext/hs-include.js'];
+// What the htmx tests load: their fixture (it imports three names from `fixtures.js`) and the
+// htmx build upstream pins. Copied for `--files` runs too.
+const SUPPORT = ['htmx-fixtures.js', 'vendor/htmx.js'];
 const KNOWN = join(here, 'known-failures.json');
 
 const args = process.argv.slice(2);
@@ -87,6 +93,18 @@ if (own) {
   }
 } else {
   for (const d of DIRS) cpSync(join(testRoot, d), join(work, 'test', d), { recursive: true });
+  for (const f of FILES) {
+    if (!existsSync(join(testRoot, f))) continue; // an upstream ref from before the file
+    mkdirSync(dirname(join(work, 'test', f)), { recursive: true });
+    cpSync(join(testRoot, f), join(work, 'test', f));
+  }
+}
+if (!own) {
+  for (const f of SUPPORT) {
+    if (!existsSync(join(testRoot, f))) continue;
+    mkdirSync(dirname(join(work, 'test', f)), { recursive: true });
+    cpSync(join(testRoot, f), join(work, 'test', f));
+  }
 }
 cpSync(join(here, 'fixtures.js'), join(work, 'test', 'fixtures.js'));
 // A few tests load the engine themselves, from where upstream's build puts it.

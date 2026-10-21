@@ -19,6 +19,12 @@ const BLANK_PAGE = [
 
 export { expect };
 
+// Upstream's `htmx-fixtures.js` builds its own page (htmx, then the bundle from `.bundle/`) and
+// imports these three from `fixtures.js` for coverage, which is off here.
+export const COVERAGE = false;
+export const accumulateCoverage = map => map;
+export const flushCoverageShard = () => {};
+
 export const test = base.extend({
   _hsContext: [
     async ({ browser }, use) => {
@@ -53,6 +59,29 @@ export const test = base.extend({
     await _hsPage.goto('http://localhost/__blank');
     await _hsPage.waitForFunction(() => typeof _hyperscript !== 'undefined');
     await use(_hsPage);
+  },
+
+  // A fresh page whose script tags load these files (paths) before the engine boots, as a
+  // page's own `<script src>` tags run before DOMContentLoaded. For htmx and fixi (own tests).
+  // The engine itself is the context's init script, so it is defined before these run; it boots
+  // (and looks for htmx) on DOMContentLoaded, after them.
+  withScripts: async ({ page }, use) => {
+    await use(async (...files) => {
+      await page.route('http://localhost/__script/*', r =>
+        r.fulfill({
+          contentType: 'text/javascript',
+          path: files[Number(r.request().url().split('/').pop())],
+        })
+      );
+      const tags = files.map((_, i) => `<script src="/__script/${i}"></script>`).join('');
+      await page.route('http://localhost/__scripted', r =>
+        r.fulfill({ contentType: 'text/html', body: BLANK_PAGE.replace('<body>', `<body>${tags}`) })
+      );
+      await page.goto('http://localhost/__scripted');
+      // The engine installs its htmx and fixi listeners once it has processed the document.
+      await page.waitForFunction(() => document.readyState === 'complete');
+      await page.evaluate(() => new Promise(r => setTimeout(r, 0)));
+    });
   },
 
   html: async ({ page }, use) => {

@@ -11,7 +11,7 @@ core's `dist/hyperfixi.js` is this package's `hyperfixi-hs.js`. It is also publi
 
 ## Install
 
-The script-tag bundle, hyperscript and nothing else (34.1 KB gzipped). It installs as
+The script-tag bundle, hyperscript and nothing else (34.9 KB gzipped). It installs as
 `window._hyperscript` and `window.hyperfixi`, and reads the document when it is ready:
 
 ```html
@@ -56,6 +56,20 @@ _hyperscript.addSourceTransform((source, element) => english);
 A script is rewritten as it is read. The element keeps the text its author wrote, and a parse
 error in the rewritten script carries that text (`error.written`). `@lokascript/hyperscript-adapter`
 uses the hook when the host has it.
+
+### htmx and fixi
+
+Load htmx (2 or 4) or fixi beside any bundle and nothing else is needed: once the engine has
+processed the document it processes content they swap in, and hands htmx the content a script
+puts in, so its `hx-*` attributes work. On htmx 4 it registers upstream's `hs-include`
+extension (`hs-include=":userId"` sends an element-scoped variable with the request; enable it
+with `htmx.config.extensions = "hs-include"`). This is upstream's integration
+(`src/htmx-compat.ts`), with two additions: fixi (on `fx:swapped`), and a hand-off to htmx that
+does not recurse when a page also hands htmx's content to the engine itself
+(`htmx.onLoad(el => _hyperscript.process(el))`), as it does on upstream. As on upstream, the
+engine looks for htmx once, when it has processed the document: load htmx with a script tag
+(plain or `defer`, not `async`) for the hand-off and `hs-include`; swapped-in content is processed
+whenever htmx loads.
 
 ## Layout
 
@@ -153,7 +167,7 @@ commands) 18.4 KB, `full` 34.1 KB, `core` (no commands) 13.8 KB.
 
 ## The script-tag bundle: `hyperfixi-hs.js`
 
-`dist/hyperfixi-hs.js` (minified, 34.1 KB gzipped; `hyperfixi-hs.dev.js` is the readable build) is the first product on this engine:
+`dist/hyperfixi-hs.js` (minified, 34.9 KB gzipped; `hyperfixi-hs.dev.js` is the readable build) is the first product on this engine:
 hyperscript and nothing else, every module, no htmx attributes, English only. It installs
 `window._hyperscript`, as upstream does, and the same object as `window.hyperfixi`. The name
 paired with core's `hyperfixi-hx.js` (hyperscript plus htmx, retired in Phase C3). Since C-R4b
@@ -185,8 +199,12 @@ gallery for `packages/core/test-pages/`. One behavior of core's is not in this e
 engine want `increment #count's textContent`. The examples write the second, which every
 bundle runs to the same count (the bundle matrix's Counter row).
 
-The 66 known failures: upstream's internal-API surface (`internals.tokenizer`,
-`evalStatically`, source info, error collection: 47), sockets and workers (17, upstream
+Since 2026-10-21 the gate also runs upstream's htmx tests (`integration/htmx.js` and
+`ext/hs-include.js`, 19), which the first vendoring left out, so the whole suite is 1,486. The
+engine failed 10 of them until it had upstream's htmx integration; it passes all 19.
+
+The 64 known failures: upstream's internal-API surface (`internals.tokenizer`,
+`evalStatically`, source info, error collection: 45), sockets and workers (17, upstream
 extensions that are not built), and two collection-expression tests that need upstream's
 component extension. Upstream's one failure is a test that expects its worker extension to be
 absent.

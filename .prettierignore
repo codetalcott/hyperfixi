@@ -27,3 +27,6 @@ package-lock.json
 # The engine's acceptance oracle: upstream _hyperscript's tests, vendored unmodified
 # (packages/engine/upstream-suite/vendor/README.md).
 packages/engine/upstream-suite/vendor/
+
+# Third-party builds the engine's own tests load (packages/engine/tests/vendor/README.md).
+packages/engine/tests/vendor/*.js

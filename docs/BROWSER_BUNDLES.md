@@ -8,7 +8,7 @@
 
 **The engine (2026-10-03).** `@hyperfixi/engine` replaces core's engine (the migration plan is
 `~/.claude/plans/engine-replaces-core.md`; every tracked gallery page runs on it). Its script-tag
-bundle is **`hyperfixi-hs.js`** (34.1 KB gzipped): hyperscript and nothing else, every module,
+bundle is **`hyperfixi-hs.js`** (34.9 KB gzipped): hyperscript and nothing else, every module,
 upstream-faithful, with upstream's reactive features (`live`, `when`, `bind`) built in. For
 hypermedia attributes it pairs with an upstream library instead of reimplementing one:
 
@@ -20,7 +20,12 @@ hypermedia attributes it pairs with an upstream library instead of reimplementin
 | `hyperfixi-hs.js` + `@lokascript/hyperscript-adapter`              | see below | Hyperscript written in any of 24 languages ([Hyperscript in another language](#hyperscript-in-another-language)) |
 
 Hyperscript handles behavior, the hypermedia library handles requests and streams, and neither
-reimplements the other. `examples/hx-v4/` and `examples/hx-v4-i18n/` are the second and third
+reimplements the other. The engine processes the content htmx (2 or 4) and fixi swap in, and
+hands htmx the content a script puts in, so a swapped-in `_="…"` runs and an `hx-get` a script
+inserts issues its request; on htmx 4 it also registers upstream's `hs-include` extension
+(`hs-include=":id"` sends an element-scoped variable with the request). That is upstream's htmx
+integration (fixi's is the engine's own addition); nothing to configure.
+`examples/hx-v4/` and `examples/hx-v4-i18n/` are the second and third
 stacks running (htmx 4 is vendored for them under `examples/vendor/`). Localized attribute names
 on real htmx are the adapter's job ([packages/htmx-adapter](../packages/htmx-adapter/README.md));
 on fixi, loka-js's.

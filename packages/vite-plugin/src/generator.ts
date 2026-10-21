@@ -38,8 +38,6 @@ interface BundleSpec {
   blocks: string[];
   positional: boolean;
   reactivity: boolean;
-  /** Re-process content htmx swaps in (`htmx:load` / `htmx:afterSettle`). */
-  htmxIntegration: boolean;
   globalName: string;
   autoInit: boolean;
   esModule: boolean;
@@ -59,7 +57,6 @@ function generateBundleCode(spec: BundleSpec): string {
     blocks,
     positional,
     reactivity,
-    htmxIntegration,
     globalName,
     autoInit,
     esModule,
@@ -79,7 +76,6 @@ function generateBundleCode(spec: BundleSpec): string {
     semantic.enabled
       ? `Multilingual: ${languages.join(', ') || 'en'} (translated as read, through the engine's source transform)`
       : '',
-    htmxIntegration ? 'htmx: content swapped in is processed (htmx:load / htmx:afterSettle)' : '',
   ].filter(Boolean);
 
   const bundleInfo = JSON.stringify({
@@ -93,22 +89,11 @@ function generateBundleCode(spec: BundleSpec): string {
   const apiProps = [`bundle: ${bundleInfo}`, ...semanticExports].map(p => `  ${p},`).join('\n');
 
   // `boot()` installs `window._hyperscript` (the engine is a _hyperscript
-  // implementation; that global is its to take) and processes the document.
-  // The plugin's own global is set beside it unless the two names coincide.
+  // implementation; that global is its to take) and processes the document,
+  // then content htmx (2 or 4) and fixi swap in: the engine's integration, so
+  // the bundle needs no hook of its own. The plugin's own global is set beside
+  // it unless the two names coincide.
   const installGlobal = globalName === '_hyperscript' ? '' : `  window.${globalName} = api;\n`;
-
-  const htmxHooks = htmxIntegration
-    ? `
-  // htmx (any major) announces swapped-in content on these; hand it to the engine.
-  for (const type of ['htmx:load', 'htmx:afterSettle']) {
-    document.addEventListener(type, event => {
-      const detail = event.detail;
-      const target = (detail && (detail.elt || detail.target)) || event.target;
-      if (target instanceof Element) api.processNode(target);
-    });
-  }
-`
-    : '';
 
   return `/**
  * hyperfixi ${name} bundle (auto-generated)
@@ -132,7 +117,7 @@ ${
     ? `
 if (typeof window !== 'undefined') {
 ${installGlobal}  boot();
-${htmxHooks}}
+}
 `
     : ''
 }${
@@ -236,7 +221,6 @@ export class Generator {
       blocks,
       positional,
       reactivity,
-      htmxIntegration: options.htmx ?? usage.htmx?.hasHtmxAttributes ?? false,
       globalName: options.globalName ?? 'hyperfixi',
       autoInit: true,
       esModule: true,

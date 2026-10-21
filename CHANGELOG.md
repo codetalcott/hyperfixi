@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`@hyperfixi/engine`: content htmx or fixi swaps in runs its hyperscript, and htmx content a
+  script puts in issues its requests.** Upstream `_hyperscript` has this integration in its core
+  runtime and the engine had none: a `_="on click …"` that htmx swapped in did nothing, and an
+  `hx-get` that a script `put` into the page was never wired. The engine now has upstream's
+  integration (0.9.93's `htmx-compat.js`), installed by `boot()` in every bundle, the Vite
+  plugin's included: `htmx:load` (htmx 2) and `htmx:after:process` (htmx 4) process the content,
+  an after-process hook hands what a script inserts to `htmx.process`, and on htmx 4 it
+  registers upstream's `hs-include` extension (`hs-include=":id"` sends element-scoped variables
+  with the request; `htmx.config.extensions = "hs-include"` enables it). Two additions upstream
+  lacks: fixi (`fx:swapped` processes the swapped content), and pages with their own hooks
+  between the two (`htmx.onLoad(el => _hyperscript.process(el))`,
+  `_hyperscript.addAfterProcessHook(el => htmx.process(el))`, the workarounds until now) no longer
+  recurse, where upstream recurses until the stack runs out. The workarounds can be removed. The
+  first vendoring of upstream's suite left out its htmx tests (`integration/htmx.js`,
+  `ext/hs-include.js`), which is how the gap shipped; the gate now runs them and passes all 19
+  (1422/1486). `hyperfixi-hs.js` grows 0.7 KB gzipped, to 34.9 KB.
+- **`@hyperfixi/engine`: loading the engine twice no longer binds every handler twice.** Element
+  state was private to each copy of the engine, so the second copy initialised every element
+  again and one click ran its handler twice. htmx 4's boosted swaps run body scripts again, so
+  boost, then back, did it on a page that loads the engine at the end of its body. The state is
+  now `elt._hyperscript`, where upstream keeps it and a second copy finds it (two more of
+  upstream's tests pass).
+
+### Deprecated
+
+- **`@hyperfixi/vite-plugin`'s `htmx` option does nothing.** It added a listener for htmx 2's
+  event names, which htmx 4 does not fire; the engine's integration covers every bundle. The
+  option is still accepted, so existing configs build.
+
 ## [7.3.0] - 2026-10-21
 
 `@hyperfixi/mcp-server` lists its 14 core tools by default and keeps the other 70 in toolsets
