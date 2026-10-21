@@ -3,9 +3,10 @@
 # Runs lokascript-domains' round-trip gate against THIS tree's intent, framework
 # and semantic, packed from their dist/.
 #
-# The seven domain DSLs read on framework's matcher skeleton and take their
-# grammar from framework's language modules (learn writes its commanding sentence
-# with semantic), and no other gate here parses one:
+# The six domain DSLs read on framework's matcher skeleton and take their
+# grammar from framework's language modules (no domain reads semantic at run time
+# since domains 7.1.0, when learn moved into lokascript-learn), and no other gate
+# here parses one:
 # parse parity and the multilingual ratchets cover hyperscript only. So a matcher
 # or profile change made for hyperscript could regress a domain with every gate
 # here green. This runs the domains' own gate (their scripts/gate-upstream.sh) on

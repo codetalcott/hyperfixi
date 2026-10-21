@@ -9,10 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **`@hyperfixi/mcp-server` is on `@lokascript/domains` 7.0.0.** The domain DSLs take each
-  language's grammar from `@lokascript/framework/languages` (framework 7.1); they read and write
-  exactly as on 5.0.4 (the domains' round-trip gate: 0 worse, 0 better, 0 parses moved). Domains
-  7.0.0 peers framework, semantic and intent `^7.1.0`.
+- **`@hyperfixi/mcp-server` is on `@lokascript/domains` 7.1.0.** The domain DSLs take each
+  language's grammar from `@lokascript/framework/languages` (framework 7.1); the six that remain
+  read and write exactly as on 5.0.4 (the domains' round-trip gate: 0 worse, 0 better, 0 parses
+  moved). Domains 7.1.0 peers framework and intent `^7.1.0`; semantic is no longer a peer.
+
+### Removed
+
+- **`@hyperfixi/mcp-server`'s four learn tools** (`parse_learn`, `compile_learn`,
+  `validate_learn`, `translate_learn`), and learn in `detect_domain` and the composite tools.
+  learn left `@lokascript/domains` in 7.1.0 for lokascript-learn, its only user. Its commanding
+  sentence was `@lokascript/semantic`'s translation, which `translate_code` writes. A default
+  connection lists 84 tools (88 before).
 
 ## [7.1.0] - 2026-10-20
 

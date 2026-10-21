@@ -7,13 +7,13 @@
  * reader uses to judge the server's surface: it derives the counts from the
  * actual tool arrays and fails if the README disagrees.
  *
- * Two numbers, because they differ: 93 tools are DEFINED, but the 5
+ * Two numbers, because they differ: 89 tools are DEFINED, but the 5
  * MCP-sampling tools are hidden from `tools/list` unless
- * LOKASCRIPT_MCP_LLM_TOOLS=1, so a default connection sees 88.
+ * LOKASCRIPT_MCP_LLM_TOOLS=1, so a default connection sees 84.
  * (108 / 103 until 4.0, when compile_hyperscript and execute_lse retired with
  * the AOT compiler; 106 / 101 until domains 4.0.0 retired jsx and its four tools;
  * 96 / 91 until 7.0 removed validate_hyperscript, translate_hyperscript and
- * parse_multilingual.)
+ * parse_multilingual; 93 / 88 until domains 7.1.0 took learn and its four tools.)
  */
 
 import { describe, it, expect } from 'vitest';
@@ -76,9 +76,9 @@ describe('Tool count guard', () => {
   const definedCount = staticCount + domainToolCount + samplingTools.length;
   const defaultListedCount = definedCount - samplingTools.length;
 
-  it('defines 93 tools and lists 88 by default', () => {
-    expect(definedCount).toBe(93);
-    expect(defaultListedCount).toBe(88);
+  it('defines 89 tools and lists 84 by default', () => {
+    expect(definedCount).toBe(89);
+    expect(defaultListedCount).toBe(84);
   });
 
   it('the tools 7.0 removed stay removed', () => {
