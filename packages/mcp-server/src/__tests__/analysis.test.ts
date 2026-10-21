@@ -254,3 +254,53 @@ describe('fallback behavior', () => {
     }
   });
 });
+
+describe('explain_code reads the parse', () => {
+  // Through 7.2.0 it was a keyword scan that listed commands by kind: toggle → wait → add came
+  // out "It toggles .open. It adds .seen to me. It waits 200ms.", without `on #menu`.
+  const explain = async (args: Record<string, unknown>) =>
+    JSON.parse((await handleAnalysisTool('explain_code', args)).content[0].text);
+
+  it('names each step in the order it runs, with its target', async () => {
+    const data = await explain({
+      code: 'on click toggle .open on #menu then wait 200ms then add .seen to me',
+    });
+    expect(data.overview).toBe(
+      '`on click` runs `toggle .open on #menu`, then `wait 200ms`, then `add .seen to me`.'
+    );
+    expect(data.steps[0].body.map((s: { code: string }) => s.code)).toEqual([
+      'toggle .open on #menu',
+      'wait 200ms',
+      'add .seen to me',
+    ]);
+    expect(data.steps[0].body[0].does).toMatch(/toggle/i);
+  });
+
+  it("keeps an if's two branches apart", async () => {
+    const data = await explain({
+      code: 'on click if me matches .x then hide me else show me end',
+    });
+    const branch = data.steps[0].body[0];
+    expect(branch.body.map((s: { code: string }) => s.code)).toEqual(['hide me']);
+    expect(branch.otherwise.map((s: { code: string }) => s.code)).toEqual(['show me']);
+  });
+
+  it('lists the roles for a beginner', async () => {
+    const data = await explain({ code: 'toggle .open on #menu', audience: 'beginner' });
+    expect(data.steps[0].roles).toContainEqual(
+      expect.objectContaining({ role: 'destination', value: '#menu' })
+    );
+  });
+
+  it('says which part did not parse', async () => {
+    const data = await explain({ code: 'toggle .a on me then wiggle wobble' });
+    expect(data.overview).toBe('It runs `toggle .a on me`.');
+    expect(data.note).toContain('wiggle wobble');
+  });
+
+  it('falls back to a keyword scan in source order for code that does not parse', async () => {
+    const data = await explain({ code: '123 wait 1s toggle .a' });
+    expect(data.note).toMatch(/keyword scan/);
+    expect(data.overview.indexOf('waits')).toBeLessThan(data.overview.indexOf('toggles'));
+  });
+});

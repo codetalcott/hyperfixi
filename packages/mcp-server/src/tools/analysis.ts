@@ -192,18 +192,12 @@ export async function handleAnalysisTool(
       case 'explain_code': {
         const audience = (args.audience as string) || 'intermediate';
         const detail = (args.detail as string) || 'detailed';
-        // Use fallback if core/ast-utils unavailable or explainCode not exported
-        if (!astToolkit || typeof astToolkit.explainCode !== 'function') {
-          return simpleExplanation(code, audience, detail);
-        }
-        const trees = await parseHyperscript(code);
-        if (!trees) {
-          return simpleExplanation(code, audience, detail);
-        }
-        const explanation = astToolkit.explainCode(trees.ast, { audience, detail });
-        return {
-          content: [{ type: 'text', text: JSON.stringify(explanation, null, 2) }],
-        };
+        // From the parse; the keyword scan only for code that does not parse. (Core's
+        // ast-utils lost its explainCode, so the scan answered every call until 7.2.0.)
+        return (
+          (await explainFromParse(code, audience, detail)) ??
+          simpleExplanation(code, audience, detail)
+        );
       }
 
       case 'recognize_intent': {
@@ -309,17 +303,187 @@ function simpleAnalysis(
   };
 }
 
+/** One step of a parsed script, in the order it runs. */
+interface ExplainedStep {
+  /** The step as the engine reads it: the parse rendered back to English. */
+  code: string;
+  /** What the command does, from its schema. */
+  does?: string;
+  /** The roles it fills, with each role's meaning. */
+  roles?: Array<{ role: string; value: string; meaning?: string }>;
+  /** A block's commands (an `if`'s, when its condition holds). */
+  body?: ExplainedStep[];
+  /** An `if`'s commands when its condition does not hold. */
+  otherwise?: ExplainedStep[];
+}
+
+/**
+ * Explain code from its semantic parse: each step in the order it runs, rendered back to English,
+ * with its command's documented description. null when the code does not parse. (It replaced
+ * a keyword scan that listed commands by kind, not by order: toggle → wait → add came out
+ * "toggles … adds … waits", without `toggle`'s target.)
+ */
+async function explainFromParse(
+  code: string,
+  audience: string,
+  detail: string
+): Promise<{ content: Array<{ type: string; text: string }> } | null> {
+  let semantic: any;
+  try {
+    semantic = await import('@lokascript/semantic');
+  } catch {
+    return null;
+  }
+  const result = semantic.parseSemantic(code, 'en');
+  if (!result?.node) return null;
+
+  const options = {
+    withRoles: detail === 'comprehensive' || audience === 'beginner',
+    withDoes: !(audience === 'expert' && detail !== 'comprehensive'),
+  };
+  const steps = explainNodes(semantic, [result.node], options);
+  const unread = ((result.node.diagnostics ?? []) as Array<{ code?: string; message?: string }>)
+    .filter(d => d.code === 'unconsumed-input' || d.code === 'verbatim-clause')
+    .map(d => d.message);
+
+  return {
+    content: [
+      {
+        type: 'text',
+        text: JSON.stringify(
+          {
+            overview: overviewOf(steps),
+            ...(detail === 'brief' ? {} : { steps }),
+            ...(unread.length > 0 && {
+              note: `Part of the code did not parse, so it is not explained: ${unread.join('; ')}. validate_and_compile shows why.`,
+            }),
+            audience,
+            detail,
+            code,
+          },
+          null,
+          2
+        ),
+      },
+    ],
+  };
+}
+
+function explainNodes(
+  semantic: any,
+  nodes: any[],
+  options: { withRoles: boolean; withDoes: boolean }
+): ExplainedStep[] {
+  const steps: ExplainedStep[] = [];
+  for (const node of nodes) {
+    if (!node) continue;
+    if (node.kind === 'compound') {
+      steps.push(...explainNodes(semantic, node.statements ?? [], options));
+      continue;
+    }
+    const isBlock = Array.isArray(node.body) || Array.isArray(node.thenBranch);
+    const step: ExplainedStep = {
+      code: isBlock ? blockHeader(semantic, node) : rendered(semantic, node),
+    };
+    const schema = semantic.commandSchemas?.[node.action];
+    if (options.withDoes) {
+      const event = valueText(node.roles?.get?.('event'));
+      const does =
+        node.kind === 'event-handler' && event
+          ? `Runs each time a ${event} event fires.`
+          : schema?.description;
+      if (does) step.does = does;
+    }
+    if (options.withRoles && node.roles?.size) {
+      step.roles = [...node.roles.entries()].flatMap(([role, value]: [string, unknown]) => {
+        const text = valueText(value);
+        if (text === undefined) return [];
+        const meaning = schema?.roles?.find((r: { role: string }) => r.role === role)?.description;
+        return [{ role, value: text, ...(meaning && { meaning }) }];
+      });
+    }
+    if (Array.isArray(node.thenBranch)) {
+      step.body = explainNodes(semantic, node.thenBranch, options);
+      if (Array.isArray(node.elseBranch) && node.elseBranch.length > 0) {
+        step.otherwise = explainNodes(semantic, node.elseBranch, options);
+      }
+    } else if (Array.isArray(node.body)) {
+      step.body = explainNodes(semantic, node.body, options);
+    }
+    steps.push(step);
+  }
+  return steps;
+}
+
+function rendered(semantic: any, node: any): string {
+  try {
+    return semantic.render(node, 'en');
+  } catch {
+    return String(node.action ?? node.kind);
+  }
+}
+
+/** A block's first line: `on click`, `if I match .x`, `repeat 3 times`. */
+function blockHeader(semantic: any, node: any): string {
+  const empty = { ...node, body: [], statements: [], thenBranch: [], elseBranch: undefined };
+  return rendered(semantic, empty).replace(/\s+(?:then\s+)?end$/, '');
+}
+
+function valueText(value: unknown): string | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const v = value as {
+    raw?: unknown;
+    value?: unknown;
+    type?: string;
+    object?: unknown;
+    property?: unknown;
+  };
+  if (typeof v.raw === 'string') return v.raw;
+  if (['string', 'number', 'boolean'].includes(typeof v.value)) return String(v.value);
+  if (v.type === 'property-path' && typeof v.property === 'string') {
+    const owner = valueText(v.object);
+    return owner ? `${owner}'s ${v.property}` : v.property;
+  }
+  return undefined;
+}
+
+/** The steps in one or two sentences, naming each command in order. */
+function overviewOf(steps: ExplainedStep[]): string {
+  const sequence = (list: ExplainedStep[]): string =>
+    list.length === 0
+      ? 'nothing it could parse'
+      : list
+          .map(s => {
+            if (!s.body) return `\`${s.code}\``;
+            const otherwise = s.otherwise ? `; otherwise ${sequence(s.otherwise)}` : '';
+            return `\`${s.code}\` (${sequence(s.body)}${otherwise})`;
+          })
+          .join(', then ');
+  if (steps.every(s => !s.body)) return `It runs ${sequence(steps)}.`;
+  return steps
+    .map(s => {
+      if (!s.body) return `It runs \`${s.code}\`.`;
+      const otherwise = s.otherwise ? `; otherwise ${sequence(s.otherwise)}` : '';
+      return `\`${s.code}\` runs ${sequence(s.body)}${otherwise}.`;
+    })
+    .join(' ');
+}
+
+/** For code that does not parse: a keyword scan, sentences in source order. */
 function simpleExplanation(
   code: string,
   audience: string,
   detail: string
 ): { content: Array<{ type: string; text: string }> } {
-  // Generate explanation based on pattern matching with matchAll for all occurrences
-  const parts: string[] = [];
+  // Sentences keyed by where their match starts, so they come out in source order.
+  const found: Array<{ at: number; text: string }> = [];
 
-  // Detect event handler(s)
-  for (const eventMatch of code.matchAll(/on\s+(\w+)/gi)) {
-    parts.push(`This code runs when a ${eventMatch[1]} event occurs.`);
+  // Detect event handler(s): `on` where a handler starts, not the `on` of `toggle .x on #el`
+  for (const eventMatch of code.matchAll(/(?:^|\n|\bend\s+)\s*on\s+(\w+)/gi)) {
+    found.push({
+      at: eventMatch.index ?? 0,
+      text: `This code runs when a ${eventMatch[1]} event occurs.`,
+    });
   }
 
   // Command patterns - use matchAll to find all occurrences
@@ -354,9 +518,10 @@ function simpleExplanation(
 
   for (const { pattern, format } of commandPatterns) {
     for (const match of code.matchAll(pattern)) {
-      parts.push(format(match));
+      found.push({ at: match.index ?? 0, text: format(match) });
     }
   }
+  const parts = found.sort((a, b) => a.at - b.at).map(f => f.text);
 
   // Detect control flow
   if (/\bif\b/i.test(code)) {
@@ -395,6 +560,7 @@ function simpleExplanation(
         text: JSON.stringify(
           {
             overview,
+            note: 'The code did not parse, so this is a keyword scan, not an explanation of what runs. validate_and_compile shows why it did not parse.',
             audience,
             detail,
             code,
