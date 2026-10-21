@@ -7,12 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.2.0] - 2026-10-20
+
+`@hyperfixi/mcp-server` moves to `@lokascript/domains` 7.1.0: learn left the domains for
+lokascript-learn, its only user, and the server's four learn tools went with it. A minor, though
+it removes tools: there are no known users of them, and `translate_code` writes what they wrote.
+
 ### Changed
 
 - **`@hyperfixi/mcp-server` is on `@lokascript/domains` 7.1.0.** The domain DSLs take each
   language's grammar from `@lokascript/framework/languages` (framework 7.1); the six that remain
   read and write exactly as on 5.0.4 (the domains' round-trip gate: 0 worse, 0 better, 0 parses
-  moved). Domains 7.1.0 peers framework and intent `^7.1.0`; semantic is no longer a peer.
+  moved). Domains 7.1.0 peers framework and intent `^7.1.0`; semantic is no longer a peer
+  (#1604, #1605).
 
 ### Removed
 
@@ -20,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `validate_learn`, `translate_learn`), and learn in `detect_domain` and the composite tools.
   learn left `@lokascript/domains` in 7.1.0 for lokascript-learn, its only user. Its commanding
   sentence was `@lokascript/semantic`'s translation, which `translate_code` writes. A default
-  connection lists 84 tools (88 before).
+  connection lists 84 tools (88 before) (#1605).
 
 ## [7.1.0] - 2026-10-20
 
@@ -2209,7 +2216,8 @@ _Synchronized version release. See git history for details._
 - npm access token stored in GitHub Secrets
 - 2FA recommended for npm organization
 
-[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v7.1.0...HEAD
+[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v7.2.0...HEAD
+[7.2.0]: https://github.com/codetalcott/hyperfixi/compare/v7.1.0...v7.2.0
 [7.1.0]: https://github.com/codetalcott/hyperfixi/compare/v7.0.0...v7.1.0
 [7.0.0]: https://github.com/codetalcott/hyperfixi/compare/v6.3.0...v7.0.0
 [6.3.0]: https://github.com/codetalcott/hyperfixi/compare/v6.2.0...v6.3.0
