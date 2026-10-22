@@ -63,6 +63,8 @@ export {
   setNeutralizeOnClaim,
   neutralizesOnClaim,
   autoDetectBodyHooks,
+  hyperscriptBodiesRequested,
+  HX_ON_MODE_META,
   resetBodyHooks,
   type BodyExecutor,
   type BodyTranslator,

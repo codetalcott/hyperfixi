@@ -114,13 +114,20 @@ By default, `hx-on:*` bodies keep upstream semantics: they are **JavaScript**,
 htmx executes them, and the adapter translates only the attribute _name_ and
 event suffix. JS is language-neutral — there is nothing to translate.
 
-To author **hyperscript** bodies instead — including localized ones — opt in
-by configuring an executor. The easiest way is auto-detection: load
-`_hyperscript` (and, for non-English bodies, a
-`@lokascript/hyperscript-adapter` language bundle) on the page and the adapter
-wires itself:
+To author **hyperscript** bodies instead — including localized ones — opt in.
+The easiest way is a `<meta>` tag: with
+`<meta name="htmx-i18n-hx-on" content="hyperscript">` in the page, the adapter
+uses the hyperscript engine on the page (`window._hyperscript`: hyperfixi's
+`hyperfixi-hs.js` or upstream `_hyperscript`) as the executor, and, for
+non-English bodies, a `@lokascript/hyperscript-adapter` language bundle as the
+translator. A hyperscript engine on the page is **not** an opt-in by itself: a
+page with the engine, htmx and this adapter keeps JavaScript `hx-on` bodies
+until it adds the tag. (Until 7.5.0 the engine alone switched every body to
+hyperscript, which broke plain-JavaScript `hx-on` on those pages.) With the tag
+and no engine, the adapter warns and the bodies stay JavaScript.
 
 ```html
+<meta name="htmx-i18n-hx-on" content="hyperscript" />
 <script src="_hyperscript.js"></script>
 <script src="hyperscript-i18n-es.global.js"></script>
 <!-- translator: HyperscriptI18n.preprocess -->
