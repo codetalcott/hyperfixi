@@ -11,9 +11,10 @@ import type { PreprocessorConfig } from './preprocessor';
 import type { PluginOptions } from './plugin';
 import { installAttributeTranslator, type HyperscriptHost } from './attribute-translator';
 import {
-  acceptedByHost,
+  checkWithHost,
   warnLossyOnce,
   warnRejectedOnce,
+  warnUnknownEvents,
   type HyperscriptParseHost,
   type LossyRefusal,
 } from './host-validate';
@@ -48,7 +49,9 @@ export function hyperscriptI18n(options: PluginOptions = {}) {
 
       if (english !== src) {
         // Host-parser validity gate — see plugin.ts / host-validate.ts.
-        if (options.validateWithHost !== false && !acceptedByHost(host, english)) {
+        const verdict =
+          options.validateWithHost !== false ? checkWithHost(host, english) : undefined;
+        if (verdict && !verdict.accepted) {
           if (options.debug) {
             console.log(
               `[hyperscript-i18n] ${lang}: host rejected "${english}" — keeping "${src}"`
@@ -58,6 +61,7 @@ export function hyperscriptI18n(options: PluginOptions = {}) {
           }
           return src;
         }
+        if (verdict) warnUnknownEvents(lang, src, verdict.events);
         if (options.debug) {
           console.log(`[hyperscript-i18n] ${lang}: "${src}" → "${english}"`);
         }
