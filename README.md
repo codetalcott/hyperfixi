@@ -73,7 +73,7 @@ same file as `dist/hyperfixi.js`; core's own bundles (the ~352 KB `hyperfixi.js`
 
 ## For LLM Agents
 
-An agent emitting hyperscript instead of free-form JavaScript gets properties JS can't offer: every candidate **parses or fails with structured diagnostics** (a real parser, no LLM in the checker), the parse comes back as a **semantic IR** to check against intent, `diff_behaviors` proves two snippets **behaviorally equivalent**, and the result renders **deterministically into 24 languages** so a human can review the agent's work in their own language — [measured, with the residual published](docs/FIDELITY.md).
+An agent emitting hyperscript instead of free-form JavaScript gets properties JS can't offer: every candidate **parses or fails with structured diagnostics** (a real parser, no LLM in the checker), the parse comes back as a **semantic IR** to check against intent, `diff_behaviors` compares two snippets **command by command and role by role** (across languages too), and the result renders **deterministically into 24 languages** so a human can review the agent's work in their own language — [measured, with the residual published](docs/FIDELITY.md).
 
 The MCP server (`@hyperfixi/mcp-server`) exposes the whole loop: generate → `validate_and_compile` → repair from diagnostics → the hyperscript, as is, in an `_="..."` attribute. See **[AGENTS.md](./AGENTS.md)** for the worked example and ground rules.
 

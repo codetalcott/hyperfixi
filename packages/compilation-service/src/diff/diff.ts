@@ -295,9 +295,31 @@ export function canonicalizeOp(op: AbstractOperation): string {
     case 'log':
       parts.push(...op.values);
       break;
+    case 'conditional':
+      parts.push(op.negated ? 'unless' : 'if', op.condition, block(op.then), block(op.else));
+      break;
+    case 'loop':
+      parts.push(op.variant, canonicalizeRoles(op.roles), block(op.body));
+      break;
+    case 'command':
+      parts.push(op.action, canonicalizeRoles(op.roles), op.body ? block(op.body) : '');
+      break;
   }
+  if (op.extra) parts.push(`extra:${canonicalizeRoles(op.extra)}`);
 
   return parts.join('|');
+}
+
+/** A nested list of operations (a branch, a loop's body) as one key. */
+function block(ops: AbstractOperation[]): string {
+  return `[${ops.map(canonicalizeOp).join(' ; ')}]`;
+}
+
+function canonicalizeRoles(roles: Record<string, string>): string {
+  return Object.keys(roles)
+    .sort()
+    .map(k => `${k}=${roles[k]}`)
+    .join(',');
 }
 
 function canonicalizeTarget(t: { kind: string; value?: string }): string {
@@ -329,6 +351,10 @@ function describeChanges(a: AbstractOperation, b: AbstractOperation): string[] {
 
 function formatValue(v: unknown): string {
   if (v === undefined) return '(none)';
+  // A branch or a loop's body: its operations, by key.
+  if (Array.isArray(v) && v.every(x => typeof x === 'object' && x !== null && 'op' in x)) {
+    return block(v as AbstractOperation[]);
+  }
   if (typeof v === 'object' && v !== null) {
     const obj = v as Record<string, unknown>;
     if ('kind' in obj) return obj.kind === 'self' ? 'self' : `${obj.kind}:${obj.value ?? ''}`;

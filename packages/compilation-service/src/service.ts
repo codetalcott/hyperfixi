@@ -15,7 +15,7 @@ import type {
   DiffRequest,
   DiffResponse,
   ServiceOptions,
-  SemanticJSON,
+  SemanticIR,
   SemanticJSONValue,
   Diagnostic,
   NormalizeResult,
@@ -89,7 +89,8 @@ export class CompilationService {
   private renderFn: ((node: unknown, language: string) => string) | null = null;
   /**
    * `@hyperfixi/engine`'s first parse error for a source (null: it parses). Set by create()
-   * when the engine is installed (an optional peer); without it there is no engine check.
+   * when the engine is installed (an optional peer here; @hyperfixi/mcp-server depends on it).
+   * Without it there is no engine check, and validate() says so (`ENGINE_CHECK_SKIPPED`).
    */
   private engineError: ((source: string) => string | null) | null = null;
 
@@ -184,6 +185,27 @@ export class CompilationService {
     };
   }
 
+  /**
+   * Natural-language input with no engine to check it: said in the result, not only on stderr.
+   * The documented `npx @hyperfixi/mcp-server` installed none until 7.5.0 (it was an optional
+   * peer), and every error only the engine catches came back `ok` with nothing to show the check
+   * had not run.
+   */
+  private engineCheckSkipped(
+    request: CompileRequest,
+    normalized: NormalizeResult
+  ): Diagnostic | null {
+    if (this.engineError || normalized.format !== 'natural' || !request.code) return null;
+    return {
+      severity: 'info',
+      code: 'ENGINE_CHECK_SKIPPED',
+      message:
+        '@hyperfixi/engine is not installed, so this was checked by the semantic parser only: ' +
+        'code the engine cannot read (the code a page runs) can still come back ok.',
+      suggestion: 'Install @hyperfixi/engine beside this package to check code with the engine.',
+    };
+  }
+
   /** Natural-language English: the source as written is what the engine runs. */
   private isEnglishAsWritten(request: CompileRequest, normalized: NormalizeResult): boolean {
     const language = request.language ?? 'en';
@@ -225,6 +247,8 @@ export class CompilationService {
     const advisory = engineDecides && !engineRejects ? readByTheEngine : undefined;
 
     diagnostics.push(...(advisory ? normalized.diagnostics.map(advisory) : normalized.diagnostics));
+    const skipped = this.engineCheckSkipped(request, normalized);
+    if (skipped) diagnostics.push(skipped);
 
     if (!normalized.node) {
       if (engineRejects) diagnostics.push(engineRejects);
@@ -540,7 +564,7 @@ function extractSemanticValueString(v: unknown): string {
 /**
  * Convert a SemanticNode to SemanticJSON for the response.
  */
-function nodeToSemanticJSON(node: unknown): SemanticJSON | undefined {
+function nodeToSemanticJSON(node: unknown): SemanticIR | undefined {
   if (!node || typeof node !== 'object') return undefined;
 
   const n = node as {
@@ -548,10 +572,15 @@ function nodeToSemanticJSON(node: unknown): SemanticJSON | undefined {
     action?: string;
     roles?: ReadonlyMap<string, unknown>;
     body?: unknown[];
+    statements?: unknown[];
+    thenBranch?: unknown[];
+    elseBranch?: unknown[];
     eventModifiers?: Record<string, unknown>;
   };
 
   if (!n.action) return undefined;
+  const list = (nodes: unknown[]): SemanticIR[] =>
+    nodes.map(nodeToSemanticJSON).filter((x): x is SemanticIR => x !== undefined);
 
   const roles: Record<string, SemanticJSONValue> = {};
 
@@ -607,7 +636,14 @@ function nodeToSemanticJSON(node: unknown): SemanticJSON | undefined {
     };
   }
 
-  return { action: n.action, roles };
+  // The commands a node holds, so a chain, a branch or a loop can be checked command by command.
+  const ir: SemanticIR = { action: n.action, roles };
+  if (n.kind === 'compound' && Array.isArray(n.statements)) ir.body = list(n.statements);
+  else if (n.kind === 'conditional') {
+    ir.body = list(n.thenBranch ?? []);
+    if (Array.isArray(n.elseBranch) && n.elseBranch.length > 0) ir.else = list(n.elseBranch);
+  } else if (Array.isArray(n.body)) ir.body = list(n.body);
+  return ir;
 }
 
 /**

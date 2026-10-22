@@ -44,7 +44,15 @@ interface NodeLike {
   action?: string;
   roles?: ReadonlyMap<string, unknown>;
   body?: unknown[];
+  /** compound (a `then` chain) */
+  statements?: unknown[];
+  /** conditional */
+  thenBranch?: unknown[];
+  elseBranch?: unknown[];
 }
+
+/** `this`, `this.value`, `this's value`: hyperscript has no `this`; it reads a variable. */
+const THIS_REFERENCE = /^this(?:$|\.|'s\b|\s)/;
 
 function valueString(v: RoleValueLike): string {
   return String(v.value ?? v.raw ?? '');
@@ -110,6 +118,22 @@ function walk(node: unknown, out: Diagnostic[]): void {
         continue;
       }
 
+      // `toggle .a on this`, `put this.value.length into #n`: `this` is a JavaScript habit.
+      // Hyperscript reads it as a variable nobody set, so the value is null on both engines and
+      // the command does nothing or fails. (7.3.0 live test: 6 of 10 snippets that validated
+      // clean and did nothing.) The element the handler is on is `me`; its property, `my x`.
+      // A `js … end` body is JavaScript, where `this` is JavaScript's.
+      if (v.type === 'expression' && n.action !== 'js' && THIS_REFERENCE.test(s)) {
+        out.push({
+          severity: 'warning',
+          code: 'THIS_IS_NOT_ME',
+          message: `${role} "${s}" reads a variable named "this": hyperscript has no \`this\`, so it is null at runtime.`,
+          suggestion:
+            'Write `me` for the element the handler is on (`toggle .a on me`), and `my value` or `me.value` for its properties.',
+        });
+        continue;
+      }
+
       // (`UNSUPPORTED_QUERY_LITERAL`, for `add .x to <body/>`, retired with the AOT
       // compiler in 4.0: on its path `<body/>` reached querySelector verbatim, but the
       // engine reads query literals, as upstream does.)
@@ -129,5 +153,9 @@ function walk(node: unknown, out: Diagnostic[]): void {
     }
   }
 
-  if (Array.isArray(n.body)) for (const child of n.body) walk(child, out);
+  // Every list of commands a node holds: a block body, a `then` chain, both branches of an `if`.
+  // Walking `body` alone missed every command after the first `then`.
+  for (const list of [n.body, n.statements, n.thenBranch, n.elseBranch]) {
+    if (Array.isArray(list)) for (const child of list) walk(child, out);
+  }
 }

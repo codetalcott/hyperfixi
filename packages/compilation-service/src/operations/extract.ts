@@ -19,6 +19,10 @@ interface RoleValue {
   selectorKind?: string;
   dataType?: string;
   scope?: string;
+  implicit?: boolean;
+  /** property-path values carry object + property instead of value. */
+  object?: unknown;
+  property?: string;
 }
 
 interface NodeLike {
@@ -26,6 +30,15 @@ interface NodeLike {
   action?: string;
   roles?: ReadonlyMap<string, RoleValue>;
   body?: NodeLike[];
+  /** compound: the commands of a `then` chain */
+  statements?: NodeLike[];
+  /** conditional */
+  thenBranch?: NodeLike[];
+  elseBranch?: NodeLike[];
+  /** loop */
+  loopVariant?: string;
+  loopVariable?: string;
+  indexVariable?: string;
   eventModifiers?: Record<string, unknown>;
   metadata?: { sourceText?: string };
 }
@@ -72,13 +85,7 @@ function extractEventHandler(n: NodeLike): BehaviorSpec {
   const named = eventRole?.value ?? eventRole?.raw;
   const eventName = typeof named === 'string' && named.length > 0 ? named : 'click';
 
-  const operations: AbstractOperation[] = [];
-
-  if (n.body && Array.isArray(n.body)) {
-    for (const child of n.body) {
-      operations.push(...extractCommand(child));
-    }
-  }
+  const operations = extractList(n.body);
 
   return {
     trigger: {
@@ -96,12 +103,108 @@ function extractEventHandler(n: NodeLike): BehaviorSpec {
 // Command Extraction
 // =============================================================================
 
+function extractList(nodes: NodeLike[] | undefined): AbstractOperation[] {
+  return Array.isArray(nodes) ? nodes.flatMap(extractCommand) : [];
+}
+
+/**
+ * The roles each operation's own fields carry. A written role outside its list goes in the
+ * operation's `extra`, so no part of the parse is left out of the comparison.
+ */
+const CARRIED_ROLES: Record<string, readonly string[]> = {
+  toggle: ['patient', 'destination'],
+  add: ['patient', 'destination'],
+  remove: ['patient', 'source'],
+  put: ['patient', 'destination', 'method'],
+  append: ['patient', 'destination'],
+  show: ['patient'],
+  hide: ['patient'],
+  set: ['destination', 'patient'],
+  increment: ['patient', 'quantity'],
+  decrement: ['patient', 'quantity'],
+  go: ['destination'],
+  fetch: ['source', 'responseType', 'destination'],
+  wait: ['duration', 'patient'],
+  send: ['patient', 'destination'],
+  trigger: ['patient', 'destination'],
+  focus: ['patient'],
+  blur: ['patient'],
+  log: ['patient'],
+};
+
 function extractCommand(n: NodeLike): AbstractOperation[] {
+  if (!n || typeof n !== 'object') return [];
+  // A `then` chain: its commands, in order.
+  if (n.kind === 'compound' || n.action === 'compound') return extractList(n.statements);
+  if (n.kind === 'conditional') {
+    return [
+      {
+        op: 'conditional',
+        negated: n.action === 'unless',
+        condition: roleString(n.roles?.get('condition')),
+        then: extractList(n.thenBranch),
+        else: extractList(n.elseBranch),
+      },
+    ];
+  }
+  if (n.kind === 'loop') {
+    const roles = writtenRoles(n.roles);
+    if (n.loopVariable) roles['loopVariable'] = n.loopVariable;
+    if (n.indexVariable) roles['indexVariable'] = n.indexVariable;
+    return [
+      { op: 'loop', variant: n.loopVariant ?? n.action ?? '', roles, body: extractList(n.body) },
+    ];
+  }
+
   const action = n.action;
   if (!action || action === 'on') return [];
 
-  const roles = n.roles;
+  const ops = Array.isArray(n.body) ? [] : extractKnownCommand(action, n.roles);
+  // An operation that cannot describe this command (`wait for <event>`, a command with a
+  // block), or a command no operation describes: its action and every written role.
+  if (ops.length !== 1) return [genericCommand(n, action)];
 
+  const carried = CARRIED_ROLES[action] ?? [];
+  const extra = writtenRoles(n.roles, role => !carried.includes(role));
+  return Object.keys(extra).length > 0 ? [{ ...ops[0], extra }] : ops;
+}
+
+function genericCommand(n: NodeLike, action: string): AbstractOperation {
+  const op: AbstractOperation = { op: 'command', action, roles: writtenRoles(n.roles) };
+  if (Array.isArray(n.body)) op.body = extractList(n.body);
+  return op;
+}
+
+/** A role's value as text: a literal's or selector's value, an expression's (normalized) text. */
+function roleString(role: RoleValue | undefined): string {
+  if (!role) return '';
+  if (role.type === 'property-path') {
+    const owner = role.object as RoleValue | string | undefined;
+    const ownerText = typeof owner === 'object' ? roleString(owner) : String(owner ?? '');
+    return `${ownerText}'s ${role.property ?? ''}`;
+  }
+  const value = role.value ?? role.raw;
+  return typeof value === 'object' && value !== null ? JSON.stringify(value) : String(value ?? '');
+}
+
+/** The roles the source wrote (a default the parse filled in is `implicit`), sorted by name. */
+function writtenRoles(
+  roles: ReadonlyMap<string, RoleValue> | undefined,
+  keep: (role: string) => boolean = () => true
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (!roles || typeof roles.entries !== 'function') return out;
+  for (const [role, value] of [...roles.entries()].sort(([a], [b]) => a.localeCompare(b))) {
+    if (value?.implicit || !keep(role)) continue;
+    out[role] = roleString(value);
+  }
+  return out;
+}
+
+function extractKnownCommand(
+  action: string,
+  roles: ReadonlyMap<string, RoleValue> | undefined
+): AbstractOperation[] {
   switch (action) {
     // --- DOM Class ---
     case 'toggle':
@@ -338,7 +441,9 @@ function resolveTarget(
 }
 
 function resolveTargetFromRole(role: RoleValue): TargetRef {
-  const value = String(role.value ?? '');
+  // An expression carries its text in `raw`: `toggle .a on this` is not `on me` (`this` is
+  // an undefined variable in hyperscript), and read `.value` alone it resolved to self.
+  const value = roleString(role);
 
   // Reference to self
   if (role.type === 'reference' && (value === 'me' || value === 'it')) {

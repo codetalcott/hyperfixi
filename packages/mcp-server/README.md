@@ -10,7 +10,7 @@ The headline use case: an LLM agent emitting hyperscript instead of free-form Ja
 2. **Repair** — apply the diagnostics and re-validate. `get_code_fixes` maps coded errors to concrete fixes; `get_command_docs` / `search_patterns` show correct usage. Failed results carry a next-step hint block.
 3. **Use it** — once valid, the hyperscript goes in an `_="..."` attribute as is. (`compile_hyperscript`, which emitted JavaScript through the AOT compiler, retired with it in 4.0.)
 
-To present code to a human, `translate_code` renders it in any of 24 languages via deterministic grammar transformation, `diff_behaviors` proves two snippets behaviorally equivalent, and `score_fidelity` scores a candidate against a reference — including across languages — naming exactly what is missing or hallucinated. See the repo-root [AGENTS.md](../../AGENTS.md) for a worked end-to-end example.
+To present code to a human, `translate_code` renders it in any of 24 languages via deterministic grammar transformation, `diff_behaviors` compares two snippets command by command and role by role, and `score_fidelity` scores a candidate against a reference — including across languages — naming exactly what is missing or hallucinated. See the repo-root [AGENTS.md](../../AGENTS.md) for a worked end-to-end example.
 
 ## Protocol Support
 
@@ -34,8 +34,14 @@ npm run build
 ### Using npx
 
 ```bash
-npx @hyperfixi/mcp-server
+npx -y @hyperfixi/mcp-server
 ```
+
+This installs the engine (`@hyperfixi/engine`) with the server, so English is checked by the
+parser that runs it. (Until 7.5.0 the engine was an optional peer that `npx` left out: every
+error only the engine catches came back `ok`, and only stderr said so.) A result whose engine
+check could not run carries `ENGINE_CHECK_SKIPPED` (`info`), and `get_diagnostics` an
+`engine-check-skipped` note.
 
 ## Claude Desktop Configuration
 

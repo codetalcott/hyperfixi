@@ -251,14 +251,16 @@ jobs:
       - name: Build planner package
         run: npm run build --prefix packages/planner
 
+      # Before mcp-server, which depends on it (a dependency since 7.5.0: an optional peer, the
+      # npx install had none).
+      - name: Build server-bridge package
+        run: npm run build --prefix packages/server-bridge
+
       - name: Build mcp-server package
         run: npm run build --prefix packages/mcp-server
 
       - name: Build developer-tools package
         run: npm run build --prefix packages/developer-tools
-
-      - name: Build server-bridge package
-        run: npm run build --prefix packages/server-bridge
 
       - name: Build vite-plugin package
         run: npm run build --prefix packages/vite-plugin

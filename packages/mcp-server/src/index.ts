@@ -126,7 +126,7 @@ The core loop for GENERATING hyperscript:
 2. On failure: apply the diagnostics and re-validate. get_code_fixes maps error codes to concrete fixes; get_command_docs and search_patterns show correct usage.
 3. Once valid, the hyperscript goes in an _="..." attribute as is.
 
-To PRESENT code to a user, translate_code renders it in any of 24 languages via deterministic grammar transformation (word-order faithful, not LLM translation); translate_to_english normalizes foreign input. diff_behaviors checks two snippets for behavioral equivalence, and score_fidelity scores a candidate against a reference (how faithful, what exactly is missing or hallucinated) — use it to prove an edit or translation preserved meaning.
+To PRESENT code to a user, translate_code renders it in any of 24 languages via deterministic grammar transformation (word-order faithful, not LLM translation); translate_to_english normalizes foreign input. diff_behaviors compares two snippets parse against parse (the trigger, every command of a chain, both branches of an if, each role), and score_fidelity scores a candidate against a reference (how faithful, what exactly is missing or hallucinated) — use it to prove an edit or translation preserved meaning.
 
 Prefer natural language input (code + language) for simple cases; use explicit bracket syntax ([toggle patient:.active]) or semantic JSON when you need unambiguous role control.
 
