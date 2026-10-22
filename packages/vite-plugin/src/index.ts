@@ -148,6 +148,8 @@ export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
   let cachedBundle: string | null = null;
   let lastUsageHash = '';
   let isDev = false;
+  // The project Vite builds (`config.root`); `process.cwd()` until configResolved runs.
+  let root = process.cwd();
 
   /**
    * Invalidate the virtual module in dev server
@@ -209,6 +211,7 @@ export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
      */
     async configResolved(config: ResolvedConfig) {
       isDev = config.command === 'serve';
+      root = config.root;
 
       if (options.debug) {
         console.log('[hyperfixi] Plugin initialized, mode:', isDev ? 'development' : 'production');
@@ -365,8 +368,9 @@ export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
      */
     async buildStart() {
       if (!isDev) {
-        // Production build: scan entire project
-        const cwd = process.cwd();
+        // Production build: scan the project Vite builds (`root`), as the dev server does. It
+        // was `process.cwd()`, so `vite build app` from a parent directory scanned the siblings.
+        const cwd = root;
 
         if (options.debug) {
           console.log('[hyperfixi] Scanning project for hyperscript usage...');

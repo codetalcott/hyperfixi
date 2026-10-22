@@ -25,6 +25,9 @@ import { canonicalizeTree, canonicalizeElement, translateTriggerValue } from './
 import { langOf, normLang } from './lang-resolver.js';
 import {
   autoDetectBodyHooks,
+  hasBodyExecutor,
+  hyperscriptBodiesRequested,
+  HX_ON_MODE_META,
   setBodyExecutor,
   setBodyTranslator,
   setNeutralizeOnClaim,
@@ -63,10 +66,12 @@ function autoRegister(): void {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
   const w = window as unknown as { htmx?: HtmxLike };
 
-  // Opt-in hyperscript-body executor mode: picked up from page globals
-  // (_hyperscript / HyperscriptI18n) now, and re-checked at
+  // Opt-in hyperscript-body executor mode: on a page that asks for it
+  // (<meta name="htmx-i18n-hx-on" content="hyperscript">), picked up from
+  // page globals (_hyperscript / HyperscriptI18n) now, and re-checked at
   // DOMContentLoaded for scripts that load after this one. Explicit
-  // setBodyExecutor/setBodyTranslator calls always win.
+  // setBodyExecutor/setBodyTranslator calls always win. Without the meta,
+  // hx-on bodies stay JavaScript, as htmx runs them.
   autoDetectBodyHooks(window);
 
   // LISTENER ORDER MATTERS: the registration retry below must be added
@@ -95,9 +100,24 @@ function autoRegister(): void {
     );
   }
 
-  document.addEventListener('DOMContentLoaded', () => autoDetectBodyHooks(window), {
-    once: true,
-  });
+  document.addEventListener(
+    'DOMContentLoaded',
+    () => {
+      autoDetectBodyHooks(window);
+      if (
+        hyperscriptBodiesRequested(window) &&
+        !hasBodyExecutor() &&
+        typeof console !== 'undefined'
+      ) {
+        console.warn(
+          `[htmx-i18n] <meta name="${HX_ON_MODE_META}" content="hyperscript"> asks for hyperscript ` +
+            'hx-on bodies, but no hyperscript engine (window._hyperscript) is on the page, so they ' +
+            'stay JavaScript. Load the engine, or call setBodyExecutor().'
+        );
+      }
+    },
+    { once: true }
+  );
 
   installAutoSweep(document);
 }
@@ -120,4 +140,5 @@ export {
   setBodyTranslator,
   setNeutralizeOnClaim,
   installResolverMode,
+  HX_ON_MODE_META,
 };

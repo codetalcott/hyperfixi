@@ -124,13 +124,21 @@ export class Scanner {
       needsCookies: false,
     };
 
-    // Find all hyperscript in _="..." attributes (single, double, backtick quotes)
+    // Find all hyperscript in _="..." attributes (single, double, backtick quotes), and in the
+    // other two attributes the engine reads, `script` and `data-script` (the spelling JSX
+    // type-checks without an augmentation).
     const attrPatterns = [
       /_\s*=\s*"([^"]+)"/g, // _="..."
       /_\s*=\s*'([^']+)'/g, // _='...'
       /_\s*=\s*`([^`]+)`/g, // _=`...`
       /_=\{`([^`]+)`\}/g, // _={`...`} (JSX)
       /_=\{['"]([^'"]+)['"]\}/g, // _={"..."} or _={'...'} (JSX)
+      // script="..." / data-script="...": no spaces around `=`, so `const script = "…"` in a
+      // .js file is not read as an attribute
+      /\s(?:data-)?script="([^"]+)"/g,
+      /\s(?:data-)?script='([^']+)'/g,
+      /\s(?:data-)?script=\{`([^`]+)`\}/g, // data-script={`...`} (JSX)
+      /\s(?:data-)?script=\{['"]([^'"]+)['"]\}/g,
     ];
 
     for (const pattern of attrPatterns) {
@@ -140,8 +148,10 @@ export class Scanner {
       }
     }
 
-    // Also check for hyperscript in script tags
-    const scriptPattern = /<script[^>]*type=["']?text\/hyperscript["']?[^>]*>([^<]+)<\/script>/gi;
+    // Also check for hyperscript in script tags. The body runs to `</script>`, as the HTML parser
+    // reads it: a `<` inside (`if n < 10`, a `<div/>` query) used to skip the whole block.
+    const scriptPattern =
+      /<script\b[^>]*\btype\s*=\s*["']?text\/hyperscript["']?[^>]*>([\s\S]*?)<\/script\s*>/gi;
     let match;
     while ((match = scriptPattern.exec(code))) {
       this.analyzeScript(match[1], usage);
