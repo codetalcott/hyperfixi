@@ -208,7 +208,7 @@ export const germanProfile: LanguageProfile = /* @__PURE__ */ withGrammar(german
     after: { primary: 'nach', normalized: 'after' },
     // Common event names (for event handler patterns)
     click: { primary: 'Klick', alternatives: ['Klicken'], normalized: 'click' },
-    hover: { primary: 'Hover', alternatives: ['Schweben'], normalized: 'hover' },
+    hover: { primary: 'Hover', alternatives: ['Schweben'], normalized: 'mouseenter' },
     submit: { primary: 'Absenden', alternatives: ['Senden'], normalized: 'submit' },
     input: { primary: 'Eingabe', normalized: 'input' },
     change: { primary: 'Änderung', alternatives: ['Ändern'], normalized: 'change' },

@@ -203,7 +203,7 @@ export const frenchProfile: LanguageProfile = /* @__PURE__ */ withGrammar(french
       alternatives: ['redimensionner'],
       normalized: 'resize',
     },
-    hover: { primary: 'survol', alternatives: ['survoler'], normalized: 'hover' },
+    hover: { primary: 'survol', alternatives: ['survoler'], normalized: 'mouseenter' },
     submit: { primary: 'soumission', alternatives: ['soumettre'], normalized: 'submit' },
     input: { primary: 'saisie', alternatives: ['entrée'], normalized: 'input' },
     // i18n dict emits the verb `changer` for `change` (profile primary is the noun

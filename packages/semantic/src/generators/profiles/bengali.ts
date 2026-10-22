@@ -96,7 +96,7 @@ export const bengaliProfile: LanguageProfile = /* @__PURE__ */ withGrammar(benga
     breakpoint: { primary: 'ব্রেকপয়েন্ট', normalized: 'breakpoint' },
     // Common event names (for event handler patterns)
     click: { primary: 'ক্লিক', normalized: 'click' },
-    hover: { primary: 'হোভার', alternatives: ['উপরে_রাখুন'], normalized: 'hover' },
+    hover: { primary: 'হোভার', alternatives: ['উপরে_রাখুন'], normalized: 'mouseenter' },
     submit: { primary: 'সাবমিট', alternatives: ['জমা'], normalized: 'submit' },
     input: { primary: 'ইনপুট', alternatives: ['প্রবেশ'], normalized: 'input' },
     change: { primary: 'পরিবর্তন', normalized: 'change' },

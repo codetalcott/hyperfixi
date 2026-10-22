@@ -196,7 +196,7 @@ export const russianProfile: LanguageProfile = /* @__PURE__ */ withGrammar(russi
     breakpoint: { primary: 'точка-останова', normalized: 'breakpoint' },
     // Common event names (for event handler patterns)
     click: { primary: 'клик', alternatives: ['клике', 'нажатии'], normalized: 'click' },
-    hover: { primary: 'наведении', alternatives: ['наведение'], normalized: 'hover' },
+    hover: { primary: 'наведении', alternatives: ['наведение'], normalized: 'mouseenter' },
     submit: { primary: 'отправке', alternatives: ['отправка'], normalized: 'submit' },
     input: { primary: 'вводе', alternatives: ['ввод'], normalized: 'input' },
     change: { primary: 'изменении', alternatives: ['изменение'], normalized: 'change' },

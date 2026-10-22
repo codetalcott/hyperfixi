@@ -311,7 +311,7 @@ export const polishProfile: LanguageProfile = /* @__PURE__ */ withGrammar(polish
       alternatives: ['zmień rozmiar', 'zmieńrozmiar'],
       normalized: 'resize',
     },
-    hover: { primary: 'najechaniu', alternatives: ['hover'], normalized: 'hover' },
+    hover: { primary: 'najechaniu', alternatives: ['hover'], normalized: 'mouseenter' },
     submit: { primary: 'wysłaniu', alternatives: ['wyslaniu', 'submit'], normalized: 'submit' },
     // i18n dict emits `wejście` for `input`; recognize it so `on input` types as literal.
     input: { primary: 'wprowadzeniu', alternatives: ['input', 'wejście'], normalized: 'input' },

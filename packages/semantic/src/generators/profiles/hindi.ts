@@ -116,7 +116,7 @@ export const hindiProfile: LanguageProfile = /* @__PURE__ */ withGrammar(hindiGr
     breakpoint: { primary: 'ब्रेकप्वाइंट', normalized: 'breakpoint' },
     // Common event names (for event handler patterns)
     click: { primary: 'क्लिक', normalized: 'click' },
-    hover: { primary: 'होवर', alternatives: ['ऊपर_रखें'], normalized: 'hover' },
+    hover: { primary: 'होवर', alternatives: ['ऊपर_रखें'], normalized: 'mouseenter' },
     submit: { primary: 'सबमिट', alternatives: ['जमा'], normalized: 'submit' },
     input: { primary: 'इनपुट', alternatives: [], normalized: 'input' },
     change: { primary: 'बदलाव', alternatives: ['परिवर्तन'], normalized: 'change' },

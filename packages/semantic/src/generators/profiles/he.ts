@@ -163,7 +163,7 @@ export const hebrewProfile: LanguageProfile = /* @__PURE__ */ withGrammar(hebrew
     after: { primary: 'אחרי', normalized: 'after' },
     // Common event names (for event handler patterns)
     click: { primary: 'לחיצה', alternatives: ['קליק'], normalized: 'click' },
-    hover: { primary: 'ריחוף', normalized: 'hover' },
+    hover: { primary: 'ריחוף', normalized: 'mouseenter' },
     submit: { primary: 'שליחה', alternatives: ['הגשה'], normalized: 'submit' },
     input: { primary: 'קלט', alternatives: ['הזנה'], normalized: 'input' },
     change: { primary: 'שינוי', alternatives: ['עדכון'], normalized: 'change' },

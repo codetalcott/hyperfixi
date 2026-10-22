@@ -80,7 +80,7 @@ export const chineseProfile: LanguageProfile = /* @__PURE__ */ withGrammar(chine
     breakpoint: { primary: '断点', normalized: 'breakpoint' },
     // Common event names (for event handler patterns)
     click: { primary: '点击', normalized: 'click' },
-    hover: { primary: '悬停', alternatives: ['悬浮'], normalized: 'hover' },
+    hover: { primary: '悬停', alternatives: ['悬浮'], normalized: 'mouseenter' },
     // 送出 is the Taiwan/HK form for sending form data; 提交 is understood there
     // but is the Mainland default.
     submit: { primary: '提交', alternatives: ['送出'], normalized: 'submit' },

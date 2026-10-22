@@ -157,7 +157,7 @@ export const indonesianProfile: LanguageProfile = /* @__PURE__ */ withGrammar(in
     after: { primary: 'sesudah', alternatives: ['setelah'], normalized: 'after' },
     // Common event names (for event handler patterns)
     click: { primary: 'klik', alternatives: ['tekan'], normalized: 'click' },
-    hover: { primary: 'hover', alternatives: ['arahkan'], normalized: 'hover' },
+    hover: { primary: 'hover', alternatives: ['arahkan'], normalized: 'mouseenter' },
     submit: { primary: 'ajukan', normalized: 'submit' },
     // i18n dict emits `masukan` for `input` (profile primary is `masuk`); recognize it.
     input: { primary: 'masuk', alternatives: ['input', 'masukan'], normalized: 'input' },

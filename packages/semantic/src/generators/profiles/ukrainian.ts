@@ -199,7 +199,7 @@ export const ukrainianProfile: LanguageProfile = /* @__PURE__ */ withGrammar(ukr
     breakpoint: { primary: 'точка-зупинки', normalized: 'breakpoint' },
     // Common event names (for event handler patterns)
     click: { primary: 'кліку', alternatives: ['клік', 'натисканні'], normalized: 'click' },
-    hover: { primary: 'наведенні', alternatives: ['наведення'], normalized: 'hover' },
+    hover: { primary: 'наведенні', alternatives: ['наведення'], normalized: 'mouseenter' },
     // `надсилання` is the form the i18n dict emits for `submit` (the profile
     // primary `відправці` is a different word); without it `on submit` events
     // (fetch-with-method/-formdata, morph-form-update, form-submit-prevent) parse
