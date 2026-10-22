@@ -19,6 +19,17 @@ describe('the plugin on @hyperfixi/engine', () => {
     api.use(hyperscriptI18n());
   });
 
+  // 7.3.0 live test: es `pulsar` is no event word, so `al pulsar …` is a handler for a custom
+  // event nothing fires. The script still runs as written; the page is told why it never fires.
+  it('warns when a handler listens for a word nothing fires', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    document.body.innerHTML = '<button lang="es" _="al pulsar agregar .a"></button>';
+    api.processNode(document.body);
+    const warnings = warnSpy.mock.calls.map(c => String(c[0]));
+    warnSpy.mockRestore();
+    expect(warnings.some(w => w.includes('"pulsar" is not an event'))).toBe(true);
+  });
+
   it('is installed through the source transform, not the process hook', () => {
     expect(typeof api.addSourceTransform).toBe('function');
   });

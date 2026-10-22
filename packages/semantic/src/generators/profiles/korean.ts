@@ -97,7 +97,7 @@ export const koreanProfile: LanguageProfile = /* @__PURE__ */ withGrammar(korean
     breakpoint: { primary: '중단점', normalized: 'breakpoint' },
     // Common event names (for event handler patterns)
     click: { primary: '클릭', normalized: 'click' },
-    hover: { primary: '호버', normalized: 'hover' },
+    hover: { primary: '호버', normalized: 'mouseenter' },
     submit: { primary: '제출', normalized: 'submit' },
     input: { primary: '입력', normalized: 'input' },
     change: { primary: '변경', normalized: 'change' },

@@ -61,6 +61,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   on both engines. Its worked example showed output the server no longer gives, and it quoted a
   fidelity figure ("~76%") from before the renderer reached 100% on the corpus. Rewritten from the
   server's real output.
+- **Multilingual: a native time unit after the event is a duration.** ko `클릭할 때 1초 대기`,
+  tr `tıklamada 1 saniye bekle` and ja `クリックで 1 秒 待つ` came back `on click 1 wait s`: the
+  number became a click count (the handler ran on the first click only) and the wait waited for
+  nothing, with no error. A number and the language's word for a unit after it, glued or spaced,
+  are one duration now (`wait 1s`, `wait 150ms`).
+- **Multilingual: a bare URL with a number in it translates.** `fetch /api/items/42` and
+  `fetch /api/slow?ms=300` were refused in every language, both ways ("would lose 42"): the check
+  counted the URL's numbers alone, and the translation writes the URL quoted. A bare URL is one
+  value now, the same as quoted.
+- **Multilingual: es and pt `esperar a <event>` waits for the event.** es `esperar a continue`
+  came back `wait continue`, a timed wait on a variable, which waits for nothing. `esperar a`
+  (es, pt) and `esperar por` (pt) read as `wait for`, as `esperar evento` already did.
+- **Multilingual: a hover word is `mouseenter`.** Eighteen languages' hover word (es `sobrevolar`,
+  fr `survol`, ko `호버`, …) read as `on hover`, which is not a DOM event, so the handler never ran.
+  They read as `on mouseenter` now; what `on mouseenter` is written as does not change.
+- **Multilingual: a dropped word with content of its own is refused, not dropped.** es
+  `al hacer clic fuera quitar .open de mí` came back `on click remove .open from me` (the dropdown
+  closed on every click): a particle the language maps to a word with meaning (`fuera`, `out`) was
+  skipped like a role marker. Such a translation is refused now (`LossyTranslationError`).
+- **`@lokascript/hyperscript-adapter` warns when a handler listens for a word nothing fires.**
+  A word the language does not know as an event (es `al pulsar …`, de `beim Tippen …`) runs as a
+  custom event of that name, and the handler never ran, silently. The adapter now warns once per
+  language and word. A name written as code (`miEvento`, `draggable:start`) stays quiet. No event
+  words were added: loka-js and our dictionaries ship the noun (`clic`), not the verbs. MCP
+  `validate_and_compile` reports the same, as an `UNKNOWN_EVENT_WORD` warning on non-English
+  input (`get_code_fixes` has its fix).
 
 ## [7.4.0] - 2026-10-21
 

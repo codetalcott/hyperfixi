@@ -61,13 +61,96 @@ export function referenceReadAsEvent(
  * posture as the `addBeforeProcessHook` check).
  */
 export function acceptedByHost(hs: HyperscriptParseHost, src: string): boolean {
-  if (typeof hs.parse !== 'function') return true;
+  return checkWithHost(hs, src).accepted;
+}
+
+/** The host's verdict on a translation, and the events its handlers listen for. */
+export interface HostVerdict {
+  accepted: boolean;
+  events: string[];
+}
+
+/** `acceptedByHost`, keeping the handlers' event names from the same parse. */
+export function checkWithHost(hs: HyperscriptParseHost, src: string): HostVerdict {
+  if (typeof hs.parse !== 'function') return { accepted: true, events: [] };
   try {
     const result = hs.parse(src);
-    if (result?.errors && result.errors.length > 0) return false;
-    return referenceReadAsEvent(result) === undefined;
+    if (result?.errors && result.errors.length > 0) return { accepted: false, events: [] };
+    const events = (result?.features ?? []).flatMap(f =>
+      (f.events ?? []).flatMap(e => (typeof e.on === 'string' ? [e.on] : []))
+    );
+    return { accepted: referenceReadAsEvent(result) === undefined, events };
   } catch {
-    return false;
+    return { accepted: false, events: [] };
+  }
+}
+
+/**
+ * Events the DOM or the engine fires that an `on…` handler property may not name: none does
+ * for `focusin`, and older DOMs (jsdom among them) lack the transition and animation ones.
+ */
+const EVENTS_WITHOUT_HANDLER = new Set([
+  'focusin',
+  'focusout',
+  'mutation',
+  'intersection',
+  'transitionstart',
+  'transitionrun',
+  'transitionend',
+  'transitioncancel',
+  'animationstart',
+  'animationiteration',
+  'animationend',
+  'animationcancel',
+]);
+
+/**
+ * True when something fires an event by this name: an element, the document or the window
+ * has its `on…` handler. Without a DOM nothing can be told, so every name passes.
+ */
+function isFiredEvent(name: string): boolean {
+  const g = globalThis as { HTMLElement?: { prototype: object }; document?: object };
+  if (!g.HTMLElement) return true;
+  if (EVENTS_WITHOUT_HANDLER.has(name)) return true;
+  const handler = 'on' + name;
+  return (
+    handler in g.HTMLElement.prototype ||
+    (!!g.document && handler in g.document) ||
+    handler in globalThis
+  );
+}
+
+/**
+ * The handler events of a translation that are a word the author wrote, which nothing fires:
+ * a word the language's vocabulary does not know passes through as a custom event's name, and
+ * the handler never runs (es `al pulsar …` is `on pulsar …`; 7.3.0 live test). A name written
+ * as code (`miEvento`, `draggable:start`, `fx-swap`) is a custom event on purpose, and stays
+ * quiet; so does any name the language translated, which the source does not contain.
+ */
+export function unknownEventWords(src: string, events: readonly string[]): string[] {
+  return events.filter(
+    name =>
+      /^[\p{L}\p{M}]+$/u.test(name) &&
+      !/\p{Lu}/u.test(name.slice(1)) &&
+      src.includes(name) &&
+      !isFiredEvent(name)
+  );
+}
+
+/** (language, word) pairs already warned about this page load. */
+const warnedUnknownEvent = new Set<string>();
+
+/** Warn, once per language and word, about a handler event nothing fires. */
+export function warnUnknownEvents(lang: string, src: string, events: readonly string[]): void {
+  for (const word of unknownEventWords(src, events)) {
+    const key = `${lang}\u0000${word}`;
+    if (warnedUnknownEvent.has(key)) continue;
+    warnedUnknownEvent.add(key);
+    console.warn(
+      `[hyperscript-i18n] lang="${lang}": "${word}" is not an event this language knows, so it ` +
+        `runs as a custom event named "${word}", which nothing fires unless a script sends it. ` +
+        `Source: "${src.length > 60 ? src.slice(0, 60) + '…' : src}".`
+    );
   }
 }
 
@@ -80,6 +163,7 @@ const warnedRejectedLang = new Set<string>();
 export function resetHostValidationWarnings(): void {
   warnedRejectedLang.clear();
   warnedLossyLang.clear();
+  warnedUnknownEvent.clear();
 }
 
 export function warnRejectedOnce(lang: string, src: string, english: string): void {

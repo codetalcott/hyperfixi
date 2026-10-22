@@ -12,8 +12,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   acceptedByHost,
+  checkWithHost,
   referenceReadAsEvent,
+  unknownEventWords,
   warnRejectedOnce,
+  warnUnknownEvents,
   resetHostValidationWarnings,
 } from '../src/host-validate';
 
@@ -38,12 +41,19 @@ describe('acceptedByHost — channel folding (mock hosts)', () => {
   });
 
   it('rejects a parse that reads a reference as a handler event', () => {
-    const host = { parse: () => ({ errors: [], features: [{ events: [{ on: 'click' }] }, { events: [{ on: 'me' }] }] }) };
+    const host = {
+      parse: () => ({
+        errors: [],
+        features: [{ events: [{ on: 'click' }] }, { events: [{ on: 'me' }] }],
+      }),
+    };
     expect(acceptedByHost(host, 'on click on me toggle .active')).toBe(false);
   });
 
   it('accepts handlers for real events', () => {
-    const host = { parse: () => ({ errors: [], features: [{ events: [{ on: 'click' }, { on: 'keyup' }] }, {}] }) };
+    const host = {
+      parse: () => ({ errors: [], features: [{ events: [{ on: 'click' }, { on: 'keyup' }] }, {}] }),
+    };
     expect(acceptedByHost(host, 'on click or keyup toggle .active')).toBe(true);
   });
 
@@ -113,6 +123,52 @@ describe('warnRejectedOnce', () => {
     expect(warnSpy.mock.calls[0][0]).toContain('src-a');
     expect(warnSpy.mock.calls[0][0]).toContain('english-a');
     expect(warnSpy.mock.calls[1][0]).toContain('lang="ja"');
+    warnSpy.mockRestore();
+  });
+});
+
+// 7.3.0 live test: a word the language does not know as an event passes through as a custom
+// event's name (es `al pulsar …` → `on pulsar …`), and the handler never runs.
+describe('unknownEventWords', () => {
+  it('names a word the author wrote that nothing fires', () => {
+    expect(unknownEventWords('al pulsar agregar .a', ['pulsar'])).toEqual(['pulsar']);
+    expect(unknownEventWords('タップで .a を 追加', ['タップ'])).toEqual(['タップ']);
+    // A German noun is capitalized: still a word, not code.
+    expect(unknownEventWords('beim Tippen hinzufügen .a', ['Tippen'])).toEqual(['Tippen']);
+  });
+
+  it('passes every event the DOM or the engine fires', () => {
+    const fired = ['click', 'pointerdown', 'mouseenter', 'transitionend', 'focusin', 'mutation'];
+    expect(unknownEventWords(`al ${fired.join(' o ')} agregar .a`, fired)).toEqual([]);
+  });
+
+  it('passes a name written as code, and a name the language translated', () => {
+    expect(unknownEventWords('al miEvento agregar .a', ['miEvento'])).toEqual([]);
+    expect(unknownEventWords('al draggable:start agregar .a', ['draggable:start'])).toEqual([]);
+    expect(unknownEventWords('al clic agregar .a', ['click'])).toEqual([]);
+  });
+
+  it('reads the names from the host parse it already makes', () => {
+    const vendor = readFileSync(
+      path.join(__dirname, 'browser', 'vendor', '_hyperscript-0.9.93.min.js'),
+      'utf8'
+    );
+    new Function(vendor).call(globalThis);
+    const hs = (globalThis as { _hyperscript?: { parse(s: string): unknown } })._hyperscript!;
+    const verdict = checkWithHost(hs as never, 'on pulsar or click add .a');
+    expect(verdict).toEqual({ accepted: true, events: ['pulsar', 'click'] });
+  });
+
+  it('warns once per language and word', () => {
+    resetHostValidationWarnings();
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    warnUnknownEvents('es', 'al pulsar agregar .a', ['pulsar']);
+    warnUnknownEvents('es', 'al pulsar quitar .a', ['pulsar']);
+    warnUnknownEvents('es', 'al tocar agregar .a', ['tocar']);
+    warnUnknownEvents('es', 'al clic agregar .a', ['click']);
+    expect(warnSpy).toHaveBeenCalledTimes(2);
+    expect(warnSpy.mock.calls[0][0]).toContain('"pulsar" is not an event');
+    expect(warnSpy.mock.calls[1][0]).toContain('"tocar"');
     warnSpy.mockRestore();
   });
 });

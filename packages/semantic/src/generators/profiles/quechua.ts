@@ -186,7 +186,7 @@ export const quechuaProfile: LanguageProfile = /* @__PURE__ */ withGrammar(quech
     click: { primary: 'ñitiy', normalized: 'click' },
     load: { primary: 'apakuy', normalized: 'load' },
     submit: { primary: 'apaykachay', normalized: 'submit' },
-    hover: { primary: 'hawachiy', normalized: 'hover' },
+    hover: { primary: 'hawachiy', normalized: 'mouseenter' },
     input: { primary: 'yaykuchiy', normalized: 'input' },
     change: { primary: 'kambiay', normalized: 'change' },
     // Phase 8 (htmx v4 localized attributes): attribute-suffix keywords

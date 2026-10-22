@@ -54,6 +54,21 @@ describe('a custom event in a wait takes the language’s event word', () => {
     expect(translate(translate(source, 'en', lang), lang, 'en')).toBe(translate(source, 'en', 'en'));
   });
 
+  // es and pt write their own `for` (registry.ts, WAIT_FOR_WORDS). es `a` is also the
+  // destination marker, skipped, so `esperar a continue` read as `wait continue` (7.3.0 live test).
+  it.each([
+    ['es', 'esperar a continue', 'wait for continue'],
+    ['es', 'esperar a carga', 'wait for load'],
+    ['es', 'al hacer clic esperar a foo entonces agregar .a', 'on click wait for foo then add .a'],
+    ['es', 'al clic esperar a foo o bar entonces registrar 1', 'on click wait for foo or bar then log 1'],
+    ['es', 'al clic esperar a foo de #b entonces registrar 1', 'on click wait for foo from #b then log 1'],
+    ['pt', 'esperar por foo', 'wait for foo'],
+    ['pt', 'ao clicar esperar por foo então adicionar .a', 'on click wait for foo then add .a'],
+    ['pt', 'esperar a foo', 'wait for foo'],
+  ])('%s: the language’s own `for` (%s)', (lang, written, english) => {
+    expect(translate(written, lang, 'en')).toBe(english);
+  });
+
   it('English keeps `wait for`', () => {
     expect(translate('on click wait for foo then log 1', 'en', 'en')).toBe(
       'on click wait for foo then log 1'

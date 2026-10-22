@@ -214,7 +214,7 @@ export const portugueseProfile: LanguageProfile = /* @__PURE__ */ withGrammar(po
       alternatives: ['redimensionar'],
       normalized: 'resize',
     },
-    hover: { primary: 'sobrevoar', alternatives: ['passar'], normalized: 'hover' },
+    hover: { primary: 'sobrevoar', alternatives: ['passar'], normalized: 'mouseenter' },
     // 'submissão' is the European Portuguese form; pt-BR says 'envio'.
     submit: {
       primary: 'envio',

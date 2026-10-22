@@ -173,7 +173,7 @@ export const italianProfile: LanguageProfile = /* @__PURE__ */ withGrammar(itali
     // `resize` event (window-resize): dict emits ridimensiona; register it so the
     // event types as literal="resize" (matching en) instead of expression.
     resize: { primary: 'ridimensiona', normalized: 'resize' },
-    hover: { primary: 'passaggio', alternatives: ['sorvolo'], normalized: 'hover' },
+    hover: { primary: 'passaggio', alternatives: ['sorvolo'], normalized: 'mouseenter' },
     submit: { primary: 'invio', alternatives: ['sottomettere'], normalized: 'submit' },
     input: { primary: 'inserimento', alternatives: ['input'], normalized: 'input' },
     change: { primary: 'cambio', alternatives: ['cambiamento'], normalized: 'change' },

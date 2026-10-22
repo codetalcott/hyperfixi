@@ -29,6 +29,7 @@ import {
   type ValidationFunctions,
 } from './validation/gates.js';
 import { extractOperations } from './operations/extract.js';
+import { unknownEventDiagnostics } from './validation/unknown-events.js';
 
 // =============================================================================
 // Service
@@ -93,6 +94,8 @@ export class CompilationService {
    * Without it there is no engine check, and validate() says so (`ENGINE_CHECK_SKIPPED`).
    */
   private engineError: ((source: string) => string | null) | null = null;
+  /** The events the engine's parse of a source listens for, with `engineError`. */
+  private engineEvents: ((source: string) => string[]) | null = null;
 
   private constructor(options: ServiceOptions = {}) {
     this.confidenceThreshold = options.confidenceThreshold ?? 0.7;
@@ -141,6 +144,18 @@ export class CompilationService {
           return engine.api.parse(source).errors[0]?.message.split('\n')[0] ?? null;
         } catch (e) {
           return (e instanceof Error ? e.message : String(e)).split('\n')[0] ?? 'parse error';
+        }
+      };
+      service.engineEvents = source => {
+        try {
+          const { features } = engine.api.parse(source) as {
+            features?: Array<{ events?: Array<{ on?: unknown }> }>;
+          };
+          return (features ?? []).flatMap(f =>
+            (f.events ?? []).flatMap(e => (typeof e.on === 'string' ? [e.on] : []))
+          );
+        } catch {
+          return [];
         }
       };
     } catch {
@@ -273,6 +288,7 @@ export class CompilationService {
     if (engineError) diagnostics.push(engineError);
     const ok = gateResult.pass && !engineError;
     diagnostics.push(...this.nameCollisions(request, normalized));
+    diagnostics.push(...this.unknownEvents(request, normalized));
 
     const semanticJSON = ok ? nodeToSemanticJSON(normalized.node) : undefined;
 
@@ -282,6 +298,28 @@ export class CompilationService {
       confidence: gateResult.adjustedConfidence,
       diagnostics,
     };
+  }
+
+  /**
+   * A handler event in foreign input that is a word of the author's which nothing fires: es
+   * `al pulsar …` runs as `on pulsar …` (7.3.0 live test). Read off the engine's parse of the
+   * English render, as `@lokascript/hyperscript-adapter` reads it off the page's.
+   */
+  private unknownEvents(request: CompileRequest, normalized: NormalizeResult): Diagnostic[] {
+    if (!this.engineEvents || !this.renderFn || normalized.format !== 'natural') return [];
+    if (!request.code || !normalized.node || this.isEnglishAsWritten(request, normalized))
+      return [];
+    let english: string;
+    try {
+      english = this.renderFn(normalized.node, 'en');
+    } catch {
+      return [];
+    }
+    return unknownEventDiagnostics(
+      request.code,
+      this.engineEvents(english),
+      request.language ?? 'en'
+    );
   }
 
   /**

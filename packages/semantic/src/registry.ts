@@ -511,7 +511,37 @@ export function tokenize(input: string, language: string): TokenStream {
     fuseScopedNames(markLineStarts(tokenizer.tokenize(input), input, language), language),
     language
   );
-  return language === 'en' ? stream : fuseParenthesizedNames(stream, language);
+  return language === 'en' ? stream : markWaitForWords(fuseParenthesizedNames(stream, language));
+}
+
+/**
+ * The preposition a language writes between its wait verb and what is waited for: es and pt
+ * `esperar a foo` is `wait for foo`.
+ */
+const WAIT_FOR_WORDS: Readonly<Record<string, readonly string[]>> = {
+  es: ['a'],
+  pt: ['a', 'por'],
+};
+
+/**
+ * A wait verb's `for` (es `esperar a foo`) written as the language's `event` word, which every
+ * reader of a wait takes (`esperar evento foo`, P52). The `a` is also the destination marker,
+ * which a wait has no use for, so it was skipped and the name read as a time wait: es
+ * `esperar a continue` came back `wait continue`, which waits for nothing (7.3.0 live test).
+ */
+function markWaitForWords(stream: TokenStream): TokenStream {
+  const words = WAIT_FOR_WORDS[stream.language];
+  const eventWord = tryGetProfile(stream.language)?.keywords?.event?.primary;
+  if (!words || !eventWord) return stream;
+  const tokens = stream.tokens;
+  let out: LanguageToken[] | undefined;
+  for (let i = 1; i < tokens.length; i++) {
+    const t = tokens[i]!;
+    if (tokens[i - 1]!.normalized !== 'wait' || !words.includes(t.value.toLowerCase())) continue;
+    out ??= [...tokens];
+    out[i] = { ...t, value: eventWord, kind: 'keyword', normalized: 'event' } as LanguageToken;
+  }
+  return out ? new TokenStreamImpl(out, stream.language) : stream;
 }
 
 /**
@@ -604,6 +634,30 @@ function fuseGluedValues(stream: TokenStream, language: string): TokenStream {
       changed = true;
       continue;
     }
+    // A number and the language's own word for a time unit after it, glued or spaced (ko `1초`,
+    // tr `1 saniye`, ja `1 秒`): one duration, as ja's tokenizer already read a glued `1秒`. The
+    // tokenizers knew the unit words (`초` is `s`) but left them a token apart, and the event
+    // head read the number as a click count: `클릭할 때 1초 대기` became `on click 1 wait s`,
+    // which waits for nothing and runs on the first click only (7.3.0 live test). English
+    // spells its units glued (`2s`), and stays as it reads.
+    if (
+      language !== 'en' &&
+      t.kind === 'literal' &&
+      /^\d+(\.\d+)?$/.test(t.value) &&
+      next?.kind === 'keyword' &&
+      next.normalized !== undefined &&
+      TIME_UNITS.has(next.normalized) &&
+      next.value !== next.normalized
+    ) {
+      out.push({
+        value: `${t.value}${next.normalized}`,
+        kind: 'literal',
+        position: { ...t.position, end: next.position.end },
+      } as LanguageToken);
+      i += 1;
+      changed = true;
+      continue;
+    }
     // `(startWidth)px`: a parenthesized operand and the unit touching its `)`.
     // Not a call's parentheses (`f(x)px`).
     if (t.value === '(' && !touches(out[out.length - 1], t)) {
@@ -630,6 +684,9 @@ function fuseGluedValues(stream: TokenStream, language: string): TokenStream {
   return changed ? new TokenStreamImpl(out, language) : stream;
 }
 
+/** What a tokenizer normalizes a time-unit word to (`초` → `s`, `ミリ秒` → `ms`). */
+const TIME_UNITS: ReadonlySet<string> = new Set(['ms', 's', 'm', 'h']);
+
 /** English pronouns and the possessive each owns an attribute with. */
 const PRONOUN_POSSESSIVES: Readonly<Record<string, string>> = { it: 'its', me: 'my', you: 'your' };
 
@@ -638,7 +695,10 @@ const PRONOUN_POSSESSIVES: Readonly<Record<string, string>> = { it: 'its', me: '
  * an operand only (PARENTHESIZED_OPERAND), and a CSS unit touches the `)`.
  * Undefined otherwise.
  */
-function parenthesizedLengthEnd(tokens: readonly LanguageToken[], open: number): number | undefined {
+function parenthesizedLengthEnd(
+  tokens: readonly LanguageToken[],
+  open: number
+): number | undefined {
   let close = open + 1;
   while (close < tokens.length && tokens[close]!.value !== ')') {
     if (tokens[close]!.value === '(') return undefined;

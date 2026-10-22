@@ -136,7 +136,7 @@ export const spanishProfile: LanguageProfile = /* @__PURE__ */ withGrammar(spani
       alternatives: ['cambio de tamano', 'redimensionar'],
       normalized: 'resize',
     },
-    hover: { primary: 'sobrevolar', alternatives: ['pasar por encima'], normalized: 'hover' },
+    hover: { primary: 'sobrevolar', alternatives: ['pasar por encima'], normalized: 'mouseenter' },
     submit: { primary: 'envío', alternatives: ['envio', 'someter'], normalized: 'submit' },
     input: { primary: 'entrada', alternatives: ['introducir'], normalized: 'input' },
     change: { primary: 'cambio', alternatives: ['cambiar'], normalized: 'change' },

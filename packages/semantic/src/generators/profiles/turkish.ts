@@ -119,7 +119,11 @@ export const turkishProfile: LanguageProfile = /* @__PURE__ */ withGrammar(turki
       alternatives: ['tıkla', 'tiklama', 'tık', 'tik'],
       normalized: 'click',
     },
-    hover: { primary: 'üzerine gelme', alternatives: ['üzerinde gezinme'], normalized: 'hover' },
+    hover: {
+      primary: 'üzerine gelme',
+      alternatives: ['üzerinde gezinme'],
+      normalized: 'mouseenter',
+    },
     submit: { primary: 'gönderme', normalized: 'submit' },
     // `giriş` reads as entry/login (giriş yapma) and can imply an auth event;
     // the data-input term is `girdi` ("Girdi (Input) Eventleri").

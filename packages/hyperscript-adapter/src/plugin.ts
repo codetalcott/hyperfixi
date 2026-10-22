@@ -9,9 +9,10 @@ import { resolveLanguage } from './language-resolver';
 import { preprocessToEnglish, type PreprocessorConfig } from './preprocessor';
 import { installAttributeTranslator, type HyperscriptHost } from './attribute-translator';
 import {
-  acceptedByHost,
+  checkWithHost,
   warnLossyOnce,
   warnRejectedOnce,
+  warnUnknownEvents,
   resetHostValidationWarnings,
   type HyperscriptParseHost,
   type LossyRefusal,
@@ -108,7 +109,9 @@ export function hyperscriptI18n(options: PluginOptions = {}) {
         // if it rejects the English, committing it would only trade a
         // translation gap for a parse error naming code the author never
         // wrote. Fall back to the original text instead.
-        if (options.validateWithHost !== false && !acceptedByHost(host, english)) {
+        const verdict =
+          options.validateWithHost !== false ? checkWithHost(host, english) : undefined;
+        if (verdict && !verdict.accepted) {
           if (options.debug) {
             console.log(
               `[hyperscript-i18n] ${lang}: host rejected "${english}" — keeping "${src}"`
@@ -118,6 +121,7 @@ export function hyperscriptI18n(options: PluginOptions = {}) {
           }
           return src;
         }
+        if (verdict) warnUnknownEvents(lang, src, verdict.events);
         if (options.debug) {
           console.log(`[hyperscript-i18n] ${lang}: "${src}" → "${english}"`);
         }

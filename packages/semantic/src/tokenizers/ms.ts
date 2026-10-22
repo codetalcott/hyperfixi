@@ -64,7 +64,7 @@ const MALAY_EXTRAS: KeywordEntry[] = [
   { native: 'masuk', normalized: 'input' }, // Alternative for input (means "enter")
   { native: 'muat', normalized: 'load' },
   { native: 'tatal', normalized: 'scroll' },
-  { native: 'hover', normalized: 'hover' }, // English loanword commonly used
+  { native: 'hover', normalized: 'mouseenter' }, // English loanword commonly used
   { native: 'inklusif', normalized: 'inclusive' },
   { native: 'eksklusif', normalized: 'exclusive' },
   { native: 'aksara', normalized: 'characters' },

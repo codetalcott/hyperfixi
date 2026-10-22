@@ -560,6 +560,30 @@ describe('CompilationService', () => {
       ).toBe(false);
     });
 
+    it('warns on a handler event that is a word nothing fires (UNKNOWN_EVENT_WORD)', () => {
+      // 7.3.0 live test: es has no event `pulsar`, so the handler is `on pulsar`, which never runs.
+      const r = service.validate({ code: 'al pulsar agregar .a', language: 'es' });
+      expect(r.ok).toBe(true);
+      const unknown = r.diagnostics.find(d => d.code === 'UNKNOWN_EVENT_WORD');
+      expect(unknown?.severity).toBe('warning');
+      expect(unknown?.message).toContain('"pulsar"');
+
+      // The language's word, a name written as code, and English as written stay quiet.
+      for (const [code, language] of [
+        ['al clic agregar .a', 'es'],
+        ['al pointerdown agregar .a', 'es'],
+        ['al miEvento agregar .a', 'es'],
+        ['on pulsar add .a', 'en'],
+      ] as const) {
+        expect(
+          service
+            .validate({ code, language })
+            .diagnostics.some(d => d.code === 'UNKNOWN_EVENT_WORD'),
+          code
+        ).toBe(false);
+      }
+    });
+
     it('inert-shape gate stays quiet on correct phrasings', () => {
       // False positives teach agents to distrust warnings; these must be clean.
       for (const code of [

@@ -65,6 +65,8 @@ the code. For a non-English input, it reads the English translation the page wou
   `INERT_PROPERTY_WRITE`, `HALF_PARSED_CONDITION`.
 - `NAME_COLLISION`, for a foreign variable spelled like a word of its own language (es `si` is
   also `if`). It comes with a suggested rename.
+- `UNKNOWN_EVENT_WORD`, for a foreign handler event that is a plain word the language has no
+  event for (es `al pulsar …`): it runs as a custom event of that name, which nothing fires.
 
 ### `translate({ code, from, to, verify? })`
 

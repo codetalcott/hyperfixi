@@ -77,7 +77,7 @@ export const thaiProfile: LanguageProfile = /* @__PURE__ */ withGrammar(thaiGram
     breakpoint: { primary: 'จุดพัก', normalized: 'breakpoint' },
     // Common event names (for event handler patterns)
     click: { primary: 'คลิก', normalized: 'click' },
-    hover: { primary: 'โฮเวอร์', alternatives: ['วางเมาส์'], normalized: 'hover' },
+    hover: { primary: 'โฮเวอร์', alternatives: ['วางเมาส์'], normalized: 'mouseenter' },
     submit: { primary: 'ยื่น', alternatives: ['ส่งข้อมูล'], normalized: 'submit' },
     input: { primary: 'ป้อน', alternatives: ['กรอก'], normalized: 'input' },
     // Reactive `when <expr> changes` trigger word — synced VERBATIM from the i18n

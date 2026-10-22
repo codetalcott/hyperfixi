@@ -85,7 +85,7 @@ export const vietnameseProfile: LanguageProfile = /* @__PURE__ */ withGrammar(vi
     breakpoint: { primary: 'điểm-dừng', normalized: 'breakpoint' },
     // Common event names (for event handler patterns)
     click: { primary: 'nhấp', alternatives: ['bấm'], normalized: 'click' },
-    hover: { primary: 'di chuột', alternatives: ['rê chuột'], normalized: 'hover' },
+    hover: { primary: 'di chuột', alternatives: ['rê chuột'], normalized: 'mouseenter' },
     submit: { primary: 'nộp', alternatives: [], normalized: 'submit' },
     input: { primary: 'nhập', alternatives: ['nhập liệu'], normalized: 'input' },
     // Reactive `when <expr> changes` trigger word — synced VERBATIM from the i18n
