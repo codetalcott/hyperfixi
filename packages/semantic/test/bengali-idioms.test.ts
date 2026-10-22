@@ -117,11 +117,11 @@ describe('Bengali Tokenizer - Keyword Detection', () => {
       expect(submitToken?.normalized).toBe('submit');
     });
 
-    it('should tokenize হোভার as hover', () => {
+    it('should tokenize হোভার as mouseenter (hover is no DOM event)', () => {
       const tokens = getTokens('হোভার তে', 'bn');
       const hoverToken = tokens.find(t => t.value === 'হোভার');
       expect(hoverToken).toBeDefined();
-      expect(hoverToken?.normalized).toBe('hover');
+      expect(hoverToken?.normalized).toBe('mouseenter');
     });
   });
 

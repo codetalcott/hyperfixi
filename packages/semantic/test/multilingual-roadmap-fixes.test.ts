@@ -6642,7 +6642,7 @@ describe('generalized multi-word keyword tokenization (base-tokenizer)', () => {
     ['he', 'ברירת מחדל', 'default'],
     ['bn', 'তৈরি করুন', 'make'],
     ['bn', 'চালিয়ে যান', 'continue'],
-    ['tr', 'üzerine gelme', 'hover'],
+    ['tr', 'üzerine gelme', 'mouseenter'],
     ['qu', 'mana waqtalla', 'async'],
     ['vi', 'chuyển đổi', 'toggle'],
     ['vi', 'với mỗi', 'for'],

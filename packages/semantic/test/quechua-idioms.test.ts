@@ -431,9 +431,9 @@ describe('Quechua Event and Command References', () => {
       expect(submitToken).toBeDefined();
     });
 
-    it('should tokenize hawachiy as hover', () => {
+    it('should tokenize hawachiy as mouseenter (hover is no DOM event)', () => {
       const tokens = getTokens('hawachiy pi', 'qu');
-      const hoverToken = tokens.find(t => t.normalized === 'hover');
+      const hoverToken = tokens.find(t => t.normalized === 'mouseenter');
       expect(hoverToken).toBeDefined();
     });
 
