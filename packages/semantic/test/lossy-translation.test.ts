@@ -192,6 +192,12 @@ describe('invariantValues', () => {
     expect(missingInvariants('fetch /api/items/42', 'fetch /api/items/43')).toEqual([
       '"/api/items/42"',
     ]);
+    // An interpolation is part of the URL, spaces and all (direct-path-shapes'
+    // naked-url-interpolation case was refused when the value stopped at its space).
+    expect(values('fetch /search?q=${my value} then put it into #o')).toEqual([
+      '"/search?q=${my value}"',
+      '#o',
+    ]);
     // Division is not a URL.
     expect(values('set x to 10 / 2')).toEqual(['10', '2']);
   });
