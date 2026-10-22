@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>htmx v4 + _hyperscript, no opt-in — hx-on bodies stay JavaScript</title>
+    <!-- The documented stack (a hyperscript engine, the adapter, htmx 4) with
+         no <meta name="htmx-i18n-hx-on">: hx-on bodies are JavaScript, as htmx
+         runs them, and `_` handlers still run on the engine. Until 7.5.0 the
+         engine's presence alone switched hx-on to hyperscript, so the JS
+         bodies below failed with a hyperscript parse error. -->
+    <script src="/packages/htmx-adapter/test/browser/vendor/_hyperscript-0.9.93.min.js"></script>
+    <script src="/packages/htmx-adapter/dist/htmx-i18n.global.js"></script>
+    <script src="/packages/htmx-adapter/vocab/es.js"></script>
+    <script src="/packages/htmx-adapter/test/browser/vendor/htmx-4.0.0.js"></script>
+  </head>
+  <body>
+    <button id="js" hx-on:click="document.getElementById('out').textContent = 'js ran'">js</button>
+    <!-- A localized name with a JavaScript body: canonicalized to hx-on:click, run by htmx. -->
+    <button id="js-es" hx-en:clic="document.getElementById('out-es').textContent = 'js es'">
+      js es
+    </button>
+    <button id="hs" _="on click put 'hs ran' into #out-hs">hs</button>
+    <div id="out"></div>
+    <div id="out-es"></div>
+    <div id="out-hs"></div>
+  </body>
+</html>

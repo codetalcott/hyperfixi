@@ -279,11 +279,21 @@ describe('executor mode: idempotency and lifecycle', () => {
 });
 
 describe('autoDetectBodyHooks', () => {
+  /** A window-shaped object: the page globals plus jsdom's document (head carries the opt-in). */
+  const win = (globals: object) => ({ ...globals, document });
+  const optIn = () => {
+    document.head.innerHTML = `<meta name="htmx-i18n-hx-on" content="hyperscript">`;
+  };
+  beforeEach(() => {
+    document.head.innerHTML = '';
+  });
+
   it('wires _hyperscript.evaluate as executor and HyperscriptI18n.preprocess as translator', () => {
+    optIn();
     const evaluate = vi.fn();
     const preprocess = vi.fn((src: string) => src.toUpperCase());
     const hs = Object.assign(vi.fn(), { evaluate });
-    autoDetectBodyHooks({ _hyperscript: hs, HyperscriptI18n: { preprocess } });
+    autoDetectBodyHooks(win({ _hyperscript: hs, HyperscriptI18n: { preprocess } }));
     expect(hasBodyExecutor()).toBe(true);
     expect(hasBodyTranslator()).toBe(true);
 
@@ -296,11 +306,36 @@ describe('autoDetectBodyHooks', () => {
     expect(evaluate).toHaveBeenCalledWith('ALTERNAR', { me: btn, event: expect.any(Event) });
   });
 
+  // The 7.3.0 live test: the engine is on every page of the documented engine + htmx + adapter
+  // stack, and taking it as a request turned a plain-JS hx-on into a hyperscript parse error.
+  it('leaves hx-on bodies to htmx (JavaScript) when the page did not opt in', () => {
+    const evaluate = vi.fn();
+    autoDetectBodyHooks(win({ _hyperscript: Object.assign(vi.fn(), { evaluate }) }));
+    expect(hasBodyExecutor()).toBe(false);
+
+    document.body.innerHTML = `<button hx-on:click="document.title = 'js'"></button>`;
+    const btn = document.querySelector('button')!;
+    expect(canonicalizeElement(btn)).toBe(false);
+    expect(btn.getAttribute('hx-on:click')).toBe("document.title = 'js'");
+    click(btn);
+    expect(evaluate).not.toHaveBeenCalled();
+  });
+
+  it('reads the opt-in only as content="hyperscript"', () => {
+    document.head.innerHTML = `<meta name="htmx-i18n-hx-on" content="javascript">`;
+    autoDetectBodyHooks(win({ _hyperscript: Object.assign(vi.fn(), { evaluate: vi.fn() }) }));
+    expect(hasBodyExecutor()).toBe(false);
+    document.head.innerHTML = `<meta name="htmx-i18n-hx-on" content=" Hyperscript ">`;
+    autoDetectBodyHooks(win({ _hyperscript: Object.assign(vi.fn(), { evaluate: vi.fn() }) }));
+    expect(hasBodyExecutor()).toBe(true);
+  });
+
   it('never overwrites explicitly configured hooks', () => {
+    optIn();
     const mine = vi.fn();
     setBodyExecutor(mine);
     const evaluate = vi.fn();
-    autoDetectBodyHooks({ _hyperscript: Object.assign(vi.fn(), { evaluate }) });
+    autoDetectBodyHooks(win({ _hyperscript: Object.assign(vi.fn(), { evaluate }) }));
     document.body.innerHTML = `<button hx-on:click="x"></button>`;
     const btn = document.querySelector('button')!;
     canonicalizeElement(btn);
@@ -310,7 +345,8 @@ describe('autoDetectBodyHooks', () => {
   });
 
   it('is a no-op when the globals are absent', () => {
-    autoDetectBodyHooks({});
+    optIn();
+    autoDetectBodyHooks(win({}));
     expect(hasBodyExecutor()).toBe(false);
     expect(hasBodyTranslator()).toBe(false);
   });
