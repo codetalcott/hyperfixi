@@ -81,6 +81,20 @@ describe('translate() refuses a lossy translation', () => {
   });
 });
 
+describe('a bare URL with a number translates (7.3.0 live test)', () => {
+  for (const source of ['fetch /api/items/42', 'fetch /api/slow?ms=300 then put it into #o']) {
+    for (const lang of ['ja', 'es', 'ar', 'ko']) {
+      it(`${source} → ${lang} → en`, () => {
+        const there = translate(source, 'en', lang);
+        expect(translate(there, lang, 'en')).toContain('/api/');
+      });
+    }
+  }
+  it('hand-written: es buscar /api/items/42 → en', () => {
+    expect(translate('buscar /api/items/42', 'es', 'en')).toContain('/api/items/42');
+  });
+});
+
 describe('the checks, one at a time', () => {
   const node = parse('on click toggle .a then add .b', 'en');
 
@@ -167,6 +181,19 @@ describe('invariantValues', () => {
   it('counts repeats', () => {
     expect(missingInvariants('add .a then add .a', 'add .a')).toEqual(['.a']);
     expect(missingInvariants("put 'x' into #o", 'put "x" into #o')).toEqual([]);
+  });
+
+  // 7.3.0 live test: a bare URL's numbers counted alone, and the render quotes the URL, so
+  // `fetch /api/items/42` was refused in every language, both ways ("would lose 42").
+  it('a bare URL is one value, the same as the URL quoted', () => {
+    expect(values('fetch /api/items/42 then put it into #o')).toEqual(['"/api/items/42"', '#o']);
+    expect(values('go to url http://localhost:3000/x')).toEqual(['"http://localhost:3000/x"']);
+    expect(missingInvariants('fetch /api/slow?ms=300', 'fetch "/api/slow?ms=300"')).toEqual([]);
+    expect(missingInvariants('fetch /api/items/42', 'fetch /api/items/43')).toEqual([
+      '"/api/items/42"',
+    ]);
+    // Division is not a URL.
+    expect(values('set x to 10 / 2')).toEqual(['10', '2']);
   });
 });
 

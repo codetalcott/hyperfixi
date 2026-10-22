@@ -219,6 +219,18 @@ export function invariantValues(text: string): Map<string, number> {
       i = j + 1;
       continue;
     }
+    // A bare URL (`fetch /api/items/42`, `go to url http://localhost:3000/x`) is one value, to the
+    // next space, as the engine reads it: a render may quote it (`"/api/items/42"`), so it counts
+    // as that string. Read as text, its numbers counted alone and the quoted render lacked them,
+    // so every such translation was refused ("would lose 42").
+    const urlStart = c === '/' ? /[\w.$~%-]/.test(next) : /^https?:\/\//.test(text.slice(i, i + 8));
+    if (urlStart && (i === 0 || /[\s([,{]/.test(text[i - 1] as string))) {
+      let j = i;
+      while (j < text.length && !/\s/.test(text[j] as string)) j++;
+      add(`"${text.slice(i, j)}"`);
+      i = j;
+      continue;
+    }
     if (c === '<' && /[\p{L}.#[*:]/u.test(next)) {
       const close = text.indexOf('/>', i);
       if (close > 0 && !/[\s<]/.test(text.slice(i + 1, close).replace(/\[[^\]]*\]/g, ''))) {

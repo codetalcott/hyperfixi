@@ -76,6 +76,42 @@ export const COVERAGE_RESIDUE_NORMALIZED = new Set([
   'async',
 ]);
 
+/** What a tokenizer normalizes a role-marking particle to: the role it marks. */
+const MARKED_ROLES: ReadonlySet<string> = new Set([
+  'agent',
+  'patient',
+  'source',
+  'destination',
+  'goal',
+  'event',
+  'condition',
+  'quantity',
+  'duration',
+  'responseType',
+  'method',
+  'style',
+  'manner',
+  'loopType',
+]);
+
+/**
+ * A particle a reader may skip: one that marks a role or joins words (normalized to a role, a
+ * preposition or connective of the residue list, or nothing), or a role marker's surface. A
+ * particle the language maps to a word with content of its own (es `fuera`, `out`) is not
+ * residue: dropped, it is part of the script lost. It was skipped in silence, so
+ * `al hacer clic fuera quitar .open de mí` came back as `on click remove .open from me`, the
+ * dropdown closing on every click (7.3.0 live test).
+ */
+function isMarkerParticle(t: LanguageToken, language: string): boolean {
+  const normalized = (t as { normalized?: string }).normalized?.toLowerCase();
+  return (
+    normalized === undefined ||
+    MARKED_ROLES.has(normalized) ||
+    COVERAGE_RESIDUE_NORMALIZED.has(normalized) ||
+    getCoverageMarkerSurfaces(language).has(t.value.toLowerCase())
+  );
+}
+
 /** Current record count of the active coverage frame (for rollback). */
 export function coverageMark(state: ParserState): number {
   const frame = state.coverageFrames[state.coverageFrames.length - 1];
@@ -144,7 +180,8 @@ export function isCoverageResidueToken(
   language: string
 ): boolean {
   const t = run[i]!;
-  if (t.kind === 'particle' || t.kind === 'conjunction') return true;
+  if (t.kind === 'conjunction') return true;
+  if (t.kind === 'particle') return isMarkerParticle(t, language);
   if ((t.metadata as { closesTrackedBlock?: boolean } | undefined)?.closesTrackedBlock) {
     return true;
   }
