@@ -40,7 +40,9 @@
  *
  * Translation is lazy (first event fire, memoized) so a translator that
  * loads after the initial sweep still applies. Both auto-detection
- * (`autoDetectBodyHooks`) and manual configuration are supported; the
+ * (`autoDetectBodyHooks`, which needs the page's
+ * `<meta name="htmx-i18n-hx-on" content="hyperscript">`) and manual
+ * configuration are supported; the
  * executor is also re-read at fire time so replacing it takes effect on
  * live listeners. The body is re-read on every re-claim, so
  * `htmx.process(elt, true)` after editing the attribute runs the new body.
@@ -267,14 +269,32 @@ export function claimHxOnAttribute(
 }
 
 /**
+ * The page's opt-in to hyperscript `hx-on` bodies:
+ * `<meta name="htmx-i18n-hx-on" content="hyperscript">`.
+ */
+export const HX_ON_MODE_META = 'htmx-i18n-hx-on';
+
+/** Whether the page asked for hyperscript `hx-on` bodies (see {@link HX_ON_MODE_META}). */
+export function hyperscriptBodiesRequested(win: object): boolean {
+  const doc = (win as { document?: Document }).document;
+  const meta = doc?.querySelector?.(`meta[name="${HX_ON_MODE_META}"]`);
+  return meta?.getAttribute('content')?.trim().toLowerCase() === 'hyperscript';
+}
+
+/**
  * Auto-detect body hooks from page globals — called by the browser entry
  * at load and again at DOMContentLoaded. Never overwrites hooks that
  * were set explicitly.
  *
- * - `window._hyperscript` → executor (original _hyperscript; pairs with
- *   `@lokascript/hyperscript-adapter` for multilingual `_=` too)
+ * - `window._hyperscript` → executor, ONLY when the page opted in with
+ *   `<meta name="htmx-i18n-hx-on" content="hyperscript">`. A hyperscript
+ *   engine on the page is not a request for hyperscript bodies: the
+ *   documented engine + htmx + adapter stack always has one, and taking it
+ *   as one turned every plain-JavaScript `hx-on` on such a page into a
+ *   hyperscript parse error.
  * - `window.HyperscriptI18n.preprocess` → translator (the
- *   hyperscript-adapter browser bundles expose exactly this)
+ *   hyperscript-adapter browser bundles expose exactly this). Used only in
+ *   executor mode.
  */
 export function autoDetectBodyHooks(win: object): void {
   const w = win as {
@@ -284,7 +304,7 @@ export function autoDetectBodyHooks(win: object): void {
     HyperscriptI18n?: { preprocess?: (src: string, lang: string) => string };
   };
 
-  if (!executor && typeof w._hyperscript === 'function') {
+  if (!executor && typeof w._hyperscript === 'function' && hyperscriptBodiesRequested(win)) {
     const hs = w._hyperscript;
     setBodyExecutor((code, elt, evt) =>
       typeof hs.evaluate === 'function' ? hs.evaluate(code, { me: elt, event: evt }) : hs(code)

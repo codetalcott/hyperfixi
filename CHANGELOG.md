@@ -7,8 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`@lokascript/htmx-adapter`: `hx-on` bodies stay JavaScript unless the page opts in to
+  hyperscript bodies.** The adapter used to switch every `hx-on` body on the page to hyperscript
+  whenever a hyperscript engine (`window._hyperscript`) was loaded, and the documented stack (the
+  engine, htmx 4 and this adapter) always has one. So a plain-JavaScript
+  `hx-on:click="document.getElementById('o').textContent = 'ran'"` failed with a hyperscript parse
+  error, although the README says bodies are JavaScript by default. The opt-in is now explicit:
+  `<meta name="htmx-i18n-hx-on" content="hyperscript">`, or `setBodyExecutor()` as before. A page
+  that wrote hyperscript `hx-on` bodies and relied on the engine alone adds the `<meta>` tag. With
+  the tag and no engine on the page, the adapter warns and the bodies stay JavaScript.
+
 ### Fixed
 
+- **`@hyperfixi/vite-plugin` loads in a CommonJS project.** `npm init -y` writes
+  `"type": "commonjs"`, and there the plugin's `require` build failed with
+  `ERR_PACKAGE_PATH_NOT_EXPORTED`: it requires `@hyperfixi/engine`, whose `exports` had only an
+  `import` condition. The engine's `exports` now name its ES module as the `default` too, which
+  Node 20.19+ and 22.12+ (what Vite 8 needs) can `require`.
+- **`@hyperfixi/vite-plugin` ships types for the app side** (`@hyperfixi/vite-plugin/client`):
+  the virtual module and `window.hyperfixi` / `window._hyperscript`. A TypeScript 6 project
+  rejected `import 'hyperfixi'` (`TS2882`). The README has a TypeScript section, with JSX's
+  `data-script` and an augmentation for `_`.
+- **The Vite plugin's scanner reads a `<script type="text/hyperscript">` block that contains
+  `<`** (`if n < 10`, a `<div/>` query). It skipped the whole block, so its commands were not
+  bundled and the page failed to parse. It also reads the `script` and `data-script` attributes,
+  which the engine runs as it runs `_`, and a production build scans Vite's `root` rather than the
+  working directory (`vite build app` from a parent directory bundled the siblings' modules).
 - **MCP `diff_behaviors` no longer calls any two multi-command or `if` handlers identical.** It
   compared the operations it could extract, and it extracted single commands only: a `then` chain
   (a `compound` node), an `if`, a loop and every command it had no extractor for gave nothing, so

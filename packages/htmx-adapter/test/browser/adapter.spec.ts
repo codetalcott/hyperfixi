@@ -100,6 +100,38 @@ test.describe('htmx v4 (4.0.0)', () => {
     await expect(page.locator('#out #fin')).toHaveText('listo');
   });
 
+  test('no opt-in: a hyperscript engine on the page leaves hx-on bodies JavaScript', async ({
+    page,
+  }) => {
+    const errors = await collectHtmxErrors(page);
+    await page.goto(`${FIXTURES}/v4-hx-on-js-default.html`);
+
+    await page.locator('#js').click();
+    await expect(page.locator('#out')).toHaveText('js ran');
+    // The localized name is canonicalized to hx-on:click, and htmx runs its JS body.
+    await expect(page.locator('#js-es')).toHaveAttribute('hx-on:click', /js es/);
+    await page.locator('#js-es').click();
+    await expect(page.locator('#out-es')).toHaveText('js es');
+    // `_` handlers still run on the engine.
+    await page.locator('#hs').click();
+    await expect(page.locator('#out-hs')).toHaveText('hs ran');
+
+    expect(await errors.htmx()).toEqual([]);
+    expect(errors.console).toEqual([]);
+  });
+
+  test('opt-in with no hyperscript engine: warns, and hx-on bodies stay JavaScript', async ({
+    page,
+  }) => {
+    const errors = await collectHtmxErrors(page);
+    await page.goto(`${FIXTURES}/v4-hx-on-opt-in-no-engine.html`);
+
+    await page.locator('#js').click();
+    await expect(page.locator('#out')).toHaveText('js ran');
+    expect(errors.warnings.join('\n')).toContain('no hyperscript engine');
+    expect(errors.console).toEqual([]);
+  });
+
   test('executor mode: hx-on bodies run through real _hyperscript with me bound', async ({
     page,
   }) => {

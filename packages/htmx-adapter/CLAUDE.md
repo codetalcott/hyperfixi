@@ -75,8 +75,11 @@ npm run check:vocab        # exit 1 if a committed module is stale
   modules work verbatim; if a registry already exists on the page (core 3.x's
   `hyperfixi-hx.js`), the browser entry fans registrations out to both.
 - **`hx-on:` bodies are JS by default (upstream semantics), hyperscript by
-  opt-in**: `setBodyExecutor()` (auto-detected from `window._hyperscript`)
-  flips the hx-on family into executor mode — the adapter claims every
+  opt-in**: `setBodyExecutor()` (auto-detected from `window._hyperscript`
+  only on a page with `<meta name="htmx-i18n-hx-on" content="hyperscript">`;
+  owner, 2026-10-22: the engine alone used to opt in, and every page of the
+  documented engine + htmx + adapter stack has one, so plain-JS `hx-on`
+  broke there) flips the hx-on family into executor mode — the adapter claims every
   hx-on attr (a claim RECORDS {attrName, body} per element, keyed by
   resolved event name; the listener reads the record so a re-claim after
   `htmx.process(elt, true)` runs an edited body), suppresses

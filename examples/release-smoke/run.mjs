@@ -396,6 +396,26 @@ async function main() {
       record(line.replace(/^(PASS|FAIL)\s/, ''), line.startsWith('PASS'));
     }
 
+    // ---- 2b. CommonJS require of the Vite plugin ----------------------------
+    // `npm init -y` writes "type": "commonjs", where vite.config.js loads the plugin with
+    // `require`; its require build requires the ESM-only engine (7.3.0 failed with
+    // ERR_PACKAGE_PATH_NOT_EXPORTED until the engine's exports named a `default`).
+    {
+      writeFileSync(
+        join(tmp, 'require-smoke.cjs'),
+        "const { hyperfixi } = require('@hyperfixi/vite-plugin');\n" +
+          "if (typeof hyperfixi !== 'function') throw new Error('no hyperfixi export');\n" +
+          "if (hyperfixi().name !== 'vite-plugin-hyperfixi') throw new Error('unexpected plugin');\n",
+      );
+      try {
+        execFileSync('node', ['require-smoke.cjs'], { cwd: tmp, stdio: 'pipe' });
+        record('require(@hyperfixi/vite-plugin) from CommonJS', true);
+      } catch (e) {
+        const msg = (e.stderr?.toString() || e.message).match(/ERR_[A-Z_]+|Error: .*/)?.[0] ?? '';
+        record('require(@hyperfixi/vite-plugin) from CommonJS', false, msg);
+      }
+    }
+
     // ---- 3. browser bundles -------------------------------------------------
     console.log('\n3. Browser bundles (Playwright / chromium)');
     copyFileSync(join(FIXTURES, 'core.html'), join(tmp, 'core.html'));
