@@ -205,6 +205,37 @@ export const ErrorFixes: Record<string, CodeFix[]> = {
     },
   ],
 
+  THIS_IS_NOT_ME: [
+    {
+      code: 'use-me',
+      title: 'Write `me` for the element the handler is on',
+      kind: 'quickfix',
+      description:
+        'Hyperscript has no `this`: it reads a variable nobody set, so it is null. The element ' +
+        'the handler is on is `me`, and its properties are `my value` or `me.value`.',
+      edit: {
+        type: 'replace',
+        text: 'me',
+      },
+      priority: 100,
+      isPreferred: true,
+    },
+  ],
+
+  ENGINE_CHECK_SKIPPED: [
+    {
+      code: 'install-engine',
+      title: 'Install @hyperfixi/engine beside the server',
+      kind: 'quickfix',
+      description:
+        'Without the engine, English is checked by the semantic parser only, and code the engine ' +
+        'cannot read can come back ok. @hyperfixi/mcp-server 7.5.0 and later depend on it; an older ' +
+        'install, or one that skipped it, needs `npm install @hyperfixi/engine`.',
+      priority: 100,
+      isPreferred: true,
+    },
+  ],
+
   NAME_COLLISION: [
     {
       code: 'rename-variable',
@@ -608,6 +639,7 @@ export function getFixesForDiagnostic(diagnosticCode: string): CodeFix[] {
     'parse-error': 'ENGINE_PARSE_ERROR',
     'semantic-error': 'PARSE_FAILED',
     'low-confidence': 'LOW_CONFIDENCE',
+    'engine-check-skipped': 'ENGINE_CHECK_SKIPPED',
     'unmatched-quote': 'SYNTAX.UNMATCHED_QUOTE',
     'unmatched-backtick': 'SYNTAX.UNMATCHED_BACKTICK',
     'unbalanced-parens': 'SYNTAX.UNBALANCED_PARENS',

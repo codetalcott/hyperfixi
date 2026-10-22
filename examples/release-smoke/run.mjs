@@ -353,6 +353,35 @@ async function main() {
       );
     }
 
+    // ---- 1d. the MCP server installed alone brings the engine ---------------
+    // `npx @hyperfixi/mcp-server` (the documented install) gets the server's dependencies only.
+    // The engine was an optional peer until 7.5.0, so that install had none and every error
+    // only the engine catches came back ok.
+    {
+      const alone = mkdtempSync(join(tmpdir(), 'hyperfixi-release-smoke-mcp-'));
+      try {
+        writeFileSync(join(alone, 'package.json'), '{"name":"mcp-alone","version":"0.0.0","private":true}');
+        execFileSync(
+          'npm',
+          ['install', '--no-audit', '--no-fund', '--loglevel=error', `@hyperfixi/mcp-server@${VERSION}`],
+          { cwd: alone, stdio: 'pipe' },
+        );
+        const missing = ['@hyperfixi/engine', '@hyperfixi/core', '@hyperfixi/server-bridge'].filter(
+          (name) => !existsSync(join(alone, 'node_modules', ...name.split('/'), 'package.json')),
+        );
+        record(
+          '@hyperfixi/mcp-server installed alone brings the engine, core and server-bridge',
+          missing.length === 0,
+          missing.length ? `missing: ${missing.join(', ')}` : '',
+        );
+      } catch (e) {
+        const msg = (e.stderr?.toString() || e.message).split('\n').filter(Boolean).slice(-1).join(' ');
+        record('@hyperfixi/mcp-server installed alone', false, msg);
+      } finally {
+        rmSync(alone, { recursive: true, force: true });
+      }
+    }
+
     // ---- 2. Node import surface --------------------------------------------
     console.log('\n2. Node import surface');
     copyFileSync(join(FIXTURES, 'node-smoke.mjs'), join(tmp, 'node-smoke.mjs'));

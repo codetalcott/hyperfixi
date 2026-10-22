@@ -345,6 +345,30 @@ describe('CompilationService', () => {
   });
 
   describe('validate()', () => {
+    // The IR is what an agent checks against its intent. A `then` chain used to come back as
+    // `compound` with no commands, and an `if` with its condition only (7.3.0 live test: 11 of 15
+    // final snippets could not be checked).
+    it('returns the commands of a chain, a branch and a loop in the IR', () => {
+      const chain = service.validate({
+        code: 'on click add .a to me then toggle .b on #panel',
+      }).semantic;
+      expect(chain?.action).toBe('compound');
+      expect(chain?.trigger?.event).toBe('click');
+      expect(chain?.body?.map(c => c.action)).toEqual(['add', 'toggle']);
+      expect(chain?.body?.[1]?.roles.destination?.value).toBe('#panel');
+
+      const branch = service.validate({
+        code: 'on click if me matches .x then add .a to me else remove .a from me end',
+      }).semantic;
+      expect(branch?.action).toBe('if');
+      expect(branch?.roles.condition?.value).toBe('me matches .x');
+      expect(branch?.body?.map(c => c.action)).toEqual(['add']);
+      expect(branch?.else?.map(c => c.action)).toEqual(['remove']);
+
+      const loop = service.validate({ code: 'on click repeat 3 times add .a to me end' }).semantic;
+      expect(loop?.body?.map(c => c.action)).toEqual(['add']);
+    });
+
     it('validates explicit syntax', () => {
       const result = service.validate({
         explicit: '[toggle patient:.active]',
@@ -410,6 +434,22 @@ describe('CompilationService', () => {
         'on click if #box has class .danger add .warned to #box end',
         'HALF_PARSED_CONDITION',
         false
+      );
+      // `this` is null on both engines (7.3.0 live test: 6 of 10 clean-validating no-ops).
+      expectWarning('on click toggle .active on this', 'THIS_IS_NOT_ME', true);
+      expectWarning('on input put this.value.length into #count', 'THIS_IS_NOT_ME', true);
+      expectWarning("on click this.classList.toggle('open')", 'THIS_IS_NOT_ME', true);
+      // After a `then` and inside a branch: the gate walked `body` only, never a chain's
+      // statements or an `if`'s branches.
+      expectWarning(
+        'on click add .x to #a then set the text of #output to "Saved"',
+        'INERT_PROPERTY_WRITE',
+        true
+      );
+      expectWarning(
+        'on click if true then put "hi" into this else add .x to me end',
+        'THIS_IS_NOT_ME',
+        true
       );
     });
 
@@ -529,6 +569,9 @@ describe('CompilationService', () => {
         'on click if #box matches .danger add .warned to #box end',
         'on click add .modal-open to body',
         'on click add .is-active to #item', // .is-* utility classes must not trip HALF_PARSED_CONDITION
+        'on click put "this" into #out', // a string, not the variable
+        'on click js this.focus() end', // JavaScript's `this`
+        'on click toggle .a on me then put my.value into #out',
       ]) {
         const r = service.validate({ code, language: 'en' });
         expect(r.ok, code).toBe(true);

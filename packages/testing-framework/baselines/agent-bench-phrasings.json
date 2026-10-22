@@ -4,9 +4,9 @@
     "phrasings": 37,
     "parse": 21,
     "behaveCorrectly": 17,
-    "warnedWrong": 1,
-    "silentBand": 3,
-    "silentNoop": 2
+    "warnedWrong": 2,
+    "silentBand": 2,
+    "silentNoop": 1
   },
   "phrasings": [
     {
@@ -167,7 +167,7 @@
     {
       "taskId": "toggle-self-class",
       "code": "on click toggle .active on this",
-      "band": "silent-noop"
+      "band": "warned-wrong"
     },
     {
       "taskId": "toggle-other-class",

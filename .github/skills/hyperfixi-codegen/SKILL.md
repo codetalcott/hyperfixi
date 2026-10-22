@@ -12,7 +12,7 @@ Validate HyperFixi/LokaScript code and compare behaviors. (Compiling to JavaScri
 ## When to Use
 
 - Validate semantics (dry-run)
-- Compare two inputs for behavioral equivalence
+- Compare two inputs command by command and role by role (diff_behaviors)
 
 ## Workflow
 

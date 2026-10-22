@@ -26,6 +26,7 @@ export type {
   ServiceOptions,
   SemanticJSON,
   SemanticJSONValue,
+  SemanticIR,
   Diagnostic,
   InputFormat,
 } from './types.js';
@@ -56,6 +57,9 @@ export type {
   FocusOp,
   BlurOp,
   LogOp,
+  ConditionalOp,
+  LoopOp,
+  CommandOp,
 } from './operations/types.js';
 export { extractOperations } from './operations/extract.js';
 

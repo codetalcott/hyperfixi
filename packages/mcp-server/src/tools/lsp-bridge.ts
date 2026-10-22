@@ -387,6 +387,21 @@ async function getDiagnostics(
     }
   }
 
+  // No engine to check English: say so in the result, not only on stderr (the documented npx
+  // install had none until 7.5.0, and this tool then returned no diagnostics for code the engine
+  // rejects).
+  if (english && !engineParse) {
+    diagnostics.push({
+      range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } },
+      severity: 3, // Information
+      code: 'engine-check-skipped',
+      source: 'hyperfixi-mcp',
+      message:
+        '@hyperfixi/engine is not installed: these diagnostics are heuristics, and code the engine ' +
+        'cannot read can come back with none. Install @hyperfixi/engine beside the server.',
+    });
+  }
+
   // Semantic analysis (every language). On English the engine reads, semantic's errors are
   // doubts about its IR, not the code (they were this tool's false errors), so they are warnings.
   const analyzer = getSemanticAnalyzer();

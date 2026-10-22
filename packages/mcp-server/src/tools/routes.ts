@@ -7,7 +7,7 @@
  */
 
 import type { Tool } from '@modelcontextprotocol/server';
-// Types only: the package is an optional peer, loaded below on first use. Typed, so a change to
+// Types only: the package (a dependency) is loaded below on first use. Typed, so a change to
 // its return shapes fails the typecheck. (Untyped, both tools read `scanRoutes(...).routes` from
 // the array it returns, and threw on every input from the day they were added until 7.2.0.)
 import type * as ServerBridge from '@hyperfixi/server-bridge';

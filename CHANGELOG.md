@@ -35,6 +35,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   bundled and the page failed to parse. It also reads the `script` and `data-script` attributes,
   which the engine runs as it runs `_`, and a production build scans Vite's `root` rather than the
   working directory (`vite build app` from a parent directory bundled the siblings' modules).
+- **MCP `diff_behaviors` no longer calls any two multi-command or `if` handlers identical.** It
+  compared the operations it could extract, and it extracted single commands only: a `then` chain
+  (a `compound` node), an `if`, a loop and every command it had no extractor for gave nothing, so
+  `remove .b then wait 2s` and `remove .c then wait 5s` were "No semantic change", and so were an
+  English handler and an unrelated Spanish one. It now compares every command of a chain, both
+  branches of an `if`, a loop's body, and any other command with all its written roles (a
+  `fetch`'s `with` options included), and `this` is no longer read as `me`. Faithful translations
+  still compare identical (checked on chains, branches, loops and `wait for` in ja, es and ar).
+- **`npx @hyperfixi/mcp-server` installs the engine.** `@hyperfixi/engine`, `@hyperfixi/core` and
+  `@hyperfixi/server-bridge` were optional peers, which `npx` leaves out, so the documented
+  install checked nothing on the engine: every error only the engine catches came back `ok`, and
+  only stderr said so. They are dependencies now, and a validation whose engine check could not
+  run says so in the result (`ENGINE_CHECK_SKIPPED`, `info`; `get_diagnostics`:
+  `engine-check-skipped`). release-smoke installs the server alone and checks for the three.
+- **Validation warns on `this`** (`THIS_IS_NOT_ME`): hyperscript has no `this`, so
+  `toggle .a on this` or `put this.value.length into #n` reads a variable nobody set and does
+  nothing. These validated clean (6 of 10 clean-validating snippets that did nothing, in the 7.3.0
+  live test). The inert-shape warnings also reach commands after a `then` and inside an `if`'s
+  branches; they read only a block's `body` before.
+- **The IR `validate_and_compile` returns has the commands of a chain, a branch or a loop**: a
+  `then` chain is `compound` with each command in `body`, an `if` has `body` and `else`. A chain
+  came back as `compound` with no commands, so it could not be checked against an intent.
+- **AGENTS.md** said `this`, `and` or a comma between commands, and `put … in` work; all four fail
+  on both engines. Its worked example showed output the server no longer gives, and it quoted a
+  fidelity figure ("~76%") from before the renderer reached 100% on the corpus. Rewritten from the
+  server's real output.
 - **Multilingual: a native time unit after the event is a duration.** ko `클릭할 때 1초 대기`,
   tr `tıklamada 1 saniye bekle` and ja `クリックで 1 秒 待つ` came back `on click 1 wait s`: the
   number became a click count (the handler ran on the first click only) and the wait waited for
