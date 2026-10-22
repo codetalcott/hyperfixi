@@ -196,6 +196,14 @@ The adapter logs this when it receives non-English text but produces no change. 
 - Unsupported command — only commands with semantic patterns translate (toggle, add, remove, put, set, etc.). Feature-level keywords (`def`, `worker`) stay in English.
 - Missing language bundle — if using a single-language bundle, only that language translates. Other languages pass through unchanged.
 
+**"… is not an event this language knows" warning in console**
+
+A handler's event is a plain word the language has no event for (es `al pulsar …`,
+de `beim Tippen …`), so it runs as a custom event of that name, which nothing fires unless a
+script sends it. Use the language's word for the DOM event (es `al hacer clic` or `al clic`), or
+the English name (`al click`). A name written as code (`miEvento`, `draggable:start`) is taken
+as a custom event on purpose and does not warn. Each word warns once per language.
+
 **SOV languages (ja, ko, tr) not translating reliably**
 
 These languages produce lower confidence scores due to word-order differences. Lower the threshold with a per-language map:
