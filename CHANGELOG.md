@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.5.0] - 2026-10-22
+
+What a live test of 7.3.0 found users hitting. The Vite plugin loads in a CommonJS project and
+ships types. MCP `diff_behaviors` compares whole handlers, and `npx` installs the engine.
+Hand-written non-English hyperscript that ran wrong in silence now reads right or says so. A
+minor: `@lokascript/htmx-adapter`'s `hx-on` change restores what its README always documented
+(bodies are JavaScript by default), and a page that relied on the engine switching them adds
+`<meta name="htmx-i18n-hx-on" content="hyperscript">`.
+
 ### Changed
 
 - **`@lokascript/htmx-adapter`: `hx-on` bodies stay JavaScript unless the page opts in to
