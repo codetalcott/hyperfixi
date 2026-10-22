@@ -11,10 +11,14 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
+    },
+    "./client": {
+      "types": "./client.d.ts"
     }
   },
   "files": [
     "dist/",
+    "client.d.ts",
     "README.md",
     "CHANGELOG.md"
   ],

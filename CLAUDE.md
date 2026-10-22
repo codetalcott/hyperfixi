@@ -1142,7 +1142,8 @@ export default {
 import 'hyperfixi';
 ```
 
-The plugin scans your files for `_="..."` attributes and emits a bundle on
+The plugin scans your files for hyperscript (`_`, `script` and `data-script` attributes,
+`text/hyperscript` blocks) and emits a bundle on
 `@hyperfixi/engine` that registers only the grammar modules you use (a bundle on the
 engine is the list passed to `register()`; the keyword → module map is derived from the
 engine, not copied). Measured 2026-10-03: 17.9 KB gzipped for three commands, 34.4 KB for
