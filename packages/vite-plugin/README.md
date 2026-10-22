@@ -5,7 +5,8 @@ Zero-config Vite plugin that emits a bundle on [`@hyperfixi/engine`](../engine/R
 ## Features
 
 - **Zero-config**: Just add the plugin and it works
-- **Automatic detection**: Scans HTML, Vue, Svelte, JSX/TSX for `_="..."` attributes
+- **Automatic detection**: Scans HTML, Vue, Svelte, JSX/TSX for hyperscript in `_`, `script` and
+  `data-script` attributes and in `<script type="text/hyperscript">` blocks
 - **Minimal bundles**: Registers only the engine modules your commands and blocks need (17.9 KB gzipped for three commands, 34.4 KB for everything)
 - **Upstream's grammar**: The engine is gated by `_hyperscript`'s own test suite, so what works on `hyperfixi-hs.js` works in the generated bundle
 - **Multilingual**: Non-English scripts are translated as the engine reads them (the attribute stays as written)
@@ -41,7 +42,9 @@ import 'hyperfixi'; // the generated bundle: the engine + your modules
 
 ## How It Works
 
-1. **Scans** your HTML/Vue/Svelte/JSX files for `_="..."` attributes
+1. **Scans** your HTML/Vue/Svelte/JSX files for hyperscript: the `_`, `script` and
+   `data-script` attributes the engine reads, and `<script type="text/hyperscript">` blocks.
+   A production build scans Vite's `root`, as the dev server does
 2. **Detects** which commands, blocks, and expression kinds you use
 3. **Emits** a bundle on [`@hyperfixi/engine`](../engine/README.md) that registers only
    the grammar modules those need — a bundle on the engine is the list passed to
@@ -252,6 +255,47 @@ import 'hyperfixi';
 import 'virtual:hyperfixi';
 import '@hyperfixi/core'; // Redirects to virtual module
 ```
+
+## TypeScript
+
+Reference the plugin's client types once, as you do Vite's, in `src/vite-env.d.ts`:
+
+```ts
+/// <reference types="vite/client" />
+/// <reference types="@hyperfixi/vite-plugin/client" />
+```
+
+(or `"types": ["vite/client", "@hyperfixi/vite-plugin/client"]` in `tsconfig.json`). They declare
+the virtual module (`import 'hyperfixi'`, `import api from 'hyperfixi'`) and the globals the
+bundle installs, `window.hyperfixi` and `window._hyperscript`. Without them, TypeScript 6 and
+later reject the side-effect import (`TS2882`), and `window.hyperfixi` is `TS2339`.
+
+In JSX, write the script in `data-script`: the engine reads it as it reads `_`, the plugin
+scans it, and JSX accepts any `data-*` attribute:
+
+```tsx
+<button data-script="on click toggle .active">Toggle</button>
+```
+
+To write `_` instead, declare it once for React:
+
+```ts
+// src/hyperscript-jsx.d.ts
+import 'react';
+
+declare module 'react' {
+  interface HTMLAttributes<T> {
+    _?: string;
+  }
+}
+```
+
+## CommonJS projects
+
+A project whose `package.json` says `"type": "commonjs"` (what `npm init -y` writes) loads the
+plugin with `require`. That works on the Node versions Vite 8 supports (20.19+, 22.12+), which
+`require` an ES module: `@hyperfixi/engine` is ESM only, and until 7.5.0 its `exports` named no
+condition `require` could use, so a CommonJS config failed with `ERR_PACKAGE_PATH_NOT_EXPORTED`.
 
 ## HMR Support
 

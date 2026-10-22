@@ -318,6 +318,45 @@ describe('Scanner', () => {
       const usage = scanner.scan(code, 'test.html');
       expect(usage.commands.has('toggle')).toBe(true);
     });
+
+    // 7.3.0 live test: `([^<]+)` skipped any script block holding a `<`, so `hide` was not
+    // bundled and the page failed with "Expected 'end' but found 'hide'".
+    it('reads a script tag whose body holds `<` (a comparison, a query literal)', () => {
+      const code = [
+        '<script type="text/hyperscript">',
+        '  def maybeHide(el, n) if n < 10 then hide el end end',
+        '  behavior Counter on click put <li/> into #list then increment :n end',
+        '</script>',
+      ].join('\n');
+      const usage = scanner.scan(code, 'index.html');
+      expect([...usage.commands]).toEqual(expect.arrayContaining(['hide', 'put', 'increment']));
+      expect(usage.blocks.has('if')).toBe(true);
+    });
+
+    it('reads each script tag to its own </script>, not to the last one', () => {
+      const code =
+        '<script type="text/hyperscript">def a() hide me end</script>' +
+        '<script>const s = "toggle"</script>' +
+        "<script type='text/hyperscript'>def b() show me end</script>";
+      const usage = scanner.scan(code, 'index.html');
+      expect(usage.commands.has('hide')).toBe(true);
+      expect(usage.commands.has('show')).toBe(true);
+      expect(usage.commands.has('toggle')).toBe(false);
+    });
+
+    it('reads the script and data-script attributes, which the engine also runs', () => {
+      const usage = scanner.scan(
+        '<button data-script="on click hide #x">a</button><p script=\'on click show #y\'>b</p>' +
+          '<div data-script={`on click take .on`} />',
+        'App.tsx'
+      );
+      expect([...usage.commands]).toEqual(expect.arrayContaining(['hide', 'show', 'take']));
+    });
+
+    it('does not read a JavaScript `script` variable as an attribute', () => {
+      const usage = scanner.scan('const script = "on click hide #x";', 'main.js');
+      expect(usage.commands.has('hide')).toBe(false);
+    });
   });
 
   describe('language detection', () => {
