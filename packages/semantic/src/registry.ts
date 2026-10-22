@@ -511,7 +511,37 @@ export function tokenize(input: string, language: string): TokenStream {
     fuseScopedNames(markLineStarts(tokenizer.tokenize(input), input, language), language),
     language
   );
-  return language === 'en' ? stream : fuseParenthesizedNames(stream, language);
+  return language === 'en' ? stream : markWaitForWords(fuseParenthesizedNames(stream, language));
+}
+
+/**
+ * The preposition a language writes between its wait verb and what is waited for: es and pt
+ * `esperar a foo` is `wait for foo`.
+ */
+const WAIT_FOR_WORDS: Readonly<Record<string, readonly string[]>> = {
+  es: ['a'],
+  pt: ['a', 'por'],
+};
+
+/**
+ * A wait verb's `for` (es `esperar a foo`) written as the language's `event` word, which every
+ * reader of a wait takes (`esperar evento foo`, P52). The `a` is also the destination marker,
+ * which a wait has no use for, so it was skipped and the name read as a time wait: es
+ * `esperar a continue` came back `wait continue`, which waits for nothing (7.3.0 live test).
+ */
+function markWaitForWords(stream: TokenStream): TokenStream {
+  const words = WAIT_FOR_WORDS[stream.language];
+  const eventWord = tryGetProfile(stream.language)?.keywords?.event?.primary;
+  if (!words || !eventWord) return stream;
+  const tokens = stream.tokens;
+  let out: LanguageToken[] | undefined;
+  for (let i = 1; i < tokens.length; i++) {
+    const t = tokens[i]!;
+    if (tokens[i - 1]!.normalized !== 'wait' || !words.includes(t.value.toLowerCase())) continue;
+    out ??= [...tokens];
+    out[i] = { ...t, value: eventWord, kind: 'keyword', normalized: 'event' } as LanguageToken;
+  }
+  return out ? new TokenStreamImpl(out, stream.language) : stream;
 }
 
 /**
