@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`@lokascript/htmx-adapter`: `hx-on` bodies stay JavaScript unless the page opts in to
+  hyperscript bodies.** The adapter used to switch every `hx-on` body on the page to hyperscript
+  whenever a hyperscript engine (`window._hyperscript`) was loaded, and the documented stack (the
+  engine, htmx 4 and this adapter) always has one. So a plain-JavaScript
+  `hx-on:click="document.getElementById('o').textContent = 'ran'"` failed with a hyperscript parse
+  error, although the README says bodies are JavaScript by default. The opt-in is now explicit:
+  `<meta name="htmx-i18n-hx-on" content="hyperscript">`, or `setBodyExecutor()` as before. A page
+  that wrote hyperscript `hx-on` bodies and relied on the engine alone adds the `<meta>` tag. With
+  the tag and no engine on the page, the adapter warns and the bodies stay JavaScript.
+
 ## [7.4.0] - 2026-10-21
 
 Content htmx or fixi swaps in runs its hyperscript, as it does on upstream `_hyperscript`: the

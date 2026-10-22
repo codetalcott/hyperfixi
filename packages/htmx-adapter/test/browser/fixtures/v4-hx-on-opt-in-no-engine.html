@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>htmx v4, hx-on opt-in with no hyperscript engine — warns, bodies stay JavaScript</title>
+    <meta name="htmx-i18n-hx-on" content="hyperscript" />
+    <script src="/packages/htmx-adapter/dist/htmx-i18n.global.js"></script>
+    <script src="/packages/htmx-adapter/test/browser/vendor/htmx-4.0.0.js"></script>
+  </head>
+  <body>
+    <button id="js" hx-on:click="document.getElementById('out').textContent = 'js ran'">js</button>
+    <div id="out"></div>
+  </body>
+</html>
