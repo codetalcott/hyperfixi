@@ -153,7 +153,7 @@ export function unknownEventWords(source: string, events: readonly string[]): st
   const words = events.filter(
     name =>
       /^[\p{L}\p{M}]+$/u.test(name) &&
-      name === name.toLowerCase() &&
+      !/\p{Lu}/u.test(name.slice(1)) &&
       source.includes(name) &&
       !FIRED_EVENTS.has(name)
   );

@@ -133,6 +133,8 @@ describe('unknownEventWords', () => {
   it('names a word the author wrote that nothing fires', () => {
     expect(unknownEventWords('al pulsar agregar .a', ['pulsar'])).toEqual(['pulsar']);
     expect(unknownEventWords('タップで .a を 追加', ['タップ'])).toEqual(['タップ']);
+    // A German noun is capitalized: still a word, not code.
+    expect(unknownEventWords('beim Tippen hinzufügen .a', ['Tippen'])).toEqual(['Tippen']);
   });
 
   it('passes every event the DOM or the engine fires', () => {

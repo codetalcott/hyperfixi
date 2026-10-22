@@ -236,6 +236,20 @@ export const ErrorFixes: Record<string, CodeFix[]> = {
     },
   ],
 
+  UNKNOWN_EVENT_WORD: [
+    {
+      code: 'use-event-word',
+      title: "Write the language's word for the event",
+      kind: 'quickfix',
+      description:
+        'The handler listens for a custom event of that name, which nothing fires unless a script ' +
+        "sends it. Write the language's word for the DOM event (get_keyword_translations), or its " +
+        'English name (`click`); a custom event fired on purpose is clearer written as code.',
+      priority: 100,
+      isPreferred: true,
+    },
+  ],
+
   NAME_COLLISION: [
     {
       code: 'rename-variable',

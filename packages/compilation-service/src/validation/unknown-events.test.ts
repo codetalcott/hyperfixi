@@ -5,6 +5,8 @@ describe('unknownEventWords', () => {
   it('names a word the author wrote that nothing fires (7.3.0 live test)', () => {
     expect(unknownEventWords('al pulsar agregar .a', ['pulsar'])).toEqual(['pulsar']);
     expect(unknownEventWords('タップで .a を 追加', ['タップ'])).toEqual(['タップ']);
+    // A German noun is capitalized: still a word, not code.
+    expect(unknownEventWords('beim Tippen hinzufügen .a', ['Tippen'])).toEqual(['Tippen']);
   });
 
   it('passes the events the specifications define, and upstream observers', () => {

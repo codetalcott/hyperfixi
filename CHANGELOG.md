@@ -84,7 +84,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   A word the language does not know as an event (es `al pulsar …`, de `beim Tippen …`) runs as a
   custom event of that name, and the handler never ran, silently. The adapter now warns once per
   language and word. A name written as code (`miEvento`, `draggable:start`) stays quiet. No event
-  words were added: loka-js and our dictionaries ship the noun (`clic`), not the verbs.
+  words were added: loka-js and our dictionaries ship the noun (`clic`), not the verbs. MCP
+  `validate_and_compile` reports the same, as an `UNKNOWN_EVENT_WORD` warning on non-English
+  input (`get_code_fixes` has its fix).
 
 ## [7.4.0] - 2026-10-21
 
