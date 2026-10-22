@@ -57,6 +57,18 @@ import type {
 export type SemanticJSON = _SemanticJSON;
 export type SemanticJSONValue = _SemanticJSONValue;
 
+/**
+ * The IR validation returns: {@link SemanticJSON} with the commands a node holds. A `then`
+ * chain is `compound` with each command in `body`; an `if` has its branches in `body` and
+ * `else`; a loop or a block command (`tell`, `repeat`) has its commands in `body`. Until 7.5.0
+ * a chain came back as `compound` with no commands at all, so its IR could not be checked
+ * against an intent.
+ */
+export interface SemanticIR extends SemanticJSON {
+  body?: SemanticIR[];
+  else?: SemanticIR[];
+}
+
 // =============================================================================
 // Response Types
 // =============================================================================
@@ -68,7 +80,7 @@ export interface ValidationResponse {
   /** Whether validation passed */
   ok: boolean;
   /** Normalized semantic representation (if parse succeeded) */
-  semantic?: SemanticJSON;
+  semantic?: SemanticIR;
   /** Parse confidence */
   confidence?: number;
   /** Diagnostics */

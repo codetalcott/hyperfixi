@@ -135,8 +135,43 @@ export interface LogOp {
   values: string[];
 }
 
-/** Union of all abstract operations */
-export type AbstractOperation =
+// --- Control flow, and every other command ---
+/** `if` / `unless` (`negated`), with both branches' operations. */
+export interface ConditionalOp {
+  op: 'conditional';
+  negated: boolean;
+  /** The condition as the parse normalized it (English, whatever the source language). */
+  condition: string;
+  then: AbstractOperation[];
+  else: AbstractOperation[];
+}
+
+/** A loop (`repeat … times`, `for x in …`, `while`, `until`, `forever`) and its body. */
+export interface LoopOp {
+  op: 'loop';
+  variant: string;
+  /** The loop's written roles (count, collection, condition, variable), by role name. */
+  roles: Record<string, string>;
+  body: AbstractOperation[];
+}
+
+/**
+ * A command no other operation describes (`tell`, `call`, `take`, `wait for <event>`, …): its
+ * action and written roles, and its block body if it has one. Nothing a parse holds is dropped,
+ * so two scripts that differ anywhere never extract the same operations.
+ */
+export interface CommandOp {
+  op: 'command';
+  action: string;
+  roles: Record<string, string>;
+  body?: AbstractOperation[];
+}
+
+/**
+ * Union of all abstract operations. `extra` holds the written roles an operation's own fields
+ * do not carry (a `fetch`'s `with` options), so a difference there is still a difference.
+ */
+export type AbstractOperation = (
   | ToggleClassOp
   | AddClassOp
   | RemoveClassOp
@@ -155,7 +190,11 @@ export type AbstractOperation =
   | TriggerEventOp
   | FocusOp
   | BlurOp
-  | LogOp;
+  | LogOp
+  | ConditionalOp
+  | LoopOp
+  | CommandOp
+) & { extra?: Record<string, string> };
 
 // =============================================================================
 // Behavior Spec

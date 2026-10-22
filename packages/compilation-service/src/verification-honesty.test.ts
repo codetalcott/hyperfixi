@@ -132,3 +132,63 @@ describe("the book's pseudo-command and counter now parse completely", () => {
     expect(r.verification?.faithful).toBe(true);
   });
 });
+
+// 7.3.0 live test: diff() said any two multi-command or `if` handlers were identical ("No semantic
+// change"). Extraction knew single commands only: a `then` chain is a `compound` node, and `if`,
+// loops and every other command extracted nothing, so both sides compared as empty lists.
+describe('diff() compares everything a handler does', () => {
+  const different: Array<[string, string]> = [
+    ['on click remove .b then wait 2s', 'on click remove .c then wait 2s'],
+    ['on click remove .b then wait 2s', 'on click remove .b then wait 5s'],
+    ['on click fetch /api/a then put it into #o', 'on click fetch /api/b then put it into #o'],
+    [
+      'on click if me matches .x then add .a to me else remove .a from me end',
+      'on click if me matches .y then add .a to me else remove .a from me end',
+    ],
+    [
+      'on click if me matches .x then add .a to me else remove .a from me end',
+      'on click if me matches .x then add .a to me end',
+    ],
+    ['on click repeat 3 times add .a to me end', 'on click repeat 5 times add .a to me end'],
+    ['on click wait for continue then add .a', 'on click wait for done then add .a'],
+    ['on click tell #x add .a end', 'on click tell #y add .a end'],
+    ["on click fetch /api with method:'POST'", "on click fetch /api with method:'GET'"],
+    // `this` is an undefined variable in hyperscript, not `me`.
+    ['on click toggle .a on this', 'on click toggle .a on me'],
+  ];
+  for (const [a, b] of different) {
+    it(`${a}  ≠  ${b}`, () => {
+      const r = service.diff({ a: { code: a }, b: { code: b } });
+      expect(r.ok).toBe(true);
+      expect(r.identical).toBe(false);
+      expect(r.summary).not.toBe('No semantic change');
+    });
+  }
+
+  it('a default written out is the same handler', () => {
+    const r = service.diff({
+      a: { code: 'on click toggle .a on me' },
+      b: { code: 'on click toggle .a' },
+    });
+    expect(r.identical).toBe(true);
+  });
+
+  // The other half: the comparison reads the parse's language-neutral roles, so a faithful
+  // translation of a chain, a branch or a loop still compares identical.
+  const translated = [
+    'on click remove .b then wait 2s',
+    'on click if me matches .x then add .a to me else remove .a from me end',
+    'on click repeat 3 times add .a to me end',
+    'on click wait for continue then add .a',
+  ];
+  for (const source of translated) {
+    for (const lang of ['ja', 'es', 'ar']) {
+      it(`${source} is identical to its ${lang} translation`, () => {
+        const t = service.translate({ code: source, from: 'en', to: lang });
+        expect(t.ok).toBe(true);
+        const r = service.diff({ a: { code: source }, b: { code: t.code!, language: lang } });
+        expect(r.identical).toBe(true);
+      });
+    }
+  }
+});
