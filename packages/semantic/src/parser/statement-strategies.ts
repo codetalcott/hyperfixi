@@ -18,6 +18,7 @@ import {
   SOV_EVENT_MARKERS,
   SOV_SOURCE_MARKERS,
   isEnEventKeyword,
+  isEventWordObject,
   isStrippableSourceRef,
   matchEventMarkerPhrase,
 } from './event-heads';
@@ -475,13 +476,16 @@ export function trySOVEventExtraction(
         // Languages without single-token event markers (KO): event keyword
         // stands alone, or is followed by an optional param phrase and/or
         // marker phrase (할 때), consumed so they don't leak into the body parse.
+        // Without the phrase, a word its verb's object particle follows is that
+        // verb's object (`로드 를 대기`, wait for load): keep scanning.
+        const markerLen = matchEventMarkerPhrase(allTokens, i + 1 + paramPhrase.len, language);
+        if (markerLen === 0 && isEventWordObject(allTokens, i + 1 + paramPhrase.len, language)) {
+          continue;
+        }
         eventIndex = i;
         eventName = resolvedName;
         keyFilter = tokenKeyFilter;
-        tokensToRemove =
-          1 +
-          paramPhrase.len +
-          matchEventMarkerPhrase(allTokens, i + 1 + paramPhrase.len, language);
+        tokensToRemove = 1 + paramPhrase.len + markerLen;
         parameterNames = paramPhrase.names;
         break;
       }

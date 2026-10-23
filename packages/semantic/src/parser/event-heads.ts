@@ -73,6 +73,37 @@ export const SOV_EVENT_MARKER_PHRASES: Record<string, string[][]> = {
   ko: [['할', '때'], ['할때']],
 };
 
+/** Lowercased surface forms (primary + alternatives) of a marker spec. */
+function surfaceForms(
+  spec: { primary?: string; alternatives?: readonly string[] } | undefined
+): Set<string> {
+  const set = new Set<string>();
+  if (spec?.primary) set.add(spec.primary.toLowerCase());
+  for (const alt of spec?.alternatives ?? []) set.add(alt.toLowerCase());
+  return set;
+}
+
+/**
+ * Is a bare event word the OBJECT of the verb after it, not a handler's event?
+ * `afterIdx` is the token after the word (and its params). ko anchors an event
+ * bare (above), so `로드 를 대기` (wait for load) read `on load` with `wait 를`
+ * for its body: the object particle had nowhere else to go. A body never starts
+ * with a particle. The one head that carries the object particle is the
+ * generated `{event} 을 에`, where an event-marker form follows it.
+ */
+export function isEventWordObject(
+  allTokens: readonly LanguageToken[],
+  afterIdx: number,
+  language: string
+): boolean {
+  const profile = tryGetProfile(language);
+  const particle = allTokens[afterIdx];
+  if (!profile || particle?.kind !== 'particle') return false;
+  if (!surfaceForms(profile.roleMarkers?.patient).has(particle.value.toLowerCase())) return false;
+  const next = allTokens[afterIdx + 1];
+  return !next || !surfaceForms(profile.eventHandler?.eventMarker).has(next.value.toLowerCase());
+}
+
 /** Length (in tokens) of an event-marker phrase starting at startIdx, or 0. */
 export function matchEventMarkerPhrase(
   allTokens: readonly LanguageToken[],
