@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **ko: an event word followed by its object particle is the verb's object, not a handler.** At
+  top level, hand-written `로드 를 대기` (wait for load) read as `on load wait 를`: a handler on
+  `load` waiting on a variable named `를`, and translate() did not refuse it. Top level is now
+  refused, as ja `ロード を 待つ` and tr `yükleme i bekle` already were; inside a handler,
+  `클릭 할 때 로드 를 대기` still reads `wait for load`. ko's own render of
+  `trigger click on #btn …` (`#btn에 클릭을 트리거 …`) had been refused for the same reason and now
+  translates.
+- **es `eso`, `esto` and a detached `lo` read as `it`, as do pt `isto` and fr `cela`/`ceci`.**
+  `poner eso en #o` read `put eso into #o`, a variable nobody set, with no error. Most profiles
+  already write `it` as a demonstrative (pt `isso`, fr `ça`, ru `это`, he `זה`, ja `それ`). What
+  `it` renders to is unchanged. A variable spelled like one of these words now reads as `it` in
+  that language, as one named `isso` already did in pt; MCP `translate_code` reports it
+  (`NAME_COLLISION`) with a rename.
+
 ## [7.5.0] - 2026-10-22
 
 What a live test of 7.3.0 found users hitting. The Vite plugin loads in a CommonJS project and
