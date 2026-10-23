@@ -805,6 +805,23 @@ not checked by a native speaker.
 | vi   | `chuyển đổi giữa .a và .b`           |                                                                                                                             |
 | zh   | `切换 .a 和 .b 之间`                 | `之间` follows the pair; `在 .a 和 .b 之间 切换` is the textbook order                                                      |
 
+## Neuter demonstratives read as `it`: es, pt, fr ⚠️ (October 2026)
+
+Input only: what `it` renders to does not move (es `ponerlo`, pt `colocá-lo`, fr `le mettre`).
+Found by hand-written input (`poner eso en #o` read a variable named `eso`).
+
+| lang | now read as `it`               | already read as `it`            |
+| ---- | ------------------------------ | ------------------------------- |
+| es   | `eso`, `esto`, a detached `lo` | `ello`, `lo` attached (`-lo`)   |
+| pt   | `isto`                         | `isso`                          |
+| fr   | `cela`, `ceci`                 | `ça`, `ca`                      |
+
+Notes for the reviewer: "this" (`esto`, `isto`, `ceci`) is read as `it`, as ru `это`, he `זה`
+and tl `ito` are, not as `me`. Hyperscript has no `this`: English `this` is a variable, which the
+validator warns about. Is `poner esto en #o` the value (`it`) to a Spanish author, or the element
+(`me`, es `yo`/`mí`)? A detached `lo` is a misspelling of `ponerlo`. it `questo`/`quello` stay
+variables, because both are adjectives too (`questo elemento`).
+
 ## August 2026 research pass — summary
 
 A follow-up research pass (web sources as a native-speaker proxy; items still

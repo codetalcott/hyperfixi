@@ -85,6 +85,9 @@ const FRENCH_EXTRAS: KeywordEntry[] = [
   { native: 'mes', normalized: 'my' },
   { native: 'ça', normalized: 'it' },
   { native: 'ca', normalized: 'it' },
+  // `ça` written out, and its pair (were read as variables).
+  { native: 'cela', normalized: 'it' },
+  { native: 'ceci', normalized: 'it' },
   { native: 'resultat', normalized: 'result' },
   { native: 'evenement', normalized: 'event' },
 

@@ -82,6 +82,12 @@ const SPANISH_EXTRAS: KeywordEntry[] = [
 
   // Reference alternatives (accent variation, synonym)
   { native: 'mí', normalized: 'me' }, // Accented form of mi
+  // The neuter demonstratives are how Spanish says `it` (`ello` is literary), as
+  // pt `isso` and fr `ça` are theirs; `lo` is the profile's own object clitic,
+  // written apart from its verb (`poner lo en #o`). Each read as a variable.
+  { native: 'eso', normalized: 'it' },
+  { native: 'esto', normalized: 'it' },
+  { native: 'lo', normalized: 'it' },
   { native: 'destino', normalized: 'target' }, // Synonym for objetivo
   { native: 'inclusivo', normalized: 'inclusive' },
   { native: 'exclusivo', normalized: 'exclusive' },

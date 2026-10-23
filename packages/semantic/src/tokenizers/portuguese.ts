@@ -112,6 +112,7 @@ const PORTUGUESE_EXTRAS: KeywordEntry[] = [
   { native: 'meu', normalized: 'my' },
   { native: 'minha', normalized: 'my' },
   { native: 'isso', normalized: 'it' },
+  { native: 'isto', normalized: 'it' }, // the other neuter demonstrative (was read as a variable)
 
   // Time units
   { native: 'segundo', normalized: 's' },
