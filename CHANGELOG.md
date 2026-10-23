@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.5.1] - 2026-10-23
+
+The last two silent misreads of hand-written non-English hyperscript that the 7.3.0 live test
+found: one is now refused, the other reads right.
+
 ### Fixed
 
 - **ko: an event word followed by its object particle is the verb's object, not a handler.** At
