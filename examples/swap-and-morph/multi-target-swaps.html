@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>04: Multi-Target Swaps - htmx-like Examples</title>
+    <title>Multi-Target Swaps - Examples</title>
     <link rel="stylesheet" href="../gallery.css">
     <style>
         /* Example-specific styles */
@@ -138,24 +138,25 @@
 <body class="example-page">
     <div class="page-container">
         <div class="breadcrumb">
-            <a href="../index.html">← Back to Gallery</a> / <strong>htmx-like</strong> / 04: Multi-Target Swaps
+            <a href="../index.html">← Back to Gallery</a> / <strong>Swap &amp; Morph</strong> / Multi-Target Swaps
         </div>
 
         <h1>Multi-Target Swaps</h1>
 
         <div class="description">
             <strong>Update multiple elements from a single response</strong><br>
-            HyperFixi supports two patterns for multi-target updates:
+            Two patterns for multi-target updates:
             <ul style="margin: 10px 0;">
                 <li><strong>Explicit updates:</strong> Several <code>put</code> commands in sequence</li>
-                <li><strong>Partials:</strong> <code>&lt;hx-partial&gt;</code> elements for automatic distribution</li>
+                <li><strong>Partials:</strong> one response, a fragment per target (simulated below; with htmx 4 loaded,
+                    <code>&lt;template hx type="partial"&gt;</code>)</li>
             </ul>
         </div>
 
         <div>
             <span class="tag">multi-target</span>
-            <span class="tag">hx-partial</span>
-            <span class="tag htmx">htmx-like</span>
+            <span class="tag">put</span>
+            <span class="tag htmx">htmx 4 partials</span>
             <span class="tag">OOB updates</span>
         </div>
 
@@ -224,14 +225,17 @@
             </div>
         </div>
 
-        <!-- Demo 2: Process Partials -->
+        <!-- Demo 2: Partials (simulated) -->
         <div class="demo">
-            <h2>Demo 2: Process Partials</h2>
-            <p>Use <code>&lt;hx-partial&gt;</code> elements to specify targets:</p>
+            <h2>Demo 2: Partials</h2>
+            <p>One response carries several fragments, each naming its target:</p>
 
             <div class="note">
-                <strong>How it works:</strong> The server returns HTML with <code>&lt;hx-partial target="#id"&gt;</code>
-                elements. HyperFixi extracts each partial and swaps it into the specified target.
+                <strong>How it works:</strong> a partials response carries a fragment per target. This demo performs
+                those swaps explicitly; hyperfixi 3.x's <code>process partials</code> command did it for you and retired
+                in 4.0. With htmx 4 loaded beside hyperfixi, the server returns
+                <code>&lt;template hx type="partial" hx-target="#id"&gt;</code> elements (or <code>hx-swap-oob</code>)
+                and htmx distributes them.
             </div>
 
             <button
@@ -248,7 +252,7 @@
                    set alertHtml to '<div class=card style=margin-top:10px><p>Alert at ' + timestamp + '</p></div>'
                    put alertHtml at end of #partial-alert"
             >
-                Process Partials Response
+                Simulate a Partials Response
             </button>
 
             <button class="secondary"
@@ -370,81 +374,71 @@
   <span class="keyword">put</span> it.data <span class="keyword">into</span> data
 
   <span class="comment">-- Update multiple targets</span>
-  <span class="keyword">swap</span> #main <span class="keyword">with</span> data.main
-  <span class="keyword">swap</span> #sidebar <span class="keyword">with</span> data.sidebar
-  <span class="keyword">swap</span> #notifications <span class="keyword">with</span> data.notifications
+  <span class="keyword">put</span> data.main <span class="keyword">into</span> #main
+  <span class="keyword">put</span> data.sidebar <span class="keyword">into</span> #sidebar
+  <span class="keyword">put</span> data.notifications <span class="keyword">into</span> #notifications
         </div>
 
-        <h3>hx-partial Response Format:</h3>
+        <h3>htmx 4 Partials Response:</h3>
         <div class="code">
-<span class="tag-name">&lt;hx-partial</span> <span class="attr-name">target</span>=<span class="string">"#main"</span><span class="tag-name">&gt;</span>
+<span class="tag-name">&lt;template</span> <span class="attr-name">hx type</span>=<span class="string">"partial"</span> <span class="attr-name">hx-target</span>=<span class="string">"#main"</span><span class="tag-name">&gt;</span>
   <span class="comment">&lt;!-- Content for #main --&gt;</span>
   &lt;div&gt;Main content here&lt;/div&gt;
-<span class="tag-name">&lt;/hx-partial&gt;</span>
+<span class="tag-name">&lt;/template&gt;</span>
 
-<span class="tag-name">&lt;hx-partial</span> <span class="attr-name">target</span>=<span class="string">"#sidebar"</span> <span class="attr-name">strategy</span>=<span class="string">"innerHTML"</span><span class="tag-name">&gt;</span>
-  <span class="comment">&lt;!-- Content for #sidebar with explicit strategy --&gt;</span>
+<span class="tag-name">&lt;template</span> <span class="attr-name">hx type</span>=<span class="string">"partial"</span> <span class="attr-name">id</span>=<span class="string">"sidebar"</span><span class="tag-name">&gt;</span>
+  <span class="comment">&lt;!-- No hx-target: the template's id names the target --&gt;</span>
   &lt;nav&gt;Sidebar content&lt;/nav&gt;
-<span class="tag-name">&lt;/hx-partial&gt;</span>
+<span class="tag-name">&lt;/template&gt;</span>
 
-<span class="tag-name">&lt;hx-partial</span> <span class="attr-name">target</span>=<span class="string">"#notifications"</span> <span class="attr-name">strategy</span>=<span class="string">"beforeEnd"</span><span class="tag-name">&gt;</span>
+<span class="tag-name">&lt;template</span> <span class="attr-name">hx type</span>=<span class="string">"partial"</span> <span class="attr-name">hx-target</span>=<span class="string">"#notifications"</span> <span class="attr-name">hx-swap</span>=<span class="string">"beforeend"</span><span class="tag-name">&gt;</span>
   <span class="comment">&lt;!-- Append to notifications --&gt;</span>
   &lt;div class="toast"&gt;New message!&lt;/div&gt;
-<span class="tag-name">&lt;/hx-partial&gt;</span>
+<span class="tag-name">&lt;/template&gt;</span>
         </div>
 
-        <h3>Process Partials Command:</h3>
-        <div class="code">
-<span class="keyword">on</span> click
-  <span class="keyword">fetch</span> <span class="string">"/api/dashboard"</span> <span class="keyword">as</span> html
-  <span class="keyword">process partials in</span> it  <span class="comment">-- Finds and swaps all hx-partial elements</span>
-        </div>
-
-        <h3>With View Transitions:</h3>
-        <div class="code">
-<span class="keyword">on</span> click
-  <span class="keyword">fetch</span> <span class="string">"/api/dashboard"</span> <span class="keyword">as</span> html
-  <span class="keyword">process partials in</span> it <span class="keyword">using view transition</span>
-        </div>
+        <p class="note">hyperfixi 3.x distributed <code>&lt;hx-partial&gt;</code> elements with a <code>process partials</code>
+        command, which retired with core's htmx layer in 4.0. For server-driven multi-target responses, load htmx 4
+        beside hyperfixi and return the templates above (or elements with <code>hx-swap-oob</code>); the explicit
+        updates above are the hyperscript-only approach.</p>
 
         <div class="explanation">
             <h3>How it works:</h3>
             <ul>
                 <li><strong>Explicit updates:</strong> Just chain several <code>put</code> commands</li>
-                <li><strong>hx-partial:</strong> Server returns structured response with targets</li>
-                <li><code>process partials</code> extracts and distributes content automatically</li>
-                <li>Each partial can have its own swap strategy</li>
+                <li><strong>Partials (htmx 4):</strong> the server returns one response with a fragment per target</li>
+                <li>Each partial can set its own <code>hx-swap</code></li>
             </ul>
 
-            <h3>hx-partial Attributes:</h3>
+            <h3>Partial Attributes (htmx 4):</h3>
             <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
                 <tr style="background: var(--color-surface, #f4f4f5);">
                     <th style="padding: 10px; text-align: left; border-bottom: 2px solid var(--color-border, #e4e4e7);">Attribute</th>
                     <th style="padding: 10px; text-align: left; border-bottom: 2px solid var(--color-border, #e4e4e7);">Description</th>
                 </tr>
                 <tr>
-                    <td style="padding: 10px; border-bottom: 1px solid var(--color-border, #e4e4e7);"><code>target</code></td>
-                    <td style="padding: 10px; border-bottom: 1px solid var(--color-border, #e4e4e7);">CSS selector for target element (required)</td>
+                    <td style="padding: 10px; border-bottom: 1px solid var(--color-border, #e4e4e7);"><code>hx-target</code></td>
+                    <td style="padding: 10px; border-bottom: 1px solid var(--color-border, #e4e4e7);">CSS selector for the target element (defaults to the template's <code>id</code>)</td>
                 </tr>
                 <tr>
-                    <td style="padding: 10px; border-bottom: 1px solid var(--color-border, #e4e4e7);"><code>strategy</code></td>
-                    <td style="padding: 10px; border-bottom: 1px solid var(--color-border, #e4e4e7);">Swap strategy (morph, innerHTML, beforeEnd, etc.)</td>
+                    <td style="padding: 10px; border-bottom: 1px solid var(--color-border, #e4e4e7);"><code>hx-swap</code></td>
+                    <td style="padding: 10px; border-bottom: 1px solid var(--color-border, #e4e4e7);">Swap style (innerHTML, beforeend, etc.; defaults to htmx's default swap)</td>
                 </tr>
             </table>
 
             <h3>htmx Comparison:</h3>
             <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
                 <tr style="background: var(--tag-htmx-bg);">
-                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid var(--color-border, #e4e4e7);">htmx</th>
-                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid var(--color-border, #e4e4e7);">HyperFixi</th>
-                </tr>
-                <tr>
-                    <td style="padding: 10px; border-bottom: 1px solid var(--color-border, #e4e4e7);"><code>hx-swap-oob="true"</code></td>
-                    <td style="padding: 10px; border-bottom: 1px solid var(--color-border, #e4e4e7);"><code>&lt;hx-partial target="#id"&gt;</code></td>
+                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid var(--color-border, #e4e4e7);">htmx 4 (in the response)</th>
+                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid var(--color-border, #e4e4e7);">hyperscript (in the page)</th>
                 </tr>
                 <tr>
                     <td style="padding: 10px; border-bottom: 1px solid var(--color-border, #e4e4e7);"><code>&lt;div id="x" hx-swap-oob="true"&gt;</code></td>
-                    <td style="padding: 10px; border-bottom: 1px solid var(--color-border, #e4e4e7);"><code>&lt;hx-partial target="#x"&gt;</code></td>
+                    <td style="padding: 10px; border-bottom: 1px solid var(--color-border, #e4e4e7);"><code>put data.x into #x</code></td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid var(--color-border, #e4e4e7);"><code>&lt;template hx type="partial" hx-target="#x" hx-swap="beforeend"&gt;</code></td>
+                    <td style="padding: 10px; border-bottom: 1px solid var(--color-border, #e4e4e7);"><code>put data.x at end of #x</code></td>
                 </tr>
             </table>
 
@@ -459,8 +453,8 @@
 
         <!-- Navigation -->
         <div class="nav-buttons">
-            <a href="03-history-navigation.html">← Previous: History Navigation</a>
-            <a href="05-boosted-links.html">Next: Boosted Links →</a>
+            <a href="../navigation/history-navigation.html">← Previous: History Navigation</a>
+            <a href="../navigation/boosted-links.html">Next: Boosted Links →</a>
         </div>
     </div>
 
