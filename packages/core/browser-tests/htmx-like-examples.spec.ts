@@ -5,29 +5,15 @@
  * Each example serves as both documentation AND a live test.
  *
  * Examples tested:
- * 1. Swap & Morph - DOM swapping with state preservation
- * 2. View Transitions - Smooth CSS-powered transitions
- * 3. History Navigation - push url / replace url commands
- * 4. Multi-Target Swaps - Update multiple elements from single action
+ * 1. Swap & Morph - DOM updates with state preservation (put, morph)
+ * 2. View Transitions - start view transition … end around a put
+ * 3. History Navigation - call history.pushState / replaceState
+ * 4. Multi-Target Swaps - Update multiple elements from a single action
  * 5. Boosted Links - AJAX navigation patterns
  *
- * NOTE: Many tests are marked .fixme() because the underlying commands
- * (swap, morph, push url, replace url, process partials) are planned but
- * not yet fully implemented. These tests serve as a specification for
- * what behavior to expect once the commands are built.
- *
- * Tests that PASS now:
- * - Page loading without errors
- * - HyperFixi loads correctly
- * - Active class management (uses existing add/remove commands)
- * - Browser support check display
- *
- * Tests that need htmx-like commands implemented:
- * - swap command tests
- * - morph command tests
- * - push url tests
- * - replace url tests
- * - process partials tests
+ * The pages run upstream's grammar on the engine. 3.x's htmx-style forms
+ * (swap … with as a content swap, push url, replace url, process partials)
+ * retired in 4.0; some test titles below still use those names.
  */
 import { test, expect } from '@playwright/test';
 import { waitForHyperfixi } from './test-utils';
@@ -35,7 +21,7 @@ import { waitForHyperfixi } from './test-utils';
 const BASE_URL = 'http://127.0.0.1:3000';
 
 test.describe('htmx-like Examples Live Tests @comprehensive', () => {
-  test.describe('01: Swap & Morph (01-swap-morph.html)', () => {
+  test.describe('Swap & Morph (swap-and-morph/swap-morph.html)', () => {
     // Test swap command - now registered in parser
     test('basic swap updates content', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/swap-and-morph/swap-morph.html`, {
@@ -180,7 +166,7 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
     });
   });
 
-  test.describe('02: View Transitions (02-view-transitions.html)', () => {
+  test.describe('View Transitions (animation/view-transitions.html)', () => {
     // swap with view transition is implemented
     test('swap with transition updates content', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/animation/view-transitions.html`, {
@@ -257,7 +243,7 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
     });
   });
 
-  test.describe('03: History Navigation (03-history-navigation.html)', () => {
+  test.describe('History Navigation (navigation/history-navigation.html)', () => {
     // push url is implemented
     test('push url updates browser hash', async ({ page }) => {
       // Capture ALL console output for debugging
@@ -390,7 +376,7 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
     });
   });
 
-  test.describe('04: Multi-Target Swaps (04-multi-target-swaps.html)', () => {
+  test.describe('Multi-Target Swaps (swap-and-morph/multi-target-swaps.html)', () => {
     // swap is implemented
     test('explicit multi-swap updates all panels', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/swap-and-morph/multi-target-swaps.html`, {
@@ -434,7 +420,7 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
       expect(initialPartial).toContain('Waiting for partial');
 
       // Click process partials
-      await page.click('button:has-text("Process Partials Response")');
+      await page.click('button:has-text("Simulate a Partials Response")');
       await page.waitForTimeout(500);
 
       // Partials should be updated
@@ -454,9 +440,9 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
       await waitForHyperfixi(page);
 
       // Click process partials multiple times
-      await page.click('button:has-text("Process Partials Response")');
+      await page.click('button:has-text("Simulate a Partials Response")');
       await page.waitForTimeout(300);
-      await page.click('button:has-text("Process Partials Response")');
+      await page.click('button:has-text("Simulate a Partials Response")');
       await page.waitForTimeout(300);
 
       // Should have multiple alert cards (beforeEnd appends) - note: cards only have class "card"
@@ -487,7 +473,7 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
     });
   });
 
-  test.describe('05: Boosted Links (05-boosted-links.html)', () => {
+  test.describe('Boosted Links (navigation/boosted-links.html)', () => {
     // swap and push url are implemented
     test('boosted nav links update content without reload', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/navigation/boosted-links.html`, {
