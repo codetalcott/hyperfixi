@@ -67,7 +67,7 @@
     "@types/node": "^26.6.5",
     "@vitest/coverage-v8": "^5.0.5",
     "esbuild": "^0.28.2",
-    "happy-dom": "^21.0.3",
+    "happy-dom": "^21.0.4",
     "hyperscript.org": "0.9.93",
     "playwright": "^1.40.0",
     "puppeteer": "^25.14.0",
