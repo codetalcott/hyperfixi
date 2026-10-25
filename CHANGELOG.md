@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`@hyperfixi/engine`: a module can add a reading to a command without changing what the
+  command reads (`Grammar.fallbacks`).** A fallback registered for a keyword is tried, from just
+  after the keyword, only when the command's own rule fails to parse, and it counts only if it
+  reads at least as far as that rule got. `toggle <element>` (the `toggleElement` module) is now
+  one. Every `toggle` that upstream reads now goes through upstream's rule exactly (registering
+  `toggleElement` used to send every `toggle <target>` through a different expression rule).
+  An unfinished upstream `toggle` now reports upstream's error: `toggle #d as` used to say
+  `Expected 'modal'`, and now says `Expected dotOrColonPath`, as upstream does. The
+  `Grammar.toggleElement` slot is gone; a module that set it registers a fallback instead.
+  `Parser` gains `mark()` and `reset()`.
+
 ## [7.5.1] - 2026-10-23
 
 The last two silent misreads of hand-written non-English hyperscript that the 7.3.0 live test

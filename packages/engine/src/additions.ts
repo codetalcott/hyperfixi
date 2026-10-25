@@ -2,16 +2,20 @@
  * Syntax upstream `_hyperscript` does not have. Everything else in this engine
  * follows upstream's source; these two forms come from `packages/core`, are used
  * by the examples this repository ships, and were kept by decision (2026-10-01).
- * Each is an optional module, and neither changes how an upstream script reads:
+ * Each is an optional module. What each takes from upstream is measured, claim by
+ * claim, by `npm run check:claims` (`tests/claims.json`):
  *
  * - `construct`: `new Date()`, `new Intl.NumberFormat('en')`. Upstream has the
  *   `make a Date` command and no expression; there, `set t to new Date().getDay()`
- *   parses (`new` is a variable, the call a second command) and fails when it runs.
+ *   parses (`new` is a variable, the call a second command) and fails when it runs,
+ *   and `set d to new Date()` runs and leaves `d` null. A dialect, kept in every
+ *   bundle by decision (2026-10-25).
  * - `toggleElement`: `toggle #dialog`, `toggle #dialog modal`, `toggle #details`.
- *   Upstream rejects `toggle <expression>` without `between`.
+ *   Upstream rejects `toggle <expression>` without `between`. A fallback for
+ *   `toggle` (`Grammar.fallbacks`), so it reads only what that rule rejects.
  */
 import type { Cmd, Expr } from './ast';
-import { expr } from './expressions';
+import { expr, unary } from './expressions';
 import type { Grammar } from './parser';
 import { implicitLoop, nullCheck, resolveSymbol } from './runtime';
 import { all, fn, get, then1 } from './util';
@@ -96,9 +100,16 @@ function flip(elt: unknown, modal: boolean): void {
   else throw new Error('toggle needs a dialog, details, select or popover element');
 }
 
-/** `toggle <element> [modal | as modal]`: the form `toggle` takes when no `between` follows. */
+/**
+ * `toggle <element> [modal | as modal]`: a fallback for `toggle`, so it reads only what
+ * upstream's rule rejects. It declines a target `between` follows: that is upstream's form.
+ */
 export function toggleElement(g: Grammar): void {
-  g.toggleElement = (p, target, start) => {
+  (g.fallbacks.toggle ??= []).push((p, _keyword, start) => {
+    p.matchAny('the', 'my');
+    // The target may be any element expression, and `as modal` after it is not a conversion.
+    const target = p.withFollow(['between', 'as'], () => unary(p));
+    if (p.peek('between')) return;
     const modal = p.match('as') ? !!p.req('modal') : !!p.match('modal');
     const text = p.text(target);
     const node: ToggleElementNode = {
@@ -114,5 +125,5 @@ export function toggleElement(g: Grammar): void {
         }),
     };
     return node;
-  };
+  });
 }

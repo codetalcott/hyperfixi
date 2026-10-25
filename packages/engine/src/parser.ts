@@ -30,9 +30,21 @@ export type CommandRule = (p: Parser, keyword: string, start: number) => Cmd | u
 export type FeatureRule = (p: Parser, start: number) => Feature;
 export type LeafRule = (p: Parser) => Expr | undefined;
 export type ChainRule = (p: Parser, root: Expr) => Expr | undefined;
+/** A position `Parser.mark` returns: the token, the last one consumed, the follow set's depth. */
+export interface Mark {
+  readonly i: number;
+  readonly last: Token;
+  readonly follows: number;
+}
 
 export interface Grammar {
   commands: Record<string, CommandRule>;
+  /**
+   * More readings of a command, for syntax upstream does not have (`additions.ts`): tried in
+   * order, from just after the keyword, only when the command's own rule fails to parse. One
+   * returns `undefined` to decline. So a fallback cannot change what the rule itself reads.
+   */
+  fallbacks: Record<string, CommandRule[]>;
   features: Record<string, FeatureRule>;
   /** Tried in order; the symbol rule goes last so it does not swallow keywords. */
   leaves: LeafRule[];
@@ -46,12 +58,11 @@ export interface Grammar {
   collections: ChainRule[];
   /** A bare call used as a command: `foo()`, `me.focus()`. */
   pseudo?: (p: Parser, start: number) => Cmd | undefined;
-  /** `toggle <element>`, with no `between`: not upstream's (`additions.ts`). */
-  toggleElement?: (p: Parser, target: Expr, start: number) => Cmd;
 }
 
 export const createGrammar = (): Grammar => ({
   commands: Object.create(null),
+  fallbacks: Object.create(null),
   features: Object.create(null),
   leaves: [],
   indirects: [],
@@ -105,6 +116,17 @@ export class Parser {
   /** Start offset of the current token — what a rule records as its node's `start`. */
   pos(): number {
     return this.cur().start;
+  }
+
+  /** Where the parser is, for `reset`: a command's fallback reads again from here. */
+  mark(): Mark {
+    return { i: this.i, last: this.last, follows: this.follows.length };
+  }
+
+  reset(mark: Mark): void {
+    this.i = mark.i;
+    this.last = mark.last;
+    this.follows.length = mark.follows;
   }
 
   /** End offset of the last consumed token — a node's `end`. */
