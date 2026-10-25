@@ -7,13 +7,42 @@
  */
 import type { Cmd, Expr, Feature, Handlers, Program } from './ast';
 import { expr } from './expressions';
-import type { Parser } from './parser';
+import { ParseError, type CommandRule, type Parser } from './parser';
 import { then1 } from './util';
 
 export interface UnlessNode extends Cmd {
   type: 'unlessStatementModifier';
   command: Cmd;
   condition: Expr;
+}
+
+/**
+ * A command's own rule and, when it fails to parse, the fallbacks registered for its keyword.
+ * A fallback's reading counts only if it reads at least as far as the rule did before failing:
+ * one that stops short (`toggle .a` of `toggle .a for`) is not a better reading of the rule's
+ * own form. The error reported is the one that got furthest, and the rule's when they tie.
+ */
+function withFallbacks(p: Parser, rule: CommandRule, keyword: string, start: number) {
+  const fallbacks = p.g.fallbacks[keyword];
+  if (!fallbacks) return rule(p, keyword, start);
+  const mark = p.mark();
+  try {
+    return rule(p, keyword, start);
+  } catch (e) {
+    if (!(e instanceof ParseError)) throw e;
+    let error = e;
+    for (const fallback of fallbacks) {
+      p.reset(mark);
+      try {
+        const cmd = fallback(p, keyword, start);
+        if (cmd && p.pos() >= e.token.start) return cmd;
+      } catch (f) {
+        if (!(f instanceof ParseError)) throw f;
+        if (f.token.start > error.token.start) error = f;
+      }
+    }
+    throw error;
+  }
 }
 
 export function command(p: Parser): Cmd | undefined {
@@ -26,7 +55,7 @@ export function command(p: Parser): Cmd | undefined {
   const t = p.cur();
   const rule = p.g.commands[t.value];
   let cmd: Cmd | undefined;
-  if (rule) cmd = p.match(t.value) && rule(p, t.value, start);
+  if (rule) cmd = p.match(t.value) && withFallbacks(p, rule, t.value, start);
   else if (t.type === 'IDENTIFIER') cmd = p.g.pseudo?.(p, start);
   if (!cmd || !p.match('unless')) return cmd;
 

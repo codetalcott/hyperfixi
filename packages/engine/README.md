@@ -39,6 +39,12 @@ feature, or an optional expression kind. A rule that is not registered does not 
 script that uses it fails with a parse error that names the token. `src/bundles/full.ts` is the
 list of every module.
 
+A module can also add a reading to a command another module defines, for syntax upstream does
+not have: a fallback (`(g.fallbacks.toggle ??= []).push(rule)`). It is tried from just after the
+keyword, and only when the command's own rule fails to parse. Its reading counts only if it
+reads at least as far as that rule got before failing; otherwise the rule's error stands. So a
+fallback cannot change what the command reads. `toggle <element>` (`src/additions.ts`) is one.
+
 A module can live in another package. `@hyperfixi/speech` is one (upstream's `speak`): it imports
 `expr` and the `Grammar` / `Cmd` / `Expr` types from here, sets `g.commands.speak` to a rule that
 reads its operands off the `Parser` it is handed, and returns a node whose `run` may return a
@@ -125,9 +131,9 @@ fails the gate. So does a listed test that now passes: prune it with
 it in the `browser-tests` job.
 
 **The package's own tests.** `test:own` runs `tests/` against the same bundle, for the two forms
-upstream has no tests for. Every one must pass. On upstream's own bundle 2 of the 21 pass (the
-two that check an upstream form still reads as it did), which is what shows the rest test the
-additions. `tests/regressions.js` holds the other kind: places where this engine differed from
+upstream has no tests for. Every one must pass. On upstream's own bundle 3 of the 27 pass (the
+three that check an upstream form still reads, or fails, as it did), which is what shows the
+rest test the additions. `tests/regressions.js` holds the other kind: places where this engine differed from
 upstream and upstream's tests did not show it (each of those passes on upstream). CI runs both
 after the upstream suite.
 
@@ -291,7 +297,8 @@ registered as without, and `check:claims` measures what each takes from upstream
 - `toggle #dialog`, `toggle #dialog modal` (or `as modal`), `toggle #details`: open what is
   closed and close what is open, for a dialog, a details element (or its summary), a popover
   and a select. Upstream rejects `toggle <expression>` unless `between` follows; that form is
-  unchanged. 0.21 KB. Measured an **addition**: upstream rejects every form it claims.
+  unchanged. 0.21 KB. Measured an **addition**: upstream rejects every form it claims. It is
+  a fallback for `toggle` (above), so it reads only what upstream's rule rejects.
 
 An attribute read through `my` / `its` / `your` takes nothing after it here, as on upstream:
 both reject `my @id as String` (upstream's attribute-access rule does not continue the

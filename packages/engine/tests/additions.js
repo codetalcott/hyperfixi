@@ -185,6 +185,16 @@ test.describe('toggle <element>', () => {
   test('reports a target that is not there', async ({ error }) => {
     expect(await error('toggle #missing')).toBe("'#missing' is null");
   });
+
+  // The element form is a fallback: it is tried only when upstream's rule fails, and a reading
+  // that stops short of where that rule failed does not count. So an unfinished upstream form
+  // reports upstream's error, not one about the element form.
+  test("an unfinished upstream form reports upstream's error", async ({ error }) => {
+    const first = async src => (await error(src))?.split('\n')[0];
+    expect(await first('toggle between .a')).toBe("Expected 'and' but found '<<<EOF>>>'");
+    expect(await first('toggle .a for')).toBe('Unexpected value: <<<EOF>>>');
+    expect(await first('toggle #d as')).toBe('Expected dotOrColonPath');
+  });
 });
 
 test.describe('fixi: content it swaps in runs', () => {
