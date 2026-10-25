@@ -762,8 +762,11 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    * `intercept` always parses with an empty body (opaque by design), so it
    * renders as a bare `<keyword> … end` — correct, and the reason the loop
    * tolerates an empty body rather than asserting one.
+   *
+   * `socket` is the exception: see {@link renderSocket}.
    */
   private renderFeature(node: FeatureSemanticNode, language: string): string {
+    if (node.action === 'socket') return this.renderSocket(node, language);
     const endKw = this.keyword(language, 'end');
     const lines = [this.featureHeader(node, language)];
     for (const child of node.body) {
@@ -772,6 +775,35 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       if (child.kind === 'event-handler') lines.push(`  ${endKw}`);
     }
     lines.push(endKw);
+    return lines.join('\n');
+  }
+
+  /**
+   * A socket: its header, its message clause, and ONE `end`. Upstream's socket reads
+   * `on message [as JSON] <commands>` as its own clause, closed by the socket's `end`;
+   * rendered as a handler with an `end` of its own, every language wrote a second `end`,
+   * which the engine rejects. `as JSON` follows the clause's head (`on message as JSON`, ja
+   * `messageで として JSON`), its `as` in the word the language writes a conversion with.
+   */
+  private renderSocket(node: FeatureSemanticNode, language: string): string {
+    const lines = [this.featureHeader(node, language)];
+    const json = node.roles.get('responseType' as SemanticRole);
+    for (const child of node.body) {
+      let line = this.render(child, language);
+      if (json?.type === 'literal' && child.kind === 'event-handler') {
+        const handler = child as EventHandlerSemanticNode;
+        const bodiless: EventHandlerSemanticNode = { ...handler, body: [] };
+        const head = this.render(bodiless, language);
+        const words = this.valueWords(language);
+        if (words.conversionAs !== 'as') words.wrote?.();
+        const asJson = `${head} ${words.conversionAs} ${String(json.value)}`;
+        line = line.startsWith(head)
+          ? asJson + line.slice(head.length)
+          : [asJson, ...handler.body.map(c => `    ${this.render(c, language)}`)].join('\n');
+      }
+      lines.push(`  ${line}`);
+    }
+    lines.push(this.keyword(language, 'end'));
     return lines.join('\n');
   }
 

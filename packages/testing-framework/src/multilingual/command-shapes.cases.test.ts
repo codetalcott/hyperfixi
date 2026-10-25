@@ -37,15 +37,18 @@ describe('command-shape cases', () => {
   });
 
   // A re-harvest that changes the count is a change to the gate's input:
-  // update this pin in the same PR, and say what moved.
-  it('are the 1135 the harvest found', () => {
-    expect(cases.length).toBe(1135);
+  // update this pin in the same PR, and say what moved. (1135 → 1168, 2026-10-25: the
+  // engine reads with its extensions, and the harvest reads `ext/` and `textContent`
+  // scripts: upstream's 15 socket scripts and socket's hover example, 7 tailwind, 10
+  // hs-include `init` scripts.)
+  it('are the 1168 the harvest found', () => {
+    expect(cases.length).toBe(1168);
     const byOrigin = cases.reduce<Record<string, number>>((m, c) => {
       const kind = c.origin.split(':')[0] ?? '';
       m[kind] = (m[kind] ?? 0) + 1;
       return m;
     }, {});
-    expect(byOrigin).toEqual({ upstream: 947, reference: 122, 'reference-pattern': 8, hover: 58 });
+    expect(byOrigin).toEqual({ upstream: 979, reference: 122, 'reference-pattern': 8, hover: 59 });
   });
 
   it('are not edited by hand: each id is the hash of its source', () => {

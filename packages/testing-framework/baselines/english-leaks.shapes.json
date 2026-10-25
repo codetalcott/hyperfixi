@@ -1,12 +1,12 @@
 {
   "description": "English-leak gate, command-shape half (src/multilingual/english-leaks.ts): per command-shape case, the findings of each language's render (translate(src, 'en', L)): an English grammar word, `event:<name>`, `case:<pronoun>` or `spacing:<marker>`. `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts.",
-  "renders": 25434,
-  "leaky": 3908,
-  "findings": 7380,
+  "renders": 26193,
+  "leaky": 4106,
+  "findings": 7764,
   "kinds": {
     "word": {
-      "renders": 2739,
-      "findings": 4592
+      "renders": 2921,
+      "findings": 4929
     },
     "event": {
       "renders": 0,
@@ -17,8 +17,8 @@
       "findings": 39
     },
     "spacing": {
-      "renders": 1292,
-      "findings": 2749
+      "renders": 1318,
+      "findings": 2796
     }
   },
   "entries": {
@@ -47,6 +47,9 @@
     },
     "014eb9ebf5": {
       "spacing:i spacing:le": "tr"
+    },
+    "0152108937": {
+      "spacing:le": "tr"
     },
     "01556efe52": {
       "spacing:e spacing:i": "tr"
@@ -147,6 +150,9 @@
     "08e8a68c85": {
       "spacing:e spacing:e spacing:i spacing:i": "tr"
     },
+    "091229c5d5": {
+      "spacing:e spacing:i": "tr"
+    },
     "092699feee": {
       "spacing:i": "tr"
     },
@@ -213,6 +219,9 @@
     "0f2669dcdc": {
       "spacing:i spacing:i": "tr"
     },
+    "0f42ea807f": {
+      "spacing:le": "tr"
+    },
     "0fba0cde11": {
       "spacing:e spacing:e spacing:i spacing:i": "tr"
     },
@@ -238,6 +247,9 @@
     },
     "1137122b56": {
       "spacing:i": "tr"
+    },
+    "1148eae2fa": {
+      "spacing:le": "tr"
     },
     "116a91c7f8": {
       "spacing:den spacing:e spacing:i": "tr",
@@ -366,6 +378,9 @@
     "190d9ca9e9": {
       "spacing:e spacing:e spacing:i spacing:i": "tr"
     },
+    "1984d270b6": {
+      "spacing:e spacing:i": "tr"
+    },
     "19a79b3024": {
       "spacing:i": "tr"
     },
@@ -379,6 +394,10 @@
     },
     "1a8a46903b": {
       "spacing:e spacing:i": "tr"
+    },
+    "1a9bebbdab": {
+      "message": "ar de es fr he hi id it ko ms pl pt qu ru sw th tl uk vi zh",
+      "message spacing:da spacing:e spacing:i": "tr"
     },
     "1aa63fd5f9": {
       "spacing:e spacing:i": "tr"
@@ -449,6 +468,9 @@
     },
     "20161acab0": {
       "in": "ar bn es fr he hi id ja ko ms pl pt qu ru sw th tl uk zh"
+    },
+    "20864ca9a9": {
+      "spacing:e spacing:e spacing:i spacing:i": "tr"
     },
     "20efa33ba5": {
       "spacing:i spacing:i": "tr"
@@ -1440,6 +1462,9 @@
     "6811807eb6": {
       "spacing:i spacing:i": "tr"
     },
+    "681a650ebc": {
+      "spacing:e spacing:e spacing:i spacing:i": "tr"
+    },
     "6835085279": {
       "spacing:i spacing:i": "tr"
     },
@@ -1493,6 +1518,13 @@
     "6bd43c0600": {
       "spacing:e spacing:i": "tr"
     },
+    "6bed0e799a": {
+      "JSON": "bn",
+      "JSON message": "ar de es fr he hi id it ms pl pt qu ru sw th tl uk vi zh",
+      "JSON message spacing:da spacing:e spacing:i": "tr",
+      "JSON message spacing:로": "ko",
+      "JSON spacing:として": "ja"
+    },
     "6c502db00d": {
       "spacing:i": "tr"
     },
@@ -1527,6 +1559,9 @@
     },
     "6dd0088239": {
       "spacing:e spacing:e spacing:i spacing:i": "tr"
+    },
+    "6df4022d85": {
+      "timeout with": "*"
     },
     "6e3bd8d366": {
       "spacing:den spacing:i": "tr",
@@ -2127,6 +2162,13 @@
       "of spacing:i spacing:in the": "tr",
       "of the": "de it vi"
     },
+    "9034d0021e": {
+      "JSON": "bn",
+      "JSON message": "ar de es fr he hi id it ms pl pt qu ru sw th tl uk vi zh",
+      "JSON message spacing:da spacing:e spacing:i": "tr",
+      "JSON message spacing:로": "ko",
+      "JSON spacing:として": "ja"
+    },
     "90a42e1d9a": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr"
     },
@@ -2211,6 +2253,9 @@
     },
     "972c3d6f19": {
       "spacing:e spacing:e spacing:e spacing:e spacing:i spacing:i spacing:i spacing:i": "tr"
+    },
+    "986e3eaa40": {
+      "timeout with": "*"
     },
     "987ed0368c": {
       "of": "bn hi ja ko tl vi zh",
@@ -2708,6 +2753,9 @@
     "bc2e321c80": {
       "spacing:e spacing:i": "tr"
     },
+    "bc88ad8664": {
+      "timeout with": "*"
+    },
     "bcf30473e0": {
       "in null": "he",
       "spacing:de spacing:nin": "tr",
@@ -2764,6 +2812,9 @@
     "c043e101bf": {
       "I precede": "ar bn de es fr he hi id it ja ko ms pl pt qu ru sw th tl uk vi zh",
       "I precede spacing:i": "tr"
+    },
+    "c097c27bb7": {
+      "spacing:e spacing:i": "tr"
     },
     "c0ad58570f": {
       "case:me-object": "ar"
@@ -2989,6 +3040,9 @@
     "d4559bb0fb": {
       "spacing:e spacing:i spacing:i": "tr"
     },
+    "d4dd4fbc1d": {
+      "spacing:le": "tr"
+    },
     "d54bf42f20": {
       "spacing:da spacing:den spacing:i": "tr",
       "spacing:에서": "ko",
@@ -3056,6 +3110,9 @@
     "d807756d44": {
       "spacing:i": "tr"
     },
+    "d891336fd9": {
+      "timeout with": "*"
+    },
     "d94fe8f146": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr"
     },
@@ -3107,6 +3164,9 @@
       "spacing:কে": "bn",
       "spacing:를 spacing:에서 spacing:을": "ko"
     },
+    "db6494f862": {
+      "spacing:e spacing:i": "tr"
+    },
     "db7fef03e9": {
       "spacing:de spacing:nin": "tr",
       "spacing:এ spacing:এ": "bn",
@@ -3115,6 +3175,13 @@
     },
     "db83784f60": {
       "spacing:e spacing:i": "tr"
+    },
+    "dc07d12b70": {
+      "json": "bn",
+      "json message": "ar de es fr he hi id it ms pl pt qu ru sw th tl uk vi zh",
+      "json message spacing:da spacing:i": "tr",
+      "json message spacing:로": "ko",
+      "json spacing:として": "ja"
     },
     "dc092ffd38": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr"
@@ -3405,6 +3472,15 @@
       "spacing:로 spacing:로": "ko",
       "spacing:として": "ja"
     },
+    "f0587c6604": {
+      "spacing:e spacing:i": "tr"
+    },
+    "f0a9124287": {
+      "spacing:e spacing:i": "tr"
+    },
+    "f11631adde": {
+      "spacing:le": "tr"
+    },
     "f1554089dd": {
       "spacing:da spacing:da spacing:e spacing:e spacing:i spacing:i": "tr"
     },
@@ -3482,6 +3558,9 @@
     "f714c87ed5": {
       "spacing:i spacing:i": "tr"
     },
+    "f7364805ea": {
+      "spacing:le": "tr"
+    },
     "f74ce980ff": {
       "spacing:i": "tr"
     },
@@ -3534,11 +3613,17 @@
     "fc731ea661": {
       "spacing:e spacing:e spacing:i spacing:i spacing:i": "tr"
     },
+    "fc81c34197": {
+      "spacing:e spacing:i": "tr"
+    },
     "fca1795dbc": {
       "spacing:i": "tr"
     },
     "fca58d36c1": {
       "spacing:i spacing:i": "tr"
+    },
+    "fca5d91170": {
+      "spacing:e spacing:i": "tr"
     },
     "fcebf7d82b": {
       "spacing:e spacing:i": "tr"
