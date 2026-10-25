@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`@hyperfixi/vite-plugin`: `extensions: ['socket', 'tailwind']`.** The generated bundle
+  imports each `@hyperfixi/engine/ext/<name>` and registers it after the modules, and the dev
+  `everything` fallback does too. Extensions are opt-in, so the scan never adds one. A project
+  that lists an extension gets an engine bundle even when the scan found nothing else (a page
+  whose only hyperscript is a `socket`).
+  - **Which module comes with `toggle` is now read from the grammar.** The plugin used to have
+    the rule "`toggleElement` comes with `toggle`" written in; it now reads which modules add
+    a reading to a command (`Grammar.fallbacks`).
+  - **`verify:reference` checks the engine's extensions as its own.** It registers each
+    `dist/ext/<name>.esm.js`, documents their keywords like the engine's, and parses their
+    examples: `socket`'s hover example is now checked, where it was skipped as "upstream's".
+
 - **`@hyperfixi/engine`: extensions that a script tag can load.** After `hyperfixi-hs.js`, a page
   can load `ext/<name>.js`, which registers its module with the page's engine. Or, from ESM,
   `register(...everything, tailwind)` with `@hyperfixi/engine/ext/tailwind`.

@@ -81,6 +81,9 @@ import { tailwind } from '@hyperfixi/engine/ext/tailwind';
 register(...everything, tailwind);
 ```
 
+With `@hyperfixi/vite-plugin`: `hyperfixi({ extensions: ['tailwind'] })`. The plugin's scan
+never adds an extension; a project lists the ones it uses.
+
 - **What a module may call is `src/kit.ts`**: for parsing, `expr`, `dotOrColonPath`,
   `urlOrExpression`, `evalStatic` and `commandList`; for running, `makeContext`, `runList` and
   `assignToNamespace`; and `config`. ESM gets

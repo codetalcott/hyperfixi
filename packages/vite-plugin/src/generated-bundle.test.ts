@@ -100,6 +100,21 @@ describe('the emitted bundle runs', () => {
     expect(el.textContent).toBe('on');
   });
 
+  it('registers a listed extension from @hyperfixi/engine/ext/<name>', async () => {
+    const api = await load(
+      generator.generate(usage(['hide']), { globalName: 'hfxTestExt', extensions: ['tailwind'] })
+    );
+    expect((api.bundle as { extensions?: string[] }).extensions).toEqual(['tailwind']);
+
+    const el = document.createElement('div');
+    el.setAttribute('_', 'on click hide with twDisplay');
+    document.body.appendChild(el);
+    api.processNode(el);
+    click(el);
+    await tick();
+    expect(el.classList.contains('hidden')).toBe(true);
+  });
+
   it('processes the content htmx and fixi announce: boot() installs the engine integration', async () => {
     await load(generator.generate(usage(['put']), { globalName: 'hfxTestHtmx' }));
     await tick(); // the engine processes the document, then installs its listeners

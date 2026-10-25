@@ -182,7 +182,7 @@ export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
 
     // In dev mode, optionally use fallback bundle for faster rebuilds
     if (isDev && options.devFallback && options.devFallback !== 'auto') {
-      cachedBundle = generator.generateDevFallback(options.devFallback);
+      cachedBundle = generator.generateDevFallback(options.devFallback, options);
     } else {
       cachedBundle = generator.generate(usage, options);
     }

@@ -1156,6 +1156,7 @@ hyperfixi({
   extraCommands: ['fetch'], // Always register these commands' modules
   extraBlocks: ['if'], // Always register these blocks' modules
   positional: true, // Always register the positional / collection expressions
+  extensions: ['socket'], // Register engine extensions (@hyperfixi/engine/ext/<name>); never scanned
   devFallback: 'everything', // Dev server: the whole engine, for faster rebuilds
   debug: true, // Verbose logging
 });

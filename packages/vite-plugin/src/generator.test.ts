@@ -249,4 +249,40 @@ describe('Generator', () => {
       }
     });
   });
+
+  describe('extensions (opt-in, by name)', () => {
+    const extensions = { extensions: ['socket', 'tailwind'] };
+
+    it('imports each from @hyperfixi/engine/ext/<name> and registers it after the modules', () => {
+      const code = generator.generate(createUsage(['put']), extensions);
+      expect(code).toContain("import { socket } from '@hyperfixi/engine/ext/socket';");
+      expect(code).toContain("import { tailwind } from '@hyperfixi/engine/ext/tailwind';");
+      expect(registered(code)).toEqual(['on', 'conversions', 'put', 'socket', 'tailwind']);
+      expect(code).toContain('"extensions":["socket","tailwind"]');
+    });
+
+    it('registers none unless listed: the scan never adds one', () => {
+      const code = generator.generate(createUsage(['put', 'socket']), noOptions);
+      expect(code).not.toContain('@hyperfixi/engine/ext/');
+      expect(code).not.toContain('"extensions"');
+    });
+
+    it('a listed extension is usage: no empty bundle', () => {
+      const code = generator.generate(createUsage([]), { extensions: ['socket'] });
+      expect(code).not.toContain('Empty Bundle');
+      expect(registered(code)).toEqual(['on', 'conversions', 'socket']);
+    });
+
+    it('the dev fallback registers them after everything', () => {
+      const code = generator.generateDevFallback('everything', extensions);
+      expect(code).toContain("import { tailwind } from '@hyperfixi/engine/ext/tailwind';");
+      expect(code).toContain('register(...everything, socket, tailwind);');
+    });
+
+    it('rejects a name that is not an extension name', () => {
+      expect(() =>
+        generator.generate(createUsage(['put']), { extensions: ['ext/socket'] })
+      ).toThrow(/'ext\/socket' is not an extension name/);
+    });
+  });
 });
