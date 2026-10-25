@@ -8,8 +8,21 @@
 //   - `html` awaits `processNode`, so an engine whose processing is async is not raced.
 // Coverage instrumentation is dropped.
 import { test as base, expect } from '@playwright/test';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 
 const bundlePath = process.env.HS_BUNDLE;
+
+// The extension files next to the bundle (`ext/<name>.js`; for upstream's bundle, upstream's
+// own). A test in `ext/<name>.js` gets that file loaded right after the engine and before the
+// document is processed, as a `<script>` after the engine's would be. The browser context is
+// shared by a worker's tests, so each file is an init script that runs only on `?ext=<name>`.
+const extDir = join(dirname(bundlePath ?? '.'), 'ext');
+const EXTENSIONS = existsSync(extDir)
+  ? readdirSync(extDir)
+      .filter(f => /^[\w-]+\.js$/.test(f))
+      .map(f => [f.slice(0, -3), readFileSync(join(extDir, f), 'utf8')])
+  : [];
 const BLANK_PAGE = [
   '<!DOCTYPE html><html>',
   '<head><base href="http://localhost/"></head>',
@@ -30,6 +43,10 @@ export const test = base.extend({
     async ({ browser }, use) => {
       const context = await browser.newContext();
       await context.addInitScript({ path: bundlePath });
+      for (const [name, code] of EXTENSIONS)
+        await context.addInitScript({
+          content: `if (location.search === '?ext=${name}') {\n${code}\n}`,
+        });
       await context.addInitScript(() => {
         window.promiseAnIntIn = ms => new Promise(r => setTimeout(() => r(42), ms));
         window.promiseValueBackIn = (val, ms) => new Promise(r => setTimeout(() => r(val), ms));
@@ -49,14 +66,16 @@ export const test = base.extend({
     { scope: 'worker' },
   ],
 
-  page: async ({ _hsPage }, use) => {
+  page: async ({ _hsPage }, use, testInfo) => {
     await _hsPage.unrouteAll({ behavior: 'ignoreErrors' });
     // The page is shared by a worker's tests: a dialog handler one test added must not answer the next.
     _hsPage.removeAllListeners('dialog');
-    await _hsPage.route('http://localhost/__blank', r =>
+    await _hsPage.route(/^http:\/\/localhost\/__blank(\?.*)?$/, r =>
       r.fulfill({ contentType: 'text/html', body: BLANK_PAGE })
     );
-    await _hsPage.goto('http://localhost/__blank');
+    const ext = /[\\/]ext[\\/]([\w-]+)\.js$/.exec(testInfo.file)?.[1];
+    const query = EXTENSIONS.some(([name]) => name === ext) ? `?ext=${ext}` : '';
+    await _hsPage.goto(`http://localhost/__blank${query}`);
     await _hsPage.waitForFunction(() => typeof _hyperscript !== 'undefined');
     await use(_hsPage);
   },

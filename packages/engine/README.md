@@ -48,12 +48,13 @@ fallback cannot change what the command reads. `toggle <element>` (`src/addition
 A module can live in another package. `@hyperfixi/speech` is one (upstream's `speak`): it imports
 `expr` and the `Grammar` / `Cmd` / `Expr` types from here, sets `g.commands.speak` to a rule that
 reads its operands off the `Parser` it is handed, and returns a node whose `run` may return a
-promise. `register(...everything, speak)` builds an engine with it. (The script-tag bundle is a
-fixed list; nothing adds a module to a page's `hyperfixi-hs.js` after it loads.)
+promise. `register(...everything, speak)` builds an engine with it. What a module may call is
+`src/kit.ts` (below); `register` skips a module it has already added.
 
 The public object is shaped like upstream's `_hyperscript` (`evaluate`, `parse`, `process`,
 `config`, `use(plugin)`, `addBeforeProcessHook`), so a plugin written for upstream's public API
-can be used on it; the multilingual adapter is. It adds one hook upstream lacks:
+can be used on it; the multilingual adapter is, and so is upstream's own `ext/tailwind.js`,
+unchanged. It adds a hook upstream lacks:
 
 ```ts
 _hyperscript.addSourceTransform((source, element) => english);
@@ -61,7 +62,44 @@ _hyperscript.addSourceTransform((source, element) => english);
 
 A script is rewritten as it is read. The element keeps the text its author wrote, and a parse
 error in the rewritten script carries that text (`error.written`). `@lokascript/hyperscript-adapter`
-uses the hook when the host has it.
+uses the hook when the host has it. It also adds `register`, `kit` and `extensions`, for
+extensions (next).
+
+### Extensions
+
+An extension is a module that is not in `everything`. It is added with `register`: from ESM, or
+on a page, after the script-tag bundle, by its own file:
+
+```html
+<script src="hyperfixi-hs.js"></script>
+<script src="ext/tailwind.js"></script>
+```
+
+```ts
+import { register, everything } from '@hyperfixi/engine';
+import { tailwind } from '@hyperfixi/engine/ext/tailwind';
+register(...everything, tailwind);
+```
+
+- **What a module may call is `src/kit.ts`**: `expr`, `config`, and nothing else yet. ESM gets
+  it from the library entry; a page's engine carries it as `_hyperscript.kit`, so an extension
+  file calls the page's engine instead of carrying a copy of its parser. An extension's value
+  imports come from `../kit` only, and the build fails on any other. A name is added to the
+  kit when an extension needs it, as a change to the public API.
+- **An extension file** (`dist/ext/<name>.js`, built from `src/ext/<name>.ts`) registers its
+  module once per page (it records its name in `_hyperscript.extensions`, so a script htmx
+  boost runs again does not register twice), and says so on the console when no engine was
+  loaded before it. `dist/ext/<name>.esm.js` is the same module for ESM
+  (`@hyperfixi/engine/ext/<name>`), taking the kit from `@hyperfixi/engine`.
+- **Loaded late** (`async`, a lazy import, a page's own `register` call), an extension still
+  applies: `register` reads again, and only again, the elements whose scripts failed to parse.
+  An extension that claims only what upstream rejects cannot change a script that parsed. A
+  dialect (an extension that changes what a parsed script means) has to be registered before
+  the document is read.
+- **Which extensions there are**: `tailwind`, upstream's (the `twDisplay`, `twVisibility` and
+  `twOpacity` hide/show strategies), held to upstream's own tests for it. An extension ported
+  from upstream is held to upstream's tests; one of this repository's own will be held to
+  `check:claims`, as the additions are.
 
 ### htmx and fixi
 
@@ -91,9 +129,10 @@ whenever htmx loads.
 | `src/reactivity.ts`, `src/templates.ts`, `src/live-templates.ts` | Optional: `when` / `live` / `bind`; `render` and template text; live templates                                                                               |
 | `src/commands/*`                                                 | 52 command keywords, one module export each                                                                                                                  |
 | `src/additions.ts`                                               | The two forms upstream does not have: `new X()` and `toggle <element>`                                                                                       |
+| `src/kit.ts`, `src/ext/*`                                        | What an extension module may call; the extensions, each built to `dist/ext/<name>.js` (script tag) and `.esm.js`                                             |
 | `src/bundles/*`                                                  | Browser bundle entries. `hyperfixi-hs` is the script-tag bundle; `full` is the same modules, for the gate; `core`, `minimal`, `common` exist to measure size |
 | `upstream-suite/`                                                | The acceptance gate: upstream's Playwright suite (vendored) against a bundle                                                                                 |
-| `tests/`                                                         | This package's own tests (`src/additions.ts`, and regressions upstream's tests did not show), in the form of upstream's and on the same fixtures             |
+| `tests/`                                                         | This package's own tests (`src/additions.ts`, extensions, and regressions upstream's tests did not show), in the form of upstream's and on the same fixtures |
 | `tools/probe.mts`                                                | One source on this engine and on upstream, side by side, on the value matrix's fixture                                                                       |
 | `tools/claims.mts`, `tests/claims.json`                          | What each addition claims, read and run on upstream: the tier each addition may have                                                                         |
 
@@ -128,10 +167,12 @@ release 0.9.93, the one this repository's other gates use) against `dist/full.js
 that fail must be exactly the ones listed in `upstream-suite/known-failures.json`. A new failure
 fails the gate. So does a listed test that now passes: prune it with
 `npm run test:upstream:update` in the same change, so the list stays what does not pass. CI runs
-it in the `browser-tests` job.
+it in the `browser-tests` job. A test in `ext/<name>.js` runs with the extension file next to
+the bundle (`ext/<name>.js`) loaded after it, as a page's `<script>` would be; for upstream's
+bundle that is upstream's own file.
 
-**The package's own tests.** `test:own` runs `tests/` against the same bundle, for the two forms
-upstream has no tests for. Every one must pass. On upstream's own bundle 3 of the 27 pass (the
+**The package's own tests.** `test:own` runs `tests/` against the same bundle, for what
+upstream has no tests for: the two forms, and the extension tier (`tests/extensions.js`). Every one must pass. On upstream's own bundle 3 of `additions.js`'s 27 pass (the
 three that check an upstream form still reads, or fails, as it did), which is what shows the
 rest test the additions. `tests/regressions.js` holds the other kind: places where this engine differed from
 upstream and upstream's tests did not show it (each of those passes on upstream). CI runs both
@@ -219,8 +260,10 @@ engine want `increment #count's textContent`. The examples write the second, whi
 bundle runs to the same count (the bundle matrix's Counter row).
 
 Since 2026-10-21 the gate also runs upstream's htmx tests (`integration/htmx.js` and
-`ext/hs-include.js`, 19), which the first vendoring left out, so the whole suite is 1,486. The
-engine failed 10 of them until it had upstream's htmx integration; it passes all 19.
+`ext/hs-include.js`, 19), which the first vendoring left out. The engine failed 10 of them until
+it had upstream's htmx integration; it passes all 19. Since 2026-10-25 it also runs upstream's
+tests for each extension this engine builds (`ext/tailwind.js`, 12; see Extensions), so the
+whole suite is 1,498.
 
 The 64 known failures: upstream's internal-API surface (`internals.tokenizer`,
 `evalStatically`, source info, error collection: 45), sockets and workers (17, upstream
