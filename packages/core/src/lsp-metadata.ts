@@ -123,7 +123,8 @@ export const REFERENCE_KEYWORDS = [
 /**
  * Top-level feature keywords: the engine's (`set` and `js` are features too, and
  * listed with the commands), and three that upstream _hyperscript ships as
- * extensions and the engine does not have (`worker`, `socket`, `eventsource`).
+ * extensions and the engine's bundle does not have (`worker`, `socket`, `eventsource`;
+ * `socket` is an extension of the engine's, `@hyperfixi/engine/ext/socket`).
  */
 export const FEATURE_KEYWORDS = [
   'on',
@@ -718,7 +719,8 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
     category: 'feature',
   },
   // Upstream _hyperscript ships these three as extensions (ext/worker.js,
-  // ext/socket.js, ext/eventsource.js); @hyperfixi/engine does not have them.
+  // ext/socket.js, ext/eventsource.js). @hyperfixi/engine's bundle has none of them;
+  // it builds `socket` as an extension (ext/socket.js).
   worker: {
     title: 'worker',
     description:
@@ -729,7 +731,7 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
   socket: {
     title: 'socket',
     description:
-      'Opens a WebSocket and handles its messages (upstream extension `ext/socket.js`; not in @hyperfixi/engine).',
+      'Opens a WebSocket and handles its messages (an extension: load `ext/socket.js` after the engine, or register `@hyperfixi/engine/ext/socket`).',
     example: 'socket Chat ws://localhost:8080/chat\n  on message as json\n    log message\nend',
     category: 'feature',
   },

@@ -23,7 +23,15 @@
 // HYPERSCRIPT_TEST_ROOT reads a test directory from disk. The tests are copied into a
 // gitignored work dir either way; nothing is modified in place.
 import { spawnSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -109,9 +117,27 @@ if (!own) {
   }
 }
 cpSync(join(here, 'fixtures.js'), join(work, 'test', 'fixtures.js'));
-// A few tests load the engine themselves, from where upstream's build puts it.
+// The engine the tests run, which a few also load themselves from where upstream's build puts
+// it. For upstream's tests it carries the extensions this engine builds (`src/ext/`), as
+// upstream's own test bundle carries its extensions (`test/entry.js`): each `ext/<name>.js`
+// next to the bundle, so for upstream's bundle, upstream's own file. This package's own tests
+// run on the engine alone; they load extensions themselves (`HS_EXT_DIR`).
+const extDir = join(dirname(resolve(bundle)), 'ext');
+const extensions = own
+  ? []
+  : readdirSync(join(here, '..', 'src', 'ext'))
+      .filter(f => f.endsWith('.ts'))
+      .map(f => f.slice(0, -3))
+      .filter(name => existsSync(join(extDir, `${name}.js`)));
+if (extensions.length) console.log(`with extensions: ${extensions.join(', ')}`);
 mkdirSync(join(work, 'test', '.bundle'));
-cpSync(resolve(bundle), join(work, 'test', '.bundle', '_hyperscript.js'));
+const testBundle = join(work, 'test', '.bundle', '_hyperscript.js');
+writeFileSync(
+  testBundle,
+  [resolve(bundle), ...extensions.map(name => join(extDir, `${name}.js`))]
+    .map(file => readFileSync(file, 'utf8'))
+    .join('\n;\n')
+);
 // `templates/templates.js` imports upstream's source and never uses it.
 mkdirSync(join(work, 'src'));
 writeFileSync(join(work, 'src', '_hyperscript.js'), 'export default {};\n');
@@ -131,7 +157,8 @@ function play(only = [], workers) {
       cwd: here,
       env: {
         ...process.env,
-        HS_BUNDLE: resolve(bundle),
+        HS_BUNDLE: testBundle,
+        HS_EXT_DIR: extDir,
         HS_REPORT: report,
         ...(workers ? { HS_WORKERS: String(workers) } : {}),
       },

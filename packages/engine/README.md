@@ -81,7 +81,9 @@ import { tailwind } from '@hyperfixi/engine/ext/tailwind';
 register(...everything, tailwind);
 ```
 
-- **What a module may call is `src/kit.ts`**: `expr`, `config`, and nothing else yet. ESM gets
+- **What a module may call is `src/kit.ts`**: for parsing, `expr`, `dotOrColonPath`,
+  `urlOrExpression`, `evalStatic` and `commandList`; for running, `makeContext`, `runList` and
+  `assignToNamespace`; and `config`. ESM gets
   it from the library entry; a page's engine carries it as `_hyperscript.kit`, so an extension
   file calls the page's engine instead of carrying a copy of its parser. An extension's value
   imports come from `../kit` only, and the build fails on any other. A name is added to the
@@ -96,8 +98,11 @@ register(...everything, tailwind);
   An extension that claims only what upstream rejects cannot change a script that parsed. A
   dialect (an extension that changes what a parsed script means) has to be registered before
   the document is read.
-- **Which extensions there are**: `tailwind`, upstream's (the `twDisplay`, `twVisibility` and
-  `twOpacity` hide/show strategies), held to upstream's own tests for it. An extension ported
+- **Which extensions there are**, both upstream's and each held to upstream's own tests for it:
+  `tailwind` (the `twDisplay`, `twVisibility` and `twOpacity` hide/show strategies) and
+  `socket` (`socket Chat ws://… [on message [as JSON] …] end`: a WebSocket as a named object
+  with `raw`, `dispatchEvent` and an `rpc` proxy). Here the socket opens when the feature is
+  installed; upstream's opens when it is parsed (`tests/extensions.js` holds the difference). An extension ported
   from upstream is held to upstream's tests; one of this repository's own will be held to
   `check:claims`, as the additions are.
 
@@ -167,9 +172,13 @@ release 0.9.93, the one this repository's other gates use) against `dist/full.js
 that fail must be exactly the ones listed in `upstream-suite/known-failures.json`. A new failure
 fails the gate. So does a listed test that now passes: prune it with
 `npm run test:upstream:update` in the same change, so the list stays what does not pass. CI runs
-it in the `browser-tests` job. A test in `ext/<name>.js` runs with the extension file next to
-the bundle (`ext/<name>.js`) loaded after it, as a page's `<script>` would be; for upstream's
-bundle that is upstream's own file.
+it in the `browser-tests` job. The engine the tests run carries the extensions this engine
+builds (`src/ext/`), as upstream's own test bundle carries its extensions (`test/entry.js`):
+the bundle, then each `ext/<name>.js` next to it, as one file. (For upstream's bundle those
+are upstream's own files.) The package's own tests run on the engine alone.
+
+**`test:upstream:update` does not retry**, so a timing flake in its run becomes a listed
+failure. Diff the `failing` list it writes before committing it.
 
 **The package's own tests.** `test:own` runs `tests/` against the same bundle, for what
 upstream has no tests for: the two forms, and the extension tier (`tests/extensions.js`). Every one must pass. On upstream's own bundle 3 of `additions.js`'s 27 pass (the
@@ -263,13 +272,13 @@ Since 2026-10-21 the gate also runs upstream's htmx tests (`integration/htmx.js`
 `ext/hs-include.js`, 19), which the first vendoring left out. The engine failed 10 of them until
 it had upstream's htmx integration; it passes all 19. Since 2026-10-25 it also runs upstream's
 tests for each extension this engine builds (`ext/tailwind.js`, 12; see Extensions), so the
-whole suite is 1,498.
+whole suite is 1,498; and the socket tests (`features/socket.js`, 16), vendored from the
+start, pass since the engine builds `socket`.
 
-The 64 known failures: upstream's internal-API surface (`internals.tokenizer`,
-`evalStatically`, source info, error collection: 45), sockets and workers (17, upstream
-extensions that are not built), and two collection-expression tests that need upstream's
-component extension. Upstream's one failure is a test that expects its worker extension to be
-absent.
+The 48 known failures: upstream's internal-API surface (`internals.tokenizer`,
+`evalStatically`, source info, error collection: 45), the worker feature (1: upstream's
+extension, not built), and two collection-expression tests that need upstream's component
+extension. Upstream's one failure is a test that expects its worker extension to be absent.
 
 As a host for the multilingual text path (semantic renders a translation, the adapter's
 `preprocess` turns it back into English, the engine runs the English):

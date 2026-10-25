@@ -53,9 +53,11 @@ const kitBuild = await build({
   logLevel: 'error',
 });
 const kitNames = Object.values(kitBuild.metafile.outputs)[0].exports;
+// Each read is pure, so a file keeps only the names its extension uses.
 const shim =
   'const kit = (globalThis._hyperscript && globalThis._hyperscript.kit) || {};\n' +
-  kitNames.map(n => `export const ${n} = kit.${n};`).join('\n');
+  'const read = name => kit[name];\n' +
+  kitNames.map(n => `export const ${n} = /* @__PURE__ */ read('${n}');`).join('\n');
 
 /** `../kit` from an extension → `@hyperfixi/engine` (esm) or the page's kit (script tag). */
 const kitPlugin = format => ({

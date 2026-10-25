@@ -1,6 +1,6 @@
 {
   "upstream": "0.9.93",
-  "passed": 1434,
+  "passed": 1450,
   "total": 1498,
   "failing": [
     "core/bootstrap.js › _hyperscript bootstrapping › logAll config logs events to console",
@@ -50,22 +50,6 @@
     "core/tokenizer.js › the _hyperscript tokenizer › handles whitespace properly",
     "expressions/collectionExpressions.js › weak indirect binding › where in component init followed by on feature",
     "expressions/collectionExpressions.js › weak indirect binding › where with is not me in component template",
-    "features/socket.js › the socket feature › converts relative URL to ws:// on http pages",
-    "features/socket.js › the socket feature › converts relative URL to wss:// on https pages",
-    "features/socket.js › the socket feature › dispatchEvent sends JSON-encoded event over the socket",
-    "features/socket.js › the socket feature › namespaced sockets work",
-    "features/socket.js › the socket feature › on message as JSON handler decodes JSON payload",
-    "features/socket.js › the socket feature › on message as JSON throws on non-JSON payload",
-    "features/socket.js › the socket feature › on message handler fires on incoming text message",
-    "features/socket.js › the socket feature › parses socket with absolute ws:// URL",
-    "features/socket.js › the socket feature › rpc proxy blacklists then/catch/length/toJSON",
-    "features/socket.js › the socket feature › rpc proxy default timeout rejects the promise",
-    "features/socket.js › the socket feature › rpc proxy noTimeout avoids timeout rejection",
-    "features/socket.js › the socket feature › rpc proxy reply with throw rejects the promise",
-    "features/socket.js › the socket feature › rpc proxy sends a message and resolves the reply",
-    "features/socket.js › the socket feature › rpc proxy timeout(n) rejects after a custom window",
-    "features/socket.js › the socket feature › rpc reconnects after the underlying socket closes",
-    "features/socket.js › the socket feature › with timeout parses and uses the configured timeout",
     "features/worker.js › the worker feature › raises a helpful error when the worker plugin is not installed"
   ]
 }
