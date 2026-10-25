@@ -4095,6 +4095,108 @@
       "family": "expressions/relativePositionalExpression"
     },
     {
+      "id": "091229c5d5",
+      "source": "init set :userId to 42",
+      "origin": "upstream:ext/hs-include.js",
+      "family": "ext/hs-include"
+    },
+    {
+      "id": "20864ca9a9",
+      "source": "init set :a to 1 then set :b to 2",
+      "origin": "upstream:ext/hs-include.js",
+      "family": "ext/hs-include"
+    },
+    {
+      "id": "681a650ebc",
+      "source": "init set :x to 10 then set :y to 20",
+      "origin": "upstream:ext/hs-include.js",
+      "family": "ext/hs-include"
+    },
+    {
+      "id": "f0587c6604",
+      "source": "init set :shared to 99",
+      "origin": "upstream:ext/hs-include.js",
+      "family": "ext/hs-include"
+    },
+    {
+      "id": "1984d270b6",
+      "source": "init set :data to 'hello'",
+      "origin": "upstream:ext/hs-include.js",
+      "family": "ext/hs-include"
+    },
+    {
+      "id": "fca5d91170",
+      "source": "init set :obj to {name: 'Alice', age: 30}",
+      "origin": "upstream:ext/hs-include.js",
+      "family": "ext/hs-include"
+    },
+    {
+      "id": "c097c27bb7",
+      "source": "init set :ctx to 'parent-val'",
+      "origin": "upstream:ext/hs-include.js",
+      "family": "ext/hs-include"
+    },
+    {
+      "id": "f0a9124287",
+      "source": "init set :secret to 42",
+      "origin": "upstream:ext/hs-include.js",
+      "family": "ext/hs-include"
+    },
+    {
+      "id": "fc81c34197",
+      "source": "init set :parent to 1",
+      "origin": "upstream:ext/hs-include.js",
+      "family": "ext/hs-include"
+    },
+    {
+      "id": "db6494f862",
+      "source": "init set :child to 2",
+      "origin": "upstream:ext/hs-include.js",
+      "family": "ext/hs-include"
+    },
+    {
+      "id": "0f42ea807f",
+      "source": "on click hide with twDisplay",
+      "origin": "upstream:ext/tailwind.js",
+      "family": "ext/tailwind"
+    },
+    {
+      "id": "d4dd4fbc1d",
+      "source": "on click hide with twVisibility",
+      "origin": "upstream:ext/tailwind.js",
+      "family": "ext/tailwind"
+    },
+    {
+      "id": "0152108937",
+      "source": "on click hide with twOpacity",
+      "origin": "upstream:ext/tailwind.js",
+      "family": "ext/tailwind"
+    },
+    {
+      "id": "ff1010c461",
+      "source": "on click show",
+      "origin": "upstream:ext/tailwind.js",
+      "family": "ext/tailwind"
+    },
+    {
+      "id": "f7364805ea",
+      "source": "on click show with twDisplay",
+      "origin": "upstream:ext/tailwind.js",
+      "family": "ext/tailwind"
+    },
+    {
+      "id": "f11631adde",
+      "source": "on click show with twVisibility",
+      "origin": "upstream:ext/tailwind.js",
+      "family": "ext/tailwind"
+    },
+    {
+      "id": "1148eae2fa",
+      "source": "on click show with twOpacity",
+      "origin": "upstream:ext/tailwind.js",
+      "family": "ext/tailwind"
+    },
+    {
       "id": "64506b6e66",
       "source": "behavior TheBehaviorWeAreDefiningForHyperscriptTestingPurposes init log 'foo' end end",
       "origin": "upstream:features/behavior.js",
@@ -5377,6 +5479,96 @@
       "source": "set $globalAtFeature to 99",
       "origin": "upstream:features/set.js",
       "family": "set"
+    },
+    {
+      "id": "65ad8f100f",
+      "source": "socket MySocket ws://localhost:1234/ws end",
+      "origin": "upstream:features/socket.js",
+      "family": "socket"
+    },
+    {
+      "id": "e825557954",
+      "source": "socket RelSocket /my-ws end",
+      "origin": "upstream:features/socket.js",
+      "family": "socket"
+    },
+    {
+      "id": "986e3eaa40",
+      "source": "socket TimedSocket ws://localhost/ws with timeout 1500 end",
+      "origin": "upstream:features/socket.js",
+      "family": "socket"
+    },
+    {
+      "id": "1a9bebbdab",
+      "source": "socket TextSocket ws://localhost/ws\n  on message\n    set window.socketFired to true",
+      "origin": "upstream:features/socket.js",
+      "family": "socket"
+    },
+    {
+      "id": "9034d0021e",
+      "source": "socket JsonSocket ws://localhost/ws\n  on message as JSON\n    set window.socketFiredJson to true",
+      "origin": "upstream:features/socket.js",
+      "family": "socket"
+    },
+    {
+      "id": "06052308f5",
+      "source": "socket RpcSocket ws://localhost/ws end",
+      "origin": "upstream:features/socket.js",
+      "family": "socket"
+    },
+    {
+      "id": "36a011f738",
+      "source": "socket ErrSocket ws://localhost/ws end",
+      "origin": "upstream:features/socket.js",
+      "family": "socket"
+    },
+    {
+      "id": "d891336fd9",
+      "source": "socket NoTOSocket ws://localhost/ws with timeout 20 end",
+      "origin": "upstream:features/socket.js",
+      "family": "socket"
+    },
+    {
+      "id": "6df4022d85",
+      "source": "socket CustomTOSocket ws://localhost/ws with timeout 60000 end",
+      "origin": "upstream:features/socket.js",
+      "family": "socket"
+    },
+    {
+      "id": "bc88ad8664",
+      "source": "socket DefTOSocket ws://localhost/ws with timeout 50 end",
+      "origin": "upstream:features/socket.js",
+      "family": "socket"
+    },
+    {
+      "id": "658e4c1024",
+      "source": "socket BlacklistSocket ws://localhost/ws end",
+      "origin": "upstream:features/socket.js",
+      "family": "socket"
+    },
+    {
+      "id": "e390bb9a76",
+      "source": "socket DispatchSocket ws://localhost/ws end",
+      "origin": "upstream:features/socket.js",
+      "family": "socket"
+    },
+    {
+      "id": "b013d4626b",
+      "source": "socket ReconnectSocket ws://localhost/ws end",
+      "origin": "upstream:features/socket.js",
+      "family": "socket"
+    },
+    {
+      "id": "6bed0e799a",
+      "source": "socket StrictJsonSocket ws://localhost/ws\n  on message as JSON\n    set window.strictFired to true",
+      "origin": "upstream:features/socket.js",
+      "family": "socket"
+    },
+    {
+      "id": "50c36977a8",
+      "source": "socket MyApp.chat ws://localhost/ws end",
+      "origin": "upstream:features/socket.js",
+      "family": "socket"
     },
     {
       "id": "e094621ad0",
@@ -6799,6 +6991,12 @@
       "source": "live\n  put $count into me\nend",
       "origin": "hover:live",
       "family": "live"
+    },
+    {
+      "id": "dc07d12b70",
+      "source": "socket Chat ws://localhost:8080/chat\n  on message as json\n    log message\nend",
+      "origin": "hover:socket",
+      "family": "socket"
     },
     {
       "id": "90d44b4675",

@@ -1,9 +1,9 @@
 {
   "description": "Command-shape gate (src/multilingual/command-shapes.ts): per case, the lanes whose translation is refused (`refused`) and the lanes whose translation is silently lossy (`silent`). A lane is `en` (translate en → en) or a language (en → L → en); `*` stands for all 23 languages. A case in a LOUD family carries its reason (`loud`). Shrink-only: regenerate with tools/regen-command-shapes-baseline.ts.",
   "upstream": "0.9.93",
-  "cases": 1135,
-  "pairs": 27240,
-  "pass": 26538,
+  "cases": 1168,
+  "pairs": 28032,
+  "pass": 27330,
   "refused": 702,
   "silent": 0,
   "entries": {

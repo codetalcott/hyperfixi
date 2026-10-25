@@ -63,6 +63,8 @@ const LANGUAGES = [
 const WORKER = 'worker Calculator\n  def add(a, b)\n    return a + b\n  end\nend';
 const LIVE = 'live put `Count: ${$count}` into me end';
 const SOCKET = 'socket ChatSocket ws://localhost:8080\n  on message\n    put it into #chat\n  end';
+const EVENTSOURCE =
+  'eventsource Updates from /events\n  on update\n    put it into #log\n  end\nend';
 
 /** Collect every action in a parsed tree. */
 function actions(node: unknown, acc = new Set<string>(), seen = new Set<unknown>()): Set<string> {
@@ -115,14 +117,24 @@ describe('the body survives the round trip', () => {
 });
 
 describe('a feature closes its blocks in the right order', () => {
-  // An event-handler child opens a block of its own, so the render needs TWO
-  // `end`s — the handler's, then the feature's. One `end` would leave the
-  // feature unterminated and the canonical parser rejects it.
-  it.each(['es', 'de', 'fr', 'it', 'pt'] as const)('%s emits both ends for a socket', language => {
-    const rendered = translate(SOCKET, 'en', language);
+  const ends = (rendered: string): number => {
     const endKeyword = rendered.trim().split('\n').pop()!.trim();
-    const endCount = rendered.split('\n').filter(l => l.trim() === endKeyword).length;
-    expect(endCount, `${language} emitted ${endCount} \`${endKeyword}\`:\n${rendered}`).toBe(2);
+    return rendered.split('\n').filter(l => l.trim() === endKeyword).length;
+  };
+
+  // A socket's `on message` is the socket's own clause, not a handler: upstream's socket
+  // feature (and the engine's ext/socket) closes it with the socket's one `end`. This test
+  // held TWO (eventsource's shape) until 2026-10-25; the engine rejects the second `end`, so
+  // every translated socket with a message clause failed to parse on the page.
+  it.each(['en', ...LANGUAGES])('%s closes a socket once', language => {
+    const rendered = translate(SOCKET, 'en', language);
+    expect(ends(rendered), `${language}:\n${rendered}`).toBe(1);
+  });
+
+  // An eventsource's handlers each take an `end` of their own, then the feature's.
+  it.each(['es', 'de', 'fr', 'it', 'pt'] as const)('%s closes an eventsource twice', language => {
+    const rendered = translate(EVENTSOURCE, 'en', language);
+    expect(ends(rendered), `${language}:\n${rendered}`).toBe(2);
   });
 
   it('a body-less feature still closes once', () => {

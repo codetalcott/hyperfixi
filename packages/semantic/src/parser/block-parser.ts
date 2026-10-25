@@ -20,6 +20,7 @@ import type {
   LanguageToken,
   PatternToken,
   SemanticNode,
+  SemanticRole,
   SemanticValue,
   CompoundSemanticNode,
   EventHandlerSemanticNode,
@@ -32,10 +33,10 @@ import { createBehaviorNode, createDefNode, createCompoundNode, createFeatureNod
 import { getPatternsForLanguage, tryGetProfile } from '../registry';
 import { tokenize } from '../tokenizers';
 import { commandSchemas } from '../generators/command-schemas';
-import { joinExpressionTokens } from './utils/expression-lexicon';
+import { joinExpressionTokens, translateConnective } from './utils/expression-lexicon';
 import { closesBlockAt, endsClauseAt, endWordSurfaces } from './end-words';
 import { isOrWordToken } from './utils/or-words';
-import { grammarWord, grammarWordForms } from './utils/grammar-words';
+import { conversionAsWord, grammarWord, grammarWordForms } from './utils/grammar-words';
 
 /**
  * NESTED block-opening keywords balanced by a matching `end`. Deliberately
@@ -1528,7 +1529,13 @@ const OPAQUE_BODY_FEATURES: ReadonlySet<string> = new Set(['intercept']);
 const NAMED_FEATURES: ReadonlySet<string> = new Set(['eventsource', 'socket', 'worker']);
 
 /** Features whose body is a sequence of `on <event> … end` handler blocks. */
-const HANDLER_BODY_FEATURES: ReadonlySet<string> = new Set(['eventsource', 'socket']);
+const HANDLER_BODY_FEATURES: ReadonlySet<string> = new Set(['eventsource']);
+
+// `socket`'s body is one clause instead, `on message [as JSON] <commands>`, which takes no
+// `end` of its own: the socket's `end` closes it, or the end of the script (upstream's socket
+// feature, and its tests: `socket TextSocket ws://localhost/ws ⏎ on message ⏎ set …`). Read
+// as eventsource's handlers, it came back with a second `end` the engine rejects, or, with no
+// `end`, with no body at all. See parseSocketClause.
 
 /** Features whose body is a sequence of `def name(params) … end` sub-blocks. */
 const DEF_BODY_FEATURES: ReadonlySet<string> = new Set(['worker']);
@@ -1706,11 +1713,19 @@ function featureBodyStart(
 
   const onForms = eventHandlerHeadForms(language);
   const eventForms = markerSurfaceForms(tryGetProfile(language)?.roleMarkers?.event);
+  // The handler word a language writes AFTER its event (ja `messageで`, tr `message da`). At one
+  // of those, the postpositional reading comes first: in ja `messageで messageを 記録` (`on
+  // message log message`) the `で` is ALSO followed by a word that looks like an event, and
+  // read as `<on> <event>` the body started at `で`, so the block did not read at all.
+  const handlerMarker = tryGetProfile(language)?.eventHandler?.eventMarker;
+  const followsEvent =
+    handlerMarker?.position === 'after' ? markerSurfaceForms(handlerMarker) : new Set<string>();
   const limit = blockEnd >= 0 ? blockEnd : tokens.length;
   for (let j = nameIdx + 1; j < limit; j++) {
     if (!tokenMatches(tokens[j], onForms)) continue;
+    const postpositional = tokenMatches(tokens[j], followsEvent);
     // Prepositional: `<on> <event>` (en `on message`, de `wenn message`).
-    if (looksLikeEvent(tokens[j + 1])) return j;
+    if (!postpositional && looksLikeEvent(tokens[j + 1])) return j;
     // Postpositional with a separate EVENT-role marker between the two
     // (ko `message 을 에`, the SOV trigger signature). Checked BEFORE the plain
     // postpositional case: a bare particle satisfies `looksLikeEvent`, so the
@@ -1732,8 +1747,27 @@ function featureBodyStart(
     }
     // Postpositional: `<event> <on>` (hi `message पर`, bn `message তে`).
     if (j > nameIdx + 1 && looksLikeEvent(tokens[j - 1])) return j - 1;
+    // A marker that can also lead its event, where nothing before it was one.
+    if (postpositional && looksLikeEvent(tokens[j + 1])) return j;
   }
   return limit;
+}
+
+/**
+ * The last token of a feature's name. Upstream names a feature with a dotted or colon path
+ * (`socket MyApp.chat …` defines `chat` in `MyApp`), which the tokenizers split at the dot:
+ * `MyApp` + `.chat`, written with no space between. Read as `MyApp` alone, the `.chat` went
+ * to the URL, and every language wrote `socket MyApp .chat …`, which the engine reads as
+ * another socket.
+ */
+function nameTokenEnd(tokens: readonly LanguageToken[], nameIdx: number): number {
+  let end = nameIdx;
+  for (let next = tokens[end + 1]; next; next = tokens[end + 1]) {
+    if (next.position.start !== tokens[end].position.end) break;
+    if (!/^[.:][A-Za-z_$]/.test(next.value)) break;
+    end++;
+  }
+  return end;
 }
 
 /** The feature's declared name, or undefined for the unnamed features. */
@@ -1746,7 +1780,10 @@ function featureName(
   if (!NAMED_FEATURES.has(action)) return undefined;
   const nameIdx = keywordIdx > 0 ? 0 : resolveNameTokenIndex(tokens, keywordIdx, language);
   if (nameIdx < 0) return undefined;
-  return tokens[nameIdx].value;
+  return tokens
+    .slice(nameIdx, nameTokenEnd(tokens, nameIdx) + 1)
+    .map(t => t.value)
+    .join('');
 }
 
 /**
@@ -1820,7 +1857,8 @@ function parseFeatureBlock(
   const isEnd = (j: number): boolean => closesBlockAt(tokens, j, language);
 
   const name = featureName(action, tokens, keywordIdx, language);
-  if (NAMED_FEATURES.has(action) && (!name || !PASCAL_CASE_NAME.test(name))) return null;
+  const leadingName = name?.split(/[.:]/)[0] ?? '';
+  if (NAMED_FEATURES.has(action) && !PASCAL_CASE_NAME.test(leadingName)) return null;
 
   const meta = (confidence: number): Parameters<typeof createFeatureNode>[3] => ({
     sourceLanguage: language,
@@ -1844,9 +1882,20 @@ function parseFeatureBlock(
   const children: SemanticNode[] = [];
   const confidences: number[] = [];
   let sawClosingEnd = false;
+  let responseType: SemanticValue | undefined;
 
   const isDefBody = DEF_BODY_FEATURES.has(action);
-  if (isDefBody || HANDLER_BODY_FEATURES.has(action)) {
+  if (action === 'socket') {
+    const clause = parseSocketClause(input, language, tokens, parsers, bodyStart, isEnd, isOpener);
+    if (!clause) return null;
+    sawClosingEnd = clause.closed;
+    if (clause.handler) {
+      children.push(clause.handler);
+      const bodyEmpty = !clause.handler.body || clause.handler.body.length === 0;
+      confidences.push(bodyEmpty ? 0.2 : (clause.handler.metadata?.confidence ?? 0.75));
+    }
+    responseType = clause.responseType;
+  } else if (isDefBody || HANDLER_BODY_FEATURES.has(action)) {
     // Segment the body END-delimited, as parseBehaviorBlock does. `eventsource`
     // closes each handler with its own `end` plus a final one for the feature;
     // `socket`'s single `end` closes both. Treating any depth-0 `end` as "the body
@@ -1912,16 +1961,134 @@ function parseFeatureBlock(
   const base = sawClosingEnd ? 1 : 0.8;
   const confidence = confidences.length > 0 ? base * meanConfidence(confidences) : base;
   const source = featureSource(action, input, tokens, keywordIdx, bodyStart, language);
+  const roles = new Map<SemanticRole, SemanticValue>();
+  if (source) roles.set('source', source);
+  if (responseType) roles.set('responseType', responseType);
   const node = createFeatureNode(
     action,
     children,
     name,
     meta(confidence),
-    source ? new Map([['source', source]]) : undefined
+    roles.size > 0 ? roles : undefined
   );
   if (action !== 'init' || !initImmediately(tokens, keywordIdx)) return node;
   const immediate: FeatureSemanticNode = { ...node, immediately: true };
   return immediate;
+}
+
+/** A socket's body: its message clause, if it has one, and whether an `end` closed it. */
+interface SocketClause {
+  handler?: EventHandlerSemanticNode;
+  /** `as JSON`: the type name as written (`JSON` or `json`). */
+  responseType?: SemanticValue;
+  closed: boolean;
+}
+
+/**
+ * Read a socket's body: `on message [as JSON] <commands>`, up to the socket's `end` or the end
+ * of the script, as upstream's socket feature reads it. The clause takes no `end` of its own.
+ *
+ * One more `end` after the socket's is read as the socket's too: it is the shape this package
+ * wrote before (eventsource's, a handler's `end` and then the feature's), so text it rendered
+ * still reads as the socket it was. Anything else after the `end` is not one socket: null.
+ *
+ * `as JSON` is cut from the clause before the clause is read as a handler, since a handler
+ * has no such slot, and returned beside it; it read as unread input, so `translate` refused
+ * every socket that decodes JSON.
+ */
+function parseSocketClause(
+  input: string,
+  language: string,
+  tokens: readonly LanguageToken[],
+  parsers: BlockParsers,
+  bodyStart: number,
+  isEnd: (j: number) => boolean,
+  isOpener: (j: number) => boolean
+): SocketClause | null {
+  const endIdx = findBlockEnd(tokens, bodyStart, isEnd, isOpener);
+  if (endIdx >= 0 && endIdx < tokens.length - 1) {
+    if (endIdx !== tokens.length - 2 || !isEnd(endIdx + 1)) return null;
+  }
+  const closed = endIdx >= 0;
+  const clauseEnd = closed ? endIdx : tokens.length;
+  if (bodyStart >= clauseEnd) return { closed };
+
+  const from = tokens[bodyStart].position.start;
+  const to = closed ? tokens[endIdx].position.start : input.length;
+  const asJson = messageAsJson(tokens, bodyStart, clauseEnd, language);
+  const text = asJson
+    ? `${input.slice(from, tokens[asJson.as].position.start)} ${input.slice(tokens[asJson.json].position.end, to)}`
+    : input.slice(from, to);
+  let parsed: SemanticNode;
+  try {
+    parsed = parsers.statement(text.trim(), language);
+  } catch {
+    return null;
+  }
+  if (parsed?.kind !== 'event-handler') return null;
+  return {
+    handler: parsed as EventHandlerSemanticNode,
+    ...(asJson && {
+      responseType: { type: 'literal', value: tokens[asJson.json].value } as SemanticValue,
+    }),
+    closed,
+  };
+}
+
+/**
+ * Where a socket's `as JSON` sits: right after the head of its message clause (`on message as
+ * JSON`, ja `messageで として JSON`, ko `message 할 때 로 JSON`), its `as` in the language's own
+ * word (the one a conversion is written with) or in English's. The event is `message` in every
+ * language: upstream's word, which no lexicon translates.
+ */
+function messageAsJson(
+  tokens: readonly LanguageToken[],
+  from: number,
+  to: number,
+  language: string
+): { as: number; json: number } | null {
+  let event = -1;
+  for (let i = from; i < Math.min(to, from + 3); i++) {
+    if (tokens[i].value.toLowerCase() === 'message') {
+      event = i;
+      break;
+    }
+  }
+  if (event < 0) return null;
+  // The words a head can still have after its event: a postposition (ja `で`), a multi-word one
+  // (ko `할 때`), an event marker (ko `을 에`), and the words of the language's own handler
+  // patterns, the ones the renderer writes a head with (zh's `一 message 就`).
+  const headWords = new Set([...eventHandlerHeadForms(language)].flatMap(f => f.split(/\s+/)));
+  for (const pattern of getPatternsForLanguage(language)) {
+    if (pattern.command !== 'on') continue;
+    for (const token of pattern.template.tokens) {
+      if (token.type !== 'literal') continue;
+      for (const word of [token.value, ...(token.alternatives ?? [])]) {
+        headWords.add(word.toLowerCase());
+      }
+    }
+  }
+  const eventMarkers = markerSurfaceForms(tryGetProfile(language)?.roleMarkers?.event);
+  for (let i = event + 1; i <= event + 3 && i + 1 < to; i++) {
+    if (isAsWord(tokens[i], language) && tokens[i + 1].value.toLowerCase() === 'json') {
+      return { as: i, json: i + 1 };
+    }
+    if (!headWords.has(tokens[i].value.toLowerCase()) && !tokenMatches(tokens[i], eventMarkers)) {
+      return null;
+    }
+  }
+  return null;
+}
+
+/** A conversion's `as`, in the language's own word or in English's. */
+function isAsWord(token: LanguageToken, language: string): boolean {
+  const value = token.value.toLowerCase();
+  return (
+    value === 'as' ||
+    token.normalized?.toLowerCase() === 'as' ||
+    token.value === conversionAsWord(language) ||
+    translateConnective(language, token.value) === 'as'
+  );
 }
 
 /** `init immediately`: the word right after the keyword. */
@@ -1949,7 +2116,7 @@ function featureSource(
   if ((action !== 'eventsource' && action !== 'socket') || keywordIdx !== 0) return undefined;
   const nameIdx = resolveNameTokenIndex(tokens, keywordIdx, language);
   if (nameIdx < 0) return undefined;
-  let first = nameIdx + 1;
+  let first = nameTokenEnd(tokens, nameIdx) + 1;
   let last = Math.min(bodyStart, tokens.length) - 1;
   if (action === 'eventsource') {
     const forms = markerSurfaceForms(tryGetProfile(language)?.roleMarkers?.source);

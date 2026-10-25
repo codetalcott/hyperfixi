@@ -44,7 +44,7 @@ import {
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const SUITE = path.resolve(here, '../../engine/upstream-suite');
-const DIRS = ['commands', 'core', 'expressions', 'features', 'templates'];
+const DIRS = ['commands', 'core', 'expressions', 'ext', 'features', 'templates'];
 
 /** Every `.js` file under a directory, sorted, as paths relative to `root`. */
 function jsFiles(root: string, dir: string): string[] {
@@ -81,7 +81,9 @@ function operands(node: ts.Expression): ts.Expression[] {
 /**
  * What a JavaScript file holds that may be hyperscript: its largest constant
  * strings (markup, read for scripts later), and the scripts it writes with
- * `setAttribute('_', '…')`.
+ * `setAttribute('_', '…')` or as a script element's `textContent` (upstream's
+ * socket tests write every script that way). A `textContent` that is not
+ * hyperscript is left out later, as a source the engine does not read.
  */
 function constantStrings(file: string): { markup: string[]; scripts: string[] } {
   const source = ts.createSourceFile(
@@ -102,6 +104,18 @@ function constantStrings(file: string): { markup: string[]; scripts: string[] } 
       fold(node.arguments[0] as ts.Expression) === '_'
     ) {
       const script = fold(node.arguments[1] as ts.Expression);
+      if (script !== undefined) {
+        scripts.push(script);
+        return;
+      }
+    }
+    if (
+      ts.isBinaryExpression(node) &&
+      node.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+      ts.isPropertyAccessExpression(node.left) &&
+      node.left.name.text === 'textContent'
+    ) {
+      const script = fold(node.right);
       if (script !== undefined) {
         scripts.push(script);
         return;

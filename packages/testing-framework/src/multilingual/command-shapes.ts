@@ -42,9 +42,9 @@
  * Regenerate with tools/regen-command-shapes-baseline.ts.
  */
 
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { FOREIGN_LANGUAGES } from './value-matrix';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -52,6 +52,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 export const CASES_PATH = path.join(here, 'command-shapes.cases.json');
 export const BASELINE_PATH = path.resolve(here, '../../baselines/command-shapes.json');
 const RUNNER_PATH = path.resolve(here, '../../../engine/upstream-suite/run.mjs');
+const EXT_DIR = path.resolve(here, '../../../engine/dist/ext');
 
 // ---------------------------------------------------------------------------
 // Cases
@@ -157,10 +158,29 @@ export type Reader = 'program' | 'statements';
 export const readerOf = (shape: Pick<CommandShapeCase, 'origin'>): Reader =>
   shape.origin.startsWith('upstream:') ? 'program' : 'statements';
 
-/** The engine's two readers. Statements exclude a lone expression: it is not a script. */
+/**
+ * The engine's two readers. Statements exclude a lone expression: it is not a script.
+ *
+ * They read with every module AND every extension the engine builds (`dist/ext/<name>.esm.js`,
+ * each exporting a module named `<name>`): a page that loads `ext/socket.js` is translated
+ * like any other, so its syntax is a case like any other. Read with `everything` alone, the
+ * harvest dropped every socket script as one the engine does not parse.
+ */
 export async function loadEngineReaders(): Promise<Record<Reader, EngineParser>> {
   const engine = await import('@hyperfixi/engine');
-  engine.register(...engine.everything);
+  const extensions = await Promise.all(
+    readdirSync(EXT_DIR)
+      .filter(f => f.endsWith('.esm.js'))
+      .sort()
+      .map(async f => {
+        const name = f.slice(0, -'.esm.js'.length);
+        const mod = (await import(pathToFileURL(path.join(EXT_DIR, f)).href))[name];
+        if (typeof mod !== 'function') throw new Error(`${f} exports no module named ${name}`);
+        return mod as (typeof engine.everything)[number];
+      })
+  );
+  if (extensions.length === 0) throw new Error(`no extensions in ${EXT_DIR}: build the engine`);
+  engine.register(...engine.everything, ...extensions);
   return {
     program: { parse: engine.parseProgram },
     statements: {

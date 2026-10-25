@@ -62,6 +62,32 @@ timeout n] [on message [as JSON] …] end` defines `Chat`, a WebSocket with `raw
   `Grammar.toggleElement` slot is gone; a module that set it registers a fallback instead.
   `Parser` gains `mark()` and `reset()`.
 
+### Fixed
+
+- **`@lokascript/semantic`: a translated `socket` comes back as the socket upstream reads.**
+  A socket's `on message [as JSON] …` is its own clause, closed by the socket's one `end` (or
+  by the end of the script). Semantic read it as an event handler, eventsource's shape, so:
+  - a clause closed by `end` came back with a second `end`, in every language. The engine
+    rejects that, so a translated socket failed to parse on the page;
+  - a clause with no `end` (upstream's tests write them that way) lost its body, and a
+    clause's `as JSON` was read as leftover input. `translate` refused both;
+  - a dotted name came back split: `socket MyApp.chat …` became `socket MyApp .chat …`, a
+    different socket.
+
+  `as JSON` is now written with the language's own word for `as`, as a conversion is (es
+  `como JSON`, ja `として JSON`). Text semantic wrote before, with two `end`s, still reads as
+  the one socket it was.
+
+  Where a language puts its handler word after the event (ja `messageで`, tr `message da`), a
+  socket or eventsource whose body starts with a word that looks like an event (ja
+  `messageで messageを 記録`, "on message log message") now reads. The handler word used to
+  be taken as the start of the body.
+  - **Measured by the command-shape gate, which now reads extension syntax.** Its engine
+    registers every extension the engine builds. Its harvest reads upstream's `ext/` tests,
+    and the scripts a test writes as `textContent` (how upstream's socket tests write theirs).
+    That adds 33 cases (1,168 in all), and each passes in all 24 lanes. Before this fix, 4 of
+    the 16 socket cases were refused in every language and 1 was silent in every language.
+
 ## [7.5.1] - 2026-10-23
 
 The last two silent misreads of hand-written non-English hyperscript that the 7.3.0 live test
