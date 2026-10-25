@@ -7,6 +7,7 @@
 import type { Cmd, Ctx, Expr, Program } from './ast';
 import { expr } from './expressions';
 import { installHtmxCompat } from './htmx-compat';
+import * as kit from './kit';
 import { ParseError, Parser, createGrammar, formatError, type Grammar } from './parser';
 import {
   config,
@@ -32,9 +33,28 @@ export type Module = (g: Grammar) => void;
 
 export const grammar = createGrammar();
 
-/** Add grammar modules to this bundle's engine. */
+const registered = new Set<Module>();
+/** Elements whose script failed to parse, for a module registered after they were read. */
+const unread = new Set<Element>();
+
+/**
+ * Add grammar modules to this bundle's engine; a module already added is skipped. Elements
+ * already read whose scripts failed to parse are read again, and only those: an extension that
+ * claims only what upstream rejects cannot change a script that parsed.
+ */
 export function register(...modules: Module[]): void {
-  for (const module of modules) module(grammar);
+  const added = modules.filter(module => !registered.has(module));
+  for (const module of added) {
+    registered.add(module);
+    module(grammar);
+  }
+  if (!added.length) return;
+  for (const elt of [...unread]) {
+    unread.delete(elt);
+    if (!elt.isConnected) continue;
+    dropData(elt);
+    initElement(elt);
+  }
 }
 
 const parser = (src: string) => new Parser(grammar, tokenize(src), src);
@@ -143,6 +163,7 @@ function initElement(elt: Element): void {
     setTimeout(() => triggerEvent(target, 'load', { hyperscript: true }), 1);
   } catch (e) {
     if (e instanceof ParseError) {
+      unread.add(elt);
       // The error is in the rewritten script; say what the author wrote.
       if (src !== written) e.written = written;
       triggerEvent(elt, 'hyperscript:parse-error', { errors: [e] });
@@ -240,6 +261,12 @@ export const api = Object.assign(evaluate, {
   addAfterProcessHook: (hook: ProcessHook) => void afterProcess.push(hook),
   /** Not in upstream: rewrite a script as it is read, leaving the attribute as written. */
   addSourceTransform: (transform: SourceTransform) => void transforms.push(transform),
+  /** Not in upstream: add grammar modules, from a script tag (`dist/ext/<name>.js`) or a page. */
+  register,
+  /** Not in upstream: what a module may call (`kit.ts`), for one that a script tag loads. */
+  kit,
+  /** Not in upstream: the extension files (`dist/ext/<name>.js`) this page has loaded. */
+  extensions: new Set<string>(),
   evaluate,
   parse: hostParse,
   process: processNode,

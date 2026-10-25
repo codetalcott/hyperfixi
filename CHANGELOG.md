@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`@hyperfixi/engine`: extensions that a script tag can load.** After `hyperfixi-hs.js`, a page
+  can load `ext/<name>.js`, which registers its module with the page's engine. Or, from ESM,
+  `register(...everything, tailwind)` with `@hyperfixi/engine/ext/tailwind`.
+  - **The first extension is upstream's `tailwind`** (the `twDisplay`, `twVisibility` and
+    `twOpacity` hide/show strategies), and upstream's 12 tests for it are now in the engine's
+    gate: 1,434 of 1,498.
+  - **The public object gains three properties.** `register` adds modules. `kit` holds what a
+    module may call: `expr` and `config`, the same names the library entry exports for module
+    authors. `extensions` lists the extension files the page has loaded.
+  - **`register` skips a module it has already added.** When it does add one, it reads again
+    the elements whose scripts failed to parse, so an `async` or late-loaded extension still
+    applies.
+  - **Upstream's own `ext/tailwind.js` also runs on the engine unchanged**, through `use`.
+
 ### Changed
 
 - **`@hyperfixi/engine`: a module can add a reading to a command without changing what the

@@ -20,11 +20,10 @@ export type { Module, Parsed, SourceTransform } from './engine';
 export { everything } from './everything';
 export { ParseError, Parser, createGrammar, formatError } from './parser';
 export type { ChainRule, CommandRule, FeatureRule, Grammar, LeafRule } from './parser';
-// For a module written outside this package (`@hyperfixi/speech`): a rule parses an operand with it.
-export { expr } from './expressions';
+// What a module written outside the engine may call (`@hyperfixi/speech`, `src/ext/`): `kit.ts`.
+export * from './kit';
 export { tokenize } from './tokenizer';
 export type { Token } from './tokenizer';
-export { config } from './runtime';
 export type { Config } from './runtime';
 export type * from './ast';
 

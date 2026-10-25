@@ -33,7 +33,7 @@ const ENGINE_COMMAND_COUNT = 53;
  * (which `test:upstream:update` rewrites), so a change there fails until this
  * follows. It replaced 3.x's hand-typed "~85% official _hyperscript".
  */
-const UPSTREAM_SUITE = { version: '0.9.93', passed: 1422, total: 1486 } as const;
+const UPSTREAM_SUITE = { version: '0.9.93', passed: 1434, total: 1498 } as const;
 
 // =============================================================================
 // PACKAGE INFO

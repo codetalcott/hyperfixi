@@ -13,6 +13,12 @@
     },
     "./browser": "./dist/hyperfixi-hs.js",
     "./dist/hyperfixi-hs.js": "./dist/hyperfixi-hs.js",
+    "./ext/*": {
+      "types": "./dist/ext/*.d.ts",
+      "import": "./dist/ext/*.esm.js",
+      "default": "./dist/ext/*.esm.js"
+    },
+    "./dist/ext/*": "./dist/ext/*",
     "./package.json": "./package.json"
   },
   "files": [

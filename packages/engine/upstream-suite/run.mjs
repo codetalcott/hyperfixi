@@ -30,9 +30,11 @@ import { fileURLToPath } from 'node:url';
 const here = dirname(fileURLToPath(import.meta.url));
 const VENDORED = '0.9.93';
 const DIRS = ['commands', 'core', 'expressions', 'features', 'templates', 'integration'];
-// Single test files from directories not taken whole: `ext/`'s other files test upstream's
-// optional extensions (components, event sources, tailwind), which this engine does not build.
-const FILES = ['ext/hs-include.js'];
+// Single test files from directories not taken whole. In `ext/`: `hs-include` (built into the
+// engine's htmx integration) and the extensions this engine builds (`dist/ext/<name>.js`, which
+// `fixtures.js` loads for `ext/<name>.js`); `ext/`'s other files test upstream's extensions
+// that the engine does not build (components, event sources).
+const FILES = ['ext/hs-include.js', 'ext/tailwind.js'];
 // What the htmx tests load: their fixture (it imports three names from `fixtures.js`) and the
 // htmx build upstream pins. Copied for `--files` runs too.
 const SUPPORT = ['htmx-fixtures.js', 'vendor/htmx.js'];

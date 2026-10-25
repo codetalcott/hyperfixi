@@ -14,7 +14,7 @@
  */
 
 import { existsSync, readdirSync, readFileSync } from 'fs';
-import { join, dirname, resolve } from 'path';
+import { basename, join, dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -65,6 +65,20 @@ function extractExportPaths(exports, basePath = '') {
   }
 
   return paths;
+}
+
+/**
+ * Whether an export target exists. A subpath pattern (`./dist/ext/*.esm.js`, for the export
+ * `./ext/*`) must match at least one file; its `*` may only be in the file name.
+ */
+function targetExists(fullPath) {
+  if (!fullPath.includes('*')) return existsSync(fullPath);
+  const dir = dirname(fullPath);
+  if (dir.includes('*') || !existsSync(dir)) return false;
+  const [before, after] = basename(fullPath).split('*');
+  return readdirSync(dir).some(
+    f => f.length > before.length + after.length && f.startsWith(before) && f.endsWith(after)
+  );
 }
 
 /**
@@ -151,7 +165,7 @@ function validatePackage(pkgName) {
         path: exportPath,
       };
 
-      if (existsSync(fullPath)) {
+      if (targetExists(fullPath)) {
         results.found.push(exportInfo);
       } else {
         results.missing.push(exportInfo);

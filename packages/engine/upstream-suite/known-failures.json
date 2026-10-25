@@ -1,7 +1,7 @@
 {
   "upstream": "0.9.93",
-  "passed": 1422,
-  "total": 1486,
+  "passed": 1434,
+  "total": 1498,
   "failing": [
     "core/bootstrap.js › _hyperscript bootstrapping › logAll config logs events to console",
     "core/evalStatically.js › evalStatically() › throws on math expressions",

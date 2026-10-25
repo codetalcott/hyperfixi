@@ -3,10 +3,11 @@
 `0.9.93/test/` is the `commands`, `core`, `expressions`, `features`, `templates` and
 `integration` directories of [`bigskysoftware/_hyperscript`](https://github.com/bigskysoftware/_hyperscript)'s
 `test/`, at tag `0.9.93` (commit `ea9a6534d24cf5c7257adcaad75ee75b0c612d8e`), unmodified,
-with four single files: `ext/hs-include.js` (the rest of `ext/` tests upstream's optional
-extensions, which the engine does not build), and what the htmx tests load,
-`htmx-fixtures.js` and `vendor/htmx.js` (the htmx 4.0.0-beta1 build upstream pins). The
-`integration` directory and the four files were added on 2026-10-21. Upstream is licensed
+with single files: `ext/hs-include.js`; `ext/tailwind.js`, the tests of an extension the engine
+builds (the rest of `ext/` tests upstream's extensions the engine does not build); and what the
+htmx tests load, `htmx-fixtures.js` and `vendor/htmx.js` (the htmx 4.0.0-beta1 build upstream
+pins). The `integration` directory and `hs-include.js` and the htmx files were added on
+2026-10-21, and `ext/tailwind.js` on 2026-10-25. Upstream is licensed
 0BSD; its `LICENSE` is beside the tests.
 
 These files are the engine's acceptance oracle (`../run.mjs`). They are test fixtures, not
