@@ -151,6 +151,25 @@ test.describe('extensions', () => {
     ]);
     expect(await evaluate(() => _hyperscript.extensions.size)).toBe(0);
   });
+
+  test('an extension file beside an engine with no kit (a bundle of your own) says what to do instead', async ({
+    page,
+    evaluate,
+  }) => {
+    const warnings = [];
+    page.on('console', m => m.type() === 'warning' && warnings.push(m.text()));
+    // Only the script-tag bundle carries the kit; a bundle built from ESM has the rest.
+    await evaluate(() => {
+      window.kit = _hyperscript.kit;
+      delete _hyperscript.kit;
+    });
+    await loadScript(page, tailwind);
+    await evaluate(() => (_hyperscript.kit = window.kit));
+    expect(warnings).toEqual([
+      "[hyperfixi] ext/tailwind.js needs hyperfixi-hs.js; with the Vite plugin, list it: extensions: ['tailwind']",
+    ]);
+    expect(await evaluate(() => _hyperscript.extensions.size)).toBe(0);
+  });
 });
 
 test.describe('socket, where it differs from upstream', () => {

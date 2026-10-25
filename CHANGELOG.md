@@ -27,9 +27,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **The first extension is upstream's `tailwind`** (the `twDisplay`, `twVisibility` and
     `twOpacity` hide/show strategies), and upstream's 12 tests for it are now in the engine's
     gate: 1,434 of 1,498.
-  - **The public object gains three properties.** `register` adds modules. `kit` holds what a
-    module may call: `expr` and `config`, the same names the library entry exports for module
-    authors. `extensions` lists the extension files the page has loaded.
+  - **The public object gains `register` and `extensions`, and the script-tag bundle's also gains
+    `kit`.** `register` adds modules. `extensions` lists the extension files the page has
+    loaded. `kit` holds what a module may call: the same names the library entry exports for
+    module authors. Only `hyperfixi-hs.js` carries the kit, so a bundle built from ESM (the Vite
+    plugin's) keeps only the parts of the engine it uses; it registers extensions from ESM, and an
+    extension file loaded beside it says so.
   - **`register` skips a module it has already added.** When it does add one, it reads again
     the elements whose scripts failed to parse, so an `async` or late-loaded extension still
     applies.
@@ -44,7 +47,7 @@ timeout n] [on message [as JSON] …] end` defines `Chat`, a WebSocket with `raw
     JSON `0`, `false` or `null` is that value, where upstream rejects it.
   - **The kit grows to what a feature needs:** `dotOrColonPath`, `urlOrExpression`,
     `evalStatic`, `commandList`, `makeContext`, `runList` and `assignToNamespace`. Each is
-    exported from `@hyperfixi/engine` and carried on `_hyperscript.kit`.
+    exported from `@hyperfixi/engine` and carried on `hyperfixi-hs.js`'s `_hyperscript.kit`.
 
 ### Changed
 

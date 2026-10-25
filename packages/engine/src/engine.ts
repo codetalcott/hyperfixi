@@ -7,7 +7,6 @@
 import type { Cmd, Ctx, Expr, Program } from './ast';
 import { expr } from './expressions';
 import { installHtmxCompat } from './htmx-compat';
-import * as kit from './kit';
 import { ParseError, Parser, createGrammar, formatError, type Grammar } from './parser';
 import {
   config,
@@ -263,8 +262,8 @@ export const api = Object.assign(evaluate, {
   addSourceTransform: (transform: SourceTransform) => void transforms.push(transform),
   /** Not in upstream: add grammar modules, from a script tag (`dist/ext/<name>.js`) or a page. */
   register,
-  /** Not in upstream: what a module may call (`kit.ts`), for one that a script tag loads. */
-  kit,
+  // `kit` (what a module may call) is added by the script-tag bundle (`bundles/full.ts`) only,
+  // so a bundle of the user's own keeps only the parts of the engine it uses.
   /** Not in upstream: the extension files (`dist/ext/<name>.js`) this page has loaded. */
   extensions: new Set<string>(),
   evaluate,

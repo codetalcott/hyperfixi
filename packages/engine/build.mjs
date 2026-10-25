@@ -96,6 +96,10 @@ for (const entry of extensions) {
 const hs = globalThis._hyperscript;
 if (!hs || !hs.register)
   console.warn('[hyperfixi] ext/${name}.js needs @hyperfixi/engine (hyperfixi-hs.js), loaded before it');
+else if (!hs.kit)
+  // The engine of a bundle built from ESM (the Vite plugin's) carries no kit: it registers
+  // extensions from ESM.
+  console.warn("[hyperfixi] ext/${name}.js needs hyperfixi-hs.js; with the Vite plugin, list it: extensions: ['${name}']");
 else if (!hs.extensions.has('${name}')) {
   hs.extensions.add('${name}');
   hs.register(module);
