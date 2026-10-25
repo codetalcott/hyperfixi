@@ -89,6 +89,7 @@ whenever htmx loads.
 | `upstream-suite/`                                                | The acceptance gate: upstream's Playwright suite (vendored) against a bundle                                                                                 |
 | `tests/`                                                         | This package's own tests (`src/additions.ts`, and regressions upstream's tests did not show), in the form of upstream's and on the same fixtures             |
 | `tools/probe.mts`                                                | One source on this engine and on upstream, side by side, on the value matrix's fixture                                                                       |
+| `tools/claims.mts`, `tests/claims.json`                          | What each addition claims, read and run on upstream: the tier each addition may have                                                                         |
 
 A node is typed data plus the closure that runs it, bound when the node is parsed: an
 expression has `ev`, a command has `run`, a feature has `install`. Control flow is a value a
@@ -101,6 +102,7 @@ npm run build --prefix packages/engine          # dist/: library, bundles, decla
 npm run typecheck --prefix packages/engine
 npm run test:upstream --prefix packages/engine  # the gate (needs a build; about 30 s)
 npm run test:own --prefix packages/engine       # additions and regressions (needs a build; 2 s)
+npm run check:claims --prefix packages/engine   # what each addition claims, on upstream (3 s)
 npm run cost --prefix packages/engine           # what each module costs in the full bundle
 
 # Any engine bundle can be scored on the same suite:
@@ -128,6 +130,17 @@ two that check an upstream form still reads as it did), which is what shows the 
 additions. `tests/regressions.js` holds the other kind: places where this engine differed from
 upstream and upstream's tests did not show it (each of those passes on upstream). CI runs both
 after the upstream suite.
+
+**The claims.** `check:claims` (`tools/claims.mts`) asks what each addition takes from upstream.
+`tests/claims.json` lists, per addition, the sources it gives a meaning to; each is read and
+run on upstream, and the worst outcome sets the tier the addition may be listed with:
+an **addition** claims only what upstream rejects, a **trap repair** also what upstream reads
+but cannot run, a **dialect** something that runs on upstream. The listed tier must be the
+measured one, the engine must read and run every claim, and the engine without the addition
+must read each claim as upstream does (otherwise the claim is not the addition's). A claim
+whose run needs an API jsdom lacks (`showModal`, `togglePopover`) is only read, with the
+reason listed; `tests/additions.js` runs it in Chromium. `--report` prints every claim and
+what each reader did with it.
 
 **The multilingual gates**, in the packages that own them:
 
@@ -262,30 +275,31 @@ two values and inserts nothing. The comparison that counts is the DOM a handler 
 
 ## Differences from upstream
 
-Three, all recorded here and nowhere silent.
+In syntax, two, both recorded here and nowhere silent.
 
 **Two additions** (`src/additions.ts`, decided 2026-10-01), forms `packages/core` has and the
-shipped examples use. Each is its own module, and neither changes how an upstream script reads:
-upstream's suite passes the same tests with them registered as without.
+shipped examples use. Each is its own module; upstream's suite passes the same tests with them
+registered as without, and `check:claims` measures what each takes from upstream (above).
 
 - `new Date()`, `new Intl.NumberFormat('en')`, `(new Date()).getDay()`: a constructor call as
   an expression. `new` is still an ordinary name unless a constructor call follows it. Upstream
-  has the `make a Date` command and no expression. 0.20 KB.
+  has the `make a Date` command and no expression. 0.20 KB. Measured a **dialect**: upstream
+  reads `set d to new Date()` as `set d to new` (an unset variable) and a second command,
+  `Date()`, which runs and leaves `d` null. With a class (`new Map()`) or a call after it
+  (`new Date().getDay()`, the form the shipped examples use), upstream's reading fails when
+  run instead; inside `put … into` or parentheses, upstream rejects it.
 - `toggle #dialog`, `toggle #dialog modal` (or `as modal`), `toggle #details`: open what is
   closed and close what is open, for a dialog, a details element (or its summary), a popover
   and a select. Upstream rejects `toggle <expression>` unless `between` follows; that form is
-  unchanged. 0.21 KB.
+  unchanged. 0.21 KB. Measured an **addition**: upstream rejects every form it claims.
 
-**One looser reading**, found by the measurement above: `my @id as String` (an attribute read
-through `my` / `its` / `your`, then a conversion or any further access). Upstream rejects it,
-because its attribute-access rule does not continue the expression chain as every other access
-does; the possessive form `#a's @title as String` works on both. This engine continues the
-chain. It is kept because the stricter reading looks like an upstream slip and a shipped
-example uses the form (`its @data-stock as Number > 0`).
+An attribute read through `my` / `its` / `your` takes nothing after it here, as on upstream:
+both reject `my @id as String` (upstream's attribute-access rule does not continue the
+expression chain); the possessive `#a's @title as String` works on both.
 
 Considered and not added: core's `swap` strategies (upstream's `swap` means something else),
 `copy`, a `? :` conditional, `.debounce(n)`, `has`, prefix `unless`, `set @a to v on <target>`,
-`sorted by … desc`. `push url` / `replace url` are undecided.
+`sorted by … desc`, `push url` / `replace url` (pages write `call history.pushState`).
 
 ## Where the bytes are
 

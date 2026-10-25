@@ -39,6 +39,7 @@
     "test:upstream": "node upstream-suite/run.mjs --bundle dist/full.js --check",
     "test:upstream:update": "node upstream-suite/run.mjs --bundle dist/full.js --update",
     "test:own": "node upstream-suite/run.mjs --bundle dist/full.js --own",
+    "check:claims": "tsx tools/claims.mts",
     "cost": "node cost.mjs"
   },
   "author": "LokaScript Contributors",

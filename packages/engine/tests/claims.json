@@ -1,0 +1,78 @@
+{
+  "construct": {
+    "tier": "dialect",
+    "note": "Upstream reads `set d to new Date()` as `set d to new` (an unset variable) and a second command, `Date()`. With a class (`new Map()`) or a call after it (`new Date().getDay()`) that fails when run; with a constructor that is also a function (`Date`) and nothing after it that needs d, it runs, and d is null.",
+    "claims": [
+      {
+        "source": "on click put new Date(2020, 0, 15).getFullYear() into me"
+      },
+      {
+        "source": "on click put 'in ' + (new Date(2020, 0, 15)).getFullYear() + '!' into me"
+      },
+      {
+        "source": "on click put new Intl.NumberFormat('en-US').format(1234.5) into me"
+      },
+      {
+        "source": "on click set d to new Date(1999, 5, 1) then put d.getFullYear() into me"
+      },
+      {
+        "source": "on click set t to new Date(2020, 0, 15).getDay() then put t into me"
+      },
+      {
+        "source": "on click set m to new Map() then put m into me"
+      },
+      {
+        "source": "on click set d to new Date() then put d into me"
+      }
+    ]
+  },
+  "toggleElement": {
+    "tier": "addition",
+    "claims": [
+      {
+        "html": "<details id='x'><summary>s</summary>body</details>",
+        "source": "on click toggle #x"
+      },
+      {
+        "html": "<details id='x'><summary id='s'>s</summary>body</details>",
+        "source": "on click toggle #s"
+      },
+      {
+        "html": "<details open>a</details><details>b</details>",
+        "source": "on click toggle <details/>"
+      },
+      {
+        "html": "<details>a</details><details>b</details>",
+        "source": "on click toggle the first <details/>"
+      },
+      {
+        "html": "<details id='x'>a</details>",
+        "source": "on click toggle #x then put 'done' into me"
+      },
+      {
+        "html": "<dialog id='d'>hi</dialog>",
+        "source": "on click toggle #d",
+        "parseOnly": "jsdom has no HTMLDialogElement.show()"
+      },
+      {
+        "html": "<dialog id='d'>hi</dialog>",
+        "source": "on click toggle #d modal",
+        "parseOnly": "jsdom has no HTMLDialogElement.showModal()"
+      },
+      {
+        "html": "<dialog id='d'>hi</dialog>",
+        "source": "on click toggle #d as modal",
+        "parseOnly": "jsdom has no HTMLDialogElement.showModal()"
+      },
+      {
+        "html": "<div popover id='p'>pop</div>",
+        "source": "on click toggle #p",
+        "parseOnly": "jsdom has no togglePopover()"
+      },
+      {
+        "html": "<select id='s'><option>a</option></select>",
+        "source": "on click toggle #s"
+      }
+    ]
+  }
+}
