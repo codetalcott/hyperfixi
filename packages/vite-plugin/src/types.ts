@@ -45,6 +45,13 @@ export interface HyperfixiPluginOptions {
   positional?: boolean;
 
   /**
+   * Extensions of `@hyperfixi/engine` to register, by name: `['socket', 'tailwind']` imports
+   * `@hyperfixi/engine/ext/socket` and `@hyperfixi/engine/ext/tailwind`. An extension is
+   * opt-in, so the scan never adds one.
+   */
+  extensions?: string[];
+
+  /**
    * @deprecated No effect. The engine processes content htmx (2 or 4) and fixi
    * swap in, and hands htmx the content a script puts in, in every bundle
    * (`@hyperfixi/engine`'s `src/htmx-compat.ts`). Accepted so existing configs

@@ -86,6 +86,13 @@ describe('resolveModules', () => {
     expect(unknown).toEqual([]);
   });
 
+  it('reads which modules add a reading to a command from the grammar (`Grammar.fallbacks`)', () => {
+    expect(ENGINE_MODULES.filter(m => m.fallbacks.length).map(m => [m.name, m.fallbacks])).toEqual([
+      ['toggleElement', ['toggle']],
+    ]);
+    expect(resolveModules({ ...base, commands: ['add'] }).modules).not.toContain('toggleElement');
+  });
+
   it('orders the list as `everything` does, whatever the scan order', () => {
     const a = resolveModules({ ...base, commands: ['put', 'add', 'wait'] }).modules;
     const b = resolveModules({ ...base, commands: ['wait', 'put', 'add'] }).modules;

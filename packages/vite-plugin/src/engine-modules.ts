@@ -23,6 +23,8 @@ export interface EngineModuleInfo {
   commands: readonly string[];
   /** Feature keywords it adds (`on`, `def`, `live`, …). */
   features: readonly string[];
+  /** Commands it adds a reading to (`Grammar.fallbacks`): `toggleElement`'s is `toggle`. */
+  fallbacks: readonly string[];
 }
 
 function exportNameOf(mod: Module): string {
@@ -42,6 +44,7 @@ export const ENGINE_MODULES: readonly EngineModuleInfo[] = everything.map(mod =>
     // spelled as (`#text`); it is not something a scan can find.
     commands: Object.keys(grammar.commands).filter(k => /^[a-z]+$/.test(k)),
     features: Object.keys(grammar.features),
+    fallbacks: Object.keys(grammar.fallbacks),
   };
 });
 
@@ -129,9 +132,11 @@ export function resolveModules(usage: ModuleUsage): ResolvedModules {
   }
   if (usage.construct) wanted.add('construct');
   if (usage.cookies) wanted.add('cookies');
-  // `toggle <element>` is the engine's addition to `toggle`; a scan cannot tell
-  // `toggle .cls` from `toggle #dialog`, and the module is 0.2 KB.
-  if (wanted.has('toggle')) wanted.add('toggleElement');
+  // A module that adds a reading to a command (`toggleElement`, `toggle #dialog`) comes with
+  // that command: a scan cannot tell `toggle .cls` from `toggle #dialog`, and the module is
+  // small. Read from the grammar (`Grammar.fallbacks`), not listed here.
+  const provided = new Set(ENGINE_MODULES.filter(m => wanted.has(m.name)).flatMap(m => m.commands));
+  for (const m of ENGINE_MODULES) if (m.fallbacks.some(k => provided.has(k))) wanted.add(m.name);
 
   const modules = ENGINE_MODULES.filter(m => wanted.has(m.name)).map(m => m.name);
   for (const name of wanted) {

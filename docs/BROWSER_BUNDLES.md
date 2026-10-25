@@ -71,6 +71,26 @@ or falls back to core's bundles.)
 > `textshelf`, `dev` / `prod` / `llm` builds. Pages pinned to a 3.x release keep
 > loading them from the CDN.
 
+## Extension files
+
+`@hyperfixi/engine` builds extensions beside its bundle: modules that are not in
+`hyperfixi-hs.js` and that a page loads after it. Each registers itself with the page's engine:
+
+```html
+<script src="hyperfixi-hs.js"></script>
+<script src="ext/socket.js"></script>
+```
+
+| File              | Size (gzip) | What it adds                                                                                                              |
+| ----------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `ext/tailwind.js` | 0.3 KB      | Upstream's `tailwind`: the `twDisplay`, `twVisibility` and `twOpacity` hide/show strategies                               |
+| `ext/socket.js`   | 1.2 KB      | Upstream's `socket`: `socket Chat ws://… [on message [as JSON] …] end`, a WebSocket with `raw`, `dispatchEvent` and `rpc` |
+
+Each is held to upstream's own tests for it. From ESM, import the module from
+`@hyperfixi/engine/ext/<name>` and `register` it. With the Vite plugin, list it:
+`hyperfixi({ extensions: ['socket'] })`. Loaded late (`async`), an extension still applies:
+the engine reads again the scripts that failed to parse. See the engine's README, "Extensions".
+
 ## Companion bundles
 
 | Bundle                                               | Global                  | Size (gzip) | Use Case                                                                          |

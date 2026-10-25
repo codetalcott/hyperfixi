@@ -32,9 +32,9 @@
  * Run: npm run verify:reference
  */
 
-import { existsSync, readFileSync } from 'fs';
+import { existsSync, readdirSync, readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 
 import { COMMAND_KEYWORDS, FEATURE_KEYWORDS, HOVER_DOCS } from '../src/lsp-metadata';
 import { bundleInfo, packageInfo } from '../src/metadata';
@@ -72,6 +72,34 @@ const engineCommands = new Set(engineSets.commands);
 const engineFeatures = new Set(engineSets.features);
 
 engine.register(...engine.everything);
+
+/**
+ * The engine's extensions (`dist/ext/<name>.esm.js`, each exporting a module named `<name>`):
+ * their keywords are documented like the engine's, and their examples parse once they are
+ * registered. Upstream's extensions the engine does not build stay exceptions (below).
+ */
+const extDir = resolve(CORE_ROOT, '../engine/dist/ext');
+const extensionModules: Array<(g: ReturnType<typeof engine.createGrammar>) => void> = existsSync(
+  extDir
+)
+  ? await Promise.all(
+      readdirSync(extDir)
+        .filter(f => f.endsWith('.esm.js'))
+        .map(
+          async f =>
+            (await import(pathToFileURL(resolve(extDir, f)).href))[f.slice(0, -'.esm.js'.length)]
+        )
+    )
+  : [];
+const extensionCommands = new Set<string>();
+const extensionFeatures = new Set<string>();
+for (const mod of extensionModules) {
+  const grammar = engine.createGrammar();
+  mod(grammar);
+  for (const key of Object.keys(grammar.commands)) extensionCommands.add(key);
+  for (const key of Object.keys(grammar.features)) extensionFeatures.add(key);
+}
+engine.register(...extensionModules);
 
 /** The engine's error for `source`, or null when it parses. */
 function parseError(source: string, requireStatement: boolean): string | null {
@@ -111,9 +139,12 @@ const LSP_SUB_KEYWORDS = new Set(['else', 'while']);
 /**
  * In FEATURE_KEYWORDS without being engine features: upstream _hyperscript ships
  * them as extensions (`ext/worker.js`, `ext/socket.js`, `ext/eventsource.js`), and
- * the LSP's hyperscript mode serves upstream's users. The engine does not have them.
+ * the LSP's hyperscript mode serves upstream's users. Those the engine builds as
+ * extensions (`socket`) are checked as its own; the rest it does not have.
  */
-const UPSTREAM_EXTENSION_FEATURES = new Set(['worker', 'socket', 'eventsource']);
+const UPSTREAM_EXTENSION_FEATURES = new Set(
+  ['worker', 'socket', 'eventsource'].filter(f => !extensionFeatures.has(f))
+);
 
 /**
  * Hover categories whose examples are not scripts: template bodies (`#if`, `#for`)
@@ -179,16 +210,20 @@ function verifyLspKeywords() {
   const featureKeywords = new Set<string>(FEATURE_KEYWORDS);
   const known = new Set([...commandKeywords, ...featureKeywords]);
 
-  const commandGaps = difference(engineCommands, commandKeywords);
+  // The engine's own keywords and its extensions' are documented alike.
+  const commandGaps = difference(
+    new Set([...engineCommands, ...extensionCommands]),
+    commandKeywords
+  );
   const commandGhosts = difference(
     commandKeywords,
-    new Set([...engineCommands, ...LSP_SUB_KEYWORDS])
+    new Set([...engineCommands, ...extensionCommands, ...LSP_SUB_KEYWORDS])
   );
   // `set` and `js` are features too; listed with the commands, they are known.
-  const featureGaps = difference(engineFeatures, known);
+  const featureGaps = difference(new Set([...engineFeatures, ...extensionFeatures]), known);
   const featureGhosts = difference(
     featureKeywords,
-    new Set([...engineFeatures, ...UPSTREAM_EXTENSION_FEATURES])
+    new Set([...engineFeatures, ...extensionFeatures, ...UPSTREAM_EXTENSION_FEATURES])
   );
   if (commandGaps.length)
     details.push(`  Engine commands COMMAND_KEYWORDS lacks: ${commandGaps.join(', ')}`);
