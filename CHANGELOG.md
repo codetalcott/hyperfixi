@@ -22,6 +22,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     the elements whose scripts failed to parse, so an `async` or late-loaded extension still
     applies.
   - **Upstream's own `ext/tailwind.js` also runs on the engine unchanged**, through `use`.
+- **`@hyperfixi/engine/ext/socket`: upstream's `socket` feature.** `socket Chat ws://… [with
+timeout n] [on message [as JSON] …] end` defines `Chat`, a WebSocket with `raw`,
+  `dispatchEvent` (`send ping to Chat` sends the event as JSON) and an `rpc` proxy
+  (`Chat.rpc.f(…)` returns a promise for the reply).
+  - **Upstream's 16 socket tests pass:** the suite is 1,450 of 1,498, with 48 known failures.
+  - **Two differences from upstream:** the socket opens when the feature is installed, not
+    when it is parsed, so a parse alone opens nothing; and with `as JSON` a message that is
+    JSON `0`, `false` or `null` is that value, where upstream rejects it.
+  - **The kit grows to what a feature needs:** `dotOrColonPath`, `urlOrExpression`,
+    `evalStatic`, `commandList`, `makeContext`, `runList` and `assignToNamespace`. Each is
+    exported from `@hyperfixi/engine` and carried on `_hyperscript.kit`.
 
 ### Changed
 

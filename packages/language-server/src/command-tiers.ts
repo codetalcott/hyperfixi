@@ -5,8 +5,9 @@
  * _hyperscript's grammar, so the two modes share their keywords:
  *
  * - `HYPERSCRIPT_COMMANDS` is the engine's command and feature keywords, plus `while`
- *   (it continues a `repeat`) and the three features upstream ships as extensions and
- *   the engine does not have (`worker`, `socket`, `eventsource`).
+ *   (it continues a `repeat`) and the three features upstream ships as extensions, which
+ *   are not in the engine's `everything` (`worker`, `socket`, `eventsource`; the engine
+ *   builds `socket` as an extension, `ext/socket.js`).
  *   `command-tiers.test.ts` checks it against the engine's grammar in both directions.
  * - `LOKASCRIPT_ONLY_COMMANDS` is empty. Core's extensions (`prepend`, `process
  *   partials`, `copy`, `push url`, `replace url`, a bare `beep`, a leading `unless`)
@@ -92,7 +93,8 @@ export const HYPERSCRIPT_COMMANDS = [
   'on',
   'when',
 
-  // Upstream extensions (ext/eventsource.js, ext/socket.js, ext/worker.js); not in the engine.
+  // Upstream extensions (ext/eventsource.js, ext/socket.js, ext/worker.js); not in the
+  // engine's `everything` (socket is an engine extension: ext/socket.js).
   'eventsource',
   'socket',
   'worker',

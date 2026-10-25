@@ -35,7 +35,7 @@ function engineKeywords(): Set<string> {
 /** In HYPERSCRIPT_COMMANDS without being engine keywords, each for its reason. */
 const NOT_ENGINE_KEYWORDS = new Set([
   'while', // continues a `repeat`
-  'eventsource', // upstream extensions (ext/*.js) the engine does not have
+  'eventsource', // upstream extensions (ext/*.js), not in the engine's `everything`
   'socket',
   'worker',
 ]);
