@@ -1,8 +1,10 @@
 /**
  * What an extension module may call: the one surface for module authors, in-tree (`src/ext/`)
- * or not (`@hyperfixi/speech`). `index.ts` exports it for ESM. The public object carries it as
- * `_hyperscript.kit`, and an extension loaded by a script tag (`dist/ext/<name>.js`) reads it
- * there, so it calls the page's engine instead of carrying a copy. An extension's value imports
+ * or not (`@hyperfixi/speech`). `index.ts` exports it for ESM. The script-tag bundle
+ * (`bundles/full.ts`, so `hyperfixi-hs.js`) carries it as `_hyperscript.kit`, and an extension
+ * loaded by a script tag (`dist/ext/<name>.js`) reads it there, so it calls the page's engine
+ * instead of carrying a copy. Only that bundle carries it: a bundle built from ESM keeps only
+ * the parts of the engine its modules use, and registers extensions from ESM. An extension's value imports
  * come from here only (its types may come from anywhere); the build fails on any other. Adding
  * a name here changes the public API, so a name is added when an extension needs it.
  */

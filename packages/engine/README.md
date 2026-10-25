@@ -62,8 +62,8 @@ _hyperscript.addSourceTransform((source, element) => english);
 
 A script is rewritten as it is read. The element keeps the text its author wrote, and a parse
 error in the rewritten script carries that text (`error.written`). `@lokascript/hyperscript-adapter`
-uses the hook when the host has it. It also adds `register`, `kit` and `extensions`, for
-extensions (next).
+uses the hook when the host has it. It also adds `register` and `extensions`, and in the
+script-tag bundle `kit`, for extensions (next).
 
 ### Extensions
 
@@ -87,14 +87,17 @@ never adds an extension; a project lists the ones it uses.
 - **What a module may call is `src/kit.ts`**: for parsing, `expr`, `dotOrColonPath`,
   `urlOrExpression`, `evalStatic` and `commandList`; for running, `makeContext`, `runList` and
   `assignToNamespace`; and `config`. ESM gets
-  it from the library entry; a page's engine carries it as `_hyperscript.kit`, so an extension
-  file calls the page's engine instead of carrying a copy of its parser. An extension's value
+  it from the library entry; the script-tag bundle (`hyperfixi-hs.js`) carries it as
+  `_hyperscript.kit`, so an extension file calls the page's engine instead of carrying a copy
+  of its parser. Only that bundle carries it: on every bundle's `api` it would keep the kit's
+  functions in a bundle that uses none of them (~0.25 KB gzipped on a small one, measured), so
+  a bundle built from ESM (the Vite plugin's) registers extensions from ESM. An extension's value
   imports come from `../kit` only, and the build fails on any other. A name is added to the
   kit when an extension needs it, as a change to the public API.
 - **An extension file** (`dist/ext/<name>.js`, built from `src/ext/<name>.ts`) registers its
   module once per page (it records its name in `_hyperscript.extensions`, so a script htmx
-  boost runs again does not register twice), and says so on the console when no engine was
-  loaded before it. `dist/ext/<name>.esm.js` is the same module for ESM
+  boost runs again does not register twice), and says so on the console when no engine, or
+  one without the kit, was loaded before it. `dist/ext/<name>.esm.js` is the same module for ESM
   (`@hyperfixi/engine/ext/<name>`), taking the kit from `@hyperfixi/engine`.
 - **Loaded late** (`async`, a lazy import, a page's own `register` call), an extension still
   applies: `register` reads again, and only again, the elements whose scripts failed to parse.

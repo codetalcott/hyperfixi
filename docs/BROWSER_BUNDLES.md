@@ -86,7 +86,8 @@ or falls back to core's bundles.)
 | `ext/tailwind.js` | 0.3 KB      | Upstream's `tailwind`: the `twDisplay`, `twVisibility` and `twOpacity` hide/show strategies                               |
 | `ext/socket.js`   | 1.2 KB      | Upstream's `socket`: `socket Chat ws://… [on message [as JSON] …] end`, a WebSocket with `raw`, `dispatchEvent` and `rpc` |
 
-Each is held to upstream's own tests for it. From ESM, import the module from
+Each is held to upstream's own tests for it. An extension file needs `hyperfixi-hs.js` before it
+(that bundle carries what the file calls, `_hyperscript.kit`). From ESM, import the module from
 `@hyperfixi/engine/ext/<name>` and `register` it. With the Vite plugin, list it:
 `hyperfixi({ extensions: ['socket'] })`. Loaded late (`async`), an extension still applies:
 the engine reads again the scripts that failed to parse. See the engine's README, "Extensions".
