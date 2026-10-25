@@ -27,7 +27,7 @@
   "devDependencies": {
     "@hyperfixi/engine": "^7.5.1",
     "@types/node": "^26.6.5",
-    "happy-dom": "^21.0.3",
+    "happy-dom": "^21.0.4",
     "tsup": "^9.0.0",
     "typescript": "^5.0.0",
     "vitest": "^5.0.5"
