@@ -31,7 +31,7 @@
     "@lokascript/framework": "^7.5.1",
     "@lokascript/semantic": "^7.5.1",
     "vscode-languageserver": "^10.1.2",
-    "vscode-languageserver-textdocument": "^1.0.15"
+    "vscode-languageserver-textdocument": "^1.0.16"
   },
   "peerDependencies": {
     "@hyperfixi/core": "^7.5.1",

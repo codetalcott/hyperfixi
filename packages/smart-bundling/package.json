@@ -50,19 +50,19 @@
   "author": "LokaScript Contributors",
   "license": "MIT",
   "dependencies": {
-    "@rollup/plugin-terser": "^1.0.0",
+    "@rollup/plugin-terser": "^1.0.2",
     "acorn": "^8.19.0",
     "acorn-walk": "^8.2.0",
-    "esbuild": "^0.28.2",
+    "esbuild": "^0.25.12",
     "fs-extra": "^11.4.1",
     "glob": "^13.0.6",
     "happy-dom": "^21.0.4",
     "magic-string": "^1.4.3",
-    "rollup": "^4.63.5",
+    "rollup": "^4.65.0",
     "semver": "^7.8.5",
     "source-map": "^0.8.0",
     "terser": "^5.51.2",
-    "vite": "^8.3.4"
+    "vite": "^8.3.5"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^29.0.3",
