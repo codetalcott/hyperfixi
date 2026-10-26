@@ -49,7 +49,7 @@
   "license": "MIT",
   "dependencies": {
     "@lokascript/semantic": "^7.5.1",
-    "hyperscript.org": "^0.9.93"
+    "hyperscript.org": "^0.9.94"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",

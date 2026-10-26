@@ -46,7 +46,7 @@
     "@lokascript/framework": "^7.5.1",
     "@lokascript/planner": "^7.5.1",
     "@lokascript/semantic": "^7.5.1",
-    "@modelcontextprotocol/server": "^2.3.1",
+    "@modelcontextprotocol/server": "^2.4.0",
     "glob": "^13.0.6",
     "yaml": "^2.9.1"
   },
