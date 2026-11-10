@@ -13,7 +13,8 @@ export const KEYWORD_LANGUAGE_MAP: Record<string, readonly string[]> = {
   '-kama': ['qu'],
   '-manta': ['qu'],
   a: ['es', 'pt', 'it', 'tr'],
-  à: ['fr'],
+  à: ['pt', 'fr'],
+  'a la': ['es'],
   'a menos que': ['es'],
   a_menos: ['pt'],
   abfangen: ['de'],
@@ -3598,7 +3599,7 @@ export const SCRIPT_RANGES: readonly {
 ];
 
 /**
- * Total keywords: 3395
+ * Total keywords: 3396
  * Total languages: 24
- * Ambiguous keywords (match 2+ languages): 202
+ * Ambiguous keywords (match 2+ languages): 203
  */
