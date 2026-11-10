@@ -45,6 +45,7 @@ const PREPOSITIONS = new Set([
   'dentro', // inside
   'fora', // outside
   'ao', // a + o (contraction)
+  'à', // a + a (contraction): the handler's head before a feminine event
   'do', // de + o (contraction)
   'no', // em + o (contraction)
   'na', // em + a (contraction)

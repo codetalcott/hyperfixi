@@ -42,10 +42,12 @@ export function render(written: SemanticNode, language: string): string {
   //     against the nominative;
   //   - `attach`, a marker written onto the word before it (ko `#out에`, N5),
   //     against the spaced one.
+  //   - `gender`, a handler's head in the gender of its event (es `a la
+  //     entrada`), against the head's own form (`al entrada`).
   // The scope goes first: in English's order a case form can need the
   // nominative that the scope-first form did not (bn `<button/> এ আমি`).
   const dropped: NativeWordKind[] = [];
-  for (const kind of ['scope', 'case', 'attach'] as const) {
+  for (const kind of ['scope', 'case', 'attach', 'gender'] as const) {
     if (!wrote.has(kind)) continue;
     const without = semanticRenderer.renderPlainWords(
       () => renderReadable(node, language),

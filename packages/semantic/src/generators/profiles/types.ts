@@ -285,6 +285,15 @@ export interface EventHandlerConfig {
    * Used in patterns like: عند عدم التركيز = "when not focusing" = "on blur"
    */
   readonly negationMarker?: RoleMarker;
+  /**
+   * The head before a feminine event noun, where the head holds an article
+   * that agrees with it: es `al clic` but `a la entrada`, pt `ao clique` but
+   * `à mudança`. `nouns` are the language's feminine event words, by their
+   * first word (`tecla` for `tecla arriba`). Any other event keeps the head's
+   * own form: a masculine noun, an infinitive (es `al redimensionar`), or a
+   * name that is code (`al my:event`, as `el evento`).
+   */
+  readonly feminineEventMarker?: { readonly marker: string; readonly nouns: readonly string[] };
 }
 
 /**

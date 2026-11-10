@@ -560,6 +560,32 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
 };
 
 /**
+ * Languages that write every noun with a capital. An event's name stands where
+ * a noun does (de `wenn Klick`, `auslösen Absenden auf #form`), so its word is
+ * written as one: `Klick`, `Änderung`, `Eingabe`, and an infinitive used as the
+ * event's name too (`das Absenden`, `das Laden`, `das Scrollen`), which also
+ * tells it from the command (`absenden`). An event with no German word
+ * stays as code (`keyup`). The reader takes either: a profile keyword folds case, and
+ * the table below lists each of its words both ways.
+ */
+const CAPITALIZED_NOUN_LANGUAGES: ReadonlySet<string> = new Set(['de']);
+
+const capitalized = (word: string): string => word.charAt(0).toUpperCase() + word.slice(1);
+
+// The table's words are looked up as written, so a noun-capitalizing
+// language's words are listed with their capital too, after the plain ones
+// (the first listed is still the one a render starts from).
+for (const language of CAPITALIZED_NOUN_LANGUAGES) {
+  const table = eventNameTranslations[language] ?? {};
+  for (const [native, english] of Object.entries(table)) {
+    // One word only: a phrase (`taste unten`) is one token to the tokenizer
+    // as it is spelled there, and no render writes one.
+    if (/\s/.test(native) || capitalized(native) in table) continue;
+    table[capitalized(native)] = english;
+  }
+}
+
+/**
  * Normalize an event name to English.
  */
 export function normalizeEventName(event: string, language: string): string {
@@ -792,7 +818,9 @@ export function localizeEventName(englishEvent: string, language: string): strin
   if (eventLocalizationDenylist[language]?.has(englishEvent)) {
     return englishEvent;
   }
-  return eventNameLocalizations[language]?.[englishEvent] ?? englishEvent;
+  const native = eventNameLocalizations[language]?.[englishEvent];
+  if (native === undefined) return englishEvent;
+  return CAPITALIZED_NOUN_LANGUAGES.has(language) ? capitalized(native) : native;
 }
 
 // =============================================================================

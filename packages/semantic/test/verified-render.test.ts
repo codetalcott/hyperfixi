@@ -89,7 +89,7 @@ describe('a variable the plain render loses is written in parentheses', () => {
     const source = 'on click set ist to 2 then set x to ist + 3 then put x into #out';
     const code = render(parse(source, 'en')!, 'de');
     expect(code).toBe(
-      'wenn klick setze (ist) auf 2 dann setze x auf (ist) + 3 dann setzen x in #out'
+      'wenn Klick setze (ist) auf 2 dann setze x auf (ist) + 3 dann setzen x in #out'
     );
     expect(readBack(code, 'de')).toBe(source);
   });

@@ -52,9 +52,10 @@ const BLOCK_HEADER_ACTIONS = new Set<ActionType>([
  * of Y`; M2 sheet A3–A5); `case`, a pronoun in the case its marker takes (N3);
  * `attach`, a marker written onto the word before it (N5: ko `#out에`);
  * `scope`, a query's scope before it, as a verb-final language writes it (tr
- * `bendeki <p/>`, N3).
+ * `bendeki <p/>`, N3); `gender`, a handler's head in the gender of its event
+ * (es `a la entrada`, pt `à mudança`).
  */
-export type NativeWordKind = 'value' | 'case' | 'attach' | 'scope';
+export type NativeWordKind = 'value' | 'case' | 'attach' | 'scope' | 'gender';
 
 /**
  * Commands whose destination is where something is, not where it goes: their
@@ -1167,6 +1168,8 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       // modifiers may unshift. A `from` then lands between the event and its
       // alternatives, which is how the parser reads a source (the first leg's).
       this.spliceOrEvents(node as EventHandlerSemanticNode, parts, eventPart, language);
+      // Before the modifiers, which may unshift and glue onto the event.
+      this.agreeHeadMarker(parts, eventPart, language);
       this.spliceEventModifiers(node as EventHandlerSemanticNode, parts, eventPart, language);
       this.attachHeadMarker(parts, eventPart, tokens, language);
     }
@@ -1296,6 +1299,24 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     if (attached === undefined || !this.splitsBack(attached, word, language)) return;
     parts.splice(at - 1, 2, attached);
     this.nativeWritten.add('attach');
+  }
+
+  /**
+   * A handler's head in the gender of the event it stands before: es `al`
+   * holds the masculine article, so a feminine event takes `a la` (`a la
+   * entrada`), and pt `ao` becomes `à` (`à mudança`). The first event decides
+   * (`a la entrada o clic`). From the profile's `feminineEventMarker`; the
+   * verified render keeps it only where the reader reads it as the plain head.
+   */
+  private agreeHeadMarker(parts: string[], eventPart: number, language: string): void {
+    const handler = tryGetProfile(language)?.eventHandler;
+    const feminine = handler?.feminineEventMarker;
+    if (!feminine || eventPart < 1 || this.plainWords.has('gender')) return;
+    if (parts[eventPart - 1] !== handler.eventMarker?.primary) return;
+    const noun = parts[eventPart]!.split(/\s/, 1)[0]!.toLowerCase();
+    if (!feminine.nouns.includes(noun)) return;
+    parts[eventPart - 1] = feminine.marker;
+    this.nativeWritten.add('gender');
   }
 
   /**

@@ -67,15 +67,15 @@ describe('renders write me in the case its marker takes', () => {
     ['pl', 'on click put 1 into me', 'gdy kliknięcie umieść 1 do mnie'],
     ['ru', 'on click put 1 into me', 'при клик положить 1 в меня'],
     ['uk', 'on click put 1 into me', 'при клік покласти 1 в мене'],
-    ['de', 'on click put 1 into me', 'wenn klick setzen 1 in mich'],
+    ['de', 'on click put 1 into me', 'wenn Klick setzen 1 in mich'],
     ['hi', 'on click put 1 into me', 'क्लिक पर 1 को रखें मुझ में'],
     // A location's case: toggle's `on`, a query's `in`.
-    ['de', 'on click toggle .x on me', 'wenn klick umschalten .x auf mir'],
-    ['de', 'on click trigger foo on me', 'wenn klick auslösen foo auf mir'],
+    ['de', 'on click toggle .x on me', 'wenn Klick umschalten .x auf mir'],
+    ['de', 'on click trigger foo on me', 'wenn Klick auslösen foo auf mir'],
     ['ru', 'on click toggle .x on me', 'при клик переключить .x на мне'],
     ['uk', 'on click toggle .x on me', 'при клік перемкнути .x на мені'],
-    ['de', 'on click hide <p/> in me', 'wenn klick verstecke <p/> in mir'],
-    ['de', 'on click get first <p/> in me', 'wenn klick hole erste <p/> in mir'],
+    ['de', 'on click hide <p/> in me', 'wenn Klick verstecke <p/> in mir'],
+    ['de', 'on click get first <p/> in me', 'wenn Klick hole erste <p/> in mir'],
     // A marker vocalized before the pronoun, which the reader takes there too.
     ['ru', 'on click add .x to me', 'при клик добавить .x ко мне'],
     ['ru', 'on click hide <p/> in me', 'при клик скрыть <p/> во мне'],
@@ -89,7 +89,7 @@ describe('renders write me in the case its marker takes', () => {
     // writes as one word.
     ['hi', 'on click remove .x from me', 'क्लिक पर .x को मुझ से हटाएं'],
     ['es', 'on click set $x to me', 'al clic establecer $x a mí'],
-    ['de', 'on click send foo to me', 'wenn klick senden foo an mich'],
+    ['de', 'on click send foo to me', 'wenn Klick senden foo an mich'],
     ['tl', 'on click remove .x from me', 'kapag click alisin .x mula_sa akin'],
     // The rest of the render reads back otherwise (`I match` as `me matches`):
     // the case form changes nothing the reader reads, so it stays.
@@ -151,14 +151,14 @@ describe('renders write it in the case its marker takes, and me as an object', (
     ['pl', 'on click put 1 before it', 'gdy kliknięcie umieść 1 przed tym'],
     ['uk', 'on click remove .x from it', 'при клік видалити .x з цього'],
     // de writes a da-compound (FUSED_FORMS.md Q4), split back by its reader.
-    ['de', 'on click add .x to it', 'wenn klick hinzufügen .x dazu'],
-    ['de', 'on click toggle .x on it', 'wenn klick umschalten .x darauf'],
-    ['de', 'on click take .x from it', 'wenn klick nehmen .x davon'],
-    ['de', 'on click put 1 into it', 'wenn klick setzen 1 darein'],
-    ['de', 'on click hide <p/> in it', 'wenn klick verstecke <p/> darin'],
-    ['de', 'on click put 1 before it', 'wenn klick setzen 1 davor'],
+    ['de', 'on click add .x to it', 'wenn Klick hinzufügen .x dazu'],
+    ['de', 'on click toggle .x on it', 'wenn Klick umschalten .x darauf'],
+    ['de', 'on click take .x from it', 'wenn Klick nehmen .x davon'],
+    ['de', 'on click put 1 into it', 'wenn Klick setzen 1 darein'],
+    ['de', 'on click hide <p/> in it', 'wenn Klick verstecke <p/> darin'],
+    ['de', 'on click put 1 before it', 'wenn Klick setzen 1 davor'],
     // `danach` is de's `then`: `nach` keeps the dative.
-    ['de', 'on click put 1 after it', 'wenn klick setzen 1 nach ihm'],
+    ['de', 'on click put 1 after it', 'wenn Klick setzen 1 nach ihm'],
     ['fr', 'on click add .x to it', 'quand clic ajouter .x à lui'],
     ['fr', 'on click put 1 into it', 'quand clic mettre 1 dans lui'],
     ['fr', 'on click put 1 before it', 'quand clic mettre 1 avant lui'],
@@ -167,7 +167,7 @@ describe('renders write it in the case its marker takes, and me as an object', (
     // A direction's accusative is the nominative (ru `это`): unchanged.
     ['ru', 'on click put 1 into it', 'при клик положить 1 в это'],
     // `me` as a verb's object: a patient, or a destination right after the verb.
-    ['de', 'on click show me', 'wenn klick zeige mich'],
+    ['de', 'on click show me', 'wenn Klick zeige mich'],
     ['ru', 'on click show me', 'при клик показать меня'],
     ['pl', 'on click put me into #out', 'gdy kliknięcie umieść mnie do #out'],
     ['uk', 'on click hide me with *opacity', 'при клік сховати мене з *opacity'],
@@ -359,5 +359,5 @@ it('a scroll position keeps its phrase in the plain render', () => {
   const node = parse('on click scroll to the top of me', 'en')!;
   expect(semanticRenderer.render(node, 'es')).toBe('al clic desplazamiento en the top of yo');
   // de has an object form too: the position is no object either.
-  expect(semanticRenderer.render(node, 'de')).toBe('wenn klick scrollen auf the top of ich');
+  expect(semanticRenderer.render(node, 'de')).toBe('wenn Klick scrollen auf the top of ich');
 });
