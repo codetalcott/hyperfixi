@@ -47,6 +47,7 @@ const PREPOSITIONS = new Set([
   'dentro', // inside
   'fuera', // outside
   'al', // a + el (contraction)
+  'a la', // the same before a feminine event (extractors/spanish-keyword.ts)
   'del', // de + el (contraction)
 ]);
 

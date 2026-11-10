@@ -87,7 +87,7 @@ export const portugueseProfile: LanguageProfile = /* @__PURE__ */ withGrammar(po
     show: { primary: 'mostrar', alternatives: ['exibir'], normalized: 'show' },
     hide: { primary: 'ocultar', alternatives: ['esconder', 'esconda'], normalized: 'hide' },
     transition: { primary: 'transição', alternatives: ['animar'], normalized: 'transition' },
-    on: { primary: 'em', alternatives: ['ao'], normalized: 'on' },
+    on: { primary: 'em', alternatives: ['ao', 'à'], normalized: 'on' },
     trigger: { primary: 'disparar', alternatives: ['ativar'], normalized: 'trigger' },
     send: { primary: 'enviar', normalized: 'send' },
     // These entries are the COMMANDS, so they write the verb, as the i18n
@@ -264,7 +264,7 @@ export const portugueseProfile: LanguageProfile = /* @__PURE__ */ withGrammar(po
     },
   },
   eventHandler: {
-    keyword: { primary: 'em', alternatives: ['ao'], normalized: 'on' },
+    keyword: { primary: 'em', alternatives: ['ao', 'à'], normalized: 'on' },
     sourceMarker: { primary: 'de', alternatives: ['desde'], position: 'before' },
     conditionalKeyword: { primary: 'quando', alternatives: ['se'] },
     // Event marker: ao (at/upon), used in SVO pattern
@@ -273,7 +273,13 @@ export const portugueseProfile: LanguageProfile = /* @__PURE__ */ withGrammar(po
     // + the eventHandler.keyword word the i18n transformer actually emits —
     // without it every generated fused `<cmd>-event-*-vso` pattern was dead
     // (the swap/if recovery split, #346/#351)
-    eventMarker: { primary: 'ao', alternatives: ['no', 'em'], position: 'before' },
+    eventMarker: { primary: 'ao', alternatives: ['à', 'no', 'em'], position: 'before' },
     temporalMarkers: ['quando', 'ao'], // temporal conjunctions (when)
+    // `ao` is a + o. The feminine event words this profile and the event
+    // table write: a entrada, a mudança, a tecla (baixo, cima), a rolagem.
+    feminineEventMarker: {
+      marker: 'à',
+      nouns: ['entrada', 'mudança', 'mudanca', 'tecla', 'rolagem'],
+    },
   },
 });

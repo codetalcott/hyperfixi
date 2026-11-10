@@ -91,7 +91,7 @@ export const spanishProfile: LanguageProfile = /* @__PURE__ */ withGrammar(spani
     hide: { primary: 'ocultar', alternatives: ['esconder'], normalized: 'hide' },
     transition: { primary: 'transición', alternatives: ['animar'], normalized: 'transition' },
     // Events
-    on: { primary: 'en', alternatives: ['al'], normalized: 'on' },
+    on: { primary: 'en', alternatives: ['al', 'a la'], normalized: 'on' },
     trigger: { primary: 'disparar', alternatives: ['activar'], normalized: 'trigger' },
     send: { primary: 'enviar', alternatives: ['envía'], normalized: 'send' },
     // DOM focus
@@ -314,7 +314,7 @@ export const spanishProfile: LanguageProfile = /* @__PURE__ */ withGrammar(spani
     },
   },
   eventHandler: {
-    keyword: { primary: 'al', alternatives: ['cuando', 'en'], normalized: 'on' },
+    keyword: { primary: 'al', alternatives: ['a la', 'cuando', 'en'], normalized: 'on' },
     sourceMarker: { primary: 'de', alternatives: ['desde'], position: 'before' },
     // Event marker: al (when), used in SVO pattern
     // Pattern: al [event] [verb] [patient] en [destination?]
@@ -322,7 +322,10 @@ export const spanishProfile: LanguageProfile = /* @__PURE__ */ withGrammar(spani
     // + the eventHandler.keyword word the i18n transformer actually emits —
     // without it every generated fused `<cmd>-event-*-vso` pattern was dead
     // (the swap/if recovery split, #346/#351)
-    eventMarker: { primary: 'al', alternatives: ['cuando', 'en'], position: 'before' },
+    eventMarker: { primary: 'al', alternatives: ['a la', 'cuando', 'en'], position: 'before' },
     temporalMarkers: ['cuando', 'al'], // temporal conjunctions (when)
+    // `al` is a + el. The feminine event words this profile and the event
+    // table write: la entrada, la tecla (abajo, arriba), la carga.
+    feminineEventMarker: { marker: 'a la', nouns: ['entrada', 'tecla', 'carga'] },
   },
 });

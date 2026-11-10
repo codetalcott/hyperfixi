@@ -11,6 +11,7 @@
 import type { ExtractionResult } from '../value-extractor-types';
 import type { ContextAwareExtractor, TokenizerContext } from '../context-aware-extractor';
 import { isWhitespace } from '../base';
+import { spanishProfile } from '../../generators/profiles/spanish';
 
 function createLatinCharClassifiers(pattern: RegExp) {
   const isLetter = (char: string) => pattern.test(char);
@@ -49,6 +50,21 @@ const PREPOSITIONS = new Set([
   'al',
   'del',
 ]);
+
+/**
+ * A handler's head before a feminine event: `a la entrada`, where a masculine
+ * one takes `al` (a + el). Two words, and `a` alone is the destination's
+ * marker (`poner x a la`, into a variable named la), so they are the head only
+ * with a feminine event word after them, the ones the renderer writes it for
+ * (the profile's `feminineEventMarker`).
+ */
+const FEMININE_HEAD = spanishProfile.eventHandler?.feminineEventMarker;
+const FEMININE_HEAD_PATTERN = FEMININE_HEAD
+  ? new RegExp(
+      `^${FEMININE_HEAD.marker.replace(/ /g, '\\s+')}(?=\\s+(?:${FEMININE_HEAD.nouns.join('|')})(?![\\p{L}\\p{N}_]))`,
+      'iu'
+    )
+  : undefined;
 
 /**
  * SpanishKeywordExtractor - Context-aware extractor for Spanish identifiers and keywords.
@@ -91,6 +107,19 @@ export class SpanishKeywordExtractor implements ContextAwareExtractor {
     // Note: This is a simplification - in production, we'd need access to
     // this.profileKeywords from the tokenizer. For now, we'll rely on
     // the context.isKeyword() to check if compound phrases are keywords.
+
+    const head = FEMININE_HEAD_PATTERN?.exec(input.slice(position));
+    if (head && FEMININE_HEAD) {
+      return {
+        value: FEMININE_HEAD.marker,
+        length: head[0].length,
+        metadata: {
+          normalized: this.context.lookupKeyword(FEMININE_HEAD.marker)?.normalized,
+          multiWord: true,
+          isPreposition: true,
+        },
+      };
+    }
 
     // Try common multi-word Spanish phrases
     const multiWordPhrases = [

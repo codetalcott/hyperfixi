@@ -51,6 +51,20 @@ timeout n] [on message [as JSON] …] end` defines `Chat`, a WebSocket with `raw
 
 ### Changed
 
+- **`@lokascript/semantic`: a Spanish or Portuguese handler's head agrees with its event, and
+  German writes an event as a noun.** Renders only; everything written before still reads.
+  - **es, pt:** `al` and `ao` hold the masculine article, and were written before every event
+    (`al entrada agregar .a`, `ao mudança de #search …`). A feminine event takes `a la` and `à`:
+    `a la entrada agregar .a`, `à mudança de #search disparar envio em #form`. The first event of
+    an `or` decides; an infinitive (`al redimensionar`) and a custom name (`al my:event`) keep the
+    masculine. Each profile lists its feminine event words (`eventHandler.feminineEventMarker`).
+    es reads `a la` as the head only before one of them, so `poner x a la` is still a put into a
+    variable named `la`. pt's `à` joins its letters and prepositions.
+  - **de:** an event's word takes its capital wherever a command names one: `wenn Klick`,
+    `wenn Änderung von #search auslösen Absenden auf #form`, `warten Änderung`. An event with no
+    German word stays code (`wenn keyup`). The event table lists each one-word name both ways, so
+    `wenn klick` and `wenn doppelklick` read as before.
+
 - **`@hyperfixi/engine`: a module can add a reading to a command without changing what the
   command reads (`Grammar.fallbacks`).** A fallback registered for a keyword is tried, from just
   after the keyword, only when the command's own rule fails to parse, and it counts only if it

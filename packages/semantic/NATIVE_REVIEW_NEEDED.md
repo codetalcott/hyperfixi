@@ -540,13 +540,13 @@ Renders wrote a handler's event with two particles, its own object marker and th
 (`クリック を で .aを 切り替え`). They now write the `on` word onto the event, as the profile
 documented (`クリック で`) and the old transformer wrote:
 
-| English                               | written                                   |
-| ------------------------------------- | ----------------------------------------- |
-| `on click toggle .a`                  | `クリックで .aを 切り替え`                |
-| `on click from #b toggle .a`          | `#b から クリックで .aを 切り替え`        |
-| `on click or keyup toggle .a`         | `クリック または キーアップで .aを 切り替え` |
-| `on myEvent(detail) toggle .a`        | `myEvent(detail)で .aを 切り替え`         |
-| `on click debounced at 200ms …`       | `クリックで debounced at 200ms …`         |
+| English                         | written                                      |
+| ------------------------------- | -------------------------------------------- |
+| `on click toggle .a`            | `クリックで .aを 切り替え`                   |
+| `on click from #b toggle .a`    | `#b から クリックで .aを 切り替え`           |
+| `on click or keyup toggle .a`   | `クリック または キーアップで .aを 切り替え` |
+| `on myEvent(detail) toggle .a`  | `myEvent(detail)で .aを 切り替え`            |
+| `on click debounced at 200ms …` | `クリックで debounced at 200ms …`            |
 
 The reader still takes `クリック を で`, and `クリック時` (the profile's `時`). Notes for the
 reviewer: is `クリックで` the head you would write, or `クリック時に` / `クリックしたら` / `クリック
@@ -560,15 +560,15 @@ takes the joined words as one).
 Renders wrote a handler's event and the `on` word apart (`ক্লিক তে .aকে টগল করুন`). They now
 write the locative onto the event, in the form the word takes:
 
-| English                        | written                               | rule                                   |
-| ------------------------------ | ------------------------------------- | -------------------------------------- |
-| `on click toggle .a`           | `ক্লিকে .aকে টগল করুন`                | the vowel sign `ে` after a consonant   |
-| `on load toggle .a`            | `লোডে .aকে টগল করুন`                  | same                                   |
-| `on change put "x" into #out`  | `পরিবর্তনে "x"কে #outএ রাখুন`         | same                                   |
-| `on submit toggle .a`          | `জমাতে .aকে টগল করুন`                 | `তে` after a vowel                     |
-| `on click from #b toggle .a`   | `#b থেকে ক্লিকে .aকে টগল করুন`        |                                        |
-| `on keyup toggle .a`           | `keyupতে .aকে টগল করুন`               | after code, `তে` as N5 writes it       |
-| `on click or keyup toggle .a`  | `ক্লিক অথবা keyupতে .aকে টগল করুন`    | the last leg takes it                  |
+| English                       | written                            | rule                                 |
+| ----------------------------- | ---------------------------------- | ------------------------------------ |
+| `on click toggle .a`          | `ক্লিকে .aকে টগল করুন`             | the vowel sign `ে` after a consonant |
+| `on load toggle .a`           | `লোডে .aকে টগল করুন`               | same                                 |
+| `on change put "x" into #out` | `পরিবর্তনে "x"কে #outএ রাখুন`      | same                                 |
+| `on submit toggle .a`         | `জমাতে .aকে টগল করুন`              | `তে` after a vowel                   |
+| `on click from #b toggle .a`  | `#b থেকে ক্লিকে .aকে টগল করুন`     |                                      |
+| `on keyup toggle .a`          | `keyupতে .aকে টগল করুন`            | after code, `তে` as N5 writes it     |
+| `on click or keyup toggle .a` | `ক্লিক অথবা keyupতে .aকে টগল করুন` | the last leg takes it                |
 
 The same rule now writes the locative onto any Bengali word it marks (`বডিতে`); a word
 ending in an anusvara or a hasant keeps it apart. The reader still takes `ক্লিক তে` and
@@ -582,15 +582,15 @@ Renders wrote a handler's event with two markers (`tıklama i üzerinde .a i de�
 event's accusative and the postposition). They now write the locative onto the event, in
 the form vowel harmony gives it (the profile's own `tıklama da`, joined):
 
-| English                        | written                                   | rule                                        |
-| ------------------------------ | ----------------------------------------- | ------------------------------------------- |
-| `on click toggle .a`           | `tıklamada .a i değiştir`                 | back vowel, voiced final: `da`              |
-| `on submit toggle .a`          | `göndermede .a i değiştir`                | front vowel: `de`                           |
-| `on change put "x" into #out`  | `değişiklikte "x" i #out e koy`           | voiceless final (`k`): `te`                 |
-| `on scroll toggle .a`          | `kaydırmada .a i değiştir`                |                                             |
-| `on click from #b toggle .a`   | `#b den tıklamada .a i değiştir`          |                                             |
-| `on keyup toggle .a`           | `keyup da .a i değiştir`                  | code keeps the suffix apart (Q2)            |
-| `on click or keyup toggle .a`  | `tıklama veya keyup da .a i değiştir`     | the last leg takes it                       |
+| English                       | written                               | rule                             |
+| ----------------------------- | ------------------------------------- | -------------------------------- |
+| `on click toggle .a`          | `tıklamada .a i değiştir`             | back vowel, voiced final: `da`   |
+| `on submit toggle .a`         | `göndermede .a i değiştir`            | front vowel: `de`                |
+| `on change put "x" into #out` | `değişiklikte "x" i #out e koy`       | voiceless final (`k`): `te`      |
+| `on scroll toggle .a`         | `kaydırmada .a i değiştir`            |                                  |
+| `on click from #b toggle .a`  | `#b den tıklamada .a i değiştir`      |                                  |
+| `on keyup toggle .a`          | `keyup da .a i değiştir`              | code keeps the suffix apart (Q2) |
+| `on click or keyup toggle .a` | `tıklama veya keyup da .a i değiştir` | the last leg takes it            |
 
 The locative is written only onto a Turkish word the reader knows; code (`keyup`,
 `draggable:start`, `myEvent(detail)`) takes `da` as a word apart until a reviewer picks a
@@ -626,22 +626,51 @@ A wait for an event no table knows (`wait for myEvent`, `wait for draggable:star
 written bare (`esperar myEvent`), which every reader took for a time wait. It is now written
 with the language's `event` word before the name, as `repeat until event X` already is:
 
-| lang | `on click wait for foo then log 1`          | notes                                     |
-| ---- | ------------------------------------------- | ----------------------------------------- |
-| es   | `al clic esperar evento foo entonces …`     | `esperar el evento foo`? the article      |
-| de   | `wenn klick warten Ereignis foo dann …`     | `auf das Ereignis foo warten`?            |
-| fr   | `quand clic attendre événement foo puis …`  | `attendre l'événement foo`?               |
-| ru   | `при клик ждать событие foo затем …`        | `ждать события foo` (genitive)?           |
-| ja   | `クリックで イベント foo 待つ それから …`  | `イベント foo を 待つ`?                   |
-| ko   | `클릭 할 때 이벤트 foo 대기 그다음 …`       | `이벤트 foo를 대기`?                      |
-| tr   | `tıklamada olay foo bekle ardından …`       | `foo olayını bekle`?                      |
-| zh   | `一 点击 就 等待 把 事件 foo 然后 …`        | the `把` is the wait pattern's            |
+| lang | `on click wait for foo then log 1`         | notes                                |
+| ---- | ------------------------------------------ | ------------------------------------ |
+| es   | `al clic esperar evento foo entonces …`    | `esperar el evento foo`? the article |
+| de   | `wenn klick warten Ereignis foo dann …`    | `auf das Ereignis foo warten`?       |
+| fr   | `quand clic attendre événement foo puis …` | `attendre l'événement foo`?          |
+| ru   | `при клик ждать событие foo затем …`       | `ждать события foo` (genitive)?      |
+| ja   | `クリックで イベント foo 待つ それから …`  | `イベント foo を 待つ`?              |
+| ko   | `클릭 할 때 이벤트 foo 대기 그다음 …`      | `이벤트 foo를 대기`?                 |
+| tr   | `tıklamada olay foo bekle ardından …`      | `foo olayını bekle`?                 |
+| zh   | `一 点击 就 等待 把 事件 foo 然后 …`       | the `把` is the wait pattern's       |
 
 A known DOM event keeps the bare form (`esperar transitionend`), a source follows the event
 (`esperar evento foo de #b`), and a bare name stays a time wait (`esperar delay`). Questions
 for the reviewer: is the bare `event` word natural before a name, or does your language want
 an article or a case (ru genitive, tr `olayını`)? Should a known event take the word too, for
 one shape (`esperar evento transitionend`)?
+
+## A handler's head agrees with its event: es, pt; de writes the event as a noun ⚠️ (November 2026)
+
+es `al` and pt `ao` hold the masculine article (a + el, a + o), and every handler was written with
+them, whatever the event. A feminine event now takes `a la` and `à`. The first event decides. An
+infinitive and a name that is code keep the masculine head. The old head still reads.
+
+| lang | before                 | now                    | kept                                         |
+| ---- | ---------------------- | ---------------------- | -------------------------------------------- |
+| es   | `al entrada agregar`   | `a la entrada agregar` | `al clic`, `al redimensionar`, `al my:event` |
+| es   | `al tecla arriba de`   | `a la tecla arriba de` |                                              |
+| pt   | `ao mudança de`        | `à mudança de`         | `ao clique`, `ao carregar`, `ao my:event`    |
+| pt   | `ao rolagem adicionar` | `à rolagem adicionar`  |                                              |
+
+The feminine words are listed by hand in each profile (`eventHandler.feminineEventMarker`): es
+`entrada`, `tecla`, `carga`; pt `entrada`, `mudança`, `tecla`, `rolagem`.
+
+de wrote an event's word lower-case (`wenn klick`, `auslösen absenden auf #form`) beside
+`Ereignis`. It is now written as a noun (`wenn Klick`, `wenn Änderung`, `auslösen Absenden auf
+#form`), an infinitive used as the event's name included (`Absenden`, `Scrollen`). An event with no
+German word stays code (`wenn keyup`). Either case reads.
+
+Questions for the reviewer:
+
+- es, pt: is a head with an article what a native writer expects before a bare event noun, or would
+  `al hacer clic` / `ao clicar` (the infinitive throughout) read better than agreeing the article?
+- es, pt: a custom event name (`al my:event`) takes the masculine, as `el evento`. Right?
+- de: `wenn Klick` is still not a German phrase (`bei Klick`, `beim Klicken`). The head word is a
+  separate question; this change is only the capital.
 
 ## A handler's count, after the head (M2 reliability row 8) ⚠️ (October 2026)
 
@@ -650,14 +679,14 @@ the first two). Every language writes the count as English does, a bare numeral 
 head, and a range keeps English's `to`. Before October 2026 the reader dropped the count and the
 translation was refused; it now reads back, so authors can see these renders:
 
-| lang | `on click 1 hide`         | a native writer might say       |
-| ---- | ------------------------- | ------------------------------- |
-| es   | `al clic 1 ocultar`       | `al primer clic ocultar`?       |
-| de   | `wenn klick 1 verbergen`  | `beim ersten Klick verbergen`?  |
-| ja   | `クリックで 1 隠す`       | `1回目のクリックで 隠す`?        |
-| ko   | `클릭 할 때 1 숨기다`     | `첫 번째 클릭 할 때 숨기다`?     |
-| tr   | `tıklamada 1 gizle`       | `ilk tıklamada gizle`?          |
-| ru   | `при клик 1 скрыть`       | `при первом клике скрыть`?      |
+| lang | `on click 1 hide`        | a native writer might say      |
+| ---- | ------------------------ | ------------------------------ |
+| es   | `al clic 1 ocultar`      | `al primer clic ocultar`?      |
+| de   | `wenn klick 1 verbergen` | `beim ersten Klick verbergen`? |
+| ja   | `クリックで 1 隠す`      | `1回目のクリックで 隠す`?      |
+| ko   | `클릭 할 때 1 숨기다`    | `첫 번째 클릭 할 때 숨기다`?   |
+| tr   | `tıklamada 1 gizle`      | `ilk tıklamada gizle`?         |
+| ru   | `при клик 1 скрыть`      | `при первом клике скрыть`?     |
 
 Question for the reviewer: is a bare number after the event readable as "the Nth click" at all, or
 does it read as a value? An ordinal (`primer`, `ersten`, `1回目`) is a new form, and waits for this
@@ -669,14 +698,14 @@ Upstream's `set {bar: 2, baz: 3} on obj` sets each property of the object on `ob
 every language; it now reads back, written with the same English `on` that `set @a to 1 on #b` (the
 attribute's scope) has always written in every language. No new word:
 
-| lang | `set {a: 1} on obj`         | `set @a to 1 on #b`        |
-| ---- | --------------------------- | -------------------------- |
-| es   | `establecer {a: 1} on obj`  | `establecer @a a 1 on #b`  |
-| de   | `festlegen auf {a: 1} on obj` | `setze @a auf 1 on #b`   |
-| ja   | `{a: 1}を on obj 設定`      | `@aを 1に on #b 設定`      |
-| ko   | `{a: 1}를 on obj 설정`      | `@a를 1에 on #b 설정`      |
-| tr   | `{a: 1} i on obj ayarla`    | `@a i 1 e on #b ayarla`    |
-| ru   | `установить в {a: 1} on obj` | `установить в @a 1 on #b` |
+| lang | `set {a: 1} on obj`           | `set @a to 1 on #b`       |
+| ---- | ----------------------------- | ------------------------- |
+| es   | `establecer {a: 1} on obj`    | `establecer @a a 1 on #b` |
+| de   | `festlegen auf {a: 1} on obj` | `setze @a auf 1 on #b`    |
+| ja   | `{a: 1}を on obj 設定`        | `@aを 1に on #b 設定`     |
+| ko   | `{a: 1}를 on obj 설정`        | `@a를 1에 on #b 설정`     |
+| tr   | `{a: 1} i on obj ayarla`      | `@a i 1 e on #b ayarla`   |
+| ru   | `установить в {a: 1} on obj`  | `установить в @a 1 on #b` |
 
 Questions for the reviewer: which word would you write for this `on` (the target the properties go
 onto)? And de: the object form takes de's default destination marker (`festlegen auf {a: 1}`) where
@@ -689,14 +718,14 @@ textContent` (replace each) were refused in every language. They now read back. 
 lexicon's word, which a condition (`if no <q/> where …`) already wrote; `mapped to` stays English, because
 no translation wrote its dictionary word before and new forms wait for this review:
 
-| lang | `set m to items where it matches .yes` | `… mapped to its textContent`          | dictionary `mapped to` |
-| ---- | -------------------------------------- | -------------------------------------- | ---------------------- |
-| es   | `establecer m a items donde ello coincide .yes` | `… items mapped to su textContent` | `transformado a`       |
-| de   | `setze m auf items wo es passt .yes`   | `… items mapped to sein textContent`   | `zugeordnet zu`        |
-| ja   | `mを items どこ それ 一致する .yesに 設定` | `mを items mapped to その textContentに 設定` | `に変換`        |
-| ko   | `m를 items 어디 그것 일치 .yes에 설정`  | `m를 items mapped to 그것의 textContent에 설정` | `로_변환`     |
-| tr   | `m i items nerede o eşleşir .yes e ayarla` | `m i items mapped to onun textContent e ayarla` | `ye dönüştürülmüş` |
-| ru   | `установить в m items где это соответствует .yes` | `… items mapped to его textContent` | `преобразовано_в` |
+| lang | `set m to items where it matches .yes`            | `… mapped to its textContent`                   | dictionary `mapped to` |
+| ---- | ------------------------------------------------- | ----------------------------------------------- | ---------------------- |
+| es   | `establecer m a items donde ello coincide .yes`   | `… items mapped to su textContent`              | `transformado a`       |
+| de   | `setze m auf items wo es passt .yes`              | `… items mapped to sein textContent`            | `zugeordnet zu`        |
+| ja   | `mを items どこ それ 一致する .yesに 設定`        | `mを items mapped to その textContentに 設定`   | `に変換`               |
+| ko   | `m를 items 어디 그것 일치 .yes에 설정`            | `m를 items mapped to 그것의 textContent에 설정` | `로_변환`              |
+| tr   | `m i items nerede o eşleşir .yes e ayarla`        | `m i items mapped to onun textContent e ayarla` | `ye dönüştürülmüş`     |
+| ru   | `установить в m items где это соответствует .yes` | `… items mapped to его textContent`             | `преобразовано_в`      |
 
 Questions for the reviewer: several `where` words are the question "where?" (ja `どこ`, ko `어디`, zh `哪里`,
 tr `nerede`), not a filter's "for which"; what would you write? And which word would you write for `mapped
@@ -711,31 +740,31 @@ word; `answer` is upstream's odd name for an alert). The choices take the `with`
 already has (the `style` role: ja `で`, ko `로`, tr `le`), and the `or` is the word the value pass
 writes in any expression. Written from grammar references, not checked by a native speaker.
 
-| lang | `ask "Name?"` | `answer "Save?" with "Yes" or "No"` | to check |
-| ---- | ------------- | ----------------------------------- | -------- |
-| ar | `اسأل "Name?"` | `أجب "Save?" بـ "Yes" أو "No"` | `بـ` for the choices; `اسأل`/`أجب` imperatives |
-| bn | `"Name?"কে জিজ্ঞাসা` | `"Save?"কে "Yes" অথবা "No" দিয়ে উত্তর` | `জিজ্ঞাসা`/`উত্তর` nouns, as `টগল`; `কে` after a quoted message; `দিয়ে` for the choices |
-| de | `frage "Name?"` | `antworte "Save?" mit "Yes" oder "No"` | imperative, as `erhöhe`; `frage nach`? |
-| es | `preguntar "Name?"` | `responder "Save?" con "Yes" o "No"` |  |
-| fr | `demander "Name?"` | `répondre "Save?" avec "Yes" ou "No"` |  |
-| he | `שאל את "Name?"` | `ענה את "Save?" עם "Yes" או "No"` | `את` before a quoted message; `עם` for the choices |
-| hi | `"Name?" को पूछें` | `"Save?" को "Yes" या "No" से जवाब` | `पूछें` imperative, `जवाब` a noun (alternative `उत्तर`): `जवाब दें`? `से` for the choices |
-| id | `tanya "Name?"` | `jawab "Save?" dengan "Yes" atau "No"` |  |
-| it | `chiedi "Name?"` | `rispondi "Save?" con "Yes" o "No"` |  |
-| ja | `"Name?"を 尋ねる` | `"Save?"を "Yes" または "No"で 答える` | `尋ねる` (ask) and `答える` (answer) as dictionary forms, as `切り替え` is a noun: `尋ね`/`答え`? Is `で` right for the choices (`「Yes」か「No」で`)? |
-| ko | `"Name?"을 질문` | `"Save?"을 "Yes" 또는 "No"로 답변` | `질문`/`답변` as nouns, as `토글`/`로그` are; `로` for the choices |
-| ms | `tanya "Name?"` | `jawab "Save?" dengan "Yes" atau "No"` |  |
-| pl | `zapytaj "Name?"` | `odpowiedz "Save?" z "Yes" lub "No"` | `zapytaj`/`odpowiedz` imperatives; `z` for the choices |
-| pt | `perguntar "Name?"` | `responder "Save?" com "Yes" ou "No"` |  |
-| qu | `"Name?" ta tapuy` | `"Save?" ta "Yes" utaq "No" wan kutichipuy` | `kutichipuy` (the plain `kutichiy` is already qu `return` and a toggle surface); `ta` and `wan` |
-| ru | `спросить "Name?"` | `ответить "Save?" с "Yes" или "No"` | infinitives, as `увеличить`; `с` for the choices (`с вариантами`?) |
-| sw | `uliza "Name?"` | `jibu "Save?" na "Yes" au "No"` | `na` for the choices |
-| th | `ถาม "Name?"` | `ตอบ "Save?" ด้วย "Yes" หรือ "No"` |  |
-| tl | `tanungin "Name?"` | `sagutin "Save?" nang "Yes" o "No"` | `nang` for the choices (`gamit ang`?) |
-| tr | `"Name?" i sor` | `"Save?" i "Yes" veya "No" le cevapla` | `sor`/`cevapla` imperatives, as `kaydet`; `yanıtla`? the instrumental `le` for the choices (`"Yes" veya "No" ile`) |
-| uk | `запитати "Name?"` | `відповісти "Save?" з "Yes" або "No"` | same as ru |
-| vi | `hỏi "Name?"` | `trả lời "Save?" với "Yes" hoặc "No"` |  |
-| zh | `询问 把 "Name?"` | `回答 把 "Save?" 用 "Yes" 或 "No"` | `把` is the patient marker the profile writes for every object; `询问`/`回答` as two-character verbs |
+| lang | `ask "Name?"`        | `answer "Save?" with "Yes" or "No"`         | to check                                                                                                                                               |
+| ---- | -------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| ar   | `اسأل "Name?"`       | `أجب "Save?" بـ "Yes" أو "No"`              | `بـ` for the choices; `اسأل`/`أجب` imperatives                                                                                                         |
+| bn   | `"Name?"কে জিজ্ঞাসা` | `"Save?"কে "Yes" অথবা "No" দিয়ে উত্তর`     | `জিজ্ঞাসা`/`উত্তর` nouns, as `টগল`; `কে` after a quoted message; `দিয়ে` for the choices                                                               |
+| de   | `frage "Name?"`      | `antworte "Save?" mit "Yes" oder "No"`      | imperative, as `erhöhe`; `frage nach`?                                                                                                                 |
+| es   | `preguntar "Name?"`  | `responder "Save?" con "Yes" o "No"`        |                                                                                                                                                        |
+| fr   | `demander "Name?"`   | `répondre "Save?" avec "Yes" ou "No"`       |                                                                                                                                                        |
+| he   | `שאל את "Name?"`     | `ענה את "Save?" עם "Yes" או "No"`           | `את` before a quoted message; `עם` for the choices                                                                                                     |
+| hi   | `"Name?" को पूछें`   | `"Save?" को "Yes" या "No" से जवाब`          | `पूछें` imperative, `जवाब` a noun (alternative `उत्तर`): `जवाब दें`? `से` for the choices                                                              |
+| id   | `tanya "Name?"`      | `jawab "Save?" dengan "Yes" atau "No"`      |                                                                                                                                                        |
+| it   | `chiedi "Name?"`     | `rispondi "Save?" con "Yes" o "No"`         |                                                                                                                                                        |
+| ja   | `"Name?"を 尋ねる`   | `"Save?"を "Yes" または "No"で 答える`      | `尋ねる` (ask) and `答える` (answer) as dictionary forms, as `切り替え` is a noun: `尋ね`/`答え`? Is `で` right for the choices (`「Yes」か「No」で`)? |
+| ko   | `"Name?"을 질문`     | `"Save?"을 "Yes" 또는 "No"로 답변`          | `질문`/`답변` as nouns, as `토글`/`로그` are; `로` for the choices                                                                                     |
+| ms   | `tanya "Name?"`      | `jawab "Save?" dengan "Yes" atau "No"`      |                                                                                                                                                        |
+| pl   | `zapytaj "Name?"`    | `odpowiedz "Save?" z "Yes" lub "No"`        | `zapytaj`/`odpowiedz` imperatives; `z` for the choices                                                                                                 |
+| pt   | `perguntar "Name?"`  | `responder "Save?" com "Yes" ou "No"`       |                                                                                                                                                        |
+| qu   | `"Name?" ta tapuy`   | `"Save?" ta "Yes" utaq "No" wan kutichipuy` | `kutichipuy` (the plain `kutichiy` is already qu `return` and a toggle surface); `ta` and `wan`                                                        |
+| ru   | `спросить "Name?"`   | `ответить "Save?" с "Yes" или "No"`         | infinitives, as `увеличить`; `с` for the choices (`с вариантами`?)                                                                                     |
+| sw   | `uliza "Name?"`      | `jibu "Save?" na "Yes" au "No"`             | `na` for the choices                                                                                                                                   |
+| th   | `ถาม "Name?"`        | `ตอบ "Save?" ด้วย "Yes" หรือ "No"`          |                                                                                                                                                        |
+| tl   | `tanungin "Name?"`   | `sagutin "Save?" nang "Yes" o "No"`         | `nang` for the choices (`gamit ang`?)                                                                                                                  |
+| tr   | `"Name?" i sor`      | `"Save?" i "Yes" veya "No" le cevapla`      | `sor`/`cevapla` imperatives, as `kaydet`; `yanıtla`? the instrumental `le` for the choices (`"Yes" veya "No" ile`)                                     |
+| uk   | `запитати "Name?"`   | `відповісти "Save?" з "Yes" або "No"`       | same as ru                                                                                                                                             |
+| vi   | `hỏi "Name?"`        | `trả lời "Save?" với "Yes" hoặc "No"`       |                                                                                                                                                        |
+| zh   | `询问 把 "Name?"`    | `回答 把 "Save?" 用 "Yes" 或 "No"`          | `把` is the patient marker the profile writes for every object; `询问`/`回答` as two-character verbs                                                   |
 
 ## `scroll … by` with a direction, in the language's own words (M2, vocabulary sheet B9) ⚠️ (October 2026)
 
@@ -746,31 +775,31 @@ amount bare: ja `下 200px`, ru `вниз 200px`). sw `kupanda` / `kushuka` (to 
 for `juu` / `chini`, which the tokenizer reads with `sogeza` as one word, mouseover. Written from
 grammar references, not checked by a native speaker.
 
-| lang | `scroll #box down by 200px` | `on click scroll up by 100px` | to check |
-| ---- | --------------------------- | ----------------------------- | -------- |
-| ar | `مرر #box أسفل 200px` | `على النقر مرر أعلى 100px` | `أعلى`/`أسفل` bare, as directions (`لأعلى`, `إلى الأعلى`?) |
-| bn | `#boxকে নিচে 200px স্ক্রোল` | `ক্লিকে উপরে 100px স্ক্রোল` | `উপরে`/`নিচে` (`উপরের দিকে`?) |
-| de | `scrollen #box runter um 200px` | `wenn klick scrollen hoch um 100px` | `hoch`/`runter` are spoken forms; `nach oben`/`nach unten`? `scrollen #box …` is the verb the dictionary has |
-| es | `desplazamiento #box abajo por 200px` | `al clic desplazamiento arriba por 100px` | `arriba`/`abajo` after the element; `hacia arriba`? `desplazamiento` is the dictionary's noun |
-| fr | `défilement #box bas par 200px` | `quand clic défilement haut par 100px` | `haut`/`bas` bare: `vers le haut`? `défilement` is the dictionary's noun |
-| he | `גלול את #box למטה 200px` | `ב לחיצה גלול למעלה 100px` | `למעלה`/`למטה` read whole, as the B7 words |
-| hi | `#box को नीचे 200px स्क्रॉल` | `क्लिक पर ऊपर 100px स्क्रॉल` | `ऊपर`/`नीचे` (`ऊपर की ओर`?) |
-| id | `gulir #box bawah 200px` | `ketika klik gulir atas 100px` | `atas`/`bawah` bare (`ke atas`?) |
-| it | `scorrere #box sotto 200px` | `su clic scorrere sopra 100px` | `sopra`/`sotto` (`su`/`giù` are a marker and …); `verso l'alto`? |
-| ja | `#boxを 下 200px スクロール` | `クリックで 上 100px スクロール` | `上`/`下` bare before the amount (`上に`?) |
-| ko | `#box을 아래쪽 200px 스크롤` | `클릭 할 때 위쪽 100px 스크롤` | `위쪽`/`아래쪽` (`아래` is `under`); `아래로`? |
-| ms | `tatal #box bawah 200px` | `apabila click tatal atas 100px` | `atas`/`bawah` bare (`ke atas`?) |
-| pl | `przewiń #box w dół 200px` | `gdy kliknięcie przewiń w górę 100px` | `w górę`/`w dół`: `w` is also pl's marker; the two words are read together |
-| pt | `rolagem #box abaixo por 200px` | `ao clique rolagem acima por 100px` | `acima`/`abaixo` (`para cima`?) |
-| qu | `#box ta uray 200px kunray` | `maykama ñitiy hanaq 100px kunray` | `hanaq`/`uray`/`lluqi`/`paña`: all uncertain |
-| ru | `прокрутить #box вниз 200px` | `при клик прокрутить вверх 100px` | `вверх`/`вниз` bare before the amount (`на 200px`?) |
-| sw | `sogeza #box kushuka 200px` | `unapo click sogeza kupanda 100px` | `kupanda`/`kushuka`, see above; `juu`/`chini` fuse with the verb |
-| th | `เลื่อน #box ลง 200px` | `เมื่อ คลิก เลื่อน ขึ้น 100px` | `ขึ้น`/`ลง` bare |
-| tl | `iscroll #box pababa 200px` | `kapag click iscroll pataas 100px` | `pataas`/`pababa` |
-| tr | `#box i aşağı 200px kaydırma` | `tıklamada yukarı 100px kaydırma` | `yukarı`/`aşağı` bare (`yukarıya`?) |
-| uk | `прокрутити #box вниз 200px` | `при клік прокрутити вгору 100px` | `вгору`/`вниз` bare (`на 200px`?) |
-| vi | `cuộn #box xuống 200px` | `khi nhấp cuộn lên 100px` | `lên`/`xuống` bare |
-| zh | `滚动 把 #box 向下 200px` | `一 点击 就 滚动 向上 100px` | `向上`/`向下` before the amount |
+| lang | `scroll #box down by 200px`           | `on click scroll up by 100px`             | to check                                                                                                     |
+| ---- | ------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| ar   | `مرر #box أسفل 200px`                 | `على النقر مرر أعلى 100px`                | `أعلى`/`أسفل` bare, as directions (`لأعلى`, `إلى الأعلى`?)                                                   |
+| bn   | `#boxকে নিচে 200px স্ক্রোল`           | `ক্লিকে উপরে 100px স্ক্রোল`               | `উপরে`/`নিচে` (`উপরের দিকে`?)                                                                                |
+| de   | `scrollen #box runter um 200px`       | `wenn klick scrollen hoch um 100px`       | `hoch`/`runter` are spoken forms; `nach oben`/`nach unten`? `scrollen #box …` is the verb the dictionary has |
+| es   | `desplazamiento #box abajo por 200px` | `al clic desplazamiento arriba por 100px` | `arriba`/`abajo` after the element; `hacia arriba`? `desplazamiento` is the dictionary's noun                |
+| fr   | `défilement #box bas par 200px`       | `quand clic défilement haut par 100px`    | `haut`/`bas` bare: `vers le haut`? `défilement` is the dictionary's noun                                     |
+| he   | `גלול את #box למטה 200px`             | `ב לחיצה גלול למעלה 100px`                | `למעלה`/`למטה` read whole, as the B7 words                                                                   |
+| hi   | `#box को नीचे 200px स्क्रॉल`          | `क्लिक पर ऊपर 100px स्क्रॉल`              | `ऊपर`/`नीचे` (`ऊपर की ओर`?)                                                                                  |
+| id   | `gulir #box bawah 200px`              | `ketika klik gulir atas 100px`            | `atas`/`bawah` bare (`ke atas`?)                                                                             |
+| it   | `scorrere #box sotto 200px`           | `su clic scorrere sopra 100px`            | `sopra`/`sotto` (`su`/`giù` are a marker and …); `verso l'alto`?                                             |
+| ja   | `#boxを 下 200px スクロール`          | `クリックで 上 100px スクロール`          | `上`/`下` bare before the amount (`上に`?)                                                                   |
+| ko   | `#box을 아래쪽 200px 스크롤`          | `클릭 할 때 위쪽 100px 스크롤`            | `위쪽`/`아래쪽` (`아래` is `under`); `아래로`?                                                               |
+| ms   | `tatal #box bawah 200px`              | `apabila click tatal atas 100px`          | `atas`/`bawah` bare (`ke atas`?)                                                                             |
+| pl   | `przewiń #box w dół 200px`            | `gdy kliknięcie przewiń w górę 100px`     | `w górę`/`w dół`: `w` is also pl's marker; the two words are read together                                   |
+| pt   | `rolagem #box abaixo por 200px`       | `ao clique rolagem acima por 100px`       | `acima`/`abaixo` (`para cima`?)                                                                              |
+| qu   | `#box ta uray 200px kunray`           | `maykama ñitiy hanaq 100px kunray`        | `hanaq`/`uray`/`lluqi`/`paña`: all uncertain                                                                 |
+| ru   | `прокрутить #box вниз 200px`          | `при клик прокрутить вверх 100px`         | `вверх`/`вниз` bare before the amount (`на 200px`?)                                                          |
+| sw   | `sogeza #box kushuka 200px`           | `unapo click sogeza kupanda 100px`        | `kupanda`/`kushuka`, see above; `juu`/`chini` fuse with the verb                                             |
+| th   | `เลื่อน #box ลง 200px`                | `เมื่อ คลิก เลื่อน ขึ้น 100px`            | `ขึ้น`/`ลง` bare                                                                                             |
+| tl   | `iscroll #box pababa 200px`           | `kapag click iscroll pataas 100px`        | `pataas`/`pababa`                                                                                            |
+| tr   | `#box i aşağı 200px kaydırma`         | `tıklamada yukarı 100px kaydırma`         | `yukarı`/`aşağı` bare (`yukarıya`?)                                                                          |
+| uk   | `прокрутити #box вниз 200px`          | `при клік прокрутити вгору 100px`         | `вгору`/`вниз` bare (`на 200px`?)                                                                            |
+| vi   | `cuộn #box xuống 200px`               | `khi nhấp cuộn lên 100px`                 | `lên`/`xuống` bare                                                                                           |
+| zh   | `滚动 把 #box 向下 200px`             | `一 点击 就 滚动 向上 100px`              | `向上`/`向下` before the amount                                                                              |
 
 ## `toggle … between` (M2, vocabulary sheet A6) ⚠️ (October 2026)
 
@@ -810,11 +839,11 @@ not checked by a native speaker.
 Input only: what `it` renders to does not move (es `ponerlo`, pt `colocá-lo`, fr `le mettre`).
 Found by hand-written input (`poner eso en #o` read a variable named `eso`).
 
-| lang | now read as `it`               | already read as `it`            |
-| ---- | ------------------------------ | ------------------------------- |
-| es   | `eso`, `esto`, a detached `lo` | `ello`, `lo` attached (`-lo`)   |
-| pt   | `isto`                         | `isso`                          |
-| fr   | `cela`, `ceci`                 | `ça`, `ca`                      |
+| lang | now read as `it`               | already read as `it`          |
+| ---- | ------------------------------ | ----------------------------- |
+| es   | `eso`, `esto`, a detached `lo` | `ello`, `lo` attached (`-lo`) |
+| pt   | `isto`                         | `isso`                        |
+| fr   | `cela`, `ceci`                 | `ça`, `ca`                    |
 
 Notes for the reviewer: "this" (`esto`, `isto`, `ceci`) is read as `it`, as ru `это`, he `זה`
 and tl `ito` are, not as `me`. Hyperscript has no `this`: English `this` is a variable, which the
