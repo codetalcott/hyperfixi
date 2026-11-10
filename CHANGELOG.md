@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.6.0] - 2026-11-10
+
+The engine takes extensions: upstream's `tailwind` and `socket` load from a script tag or
+`register(...)`, and the Vite plugin bundles them. Spanish and Portuguese handlers agree with their
+event (`a la entrada`, `à mudança`), and German writes an event as the noun it is (`wenn Klick`).
+A minor: new features, and renders that change in es, pt and de; everything written before still
+reads.
+
 ### Added
 
 - **`@hyperfixi/vite-plugin`: `extensions: ['socket', 'tailwind']`.** The generated bundle
