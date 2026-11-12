@@ -4,7 +4,13 @@ LSE has two JSON representations. Both serialize the same semantic content; they
 
 ## Full-Fidelity Format
 
-Lossless round-trip between parse and render. Used for tool-to-tool interchange.
+Lossless round-trip between parse and render, for the nodes it has fields for. Used for tool-to-tool interchange.
+
+> **What it does not carry.** The format has three node kinds and the fields below. A parser's
+> other kinds (`feature`, `def`, `behavior`) and clauses (an event handler's `from` or `every`
+> modifier, its `catch` block, a selector's `in` scope) have no place in it, and `toProtocolJSON`
+> refuses such a node with a `LossyEncodingError` (`{ lossy: 'allow' }` returns the partial
+> encoding). Counts and the full list: [What LSE cannot carry](../README.md#what-lse-cannot-carry).
 
 ### Command Node
 
@@ -69,7 +75,7 @@ Lossless round-trip between parse and render. Used for tool-to-tool interchange.
 | selector           | `{ "type": "selector", "value": ".active" }`                            | `#id`, `.class`, `[attr]`, `@aria`, `*wild`           |
 | selector (v1.1)    | `{ "type": "selector", "value": ".active", "selectorKind": "class" }`   | Optional kind: id, class, attribute, element, complex |
 | selector (v2.0)    | `{ "type": "selector", "value": "ul > li", "selectorKind": "complex" }` | Bracket syntax `<ul > li/>`; delimiters are stripped  |
-| literal (string)   | `{ "type": "literal", "value": "hello", "dataType": "string" }`         | Quoted or fallback strings                            |
+| literal (string)   | `{ "type": "literal", "value": "hello", "dataType": "string" }`         | A quoted string; a bare one has no `dataType`         |
 | literal (number)   | `{ "type": "literal", "value": 42, "dataType": "number" }`              | Integer or decimal                                    |
 | literal (boolean)  | `{ "type": "literal", "value": true, "dataType": "boolean" }`           | `true` / `false`                                      |
 | literal (duration) | `{ "type": "literal", "value": "500ms", "dataType": "duration" }`       | Number + suffix                                       |

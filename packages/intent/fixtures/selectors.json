@@ -7,8 +7,14 @@
       "kind": "command",
       "action": "add",
       "roles": {
-        "patient": { "type": "selector", "value": ".active" },
-        "destination": { "type": "selector", "value": "#output" }
+        "patient": {
+          "type": "selector",
+          "value": ".active"
+        },
+        "destination": {
+          "type": "selector",
+          "value": "#output"
+        }
       }
     }
   },
@@ -20,7 +26,10 @@
       "kind": "command",
       "action": "toggle",
       "roles": {
-        "patient": { "type": "selector", "value": ".highlight" }
+        "patient": {
+          "type": "selector",
+          "value": ".highlight"
+        }
       }
     }
   },
@@ -32,8 +41,14 @@
       "kind": "command",
       "action": "add",
       "roles": {
-        "patient": { "type": "selector", "value": "[data-active]" },
-        "destination": { "type": "selector", "value": "#output" }
+        "patient": {
+          "type": "selector",
+          "value": "[data-active]"
+        },
+        "destination": {
+          "type": "selector",
+          "value": "#output"
+        }
       }
     }
   },
@@ -45,8 +60,14 @@
       "kind": "command",
       "action": "set",
       "roles": {
-        "destination": { "type": "selector", "value": "@role" },
-        "patient": { "type": "literal", "value": "button", "dataType": "string" }
+        "destination": {
+          "type": "selector",
+          "value": "@role"
+        },
+        "patient": {
+          "type": "literal",
+          "value": "button"
+        }
       }
     }
   },
@@ -58,7 +79,10 @@
       "kind": "command",
       "action": "remove",
       "roles": {
-        "patient": { "type": "selector", "value": "*hidden" }
+        "patient": {
+          "type": "selector",
+          "value": "*hidden"
+        }
       }
     }
   },
@@ -70,8 +94,14 @@
       "kind": "command",
       "action": "add",
       "roles": {
-        "patient": { "type": "selector", "value": ".active" },
-        "destination": { "type": "selector", "value": "#container" }
+        "patient": {
+          "type": "selector",
+          "value": ".active"
+        },
+        "destination": {
+          "type": "selector",
+          "value": "#container"
+        }
       }
     }
   },
@@ -83,7 +113,11 @@
       "kind": "command",
       "action": "toggle",
       "roles": {
-        "patient": { "type": "selector", "value": "ul > li", "selectorKind": "complex" }
+        "patient": {
+          "type": "selector",
+          "value": "ul > li",
+          "selectorKind": "complex"
+        }
       }
     }
   },
@@ -95,8 +129,16 @@
       "kind": "command",
       "action": "add",
       "roles": {
-        "patient": { "type": "selector", "value": "[data-active]", "selectorKind": "attribute" },
-        "destination": { "type": "selector", "value": "#output", "selectorKind": "id" }
+        "patient": {
+          "type": "selector",
+          "value": "[data-active]",
+          "selectorKind": "attribute"
+        },
+        "destination": {
+          "type": "selector",
+          "value": "#output",
+          "selectorKind": "id"
+        }
       }
     }
   },
@@ -108,7 +150,10 @@
       "kind": "command",
       "action": "remove",
       "roles": {
-        "patient": { "type": "selector", "value": "div" }
+        "patient": {
+          "type": "selector",
+          "value": "div"
+        }
       }
     }
   },
@@ -120,7 +165,11 @@
       "kind": "command",
       "action": "toggle",
       "roles": {
-        "patient": { "type": "selector", "value": ".a, .b", "selectorKind": "complex" }
+        "patient": {
+          "type": "selector",
+          "value": ".a, .b",
+          "selectorKind": "complex"
+        }
       }
     }
   },
@@ -132,8 +181,16 @@
       "kind": "command",
       "action": "toggle",
       "roles": {
-        "patient": { "type": "selector", "value": "div:has(> .child)", "selectorKind": "complex" },
-        "destination": { "type": "selector", "value": "#out", "selectorKind": "id" }
+        "patient": {
+          "type": "selector",
+          "value": "div:has(> .child)",
+          "selectorKind": "complex"
+        },
+        "destination": {
+          "type": "selector",
+          "value": "#out",
+          "selectorKind": "id"
+        }
       }
     }
   },
@@ -145,7 +202,11 @@
       "kind": "command",
       "action": "toggle",
       "roles": {
-        "patient": { "type": "selector", "value": "[data-x=\"a/>b\"]", "selectorKind": "attribute" }
+        "patient": {
+          "type": "selector",
+          "value": "[data-x=\"a/>b\"]",
+          "selectorKind": "attribute"
+        }
       }
     }
   },
@@ -157,7 +218,11 @@
       "kind": "command",
       "action": "toggle",
       "roles": {
-        "patient": { "type": "selector", "value": ".a > .b", "selectorKind": "complex" }
+        "patient": {
+          "type": "selector",
+          "value": ".a > .b",
+          "selectorKind": "complex"
+        }
       }
     }
   }

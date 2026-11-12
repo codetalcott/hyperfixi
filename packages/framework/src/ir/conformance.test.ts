@@ -11,9 +11,9 @@ import { renderExplicit, renderDocument } from './explicit-renderer';
 import { fromProtocolJSON, toProtocolJSON } from './protocol-json';
 import type { CompoundSemanticNode } from '../core/types';
 
-import compoundFixtures from '../../../../protocol/test-fixtures/compound.json';
-import annotationFixtures from '../../../../protocol/test-fixtures/annotations.json';
-import versionFixtures from '../../../../protocol/test-fixtures/version-envelope.json';
+import compoundFixtures from '../../../intent/fixtures/compound.json';
+import annotationFixtures from '../../../intent/fixtures/annotations.json';
+import versionFixtures from '../../../intent/fixtures/version-envelope.json';
 
 // =============================================================================
 // Compound Fixtures

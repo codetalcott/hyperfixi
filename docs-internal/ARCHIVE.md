@@ -20,6 +20,13 @@ experiments, protocol python/rust), `archived/python-surfaces`, `moved/domain-fa
 packages, now `codetalcott/lokascript-domains`), `parked/sortable-fixes`. The unmerged cleanup branches
 `chore/docs-internal-triage` and `chore/sharpen-focus` hold their per-file verdicts of August.
 
+**LSE reference parsers** (`archived/lse-reference-parsers-2026-11-12`): `protocol/go`,
+`protocol/rust`, `protocol/python`, `protocol/typescript`, `protocol/spec/streaming.md`,
+`protocol/docs/{boundary,LSE-Review,LSE-v1.1-Plan}.md` and the `@lokascript/lse-conformance` wrapper
+around the fixtures. Retired 2026-11-12 after a review: no importer anywhere, never published, and
+their conformance suite ran in full only on them, not on `@lokascript/intent`. The fixtures live on in
+`packages/intent/fixtures`; `protocol/README.md` has what LSE can and cannot carry.
+
 ## Briefs whose arc shipped
 
 Each at its own tag, deleted when its arc was done.

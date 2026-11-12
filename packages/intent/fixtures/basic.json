@@ -7,7 +7,10 @@
       "kind": "command",
       "action": "toggle",
       "roles": {
-        "patient": { "type": "selector", "value": ".active" }
+        "patient": {
+          "type": "selector",
+          "value": ".active"
+        }
       }
     }
   },
@@ -19,8 +22,14 @@
       "kind": "command",
       "action": "toggle",
       "roles": {
-        "patient": { "type": "selector", "value": ".active" },
-        "destination": { "type": "selector", "value": "#button" }
+        "patient": {
+          "type": "selector",
+          "value": ".active"
+        },
+        "destination": {
+          "type": "selector",
+          "value": "#button"
+        }
       }
     }
   },
@@ -32,8 +41,14 @@
       "kind": "command",
       "action": "add",
       "roles": {
-        "patient": { "type": "selector", "value": ".highlight" },
-        "destination": { "type": "selector", "value": "#output" }
+        "patient": {
+          "type": "selector",
+          "value": ".highlight"
+        },
+        "destination": {
+          "type": "selector",
+          "value": "#output"
+        }
       }
     }
   },
@@ -45,9 +60,18 @@
       "kind": "command",
       "action": "deploy",
       "roles": {
-        "destination": { "type": "literal", "value": "production", "dataType": "string" },
-        "source": { "type": "literal", "value": "main", "dataType": "string" },
-        "manner": { "type": "literal", "value": "rolling", "dataType": "string" }
+        "destination": {
+          "type": "literal",
+          "value": "production"
+        },
+        "source": {
+          "type": "literal",
+          "value": "main"
+        },
+        "manner": {
+          "type": "literal",
+          "value": "rolling"
+        }
       }
     }
   },
@@ -59,8 +83,14 @@
       "kind": "command",
       "action": "fetch",
       "roles": {
-        "source": { "type": "literal", "value": "/api/users", "dataType": "string" },
-        "responseType": { "type": "literal", "value": "json", "dataType": "string" }
+        "source": {
+          "type": "literal",
+          "value": "/api/users"
+        },
+        "responseType": {
+          "type": "literal",
+          "value": "json"
+        }
       }
     }
   },
@@ -72,7 +102,10 @@
       "kind": "command",
       "action": "toggle",
       "roles": {
-        "patient": { "type": "selector", "value": ".active" }
+        "patient": {
+          "type": "selector",
+          "value": ".active"
+        }
       }
     }
   },
@@ -84,7 +117,10 @@
       "kind": "command",
       "action": "toggle",
       "roles": {
-        "__proto__": { "type": "selector", "value": ".active" }
+        "__proto__": {
+          "type": "selector",
+          "value": ".active"
+        }
       }
     }
   },
@@ -96,7 +132,11 @@
       "kind": "command",
       "action": "column",
       "roles": {
-        "__proto__": { "type": "flag", "name": "__proto__", "enabled": true }
+        "__proto__": {
+          "type": "flag",
+          "name": "__proto__",
+          "enabled": true
+        }
       }
     }
   },
@@ -108,7 +148,10 @@
       "kind": "command",
       "action": "toggle",
       "roles": {
-        "constructor": { "type": "selector", "value": ".active" }
+        "constructor": {
+          "type": "selector",
+          "value": ".active"
+        }
       }
     }
   }

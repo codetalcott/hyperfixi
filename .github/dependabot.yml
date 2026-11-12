@@ -114,33 +114,10 @@ updates:
     labels:
       - 'dependencies'
 
-  # Standalone npm root (own package-lock.json, not part of the workspaces)
-  - package-ecosystem: 'npm'
-    directory: '/protocol/typescript'
-    schedule:
-      interval: 'weekly'
-      day: 'monday'
-    open-pull-requests-limit: 5
-    groups:
-      minor-and-patch:
-        patterns:
-          - '*'
-        update-types:
-          - 'minor'
-          - 'patch'
-      majors:
-        patterns:
-          - '*'
-        update-types:
-          - 'major'
-    labels:
-      - 'dependencies'
-
   # Go modules (the go-client currently carries the x/crypto critical alerts)
   - package-ecosystem: 'gomod'
     directories:
       - '/clients/go-client'
-      - '/protocol/go'
     schedule:
       interval: 'weekly'
       day: 'monday'

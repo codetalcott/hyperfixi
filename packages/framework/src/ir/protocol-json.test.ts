@@ -30,7 +30,7 @@ import type { ProtocolNodeJSON, LSEEnvelopeJSON } from './types';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-const FIXTURE_DIR = join(__dirname, '../../../../protocol/test-fixtures');
+const FIXTURE_DIR = join(__dirname, '../../../intent/fixtures');
 
 function loadFixtures<T = Record<string, unknown>>(filename: string): T[] {
   return JSON.parse(readFileSync(join(FIXTURE_DIR, filename), 'utf-8'));

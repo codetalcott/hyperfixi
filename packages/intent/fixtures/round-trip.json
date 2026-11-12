@@ -25,21 +25,21 @@
   },
   {
     "id": "rt-005",
-    "description": "Fetch with URL (gets quoted on render)",
+    "description": "Fetch with URL (a bare string stays bare)",
     "input": "[fetch source:/api/data responseType:json]",
-    "roundtrip": "[fetch source:\"/api/data\" responseType:\"json\"]"
+    "roundtrip": "[fetch source:/api/data responseType:json]"
   },
   {
     "id": "rt-006",
     "description": "Column with flags",
     "input": "[column name:id +primary-key +not-null]",
-    "roundtrip": "[column name:\"id\" +primary-key +not-null]"
+    "roundtrip": "[column name:id +primary-key +not-null]"
   },
   {
     "id": "rt-007",
     "description": "Field with mixed flags",
     "input": "[field name:email +required ~nullable]",
-    "roundtrip": "[field name:\"email\" +required ~nullable]"
+    "roundtrip": "[field name:email +required ~nullable]"
   },
   {
     "id": "rt-008",
@@ -61,9 +61,9 @@
   },
   {
     "id": "rt-011",
-    "description": "Bare id/class/aria/wildcard selectors stay unwrapped (roles render sorted)",
+    "description": "Bare id/class/aria/wildcard selectors stay unwrapped (roles keep their order)",
     "input": "[add patient:.active destination:#out]",
-    "roundtrip": "[add destination:#out patient:.active]"
+    "roundtrip": "[add patient:.active destination:#out]"
   },
   {
     "id": "rt-012",
@@ -75,6 +75,6 @@
     "id": "rt-013",
     "description": "Zero-argument nested command survives render and re-parse",
     "input": "[on event:click body:[halt]]",
-    "roundtrip": "[on event:\"click\" body:[halt]]"
+    "roundtrip": "[on event:click body:[halt]]"
   }
 ]
