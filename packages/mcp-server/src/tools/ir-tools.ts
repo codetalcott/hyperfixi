@@ -18,7 +18,15 @@ import {
   isEnvelope,
   fromInterchangeNode,
 } from '@lokascript/framework';
-import { jsonResponse, errorResponse } from './utils.js';
+import { jsonResponse, errorResponse, encodeNode } from './utils.js';
+
+const WRITERS = { renderExplicit, toProtocolJSON };
+
+/** Both forms of a node; `ok` unless neither form can carry it. */
+function encoded(node: SemanticNode): Record<string, unknown> {
+  const e = encodeNode(node, WRITERS);
+  return { ok: e.explicit !== undefined || e.semantic !== undefined, ...e };
+}
 
 // =============================================================================
 // Types
@@ -269,11 +277,7 @@ function handleConvertFormat(args: Record<string, unknown>): ToolResponse {
   if (explicitInput) {
     // Explicit → JSON (always produce protocol JSON)
     const node = parseExplicit(explicitInput);
-    return jsonResponse({
-      ok: true,
-      explicit: renderExplicit(node),
-      semantic: toProtocolJSON(node),
-    });
+    return jsonResponse(encoded(node));
   }
 
   if (interchangeInput) {
@@ -283,11 +287,7 @@ function handleConvertFormat(args: Record<string, unknown>): ToolResponse {
       return errorResponse('InterchangeNode must have a `type` string field.');
     }
     const node = fromInterchangeNode(input);
-    return jsonResponse({
-      ok: true,
-      explicit: renderExplicit(node),
-      semantic: toProtocolJSON(node),
-    });
+    return jsonResponse(encoded(node));
   }
 
   // JSON → Explicit
@@ -296,10 +296,7 @@ function handleConvertFormat(args: Record<string, unknown>): ToolResponse {
   // Detect LSE envelope by presence of `lseVersion` field
   if (isEnvelope(input)) {
     const envelope = fromEnvelopeJSON(input as any);
-    const results = envelope.nodes.map((node: SemanticNode) => ({
-      explicit: renderExplicit(node),
-      semantic: toProtocolJSON(node),
-    }));
+    const results = envelope.nodes.map((node: SemanticNode) => encodeNode(node, WRITERS));
     return jsonResponse({
       ok: true,
       envelope: { lseVersion: envelope.lseVersion, features: envelope.features },
@@ -314,11 +311,7 @@ function handleConvertFormat(args: Record<string, unknown>): ToolResponse {
     return jsonResponse({ ok: false, diagnostics: errors });
   }
   const node = fromProtocolJSON(input as any);
-  return jsonResponse({
-    ok: true,
-    explicit: renderExplicit(node),
-    semantic: toProtocolJSON(node),
-  });
+  return jsonResponse(encoded(node));
 }
 
 function handleValidateExplicit(args: Record<string, unknown>): ToolResponse {
@@ -409,10 +402,7 @@ function handleFromEnvelope(args: Record<string, unknown>): ToolResponse {
   }
 
   const result = fromEnvelopeJSON(envelope as any);
-  const nodes = result.nodes.map((node: SemanticNode) => ({
-    explicit: renderExplicit(node),
-    semantic: toProtocolJSON(node),
-  }));
+  const nodes = result.nodes.map((node: SemanticNode) => encodeNode(node, WRITERS));
 
   return jsonResponse({
     ok: true,

@@ -66,7 +66,7 @@ try {
 // Try to import framework IR for LSE rendering in hover
 let frameworkIR: {
   fromInterchangeNode: (n: any) => any;
-  renderExplicit: (n: any) => string;
+  renderExplicit: (n: any, opts?: { lossy?: 'throw' | 'allow' }) => string;
 } | null = null;
 try {
   const fw = await import('@lokascript/framework');
@@ -1065,7 +1065,8 @@ async function getHoverInfo(
         const hoverOptions: Record<string, unknown> = {};
         if (frameworkIR) {
           hoverOptions.renderLSE = (node: any) =>
-            frameworkIR!.renderExplicit(frameworkIR!.fromInterchangeNode(node));
+            // Hover text, shown and never parsed: what the syntax can show of the node.
+            frameworkIR!.renderExplicit(frameworkIR!.fromInterchangeNode(node), { lossy: 'allow' });
         }
 
         const hover = astToolkit.interchangeToLSPHover(nodes, { line, character }, hoverOptions);

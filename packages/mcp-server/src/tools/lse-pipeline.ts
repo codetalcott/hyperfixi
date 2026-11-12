@@ -13,7 +13,7 @@
  */
 
 import type { Tool } from '@modelcontextprotocol/server';
-import { jsonResponse, errorResponse } from './utils.js';
+import { jsonResponse, errorResponse, encodeNode } from './utils.js';
 
 // =============================================================================
 // Types
@@ -195,25 +195,34 @@ async function handleFromHyperscript(args: Record<string, unknown>): Promise<Too
   // Step 2: Render the semantic node as LSE. It is already the framework's IR (`kind`, `action`,
   // `roles`). It used to pass through fromSemanticAST, which reads the AST builder's tree, not a
   // semantic node, so every input rendered as `[get patient:null]` with ok: true.
-  const { parseExplicit, renderExplicit, toProtocolJSON } = await import('@lokascript/framework');
-  const explicit = renderExplicit(parseResult.node as any);
-  const protocol = toProtocolJSON(parseResult.node as any);
+  const { renderExplicit, toProtocolJSON } = await import('@lokascript/framework');
+  const encoded = encodeNode(parseResult.node, { renderExplicit, toProtocolJSON });
 
-  // Step 3: The LSE must read back. Some shapes have no LSE form yet (a `then` chain inside a
-  // handler, a condition such as `me matches .x`) and render as text no LSE parser reads; refuse
-  // rather than hand back LSE that lse_to_hyperscript and validate_lse reject.
-  try {
-    parseExplicit(explicit);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+  // Step 3: Each form must carry the whole node. Some shapes have no LSE form yet (several
+  // commands in a handler, a condition such as `me matches .x`, an event modifier): the writers
+  // refuse them (LossyEncodingError), and so does this tool, rather than hand back LSE that reads
+  // as whole and is not. A form that does carry the node is still returned.
+  if (encoded.refused) {
+    const why = Object.entries(encoded.refused)
+      .map(
+        ([form, losses]) =>
+          `${form === 'explicit' ? 'bracket syntax' : 'protocol JSON'}: ${losses.join(', ')}`
+      )
+      .join('; ');
     return jsonResponse({
       ok: false,
-      error: `This code has no LSE form yet: the rendered LSE does not parse back (${message}).`,
-      partial: { lse: explicit, protocol },
+      error: `This code has no LSE form yet (${why}).`,
+      ...(encoded.semantic !== undefined ? { protocol: encoded.semantic } : {}),
+      partial: {
+        ...(encoded.partial?.explicit !== undefined ? { lse: encoded.partial.explicit } : {}),
+        ...(encoded.partial?.semantic !== undefined ? { protocol: encoded.partial.semantic } : {}),
+      },
       confidence: parseResult.confidence,
       language,
     });
   }
+  const explicit = encoded.explicit;
+  const protocol = encoded.semantic;
 
   return jsonResponse({
     ok: true,
@@ -312,13 +321,14 @@ async function handleToHyperscript(args: Record<string, unknown>): Promise<ToolR
   }
 
   // Normalize: re-render to get canonical forms
-  const normalizedLse = renderExplicit(node);
-  const normalizedProtocol = toProtocolJSON(node);
+  // A form that cannot carry the node (bracket syntax has no `match`, say) is left out and named.
+  const encoded = encodeNode(node, { renderExplicit, toProtocolJSON });
 
   const result: Record<string, unknown> = {
     ok: true,
-    lse: normalizedLse,
-    protocol: normalizedProtocol,
+    ...(encoded.explicit !== undefined ? { lse: encoded.explicit } : {}),
+    ...(encoded.semantic !== undefined ? { protocol: encoded.semantic } : {}),
+    ...(encoded.refused ? { refused: encoded.refused } : {}),
     diagnostics,
   };
 

@@ -252,7 +252,9 @@ function generateCorrectedExample(schema: CommandSchema): { explicit: string; js
   }
 
   const node = createCommandNode(schema.action, roles as never);
-  const explicit = renderExplicit(node);
+  // A template to fill in: its values are placeholders (`<source-value>`), which
+  // are not meant to read back.
+  const explicit = renderExplicit(node, { lossy: 'allow' });
   const json: SemanticJSON = { action: schema.action, roles: jsonRoles };
 
   return { explicit, json };

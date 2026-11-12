@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`@lokascript/intent` (and `@lokascript/framework`, `@lokascript/semantic`, which re-export it):
+  `toProtocolJSON` and `renderExplicit` refuse a node they cannot carry in full.** They throw a
+  `LossyEncodingError` (`losses`: each part with no place in the encoding; `partial`: what would
+  have been written), and `{ lossy: 'allow' }` returns the partial encoding, as `translate()`'s
+  option does. Before, `toProtocolJSON` returned `undefined` for a `feature`, `def` or `behavior`
+  node and dropped event modifiers (`from`, `every`), `catch` blocks and every other field it had
+  no line for; `renderExplicit` wrote text its own parser rejected or read as something else (an
+  expression of several words, several commands in one `body:`). Measured on 1,166
+  engine-accepted scripts, scoring each parse against what came back: protocol JSON was 244
+  unencodable and 71 silently missing a command, role or value; it is now 382 refused and none
+  silent. Bracket syntax was 365 unreadable and 537 silently lossy; it is now 776 refused and
+  none missing a command or a value. `nodes.map(toProtocolJSON)` no longer typechecks (the second
+  parameter is the options): write `nodes.map(n => toProtocolJSON(n))`.
+  - MCP `convert_format`, `from_envelope`, `lse_to_hyperscript` and `lse_generate_with_correction`
+    leave out a form that cannot carry the node and name it under `refused`;
+    `lse_from_hyperscript` reports each form's losses, and still returns the protocol JSON when
+    only bracket syntax refused.
+
+### Fixed
+
+- **`fromProtocolJSON` read every block command as `try`.** `tell #d2 add .bar` came back as a
+  `try` with no `#d2`; a command with a `body` now keeps its action and roles. `parseExplicit`
+  likewise reads `body:`, `catch:` and `finally:` on any command into commands (they stayed one
+  opaque role value each).
+- **`fromProtocolJSON` dropped the `else` of an `if` with an empty `then`** (`if x else y`).
+- **`toProtocolJSON` lost a role named `__proto__`** (fixed in the reference parser in #622, not in
+  the shipped one).
+- **`renderExplicit` wrote a pipe chain as the word `pipe`**, which no LSE parser reads; it writes
+  the grammar's `|>`.
+
 ## [7.6.0] - 2026-11-10
 
 The engine takes extensions: upstream's `tailwind` and `socket` load from a script tag or

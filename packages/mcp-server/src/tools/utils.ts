@@ -212,3 +212,56 @@ export function translationRefusal(error: unknown): TranslationRefusal | null {
     partial: e.partial,
   };
 }
+
+// =============================================================================
+// LSE encoding
+// =============================================================================
+
+/** A node in both LSE forms, or why a form cannot carry it. */
+export interface EncodedNode {
+  /** Bracket syntax; absent when it cannot carry the node in full. */
+  explicit?: string;
+  /** Protocol JSON; absent when it cannot carry the node in full. */
+  semantic?: unknown;
+  /** Per form that refused: the parts of the node it has no place for. */
+  refused?: { explicit?: string[]; semantic?: string[] };
+  /** What each refusing form would have written (it is missing those parts). */
+  partial?: { explicit?: string; semantic?: unknown };
+}
+
+interface LseWriters {
+  renderExplicit: (node: any, opts?: { lossy?: 'throw' | 'allow' }) => string;
+  toProtocolJSON: (node: any, opts?: { lossy?: 'throw' | 'allow' }) => unknown;
+}
+
+function lossesOf(error: unknown): { losses: string[]; partial: unknown } | undefined {
+  const e = error as { name?: string; losses?: unknown; partial?: unknown } | null;
+  if (e?.name !== 'LossyEncodingError' || !Array.isArray(e.losses)) return undefined;
+  return { losses: e.losses as string[], partial: e.partial };
+}
+
+/**
+ * Write a node in both LSE forms. A form that cannot carry the node in full is
+ * left out and named under `refused`, with what it would have written under
+ * `partial`: a tool never returns LSE that reads as whole and is not.
+ */
+export function encodeNode(node: unknown, writers: LseWriters): EncodedNode {
+  const out: EncodedNode = {};
+  const refuse = (form: 'explicit' | 'semantic', error: unknown): void => {
+    const loss = lossesOf(error);
+    if (!loss) throw error;
+    (out.refused ??= {})[form] = loss.losses;
+    (out.partial ??= {})[form] = loss.partial as never;
+  };
+  try {
+    out.explicit = writers.renderExplicit(node);
+  } catch (error) {
+    refuse('explicit', error);
+  }
+  try {
+    out.semantic = writers.toProtocolJSON(node);
+  } catch (error) {
+    refuse('semantic', error);
+  }
+  return out;
+}

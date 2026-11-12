@@ -45,12 +45,30 @@ import type {
   IRDiagnostic,
   LSEEnvelopeJSON,
 } from './types';
+import { LossyEncodingError, allowsLoss, findUnencodable, type EncodeOptions } from './encodable';
 
 // =============================================================================
 // Serialization: SemanticNode → ProtocolNodeJSON
 // =============================================================================
 
-export function toProtocolJSON(node: SemanticNode): ProtocolNodeJSON {
+/**
+ * Serialize a node to the protocol wire format.
+ *
+ * Refuses a node the format cannot carry in full (a kind it has no node for, an
+ * event modifier or a clause it has no field for) with a
+ * {@link LossyEncodingError}; `{ lossy: 'allow' }` returns the partial encoding.
+ */
+export function toProtocolJSON(node: SemanticNode, opts?: EncodeOptions): ProtocolNodeJSON {
+  if (!allowsLoss(opts)) {
+    const losses = findUnencodable(node, 'json', n =>
+      canEmitCompactTrigger(n as EventHandlerSemanticNode)
+    );
+    if (losses.length > 0) throw new LossyEncodingError('json', losses, encode(node));
+  }
+  return encode(node);
+}
+
+function encode(node: SemanticNode): ProtocolNodeJSON {
   const roles = rolesToProtocol(node.roles);
   let result: ProtocolNodeJSON;
 
@@ -58,22 +76,21 @@ export function toProtocolJSON(node: SemanticNode): ProtocolNodeJSON {
     case 'command': {
       const cmd = node as CommandSemanticNode;
       result = { kind: 'command', action: node.action, roles };
-      if (cmd.body && cmd.body.length > 0) result.body = cmd.body.map(toProtocolJSON);
+      if (cmd.body && cmd.body.length > 0) result.body = cmd.body.map(encode);
       if (cmd.catchBranch && cmd.catchBranch.length > 0)
-        result.catchBranch = cmd.catchBranch.map(toProtocolJSON);
+        result.catchBranch = cmd.catchBranch.map(encode);
       if (cmd.finallyBranch && cmd.finallyBranch.length > 0)
-        result.finallyBranch = cmd.finallyBranch.map(toProtocolJSON);
+        result.finallyBranch = cmd.finallyBranch.map(encode);
       if (cmd.asyncVariant) result.asyncVariant = cmd.asyncVariant;
-      if (cmd.asyncBody && cmd.asyncBody.length > 0)
-        result.asyncBody = cmd.asyncBody.map(toProtocolJSON);
+      if (cmd.asyncBody && cmd.asyncBody.length > 0) result.asyncBody = cmd.asyncBody.map(encode);
       if (cmd.arms && cmd.arms.length > 0) {
         result.arms = cmd.arms.map(arm => ({
           pattern: valueToProtocol(arm.pattern),
-          body: arm.body.map(toProtocolJSON),
+          body: arm.body.map(encode),
         }));
       }
       if (cmd.defaultArm && cmd.defaultArm.length > 0)
-        result.defaultArm = cmd.defaultArm.map(toProtocolJSON);
+        result.defaultArm = cmd.defaultArm.map(encode);
       break;
     }
     case 'event-handler': {
@@ -111,7 +128,7 @@ export function toProtocolJSON(node: SemanticNode): ProtocolNodeJSON {
         kind: 'event-handler',
         action: node.action,
         roles,
-        body: eh.body.map(toProtocolJSON),
+        body: eh.body.map(encode),
       };
       break;
     }
@@ -120,7 +137,7 @@ export function toProtocolJSON(node: SemanticNode): ProtocolNodeJSON {
       result = {
         kind: 'compound',
         action: 'compound',
-        statements: c.statements.map(toProtocolJSON),
+        statements: c.statements.map(encode),
         chainType: c.chainType,
       } as ProtocolNodeJSON;
       break;
@@ -128,19 +145,27 @@ export function toProtocolJSON(node: SemanticNode): ProtocolNodeJSON {
     case 'conditional': {
       const cond = node as ConditionalSemanticNode;
       result = { kind: 'command', action: node.action, roles };
-      result.thenBranch = cond.thenBranch.map(toProtocolJSON);
+      result.thenBranch = cond.thenBranch.map(encode);
       if (cond.elseBranch && cond.elseBranch.length > 0)
-        result.elseBranch = cond.elseBranch.map(toProtocolJSON);
+        result.elseBranch = cond.elseBranch.map(encode);
       break;
     }
     case 'loop': {
       const loop = node as LoopSemanticNode;
       result = { kind: 'command', action: node.action, roles };
       result.loopVariant = loop.loopVariant;
-      result.loopBody = loop.body.map(toProtocolJSON);
+      result.loopBody = loop.body.map(encode);
       if (loop.loopVariable) result.loopVariable = loop.loopVariable;
       if (loop.indexVariable) result.indexVariable = loop.indexVariable;
       break;
+    }
+    default: {
+      // A kind the wire format has no node for (reached only under
+      // `lossy: 'allow'`): what a command node can hold of it.
+      result = { kind: 'command', action: node.action, roles };
+      const body = (node as { body?: unknown }).body;
+      if (Array.isArray(body) && body.length > 0)
+        result.body = (body as SemanticNode[]).map(encode);
     }
   }
 
@@ -170,7 +195,16 @@ function rolesToProtocol(
   roles: ReadonlyMap<SemanticRole, SemanticValue>
 ): Record<string, ProtocolValueJSON> {
   const result: Record<string, ProtocolValueJSON> = {};
-  for (const [role, value] of roles) result[role] = valueToProtocol(value);
+  // defineProperty, not assignment: `result['__proto__'] = v` sets the object's
+  // prototype and the role is gone from the JSON.
+  for (const [role, value] of roles) {
+    Object.defineProperty(result, role, {
+      value: valueToProtocol(value),
+      enumerable: true,
+      writable: true,
+      configurable: true,
+    });
+  }
   return result;
 }
 
@@ -335,8 +369,10 @@ export function fromProtocolJSON(json: ProtocolNodeJSON): SemanticNode {
     );
   }
 
-  if (json.thenBranch && json.thenBranch.length > 0) {
-    const thenBranch = json.thenBranch.map(fromProtocolJSON);
+  // Either branch makes it a conditional: `if x else y` has an empty `then`,
+  // and reading it as a plain command dropped the `else`.
+  if (json.thenBranch || (json.elseBranch && json.elseBranch.length > 0)) {
+    const thenBranch = (json.thenBranch ?? []).map(fromProtocolJSON);
     const elseBranch = json.elseBranch ? json.elseBranch.map(fromProtocolJSON) : undefined;
     return applyV12Metadata(
       createConditionalNode(json.action, roles, thenBranch, elseBranch),
@@ -361,15 +397,22 @@ export function fromProtocolJSON(json: ProtocolNodeJSON): SemanticNode {
     );
   }
 
-  if (json.catchBranch || json.finallyBranch) {
+  if (json.catchBranch || json.finallyBranch || (json.body && json.body.length > 0)) {
     const body = (json.body ?? []).map(fromProtocolJSON);
     const catchBranch = json.catchBranch ? json.catchBranch.map(fromProtocolJSON) : undefined;
     const finallyBranch = json.finallyBranch ? json.finallyBranch.map(fromProtocolJSON) : undefined;
-    return applyV12Metadata(
-      createTryNode(body, catchBranch, finallyBranch),
-      annotations,
-      diagnostics
-    );
+    // Any block command, under its own action and roles. Every one of them
+    // used to come back as `try`, so `tell #d2 add .bar` lost its `tell`.
+    const block: SemanticNode =
+      json.action === 'try'
+        ? createTryNode(body, catchBranch, finallyBranch)
+        : ({
+            ...createCommandNode(json.action, roles),
+            ...(body.length > 0 ? { body } : {}),
+            ...(catchBranch && catchBranch.length > 0 ? { catchBranch } : {}),
+            ...(finallyBranch && finallyBranch.length > 0 ? { finallyBranch } : {}),
+          } as SemanticNode);
+    return applyV12Metadata(block, annotations, diagnostics);
   }
 
   if (json.asyncVariant) {
@@ -388,14 +431,6 @@ export function fromProtocolJSON(json: ProtocolNodeJSON): SemanticNode {
     }));
     const defaultArm = json.defaultArm ? json.defaultArm.map(fromProtocolJSON) : undefined;
     return applyV12Metadata(createMatchNode(roles, arms, defaultArm), annotations, diagnostics);
-  }
-
-  if (json.body && json.body.length > 0 && kind === 'command') {
-    return applyV12Metadata(
-      createTryNode(json.body.map(fromProtocolJSON)),
-      annotations,
-      diagnostics
-    );
   }
 
   return applyV12Metadata(createCommandNode(json.action, roles), annotations, diagnostics);
@@ -453,7 +488,7 @@ function valueFromProtocol(value: ProtocolValueJSON): SemanticValue {
 export function toEnvelopeJSON(envelope: LSEEnvelope): LSEEnvelopeJSON {
   const result: LSEEnvelopeJSON = {
     lseVersion: envelope.lseVersion,
-    nodes: envelope.nodes.map(toProtocolJSON),
+    nodes: envelope.nodes.map(n => toProtocolJSON(n)),
   };
   if (envelope.features && envelope.features.length > 0) result.features = [...envelope.features];
   return result;

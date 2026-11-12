@@ -226,6 +226,10 @@ describe('convert_format — v1.2 protocol JSON', () => {
     expect(response.isError).toBeUndefined();
     const data = parseResult(response);
     expect(data.ok).toBe(true);
+    // Bracket syntax has no `match`: the tool leaves that form out and says why,
+    // where it used to return brackets without the arms.
+    expect(data.explicit).toBeUndefined();
+    expect(data.refused.explicit).toContain('command.arms');
     expect(data.semantic.arms).toHaveLength(1);
     expect(data.semantic.arms[0].pattern.value).toBe(200);
     expect(data.semantic.defaultArm).toHaveLength(1);

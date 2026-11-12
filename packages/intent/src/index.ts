@@ -124,6 +124,10 @@ export {
 // IR: bracket syntax renderer
 export { renderExplicit, renderDocument } from './ir/renderer';
 
+// IR: what the encodings cannot carry
+export { LossyEncodingError, findUnencodable } from './ir/encodable';
+export type { EncodeOptions, EncodingSurface } from './ir/encodable';
+
 // IR: protocol JSON serialization
 export {
   toProtocolJSON,

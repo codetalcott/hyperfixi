@@ -24,7 +24,7 @@
  */
 
 import type { Tool } from '@modelcontextprotocol/server';
-import { jsonResponse, errorResponse } from './utils.js';
+import { jsonResponse, errorResponse, encodeNode } from './utils.js';
 
 // =============================================================================
 // Tool Definition
@@ -239,13 +239,13 @@ async function handleValidateAttempt(
   // ── Success ───────────────────────────────────────────────────────────────
 
   if (!hasErrors && node) {
-    const lse = renderExplicit(node);
-    const protocol = toProtocolJSON(node);
+    const encoded = encodeNode(node, { renderExplicit, toProtocolJSON });
     return jsonResponse({
       ok: true,
       round,
-      lse,
-      protocol,
+      ...(encoded.explicit !== undefined ? { lse: encoded.explicit } : {}),
+      ...(encoded.semantic !== undefined ? { protocol: encoded.semantic } : {}),
+      ...(encoded.refused ? { refused: encoded.refused } : {}),
       diagnostics,
       message:
         round === 0
