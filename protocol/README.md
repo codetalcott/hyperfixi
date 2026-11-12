@@ -19,6 +19,19 @@ It has one implementation, [`@lokascript/intent`](../packages/intent/) (re-expor
 > [`packages/intent/fixtures/`](../packages/intent/fixtures/), and all 142 run on `@lokascript/intent`.
 > The grammar and the wire format are unchanged.
 
+## Scope
+
+**LSE carries commands and simple handlers** (owner decision, 2026-11-12): one command, a chain of
+them, an `if` or a loop around commands, and an event handler around those (in bracket syntax a
+body holds one command). It is not an
+encoding of whole hyperscript programs and will not grow into one. A whole program travels as
+hyperscript text, which the engine validates and `translate()` moves between 24 languages (on the
+corpus below, 27,330 of 28,032 round trips carried in full, the rest refused, none silent). A tool
+that wants a whole behaviour as a tree should read the engine's syntax tree, not LSE.
+
+The writers enforce the boundary: what is outside it is refused, not written in part (see
+[What LSE cannot carry](#what-lse-cannot-carry)).
+
 ## What LSE is for
 
 - **Explicit input.** When natural-language hyperscript is ambiguous, bracket syntax names each

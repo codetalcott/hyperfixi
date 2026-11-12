@@ -1,8 +1,17 @@
 # @lokascript/intent
 
-> **Universal UI intent protocol** — LSE types, bracket syntax, and protocol JSON. Zero dependencies.
+> LSE types, bracket syntax, and protocol JSON for commands and simple handlers. Zero dependencies.
 
-LSE (LokaScript Explicit Syntax) is a language-agnostic intermediate representation for UI interactions. `@lokascript/intent` provides the core types, parsers, renderers, and wire-format serialization that any ecosystem can adopt without pulling in the full multilingual hyperscript infrastructure.
+LSE (LokaScript Explicit Syntax) is a role-labeled notation for one UI action:
+`[toggle patient:.active destination:#button]`, or the same as JSON. `@lokascript/intent` holds its
+node types, parser, writers and schema primitives. `@lokascript/semantic` and the domain DSLs build
+on the node types; `<lse-intent>` and the MCP server's `lse` tools read and write the encodings.
+
+**Scope.** LSE carries commands and simple handlers, not whole hyperscript programs. `toProtocolJSON`
+and `renderExplicit` throw a `LossyEncodingError` for a node outside that (a `behavior`, a handler
+with a `from` modifier, an expression of several words in bracket syntax); `{ lossy: 'allow' }`
+returns the partial encoding. The specification, with what is and is not carried, is in
+[`protocol/`](../../protocol/README.md).
 
 ## Installation
 

@@ -37,6 +37,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the two disagreed the fixtures now say what the shipped parser does: a bare string has no
   `dataType`, and a render keeps the author's quoting and role order. `protocol/` keeps the
   grammar, the wire format and their docs; its README now says what LSE cannot carry.
+- **LSE's scope is stated: commands and simple handlers** (`protocol/README.md`,
+  `@lokascript/intent`'s README and description). It is not an encoding of whole hyperscript
+  programs; those travel as hyperscript text.
 
 ### Fixed
 

@@ -1,10 +1,13 @@
 /**
  * @lokascript/intent
  *
- * Universal UI intent protocol — LSE (LokaScript Explicit) types, bracket
- * syntax parsing/rendering, and protocol JSON serialization.
+ * LSE (LokaScript Explicit Syntax): role-labeled node types, bracket syntax
+ * parsing/rendering, and protocol JSON serialization.
  *
- * Zero dependencies. Framework-agnostic. Usable from any JS/TS project.
+ * Scope: commands and simple handlers, not whole hyperscript programs. The
+ * writers refuse a node outside it (LossyEncodingError); see protocol/README.md.
+ *
+ * Zero dependencies. Usable from any JS/TS project.
  *
  * @example
  * ```typescript
