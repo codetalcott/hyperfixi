@@ -24,6 +24,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Bracket syntax, the same loss.** Its writer leaves an implicit reference out (`[toggle
 patient:.active]`, not `… destination:me`), its reader reads a bare `{…}` as an expression, and the writer refuses a bare literal of several words, which it
   could only write as a string. 225 carried, 150 type-only, 789 refused (was 232, 158, 776 by the node comparison). Two cases stay wrong and are listed: `go back` and `send "a-b"`.
+- **A domain DSL refused every value of more than one word, in every language**
+  (`@lokascript/framework`). A string literal reaches the node without its quotes, and both of
+  framework's writers (the schema renderer and `createMultilingualDSL`'s pattern fallback) wrote
+  it bare, so `add "oat milk" to groceries` rendered as `agregar oat milk a groceries`, which
+  reads back as `add oat` with the rest left over: `translate()` refused it. A string literal
+  holding whitespace is now written in quotes (`'…'` when it holds a `"`; one holding both is
+  still written bare, and refused); a value already quoted is unchanged, `quoteMultiword` still
+  extends the rule to a role that is not a literal, and a multi-word expression (a SQL condition)
+  stays bare. The rule is exported as `writeRoleValue(node, role, spec?)`, for a domain's
+  hand-written renderer: lokascript-domains' todo and voice renderers take it when they move to
+  this release.
 
 ### Changed
 

@@ -252,6 +252,21 @@ describe('buildPatternProfile', () => {
         'destination=shelf',
       ]);
     });
+
+    // A string literal reaches the node without its quotes. Written bare, it read
+    // back as its first word with the rest left over, and translate() refused
+    // every multi-word value in every language.
+    it('keeps the quotes on a multi-word string, so translate() reads it back', () => {
+      expect(dsl.translate('move "oat milk" into shelf', 'en', 'ja')).toBe(
+        '"oat milk" を shelf に 移動'
+      );
+      expect(dsl.translate('move "oat milk" into shelf', 'en', 'ar')).toBe(
+        'انقل "oat milk" في shelf'
+      );
+      expect(dsl.translate('"oat milk" を shelf に 移動', 'ja', 'en')).toBe(
+        'move "oat milk" into shelf'
+      );
+    });
   });
 });
 

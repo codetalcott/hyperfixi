@@ -8,7 +8,7 @@
  * Every domain that supports `translate()` needs a renderer.
  */
 
-import type { SemanticNode } from '../core/types';
+import type { SemanticNode, SemanticValue } from '../core/types';
 import { extractRoleValue, extractValue } from '../core/types';
 import type { CommandSchema } from '../schema';
 import { sortRolesByWordOrder, type PatternGenLanguageProfile } from './profile';
@@ -53,6 +53,42 @@ export type KeywordTable = Record<string, Record<string, string>>;
  * ```
  */
 export type MarkerTable = Record<string, Record<string, string>>;
+
+/**
+ * A role's value as a renderer writes it.
+ *
+ * A string literal that holds whitespace is written in quotes. It was quoted
+ * where it was read (no other value can hold whitespace), and written bare it
+ * reads back as its first word with the rest left over: `add "oat milk" to
+ * groceries` rendered `agregar oat milk a groceries`, which no language reads
+ * as the source. `quoteMultiword` extends the same rule to a role whose value
+ * is not a literal (a free-text question). A value already quoted is left as
+ * it is. One that holds both quote characters cannot be quoted, and is written
+ * bare: the read-back then refuses it, which is the honest outcome.
+ *
+ * `role` is the schema's spec for the role, when the caller has it.
+ */
+export function writeRoleValue(
+  node: SemanticNode,
+  role: string,
+  spec?: { readonly quoteMultiword?: boolean }
+): string {
+  return quoteForWriting(extractRoleValue(node, role), node.roles.get(role), spec);
+}
+
+/** {@link writeRoleValue}'s rule, for a value the caller already holds as text. */
+function quoteForWriting(
+  value: string,
+  typed: SemanticValue | undefined,
+  spec?: { readonly quoteMultiword?: boolean }
+): string {
+  if (!/\s/.test(value) || /^(["']).*\1$/s.test(value)) return value;
+  const isStringLiteral = typed?.type === 'literal' && typeof typed.value === 'string';
+  if (!isStringLiteral && !spec?.quoteMultiword) return value;
+  if (!value.includes('"')) return `"${value}"`;
+  if (!value.includes("'")) return `'${value}'`;
+  return value;
+}
 
 /**
  * Configuration for building a renderer from schemas and profiles.
@@ -338,9 +374,9 @@ function renderFromSchema(
   const postVerb: string[] = [];
 
   for (const role of ordered) {
-    let value = extractRoleValue(node, role.role);
+    let value = writeRoleValue(node, role.role, role);
     if (!value && role.default !== undefined) {
-      value = String(extractValue(role.default));
+      value = quoteForWriting(String(extractValue(role.default)), role.default, role);
     }
     // A role with no value is skipped entirely — including its marker. Emitting
     // the marker of an absent role produces dangling text ("analyze #content as",
@@ -348,10 +384,6 @@ function renderFromSchema(
     // required roles too: a required role with no value is a malformed node, and
     // a dangling marker is a worse rendering of it than simply leaving it out.
     if (!value) continue;
-
-    if (role.quoteMultiword && /\s/.test(value) && !/^(["']).*\1$/.test(value)) {
-      value = `"${value}"`;
-    }
 
     // Marker resolution, most specific first. `renderOverride` for this exact
     // language is the most specific statement; `''` means "render this role

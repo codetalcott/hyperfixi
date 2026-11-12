@@ -11,11 +11,10 @@ import type {
   RolePatternToken,
   TokenStream,
 } from '../core/types';
-import { extractRoleValue } from '../core/types';
 import type { CommandSchema } from '../schema';
 import { MatchSkeleton, createStockReader, stockConfidenceModel } from '../core/matching';
 import type { PatternGenLanguageProfile } from '../generation/profile';
-import type { DomainRenderFn } from '../generation/renderer';
+import { writeRoleValue, type DomainRenderFn } from '../generation/renderer';
 import {
   createSchemaPatternGenerator,
   type SchemaPatternProfile,
@@ -955,12 +954,8 @@ function coreEngine(): DSLEngine {
         },
         writeRole: (token: RolePatternToken, node: SemanticNode) => {
           if (!node.roles.has(token.role)) return null;
-          let value = extractRoleValue(node, token.role);
           const spec = schemas.get(node.action)?.roles.find(r => r.role === token.role);
-          if (spec?.quoteMultiword && /\s/.test(value) && !/^(["']).*\1$/.test(value)) {
-            value = `"${value}"`;
-          }
-          return value || null;
+          return writeRoleValue(node, token.role, spec) || null;
         },
       };
       return (node, language) => {
