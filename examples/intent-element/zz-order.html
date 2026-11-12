@@ -1,0 +1,11 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<script src="/packages/engine/dist/hyperfixi-hs.js"></script>
+<script src="/packages/semantic/dist/browser-en.en.global.js"></script>
+<script src="/packages/intent-element/dist/intent-element.iife.global.js"></script>
+</head><body>
+<div id="box"></div>
+<script>window.log=[];for(const t of ['lse:validated','lse:executed','lse:error'])document.addEventListener(t,e=>window.log.push(t+':'+(e.detail.diagnostics||[]).map(d=>d.code)));</script>
+<lse-intent id="a">
+  <script type="application/lse+json">{"action":"add","roles":{"patient":{"type":"selector","value":".ran"},"destination":{"type":"selector","value":"#box"}}}</script>
+</lse-intent>
+</body></html>

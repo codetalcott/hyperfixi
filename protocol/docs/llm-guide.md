@@ -376,6 +376,6 @@ All three accept bracket syntax input. See the hyperfixi docs for invocation det
 
 ### `<lse-intent>` custom element (hyperfixi)
 
-The `@hyperfixi/intent-element` package provides a `<lse-intent>` custom element that accepts protocol JSON (inline or from a `src` attribute) and executes it. Useful for shipping LLM-generated UI behavior without a full framework.
+The `@hyperfixi/intent-element` package provides a `<lse-intent>` custom element that accepts protocol JSON (inline or from a `src` attribute) and executes it. It runs an intent as written or refuses it (`lse:error`). An intent is code (an `expression` value is hyperscript), so for JSON a model produced, give the element an allow list: `<lse-intent allow="toggle add remove">` runs only those actions, with plain values and no expressions.
 
 See `packages/intent-element/` for details.

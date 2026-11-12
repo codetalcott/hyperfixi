@@ -1,13 +1,13 @@
 /**
  * @hyperfixi/intent-element
  *
- * Browser custom element that validates LSE protocol JSON and executes it on the
- * page's hyperscript host. Zero-dependency validation via @lokascript/intent;
- * execution renders the intent to English hyperscript (a LokaScriptSemantic bundle's
- * `render`) and hands it to the host's `evaluate` — @hyperfixi/engine's hyperfixi-hs.js,
- * or upstream _hyperscript.
+ * `<lse-intent>`: runs LSE protocol JSON on the page's hyperscript host. The JSON
+ * is validated, rendered to one English hyperscript script (a LokaScriptSemantic
+ * bundle's `render`) and handed to the host's `evaluate` (@hyperfixi/engine's
+ * hyperfixi-hs.js, or upstream _hyperscript). What it cannot run as written it
+ * refuses, with an `lse:error` event.
  *
- * Auto-registers <lse-intent> when loaded as a browser script.
+ * Importing this module defines `<lse-intent>`.
  *
  * @example
  * ```html
@@ -19,19 +19,18 @@
  *   <script type="application/lse+json">
  *     {"action":"toggle","roles":{"patient":{"type":"selector","value":".active"}},"trigger":{"event":"click"}}
  *   </script>
- *   <button slot="trigger">Toggle sidebar</button>
+ *   <button>Toggle sidebar</button>
  * </lse-intent>
  * ```
  */
 
-export { LSEIntentElement } from './lse-intent.js';
-export { intentRegistry } from './schema-registry.js';
-export type { SandboxResult } from './sandbox.js';
+import { LSEIntentElement } from './lse-intent.js';
 
-// Auto-register the custom element when loaded in a browser context
+export { LSEIntentElement };
+export { intentRegistry } from './schema-registry.js';
+export { droppedValues, planIntent } from './plan.js';
+export type { IntentPlan, IntentRefusal, IntentTrigger, PlanOptions } from './plan.js';
+
 if (typeof customElements !== 'undefined' && !customElements.get('lse-intent')) {
-  // Dynamic import to avoid circular reference from the export above
-  import('./lse-intent.js').then(({ LSEIntentElement }) => {
-    customElements.define('lse-intent', LSEIntentElement);
-  });
+  customElements.define('lse-intent', LSEIntentElement);
 }

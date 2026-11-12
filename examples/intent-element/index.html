@@ -161,6 +161,69 @@
     </style>
   </section>
 
+  <!-- ─── A handler body is one script ─────────────────────────────── -->
+    <section>
+      <h2>A handler with a body of two commands</h2>
+      <p>
+        The verbose <code>event-handler</code> form names its own event. Its body runs as one
+        script, so <code>it</code> carries from the first command to the second.
+      </p>
+
+      <lse-intent id="demo-chain">
+        <script type="application/lse+json">
+          {
+            "kind": "event-handler",
+            "action": "on",
+            "roles": { "event": { "type": "literal", "value": "click" } },
+            "body": [
+              { "action": "get", "roles": { "source": { "type": "expression", "raw": "1 + 2" } } },
+              {
+                "action": "put",
+                "roles": {
+                  "patient": { "type": "reference", "value": "it" },
+                  "destination": { "type": "selector", "value": "#chain-out" }
+                }
+              }
+            ]
+          }
+        </script>
+        <button>Compute 1 + 2</button>
+      </lse-intent>
+      <div id="chain-out" style="margin-top: 0.5rem">(not run yet)</div>
+    </section>
+
+    <!-- ─── allow: an intent from outside the page ────────────────────── -->
+    <section>
+      <h2><code>allow</code> — only listed actions, plain values only</h2>
+      <p>
+        This intent's selector value carries a second command. Without <code>allow</code> it would
+        run; with <code>allow="toggle add"</code> the element refuses it
+        (<code>VALUE_NOT_ALLOWED</code>) and nothing runs.
+      </p>
+
+      <lse-intent id="demo-allow" allow="toggle add">
+        <script type="application/lse+json">
+          {
+            "action": "add",
+            "roles": {
+              "patient": {
+                "type": "selector",
+                "value": ".a to #allow-box then set window.pwned to 1 then add .b"
+              },
+              "destination": { "type": "selector", "value": "#allow-box" }
+            }
+          }
+        </script>
+        <span slot="error" style="display: none; color: red">Refused: not a plain value</span>
+      </lse-intent>
+      <div
+        id="allow-box"
+        style="padding: 1rem; border: 2px solid #ccc; border-radius: 4px; margin-top: 0.5rem"
+      >
+        Untouched box
+      </div>
+    </section>
+
   <!-- ─── Example 3: Validation only (no runtime) ──────────────────── -->
   <section>
     <h2>3. Validation-only (invalid JSON)</h2>

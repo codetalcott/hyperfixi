@@ -17,7 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   path to dotted text (`put "foo" into my @bar` rendered as `… into me.@bar`, which no reader
   takes). JSON now carries `implicit`, `quoted` and `interpolates` on a value, and a property path
   as `{ type: 'property-path', object, property, access }`; the older one-string property path is
-  still read. `validateProtocolJSON` checks a path's owner. All 781 now render to the same script
+  still read. `validateProtocolJSON` checks a path's owner, and rejects a selector or reference with no string
+  value and a literal that is not a string, number or boolean (`INVALID_VALUE`: they were read as
+  `add ` and `put [object Object]`). All 781 now render to the same script
   (0 type-only, was 178). This is what `<lse-intent>` and the `lse` MCP tools run.
 - **Bracket syntax, the same loss.** Its writer leaves an implicit reference out (`[toggle
 patient:.active]`, not `… destination:me`), its reader reads a bare `{…}` as an expression, and the writer refuses a bare literal of several words, which it
@@ -25,6 +27,48 @@ patient:.active]`, not `… destination:me`), its reader reads a bare `{…}` as
 
 ### Changed
 
+- **`<lse-intent>` runs an intent as written or refuses it** (`@hyperfixi/intent-element`,
+  breaking). Tested on the real engine with the real renderer, which its unit tests had stubbed,
+  the element was running things the JSON did not say:
+  - A verbose `event-handler` ran its body **on connect**; only the `trigger` sugar was read for
+    the event. It now runs on its own event.
+  - A handler body ran one command per `evaluate`, so `it` did not carry (`get 1 + 2` then
+    `put it into #out` wrote `null`). A body is now one script, a `then` chain, with `event` in
+    scope.
+  - Event modifiers were dropped. `once` is honored; `debounce`, `throttle` and `queue` are
+    refused (`UNSUPPORTED_MODIFIER`), as is a field the reader would skip (`UNKNOWN_FIELD`), an
+    event that is not one plain name, and a handler inside another node.
+  - A schema error (`intentRegistry`) was reported and the intent ran anyway. It is refused.
+  - No host or no renderer was a diagnostic nobody was told about; it is an `lse:error`
+    (`NO_RUNTIME`, `NO_RENDERER`). So are `trigger="submit"` with no form and `intersect` with no
+    observer. Diagnostics no longer pile up across runs.
+  - `trigger` lowercased event names (`myEvent` never fired). The name's case is kept.
+  - A string literal with no `dataType` was stamped as a string, against the wire format, and only
+    at the top level. A literal is now read as written (bare); `BARE_LITERAL` warns when a bare
+    literal has several words. Write `"dataType": "string"` for text.
+  - `import '@hyperfixi/intent-element'` in a bundler defined nothing: `sideEffects` listed only
+    the script-tag file.
+  - **With the scripts loaded before the markup, the order the README showed, the element did
+    nothing and reported nothing**: the parser connects it before its JSON child exists. It waits
+    for the document now, and an element with nothing to read is an `lse:error` (`NO_INTENT`).
+  - A role the renderer has no place for (a misspelt one) was dropped and the rest ran. The run
+    is refused (`RENDER_DROPPED_VALUE`) when the script lacks a selector or literal of the intent.
+  - When `src` changed during a fetch, the first answer still ran, and the second fetch could
+    hang the element. Only the latest read counts; two `refresh()` calls at once run once.
+  - `refresh()` ran a `disabled` element; the `slot="error"` child was never hidden again.
+  - `lse:executed`'s detail is `{ node, script, result }` (`results` is gone: there is one run).
+    The `SandboxResult` type export is gone.
+- **`<lse-intent allow="…">`: an allow list for JSON the page did not write.** An intent is code:
+  a selector value of `.a to #out then set window.pwned to 1` ran three commands, and the README
+  called the element "validated" and "sandboxed". With `allow`, only the listed actions run, no
+  value may be an expression, and every other value must be one token (a string may hold any text
+  but a backslash). The README now states the trust model, and that `timeout` stops the waiting,
+  not the script. `planIntent(json, options)` exports the decision without a DOM.
+- **`<lse-intent>` has a corpus test.** Of the 781 command-shape scripts protocol JSON carries, it
+  runs 745 as written and refuses 36; none runs as another script (`src/corpus.test.ts`, counts
+  pinned). Its browser spec was untagged and ran in no CI project; it is `@comprehensive` now, and
+  runs the element on upstream `_hyperscript` as the host, which the README claimed and nothing
+  tested. The published package no longer carries its test files.
 - **The LSE round-trip gate judges scripts, not only nodes.** Each read-back node is rendered to
   English and compared, as the engine reads it, with what the original node renders to. The gate
   had treated `implicit` and `quoted` as fields with no meaning.

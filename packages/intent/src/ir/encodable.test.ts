@@ -268,6 +268,17 @@ describe('the marks a renderer reads', () => {
     expect(codes({ p: { type: 'property-path' } })).toContain('MISSING_PATH_OBJECT');
   });
 
+  it('validation rejects a value its reader would stringify or read as empty', () => {
+    const codes = (value: unknown) =>
+      validateProtocolJSON({ action: 'add', roles: { patient: value } }).map(d => d.code);
+    expect(codes({ type: 'selector' })).toEqual(['INVALID_VALUE']);
+    expect(codes({ type: 'selector', value: 5 })).toEqual(['INVALID_VALUE']);
+    expect(codes({ type: 'reference', value: '' })).toEqual(['INVALID_VALUE']);
+    expect(codes({ type: 'literal', value: { a: 1 } })).toEqual(['INVALID_VALUE']);
+    expect(codes({ type: 'literal', value: 0 })).toEqual([]);
+    expect(codes({ type: 'literal', value: '' })).toEqual([]);
+  });
+
   it('bracket syntax leaves an implicit reference out', () => {
     const node = createCommandNode('toggle', {
       patient: createSelector('.a'),
