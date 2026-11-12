@@ -4,9 +4,9 @@
  * Parses the universal [command role:value ...] bracket syntax.
  * Domain-agnostic — schema validation is injectable via ParseExplicitOptions.
  *
- * Three parsing levels matching the ABNF grammar:
- *   parseDocument()  → parseCompound()  → parseExplicit()
- *   (multi-line)       (chain ops)         (single bracket)
+ * Two parsing levels matching the ABNF grammar:
+ *   parseCompound()  → parseExplicit()
+ *   (chain ops)         (single bracket)
  */
 
 import type {
@@ -16,7 +16,6 @@ import type {
   ActionType,
   LoopVariant,
   Annotation,
-  LSEEnvelope,
   CompoundSemanticNode,
 } from '../types';
 import {
@@ -49,8 +48,6 @@ export const STRUCTURAL_ROLES = new Set([
   'condition',
   'loop-body',
   'variable',
-  'catch',
-  'finally',
 ]);
 
 /**
@@ -74,6 +71,24 @@ export function parseExplicit(input: string, options: ParseExplicitOptions = {})
 
   if (!trimmed.startsWith('[') || !trimmed.endsWith(']')) {
     throw new Error('Explicit syntax must be wrapped in brackets: [command role:value ...]');
+  }
+
+  // One statement: the opening bracket must close at the end. `[a x:1] zzz [b y:2]`
+  // used to read as one command whose `x` was `1] zzz [b`.
+  const close = closingBracket(trimmed);
+  if (close !== trimmed.length - 1) {
+    const after =
+      close === -1
+        ? ''
+        : `: "${trimmed
+            .slice(close + 1)
+            .trim()
+            .slice(0, 40)}"`;
+    throw new Error(
+      close === -1
+        ? 'Unbalanced brackets in explicit statement'
+        : `Unexpected text after the closing bracket${after}. One statement per [ ... ]; chain with then/and.`
+    );
   }
 
   const content = trimmed.slice(1, -1).trim();
@@ -302,24 +317,11 @@ export function parseExplicit(input: string, options: ParseExplicitOptions = {})
       // A block command (`tell`, `try`, …) holds its commands in fields, as the
       // renderer and the wire format have them. Left as roles they were one
       // opaque expression each: text that read back, commands that did not.
-      const blocks: {
-        body?: SemanticNode[];
-        catchBranch?: SemanticNode[];
-        finallyBranch?: SemanticNode[];
-      } = {};
-      for (const [role, field] of [
-        ['body', 'body'],
-        ['catch', 'catchBranch'],
-        ['finally', 'finallyBranch'],
-      ] as const) {
-        const nodes = extractStructuralBody(roles, role, options);
-        if (nodes.length === 0) continue;
-        roles.delete(role as SemanticRole);
-        blocks[field] = nodes;
-      }
+      const body = extractStructuralBody(roles, 'body', options);
+      if (body.length > 0) roles.delete('body' as SemanticRole);
       return attachDiagnostics({
         ...createCommandNode(command, roles, { sourceLanguage: 'explicit' }),
-        ...blocks,
+        ...(body.length > 0 ? { body } : {}),
       });
     }
   }
@@ -373,14 +375,6 @@ function splitCompoundSegments(input: string): {
       current += char;
       if (bracketDepth === 0) {
         const rest = input.slice(i + 1);
-        const pipeMatch = rest.match(/^\s*\|>\s*/);
-        if (pipeMatch) {
-          segments.push(current.trim());
-          current = '';
-          chainType ??= 'pipe';
-          i += pipeMatch[0].length;
-          continue;
-        }
         const keywordMatch = rest.match(/^\s+(then|and|async|sequential)\s+/);
         if (keywordMatch && CHAIN_KEYWORDS.has(keywordMatch[1])) {
           segments.push(current.trim());
@@ -462,55 +456,12 @@ function extractAnnotations(input: string): { annotations: Annotation[]; remaind
 }
 
 // =============================================================================
-// Document Parsing
-// =============================================================================
-
-const VERSION_HEADER_RE = /^#!lse\s+(\d+\.\d+(?:\.\d+)?)\s*$/;
-
-export function parseDocument(input: string, options?: ParseExplicitOptions): LSEEnvelope {
-  const lines = input.split('\n');
-  let lseVersion = '1.0';
-  const nodes: SemanticNode[] = [];
-  let startLine = 0;
-
-  for (let i = 0; i < lines.length; i++) {
-    const trimmed = lines[i].trim();
-    if (!trimmed) continue;
-    const versionMatch = trimmed.match(VERSION_HEADER_RE);
-    if (versionMatch) {
-      lseVersion = versionMatch[1];
-      startLine = i + 1;
-    }
-    break;
-  }
-
-  for (let i = startLine; i < lines.length; i++) {
-    const trimmed = lines[i].trim();
-    if (!trimmed) continue;
-    if (trimmed.startsWith('//') || (trimmed.startsWith('#') && !trimmed.startsWith('#!')))
-      continue;
-    nodes.push(parseCompound(trimmed, options));
-  }
-
-  return { lseVersion, nodes };
-}
-
-// =============================================================================
 // Detection Helpers
 // =============================================================================
 
 export function isCompoundSyntax(input: string): boolean {
   const { segments } = splitCompoundSegments(input.trim());
   return segments.length > 1;
-}
-
-export function isDocumentSyntax(input: string): boolean {
-  const trimmed = input.trim();
-  if (trimmed.includes('\n')) return true;
-  if (VERSION_HEADER_RE.test(trimmed)) return true;
-  if (trimmed.startsWith('//') || (trimmed.startsWith('#') && !trimmed.startsWith('#!')))
-    return true;
-  return false;
 }
 
 // =============================================================================
@@ -708,4 +659,23 @@ function findMatchingBracket(str: string, start: number): number {
     }
   }
   return str.length - 1;
+}
+
+/** Index of the `]` that closes the `[` at 0, outside quoted strings; -1 if none. */
+function closingBracket(str: string): number {
+  let depth = 0;
+  let quote = '';
+  for (let i = 0; i < str.length; i++) {
+    const ch = str[i];
+    if (quote) {
+      // A backslash escapes the next character (`"a\\\\"` ends at its last quote).
+      if (ch === '\\') i++;
+      else if (ch === quote) quote = '';
+      continue;
+    }
+    if (ch === '"' || ch === "'") quote = ch;
+    else if (ch === '[') depth++;
+    else if (ch === ']' && --depth === 0) return i;
+  }
+  return -1;
 }

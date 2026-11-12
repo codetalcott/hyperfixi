@@ -1,5 +1,11 @@
 # Wire Format
 
+> **LSE 3.0.** The format carries commands and simple handlers. Version 3.0 removed the constructs
+> that had no producer: `try` (`catchBranch`, `finallyBranch`), `all`/`race` (`asyncVariant`,
+> `asyncBody`), `match` (`arms`, `defaultArm`), pipe chains (`chainType: "pipe"`) and the versioned
+> envelope. `fromProtocolJSON` refuses a node that has one of them and `validateProtocolJSON`
+> reports it (`REMOVED_IN_LSE_3`): read as if absent, they would be a silent loss.
+
 LSE has two JSON representations. Both serialize the same semantic content; they differ in fidelity and verbosity.
 
 ## Full-Fidelity Format
@@ -192,176 +198,6 @@ Annotations with no argument omit the `value` field:
 
 Annotation order is preserved — order matters for middleware-like composition (e.g., `@retry` before `@timeout` means retry each attempt before timing out the whole sequence).
 
-### Pipe Chain (v1.2)
-
-The `|>` operator creates a compound node with `chainType: "pipe"`. It explicitly threads the output of the left command into the `patient` role of the right command (or `source` if `patient` is already present):
-
-```json
-{
-  "kind": "compound",
-  "action": "compound",
-  "chainType": "pipe",
-  "statements": [
-    {
-      "kind": "command",
-      "action": "fetch",
-      "roles": { "source": { "type": "literal", "value": "/api/users", "dataType": "string" } }
-    },
-    {
-      "kind": "command",
-      "action": "filter",
-      "roles": { "condition": { "type": "expression", "raw": "role == 'admin'" } }
-    },
-    {
-      "kind": "command",
-      "action": "put",
-      "roles": { "destination": { "type": "selector", "value": "#user-list" } }
-    }
-  ]
-}
-```
-
-**Pipe semantics:**
-
-- `|>` desugars to `then` with an implicit `patient:result` on the right command
-- If the right command already has `patient`, feeds into `source` instead
-- If both `patient` and `source` are present, `|>` is a parse error (ambiguous)
-
-### Match Command (v1.2)
-
-A `match` command node carries `arms` (ordered array of pattern→body pairs) and an optional `defaultArm` catch-all:
-
-```json
-{
-  "kind": "command",
-  "action": "match",
-  "roles": {
-    "patient": { "type": "reference", "value": "result" }
-  },
-  "arms": [
-    {
-      "pattern": { "type": "literal", "value": "200", "dataType": "string" },
-      "body": [
-        {
-          "kind": "command",
-          "action": "put",
-          "roles": {
-            "patient": { "type": "reference", "value": "body" },
-            "destination": { "type": "selector", "value": "#result" }
-          }
-        }
-      ]
-    },
-    {
-      "pattern": { "type": "literal", "value": "404", "dataType": "string" },
-      "body": [
-        {
-          "kind": "command",
-          "action": "show",
-          "roles": { "patient": { "type": "selector", "value": "#not-found" } }
-        }
-      ]
-    }
-  ],
-  "defaultArm": [
-    {
-      "kind": "command",
-      "action": "log",
-      "roles": { "patient": { "type": "reference", "value": "result" } }
-    }
-  ]
-}
-```
-
-- `arms` are checked in order; first match wins
-- `defaultArm` is optional; without it, a non-matching value is a no-op
-- No implicit fallthrough between arms
-- v1.2 supports literal patterns only; guard clauses and range patterns are deferred
-
-### Error Handling Node (v1.2)
-
-A `try` command node uses `body` (in roles), `catchBranch`, and `finallyBranch` arrays — the same structural-field pattern as `if`/`else` and `repeat`/`loopBody`:
-
-```json
-{
-  "kind": "command",
-  "action": "try",
-  "roles": {},
-  "body": [
-    {
-      "kind": "command",
-      "action": "fetch",
-      "roles": { "source": { "type": "literal", "value": "/api/users", "dataType": "string" } }
-    }
-  ],
-  "catchBranch": [
-    {
-      "kind": "command",
-      "action": "show",
-      "roles": { "patient": { "type": "selector", "value": "#error-message" } }
-    }
-  ],
-  "finallyBranch": [
-    {
-      "kind": "command",
-      "action": "remove",
-      "roles": { "patient": { "type": "selector", "value": ".loading" } }
-    }
-  ]
-}
-```
-
-`catchBranch` and `finallyBranch` are both optional. A `try` with only `finallyBranch` (no `catchBranch`) is valid for guaranteed cleanup.
-
-### Async Coordination Node (v1.2)
-
-`all` and `race` command nodes use `asyncVariant` and `asyncBody` — the body commands run concurrently:
-
-```json
-{
-  "kind": "command",
-  "action": "all",
-  "roles": {},
-  "asyncVariant": "all",
-  "asyncBody": [
-    {
-      "kind": "command",
-      "action": "fetch",
-      "roles": { "source": { "type": "literal", "value": "/api/user", "dataType": "string" } }
-    },
-    {
-      "kind": "command",
-      "action": "fetch",
-      "roles": { "source": { "type": "literal", "value": "/api/prefs", "dataType": "string" } }
-    }
-  ]
-}
-```
-
-- **`all`**: Resolves when all body commands complete. Result is an array. If any fails, the whole `all` fails.
-- **`race`**: Resolves with the first to complete. Remaining commands are cancelled.
-
-### Versioned Envelope (v1.2)
-
-A versioned envelope wraps multiple nodes with protocol metadata:
-
-```json
-{
-  "lseVersion": "1.2",
-  "features": ["diagnostics", "version-header"],
-  "nodes": [
-    { "kind": "command", "action": "toggle", "roles": { ... } },
-    { "kind": "command", "action": "add", "roles": { ... } }
-  ]
-}
-```
-
-The envelope is optional. Single-node documents MAY use the bare `SemanticNode` format (backward-compatible with v1.0/v1.1). The envelope is recommended when:
-
-- The document contains multiple top-level nodes
-- The producer wants to declare which LSE version and features are in use
-- Feature detection is needed by the consumer
-
 ### Node Shape
 
 ```typescript
@@ -371,11 +207,11 @@ interface SemanticNodeJSON {
   roles: Record<string, SemanticValueJSON>;
   // convenience sugar: wraps command in event handler
   trigger?: { event: string; modifiers?: Record<string, unknown> };
-  // event-handler only:
+  // event-handler, and a block command's commands (`tell`):
   body?: SemanticNodeJSON[];
   // compound only:
   statements?: SemanticNodeJSON[];
-  chainType?: 'then' | 'and' | 'async' | 'sequential' | 'pipe';
+  chainType?: 'then' | 'and' | 'async' | 'sequential';
   // conditional (v1.1, command nodes only):
   thenBranch?: SemanticNodeJSON[];
   elseBranch?: SemanticNodeJSON[];
@@ -388,15 +224,6 @@ interface SemanticNodeJSON {
   diagnostics?: DiagnosticJSON[];
   // metadata annotations (v1.2, all node kinds):
   annotations?: AnnotationJSON[];
-  // error handling (v1.2, command nodes only):
-  catchBranch?: SemanticNodeJSON[];
-  finallyBranch?: SemanticNodeJSON[];
-  // async coordination (v1.2, command nodes only):
-  asyncVariant?: 'all' | 'race';
-  asyncBody?: SemanticNodeJSON[];
-  // pattern matching (v1.2, command nodes only):
-  arms?: MatchArmJSON[];
-  defaultArm?: SemanticNodeJSON[];
 }
 
 interface DiagnosticJSON {
@@ -409,17 +236,6 @@ interface DiagnosticJSON {
 interface AnnotationJSON {
   name: string;
   value?: string;
-}
-
-interface MatchArmJSON {
-  pattern: SemanticValueJSON;
-  body: SemanticNodeJSON[];
-}
-
-interface LSEEnvelopeJSON {
-  lseVersion: string;
-  features?: string[];
-  nodes: SemanticNodeJSON[];
 }
 ```
 

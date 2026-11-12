@@ -1,6 +1,6 @@
 # LokaScript Explicit Syntax (LSE) Specification
 
-**Version**: 2.0.0
+**Version**: 3.0.0
 
 ## Overview
 
@@ -209,7 +209,7 @@ The `body` role value is a nested bracket command, recursively parsed. Event han
 
 These role names carry a nested bracket command rather than a plain value:
 
-`body`, `then`, `else`, `condition`, `loop-body`, `variable`, `catch`, `finally`
+`body`, `then`, `else`, `condition`, `loop-body`, `variable`
 
 **Resolution rule (v2.0):** in a structural role, a value starting with `[` is **always** a nested bracket command. To write an attribute selector in a structural role, use a selector literal:
 
@@ -247,18 +247,17 @@ Chain operators: `then`, `and`, `async`, `sequential`.
 
 Compound statements are rendered by joining each bracket command with the chain operator surrounded by spaces.
 
-A pipe chain is written with `|>`. `parseCompound` reads a chain at the top level; a chain inside a structural role (`body:[a] then [b]`) has no reading, and `renderExplicit` refuses a node that would need one.
+`parseCompound` reads a chain at the top level; a chain inside a structural role (`body:[a] then [b]`) has no reading, and `renderExplicit` refuses a node that would need one. Text after a statement's closing bracket that is not a chain operator is an error.
 
 ## MIME Types
 
-| MIME Type                                    | Use                      |
-| -------------------------------------------- | ------------------------ |
-| `application/vnd.lokascript.explicit`        | Single LSE statement     |
-| `application/vnd.lokascript.explicit-stream` | Streaming (one per line) |
+| MIME Type                             | Use                  |
+| ------------------------------------- | -------------------- |
+| `application/vnd.lokascript.explicit` | Single LSE statement |
 
 File extension: `.lse`
 
-A stream is a document: an optional `#!lse <version>` line, then one statement per line (the grammar's `document` rule; `parseDocument` reads it). The separate streaming convention retired with the reference parsers (tag `archived/lse-reference-parsers-2026-11-12`).
+LSE is one statement at a time. Version 3.0 removed the multi-line document and its `#!lse` version header.
 
 ## Wire Format
 

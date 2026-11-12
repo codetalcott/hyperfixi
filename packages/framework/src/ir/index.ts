@@ -35,19 +35,12 @@ export { DEFAULT_REFERENCES, isValidReference } from './references';
 export {
   parseExplicit,
   parseCompound,
-  parseDocument,
   isExplicitSyntax,
   isCompoundSyntax,
-  isDocumentSyntax,
 } from './explicit-parser';
 
 // Explicit syntax renderer
-export {
-  renderExplicit,
-  renderDocument,
-  LossyEncodingError,
-  findUnencodable,
-} from './explicit-renderer';
+export { renderExplicit, LossyEncodingError, findUnencodable } from './explicit-renderer';
 export type { EncodeOptions, EncodingSurface } from './explicit-renderer';
 
 // JSON schema conversion (deprecated — use fromProtocolJSON/validateProtocolJSON/toProtocolJSON)
@@ -62,17 +55,12 @@ export type {
   // v1.2 sub-types
   ProtocolDiagnosticJSON,
   AnnotationJSON,
-  MatchArmJSON,
-  LSEEnvelopeJSON,
 } from './types';
 export {
   toProtocolJSON,
   fromProtocolJSON,
   validateProtocolJSON,
   // v1.2 envelope
-  toEnvelopeJSON,
-  fromEnvelopeJSON,
-  isEnvelope,
 } from './protocol-json';
 
 // Interchange AST → SemanticNode converter

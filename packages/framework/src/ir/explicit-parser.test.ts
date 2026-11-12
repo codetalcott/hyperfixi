@@ -2,10 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   parseExplicit,
   parseCompound,
-  parseDocument,
   isExplicitSyntax,
   isCompoundSyntax,
-  isDocumentSyntax,
 } from './explicit-parser';
 import type { ParseExplicitOptions, SchemaLookup } from './types';
 import { defineCommand, defineRole } from '../schema/command-schema';
@@ -438,16 +436,6 @@ describe('parseCompound', () => {
     expect((node as CompoundSemanticNode).chainType).toBe('sequential');
   });
 
-  it('parses commands chained with |> pipe', () => {
-    const node = parseCompound('[fetch source:/api/users] |> [put destination:#list]');
-    expect(node.kind).toBe('compound');
-    const compound = node as CompoundSemanticNode;
-    expect(compound.chainType).toBe('pipe');
-    expect(compound.statements).toHaveLength(2);
-    expect(compound.statements[0].action).toBe('fetch');
-    expect(compound.statements[1].action).toBe('put');
-  });
-
   it('handles three or more chained commands', () => {
     const node = parseCompound(
       '[add patient:.loading] then [fetch source:/api/data] then [remove patient:.loading]'
@@ -520,93 +508,15 @@ describe('parseCompound — annotations', () => {
 });
 
 // =============================================================================
-// parseDocument
-// =============================================================================
-
-describe('parseDocument', () => {
-  it('parses a simple document with version header', () => {
-    const envelope = parseDocument('#!lse 1.2\n[toggle patient:.active]\n[add patient:.highlight]');
-    expect(envelope.lseVersion).toBe('1.2');
-    expect(envelope.nodes).toHaveLength(2);
-    expect(envelope.nodes[0].action).toBe('toggle');
-    expect(envelope.nodes[1].action).toBe('add');
-  });
-
-  it('defaults to version 1.0 when no header present', () => {
-    const envelope = parseDocument('[toggle patient:.active]');
-    expect(envelope.lseVersion).toBe('1.0');
-    expect(envelope.nodes).toHaveLength(1);
-  });
-
-  it('skips // comments', () => {
-    const envelope = parseDocument(
-      '#!lse 1.2\n// This is a comment\n[toggle patient:.active]\n// Another comment'
-    );
-    expect(envelope.nodes).toHaveLength(1);
-  });
-
-  it('skips # comments', () => {
-    const envelope = parseDocument('#!lse 1.2\n# This is a comment\n[toggle patient:.active]');
-    expect(envelope.nodes).toHaveLength(1);
-  });
-
-  it('skips blank lines', () => {
-    const envelope = parseDocument(
-      '#!lse 1.2\n\n[toggle patient:.active]\n\n\n[add patient:.highlight]\n'
-    );
-    expect(envelope.nodes).toHaveLength(2);
-  });
-
-  it('handles three-part version numbers', () => {
-    const envelope = parseDocument('#!lse 1.2.0\n[toggle patient:.active]');
-    expect(envelope.lseVersion).toBe('1.2.0');
-  });
-
-  it('handles compound statements in document lines', () => {
-    const envelope = parseDocument(
-      '#!lse 1.2\n[add patient:.loading] then [fetch source:/api/data]'
-    );
-    expect(envelope.nodes).toHaveLength(1);
-    expect(envelope.nodes[0].kind).toBe('compound');
-  });
-
-  it('handles annotated statements in document lines', () => {
-    const envelope = parseDocument('#!lse 1.2\n@timeout(5s) [fetch source:"/api/users"]');
-    expect(envelope.nodes).toHaveLength(1);
-    expect(envelope.nodes[0].annotations).toHaveLength(1);
-  });
-});
-
-// =============================================================================
 // Detection helpers
 // =============================================================================
 
 describe('isCompoundSyntax', () => {
   it('detects compound statements', () => {
     expect(isCompoundSyntax('[a patient:x] then [b patient:y]')).toBe(true);
-    expect(isCompoundSyntax('[a patient:x] |> [b patient:y]')).toBe(true);
   });
 
   it('rejects single commands', () => {
     expect(isCompoundSyntax('[toggle patient:.active]')).toBe(false);
-  });
-});
-
-describe('isDocumentSyntax', () => {
-  it('detects multi-line input', () => {
-    expect(isDocumentSyntax('[a patient:x]\n[b patient:y]')).toBe(true);
-  });
-
-  it('detects version header', () => {
-    expect(isDocumentSyntax('#!lse 1.2')).toBe(true);
-  });
-
-  it('detects comment lines', () => {
-    expect(isDocumentSyntax('// a comment')).toBe(true);
-    expect(isDocumentSyntax('# a comment')).toBe(true);
-  });
-
-  it('rejects single bracket commands', () => {
-    expect(isDocumentSyntax('[toggle patient:.active]')).toBe(false);
   });
 });

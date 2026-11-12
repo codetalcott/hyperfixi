@@ -29,20 +29,14 @@ import {
   parseExplicit,
   isExplicitSyntax,
   parseCompound,
-  parseDocument,
   isCompoundSyntax,
-  isDocumentSyntax,
   STRUCTURAL_ROLES,
   // IR — renderer
   renderExplicit,
-  renderDocument,
   // IR — protocol
   toProtocolJSON,
   fromProtocolJSON,
   validateProtocolJSON,
-  toEnvelopeJSON,
-  fromEnvelopeJSON,
-  isEnvelope,
   // IR — references
   DEFAULT_REFERENCES,
   isValidReference,
@@ -281,19 +275,6 @@ describe('parseCompound / isCompoundSyntax', () => {
   });
 });
 
-describe('parseDocument / isDocumentSyntax', () => {
-  it('detects document syntax (multiline)', () => {
-    expect(isDocumentSyntax('[toggle patient:.active]\n[add patient:.open]')).toBe(true);
-    expect(isDocumentSyntax('[toggle patient:.active]')).toBe(false);
-  });
-
-  it('parses a document into an LSEEnvelope', () => {
-    const envelope = parseDocument('[toggle patient:.active]\n[add patient:.open]');
-    expect(envelope.nodes).toHaveLength(2);
-    expect(envelope.lseVersion).toBeDefined();
-  });
-});
-
 describe('STRUCTURAL_ROLES', () => {
   it('contains expected structural role names', () => {
     expect(STRUCTURAL_ROLES.has('body')).toBe(true);
@@ -368,13 +349,6 @@ describe('renderExplicit', () => {
   it('re-wraps a bare attribute selector so it re-parses as a selector', () => {
     const node = parseExplicit('[toggle patient:[data-active]]');
     expect(renderExplicit(node)).toBe('[toggle patient:<[data-active]/>]');
-  });
-
-  it('renders a document via renderDocument', () => {
-    const envelope = parseDocument('[add patient:.active]\n[remove patient:.old]');
-    const output = renderDocument(envelope);
-    expect(output).toContain('add');
-    expect(output).toContain('remove');
   });
 });
 
@@ -463,16 +437,39 @@ describe('validateProtocolJSON', () => {
   });
 });
 
-describe('toEnvelopeJSON / fromEnvelopeJSON / isEnvelope', () => {
-  it('wraps and unwraps nodes via envelope', () => {
-    const envelope = parseDocument('[toggle patient:.active]');
-    const json = toEnvelopeJSON(envelope);
-    expect(isEnvelope(json)).toBe(true);
-    expect(Array.isArray(json.nodes)).toBe(true);
+describe('constructs removed in LSE 3.0', () => {
+  // try/catch, all/race, match, pipe chains and envelopes had no producer. A
+  // reader that skipped their fields would lose part of the input silently.
+  const toggle = { action: 'toggle', roles: { patient: { type: 'selector', value: '.a' } } };
+  const removed: Array<[string, Record<string, unknown>]> = [
+    ['catchBranch', { ...toggle, action: 'try', body: [toggle], catchBranch: [toggle] }],
+    ['asyncVariant', { ...toggle, action: 'all', asyncVariant: 'all', asyncBody: [toggle] }],
+    ['arms', { ...toggle, action: 'match', arms: [] }],
+    [
+      'chainType "pipe"',
+      { kind: 'compound', action: 'compound', chainType: 'pipe', statements: [toggle] },
+    ],
+    ['envelope', { lseVersion: '1.2', nodes: [toggle] }],
+  ];
 
-    const restored = fromEnvelopeJSON(json);
-    expect(restored.nodes).toHaveLength(1);
-    expect(restored.nodes[0].action).toBe('toggle');
+  it.each(removed)('fromProtocolJSON refuses %s', (name, json) => {
+    expect(() => fromProtocolJSON(json as never)).toThrow(/LSE 3\.0 has no/);
+  });
+
+  it.each(removed)('validateProtocolJSON reports %s', (name, json) => {
+    expect(validateProtocolJSON(json).map(d => d.code)).toContain('REMOVED_IN_LSE_3');
+  });
+
+  it('refuses one nested in a handler body', () => {
+    const handler = { kind: 'event-handler', action: 'on', roles: {}, body: [removed[2][1]] };
+    expect(() => fromProtocolJSON(handler as never)).toThrow(/arms/);
+  });
+
+  it('the bracket parser reads `|>` and a `catch:` block as nothing special', () => {
+    expect(() => parseCompound('[a x:1] |> [b y:2]')).toThrow();
+    const node = parseExplicit('[try body:[toggle patient:.a] catch:[log patient:it]]');
+    // `catch` is an ordinary role now: its value is kept, as text.
+    expect(node.roles.has('catch')).toBe(true);
   });
 });
 

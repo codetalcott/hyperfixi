@@ -1,6 +1,6 @@
 # @hyperfixi/mcp-server
 
-MCP (Model Context Protocol) server for hyperscript and multilingual DSL development. A connection lists **14 tools** by default (**89** defined): the agent loop below, translation, and proof that a change kept its meaning. The rest come in eight [toolsets](#toolsets), listed when `LOKASCRIPT_MCP_TOOLSETS` names them: **84** with every toolset (the 5 MCP-sampling tools also need `LOKASCRIPT_MCP_LLM_TOOLS=1`). Plus **9 resources** and **9 prompts**.
+MCP (Model Context Protocol) server for hyperscript and multilingual DSL development. A connection lists **14 tools** by default (**87** defined): the agent loop below, translation, and proof that a change kept its meaning. The rest come in eight [toolsets](#toolsets), listed when `LOKASCRIPT_MCP_TOOLSETS` names them: **82** with every toolset (the 5 MCP-sampling tools also need `LOKASCRIPT_MCP_LLM_TOOLS=1`). Plus **9 resources** and **9 prompts**.
 
 ## The agent loop
 
@@ -94,12 +94,12 @@ What a default connection lists: the deterministic checks an agent cannot do for
 
 ## Toolsets
 
-Every other tool belongs to a toolset. `LOKASCRIPT_MCP_TOOLSETS` names the toolsets to list, comma-separated (`domains,lse`), or `all`; the server's startup line on stderr says which are on and warns about a name it does not know. Only the LIST changes: a tool answers a call by name whether or not it is listed. **84** with every toolset; the 5 MCP-sampling tools below also need `LOKASCRIPT_MCP_LLM_TOOLS=1`.
+Every other tool belongs to a toolset. `LOKASCRIPT_MCP_TOOLSETS` names the toolsets to list, comma-separated (`domains,lse`), or `all`; the server's startup line on stderr says which are on and warns about a name it does not know. Only the LIST changes: a tool answers a call by name whether or not it is listed. **82** with every toolset; the 5 MCP-sampling tools below also need `LOKASCRIPT_MCP_LLM_TOOLS=1`.
 
 | Toolset    | Tools | What it holds                                                                 |
 | ---------- | ----- | ----------------------------------------------------------------------------- |
 | `domains`  | 26    | `parse_`/`compile_`/`validate_`/`translate_` for each domain DSL, composites  |
-| `lse`      | 13    | LSE bracket syntax and protocol JSON: conversion, envelopes, feedback, data   |
+| `lse`      | 11    | LSE bracket syntax and protocol JSON: conversion, feedback, training data     |
 | `grail`    | 5     | GRAIL condition/affordance workflows (reads `grail.yaml` in the server's dir) |
 | `debug`    | 4     | Explain a handler; reason over debug snapshots you assemble                   |
 | `editor`   | 3     | Completions, hover and document symbols (what the language server does)       |
@@ -142,9 +142,7 @@ bdd's tools left with domains 4.2.0 and bdd itself with domains 5.0.0: behaviors
 | `translate_lse`                | Translate LSE bracket syntax to natural language (24 languages)   |
 | `convert_format`               | Convert between explicit bracket syntax and LLM JSON              |
 | `validate_explicit`            | Validate bracket syntax without compilation (fast)                |
-| `validate_protocol`            | Validate protocol JSON against the LSE 2.0 schema                 |
-| `to_envelope`                  | Wrap a node/protocol in a transport envelope                      |
-| `from_envelope`                | Unwrap an envelope back to a node/protocol                        |
+| `validate_protocol`            | Validate protocol JSON against the LSE 3.0 schema                 |
 | `lse_validate_and_feedback`    | Validate LSE and return machine-actionable correction hints       |
 | `lse_pattern_stats`            | Pattern hit-rate stats: success by command/language, top failures |
 | `lse_generate_with_correction` | Stateless LSE generation + self-correction loop (prompt/schema)   |

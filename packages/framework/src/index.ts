@@ -96,9 +96,6 @@ export type {
   // v1.2 types
   Annotation,
   ProtocolDiagnostic,
-  AsyncVariant,
-  MatchArm,
-  LSEEnvelope,
 } from './core/types';
 
 export type { CommandSchema, RoleSpec } from './schema';
@@ -172,9 +169,6 @@ export {
   extractValue,
   extractRoleValue,
   // v1.2 factories
-  createTryNode,
-  createAsyncNode,
-  createMatchNode,
 } from './core/types';
 
 export { defineCommand, defineRole } from './schema';

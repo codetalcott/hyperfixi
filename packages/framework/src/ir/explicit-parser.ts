@@ -7,7 +7,5 @@ export {
   parseExplicit,
   isExplicitSyntax,
   parseCompound,
-  parseDocument,
   isCompoundSyntax,
-  isDocumentSyntax,
 } from '@lokascript/intent';

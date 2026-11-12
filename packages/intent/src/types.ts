@@ -94,15 +94,6 @@ export interface ProtocolDiagnostic {
   readonly code: string;
 }
 
-/** Async coordination variant (v1.2). */
-export type AsyncVariant = 'all' | 'race';
-
-/** A single arm in a match command (v1.2). */
-export interface MatchArm {
-  readonly pattern: SemanticValue;
-  readonly body: SemanticNode[];
-}
-
 // =============================================================================
 // Semantic Nodes (5 kinds)
 // =============================================================================
@@ -135,13 +126,8 @@ export interface SourcePosition {
 /** A single DSL command. */
 export interface CommandSemanticNode extends SemanticNode {
   readonly kind: 'command';
+  /** A block command's commands (`tell #x … end`). */
   readonly body?: readonly SemanticNode[];
-  readonly catchBranch?: readonly SemanticNode[];
-  readonly finallyBranch?: readonly SemanticNode[];
-  readonly asyncVariant?: AsyncVariant;
-  readonly asyncBody?: readonly SemanticNode[];
-  readonly arms?: readonly MatchArm[];
-  readonly defaultArm?: readonly SemanticNode[];
 }
 
 /** Trigger-based commands (e.g., "on click"). */
@@ -172,7 +158,7 @@ export interface ConditionalSemanticNode extends SemanticNode {
 export interface CompoundSemanticNode extends SemanticNode {
   readonly kind: 'compound';
   readonly statements: SemanticNode[];
-  readonly chainType: 'then' | 'and' | 'async' | 'sequential' | 'pipe';
+  readonly chainType: 'then' | 'and' | 'async' | 'sequential';
 }
 
 /** Loop variant discriminant. */
@@ -185,13 +171,6 @@ export interface LoopSemanticNode extends SemanticNode {
   readonly body: SemanticNode[];
   readonly loopVariable?: string;
   readonly indexVariable?: string;
-}
-
-/** Versioned envelope for multi-node LSE documents (v1.2). */
-export interface LSEEnvelope {
-  readonly lseVersion: string;
-  readonly features?: readonly string[];
-  readonly nodes: readonly SemanticNode[];
 }
 
 // =============================================================================
@@ -308,55 +287,6 @@ export function createLoopNode(
     ...(loopVariable && { loopVariable }),
     ...(indexVariable && { indexVariable }),
     ...(metadata && { metadata }),
-  };
-}
-
-export function createTryNode(
-  body: SemanticNode[],
-  catchBranch?: SemanticNode[],
-  finallyBranch?: SemanticNode[],
-  metadata?: SemanticMetadata
-): CommandSemanticNode {
-  return {
-    kind: 'command',
-    action: 'try',
-    roles: new Map(),
-    body,
-    ...(catchBranch && catchBranch.length > 0 ? { catchBranch } : {}),
-    ...(finallyBranch && finallyBranch.length > 0 ? { finallyBranch } : {}),
-    ...(metadata ? { metadata } : {}),
-  };
-}
-
-export function createAsyncNode(
-  variant: AsyncVariant,
-  asyncBody: SemanticNode[],
-  metadata?: SemanticMetadata
-): CommandSemanticNode {
-  return {
-    kind: 'command',
-    action: variant,
-    roles: new Map(),
-    asyncVariant: variant,
-    asyncBody,
-    ...(metadata ? { metadata } : {}),
-  };
-}
-
-export function createMatchNode(
-  roles: Record<SemanticRole, SemanticValue> | Map<SemanticRole, SemanticValue>,
-  arms: MatchArm[],
-  defaultArm?: SemanticNode[],
-  metadata?: SemanticMetadata
-): CommandSemanticNode {
-  const rolesMap = roles instanceof Map ? roles : new Map(Object.entries(roles));
-  return {
-    kind: 'command',
-    action: 'match',
-    roles: rolesMap,
-    arms,
-    ...(defaultArm && defaultArm.length > 0 ? { defaultArm } : {}),
-    ...(metadata ? { metadata } : {}),
   };
 }
 

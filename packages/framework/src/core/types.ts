@@ -24,8 +24,6 @@ export type {
   FlagValue,
   Annotation,
   ProtocolDiagnostic,
-  AsyncVariant,
-  MatchArm,
   SemanticNode,
   SemanticMetadata,
   SourcePosition,
@@ -36,7 +34,6 @@ export type {
   CompoundSemanticNode,
   LoopVariant,
   LoopSemanticNode,
-  LSEEnvelope,
 } from '@lokascript/intent';
 
 export {
@@ -51,9 +48,6 @@ export {
   createConditionalNode,
   createCompoundNode,
   createLoopNode,
-  createTryNode,
-  createAsyncNode,
-  createMatchNode,
   extractValue,
   extractRoleValue,
   getRoleValue,

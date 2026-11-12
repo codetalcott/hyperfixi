@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   no line for; `renderExplicit` wrote text its own parser rejected or read as something else (an
   expression of several words, several commands in one `body:`). Measured on 1,166
   engine-accepted scripts, scoring each parse against what came back: protocol JSON was 244
-  unencodable and 71 silently missing a command, role or value; it is now 382 refused and none
+  unencodable and 71 silently missing a command, role or value; it is now 385 refused and none
   silent. Bracket syntax was 365 unreadable and 537 silently lossy; it is now 776 refused and
   none missing a command or a value. `nodes.map(toProtocolJSON)` no longer typechecks (the second
   parameter is the options): write `nodes.map(n => toProtocolJSON(n))`.
@@ -37,6 +37,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the two disagreed the fixtures now say what the shipped parser does: a bare string has no
   `dataType`, and a render keeps the author's quoting and role order. `protocol/` keeps the
   grammar, the wire format and their docs; its README now says what LSE cannot carry.
+- **LSE 3.0: the constructs with no producer.** `try` (`catch:`/`finally:`, `catchBranch`,
+  `finallyBranch`, `createTryNode`), `all`/`race` (`asyncVariant`, `asyncBody`, `createAsyncNode`),
+  `match` (`arms`, `defaultArm`, `createMatchNode`), pipe chains (`|>`, `chainType: 'pipe'`), and
+  documents and envelopes (`parseDocument`, `renderDocument`, `isDocumentSyntax`, `toEnvelopeJSON`,
+  `fromEnvelopeJSON`, `isEnvelope`, the `#!lse` header) are removed from `@lokascript/intent` and
+  from framework's re-exports, with their types, 27 fixtures (142 → 115), and the grammar, JSON
+  schema and wire-format sections that described them. No parser here, in the domains or in learn
+  produced any of them. `fromProtocolJSON` refuses JSON that has one and `validateProtocolJSON`
+  reports it (`REMOVED_IN_LSE_3`), so old input is not read with a part missing.
+  - MCP: `to_envelope` and `from_envelope` are removed (87 tools defined, 82 with every toolset),
+    `lse_validate_and_feedback` no longer takes `format: "envelope"`, and the LSE prompt no longer
+    teaches the removed forms.
 - **LSE's scope is stated: commands and simple handlers** (`protocol/README.md`,
   `@lokascript/intent`'s README and description). It is not an encoding of whole hyperscript
   programs; those travel as hyperscript text.
@@ -50,8 +62,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`fromProtocolJSON` dropped the `else` of an `if` with an empty `then`** (`if x else y`).
 - **`toProtocolJSON` lost a role named `__proto__`** (fixed in the reference parser in #622, not in
   the shipped one).
-- **`renderExplicit` wrote a pipe chain as the word `pipe`**, which no LSE parser reads; it writes
-  the grammar's `|>`.
+- **`parseExplicit` read `[a x:1] zzz [b y:2]` as one command** whose `x` was `1] zzz [b`. Text
+  after a statement's closing bracket is now an error.
+- **`@lokascript/intent`'s README examples did not match the API** (`result.ok`, `defineCommand`'s
+  arguments, the envelope call). They are rewritten and each was run.
 
 ## [7.6.0] - 2026-11-10
 

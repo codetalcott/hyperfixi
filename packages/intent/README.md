@@ -21,37 +21,57 @@ npm install @lokascript/intent
 
 ## What's included
 
-- **`SemanticNode`** — 5 node kinds (command, event-handler, conditional, compound, loop) with 7 value types
-- **Bracket syntax** — parse `[toggle patient:.active on:click]` into a `SemanticNode`
-- **Protocol JSON** — serialize/deserialize to the LSE wire format (v1.0–v1.2)
-- **Schema primitives** — `CommandSchema`, `RoleSpec`, `defineCommand`, `defineRole`
-- **Diagnostics** — `IRDiagnostic`, `createDiagnosticCollector`
+- **Node types**: `SemanticNode` in five kinds (command, event-handler, conditional, compound, loop) and six value types (literal, selector, reference, property-path, expression, flag)
+- **Bracket syntax**: `parseExplicit`, `parseCompound`, `renderExplicit`
+- **Protocol JSON**: `toProtocolJSON`, `fromProtocolJSON`, `validateProtocolJSON` (LSE 3.0)
+- **Schema primitives**: `CommandSchema`, `RoleSpec`, `defineCommand`, `defineRole`
+- **Diagnostics**: `IRDiagnostic`, `createDiagnosticCollector`
 
 ## Quick start
 
 ```typescript
 import {
   parseExplicit,
+  renderExplicit,
   toProtocolJSON,
   fromProtocolJSON,
   validateProtocolJSON,
 } from '@lokascript/intent';
 
-// Parse bracket syntax
-const result = parseExplicit('[toggle patient:.active]');
-if (result.ok) {
-  const node = result.node;
+// Bracket syntax to a node (throws on text it cannot read)
+const node = parseExplicit('[toggle patient:.active destination:#button]');
+node.action; // 'toggle'
+node.roles.get('patient'); // { type: 'selector', value: '.active', selectorKind: 'class' }
 
-  // Serialize to protocol JSON (wire format)
-  const json = toProtocolJSON(node);
+// ...and back
+renderExplicit(node); // '[toggle patient:.active destination:#button]'
 
-  // Validate incoming JSON
-  const errors = validateProtocolJSON(json);
-  if (errors.length === 0) {
-    // Deserialize
-    const restored = fromProtocolJSON(json);
+// Protocol JSON (the wire format)
+const json = toProtocolJSON(node);
+// { kind: 'command', action: 'toggle', roles: { patient: { type: 'selector', value: '.active', … }, … } }
+
+// Validate JSON from outside before reading it
+const errors = validateProtocolJSON(json).filter(d => d.severity === 'error');
+if (errors.length === 0) {
+  const restored = fromProtocolJSON(json);
+}
+```
+
+## A node the encodings cannot carry
+
+```typescript
+import { renderExplicit, LossyEncodingError } from '@lokascript/intent';
+
+try {
+  renderExplicit(node);
+} catch (error) {
+  if (error instanceof LossyEncodingError) {
+    error.losses; // e.g. ['event-handler.eventModifiers.from']
+    error.partial; // what would have been written
   }
 }
+
+renderExplicit(node, { lossy: 'allow' }); // the partial text, knowingly
 ```
 
 ## Schema validation
@@ -59,24 +79,18 @@ if (result.ok) {
 ```typescript
 import { defineCommand, defineRole, parseExplicit } from '@lokascript/intent';
 
-const toggleCommand = defineCommand('toggle', {
-  patient: defineRole('patient', { required: true, types: ['selector', 'reference'] }),
-  on: defineRole('on', { required: false, types: ['literal'] }),
+const toggle = defineCommand({
+  action: 'toggle',
+  roles: [
+    defineRole({ role: 'patient', required: true, expectedTypes: ['selector'] }),
+    defineRole({ role: 'destination', required: false, expectedTypes: ['selector', 'reference'] }),
+  ],
 });
 
-const result = parseExplicit('[toggle patient:.active on:click]', {
-  schema: toggleCommand,
-});
-```
+const schemaLookup = { getSchema: (action: string) => (action === 'toggle' ? toggle : undefined) };
 
-## Protocol envelope
-
-```typescript
-import { toEnvelopeJSON, fromEnvelopeJSON } from '@lokascript/intent';
-
-// Wrap a node in a versioned envelope for transport
-const envelope = toEnvelopeJSON(node, { version: '1.2', source: 'my-dsl' });
-const { node: restored } = fromEnvelopeJSON(envelope);
+parseExplicit('[toggle patient:.active]', { schemaLookup }); // ok
+parseExplicit('[toggle colour:.active]', { schemaLookup }); // throws: unknown role "colour"
 ```
 
 ## Zero dependencies

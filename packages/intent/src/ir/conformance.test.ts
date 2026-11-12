@@ -6,7 +6,8 @@
  * the one implementation with users, ran eight of the 23 files. The reference
  * parsers retired on 2026-11-12 (tag `archived/lse-reference-parsers-2026-11-12`)
  * and the fixtures moved here. Where the two disagreed, the fixtures now say
- * what this parser does (see fixtures/README.md).
+ * what this parser does (see fixtures/README.md). LSE 3.0 then removed the
+ * constructs with no producer, and their 27 cases (142 → 115).
  *
  * A fixture shape this file does not know fails the run: a new kind of case
  * cannot sit in the directory unread.
@@ -16,13 +17,9 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, it, expect } from 'vitest';
 import {
-  fromEnvelopeJSON,
   fromProtocolJSON,
-  isEnvelope,
-  parseDocument,
   parseExplicit,
   renderExplicit,
-  toEnvelopeJSON,
   toProtocolJSON,
   validateProtocolJSON,
   type SemanticNode,
@@ -102,10 +99,7 @@ function runCase(c: Fixture): void {
   }
   // Protocol JSON → node → protocol JSON.
   if (c.jsonInput && c.expectedRoundTrip === true) {
-    const json = c.jsonInput as never;
-    const back = isEnvelope(json)
-      ? toEnvelopeJSON(fromEnvelopeJSON(json))
-      : toProtocolJSON(fromProtocolJSON(json));
+    const back = toProtocolJSON(fromProtocolJSON(c.jsonInput as never));
     return expect(JSON.parse(JSON.stringify(back))).toEqual(c.jsonInput);
   }
   // A node (as protocol JSON) → bracket text.
@@ -124,21 +118,13 @@ function runCase(c: Fixture): void {
     }
     return;
   }
-  // A document: an optional `#!lse <version>` line, then a statement per line.
-  if (typeof c.streamingInput === 'string') {
-    const doc = parseDocument(c.streamingInput);
-    const count = c.expectedNodeCount ?? (c.v1Fallback as Json | undefined)?.expectedNodeCount;
-    expect(doc.nodes.length).toBe(count);
-    if (c.expectedVersion) expect(doc.lseVersion).toBe(c.expectedVersion);
-    return;
-  }
   throw new Error(`${c.id}: a fixture shape conformance.test.ts does not read`);
 }
 
 describe('LSE fixtures on @lokascript/intent', () => {
-  it('reads every fixture file (23 files, 142 cases)', () => {
-    expect(files.length).toBe(23);
-    expect(files.reduce((n, f) => n + load(f).length, 0)).toBe(142);
+  it('reads every fixture file (18 files, 115 cases)', () => {
+    expect(files.length).toBe(18);
+    expect(files.reduce((n, f) => n + load(f).length, 0)).toBe(115);
   });
 
   for (const file of files) {

@@ -7,15 +7,16 @@
  * reader uses to judge the server's surface: it derives the counts from the
  * actual tool arrays and fails if the README disagrees.
  *
- * Three numbers, because they differ: 89 tools are DEFINED; a default
+ * Three numbers, because they differ: 87 tools are DEFINED; a default
  * connection lists the 14 core tools (see ../toolsets.ts); with every toolset
- * on it lists 84, since the 5 MCP-sampling tools also need
+ * on it lists 82, since the 5 MCP-sampling tools also need
  * LOKASCRIPT_MCP_LLM_TOOLS=1. (Every tool was listed by default until the
  * toolsets: 84. 108 / 103 until 4.0, when compile_hyperscript and execute_lse
  * retired with the AOT compiler; 106 / 101 until domains 4.0.0 retired jsx and
  * its four tools; 96 / 91 until 7.0 removed validate_hyperscript,
  * translate_hyperscript and parse_multilingual; 93 / 88 until domains 7.1.0
- * took learn and its four tools.)
+ * took learn and its four tools; 89 / 84 until LSE 3.0 removed envelopes and
+ * to_envelope / from_envelope.)
  */
 
 import { describe, it, expect } from 'vitest';
@@ -94,10 +95,10 @@ describe('Tool count guard', () => {
   ).length;
   const allListedCount = listedTools(listable, parseToolsets('all').enabled, isDomainTool).length;
 
-  it('defines 89 tools, lists 14 by default and 84 with every toolset', () => {
-    expect(definedCount).toBe(89);
+  it('defines 87 tools, lists 14 by default and 82 with every toolset', () => {
+    expect(definedCount).toBe(87);
     expect(defaultListedCount).toBe(14);
-    expect(allListedCount).toBe(84);
+    expect(allListedCount).toBe(82);
   });
 
   it('every listable tool belongs to a toolset', () => {

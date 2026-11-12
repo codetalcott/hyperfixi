@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { renderExplicit, renderDocument } from './explicit-renderer';
+import { renderExplicit } from './explicit-renderer';
 import { parseExplicit, parseCompound } from './explicit-parser';
 import {
   createCommandNode,
@@ -10,7 +10,7 @@ import {
   createEventHandlerNode,
   createCompoundNode,
 } from '../core/types';
-import type { SemanticNode, LSEEnvelope } from '../core/types';
+import type { SemanticNode } from '../core/types';
 
 describe('renderExplicit', () => {
   it('renders a basic command', () => {
@@ -197,33 +197,5 @@ describe('renderExplicit — annotations', () => {
     const reparsed = parseCompound(rendered);
     const rerendered = renderExplicit(reparsed);
     expect(rerendered).toBe(rendered);
-  });
-});
-
-describe('renderDocument', () => {
-  it('renders an envelope with version header', () => {
-    const envelope: LSEEnvelope = {
-      lseVersion: '1.2',
-      nodes: [
-        createCommandNode('toggle', { patient: createSelector('.active') }),
-        createCommandNode('add', { patient: createSelector('.highlight') }),
-      ],
-    };
-    const result = renderDocument(envelope);
-    expect(result).toBe('#!lse 1.2\n[toggle patient:.active]\n[add patient:.highlight]');
-  });
-
-  it('omits version header for version 1.0', () => {
-    const envelope: LSEEnvelope = {
-      lseVersion: '1.0',
-      nodes: [createCommandNode('toggle', { patient: createSelector('.active') })],
-    };
-    const result = renderDocument(envelope);
-    expect(result).toBe('[toggle patient:.active]');
-  });
-
-  it('renders empty envelope', () => {
-    const envelope: LSEEnvelope = { lseVersion: '1.2', nodes: [] };
-    expect(renderDocument(envelope)).toBe('#!lse 1.2');
   });
 });

@@ -1,21 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import {
-  toProtocolJSON,
-  fromProtocolJSON,
-  validateProtocolJSON,
-  toEnvelopeJSON,
-  fromEnvelopeJSON,
-  isEnvelope,
-} from './protocol-json';
+import { toProtocolJSON, fromProtocolJSON, validateProtocolJSON } from './protocol-json';
 import {
   createCommandNode,
   createEventHandlerNode,
   createCompoundNode,
   createConditionalNode,
   createLoopNode,
-  createTryNode,
-  createAsyncNode,
-  createMatchNode,
   createSelector,
   createLiteral,
   createReference,
@@ -23,8 +13,8 @@ import {
   createFlag,
   createPropertyPath,
 } from '../core/types';
-import type { CommandSemanticNode, CompoundSemanticNode } from '../core/types';
-import type { ProtocolNodeJSON, LSEEnvelopeJSON } from './types';
+import type { CommandSemanticNode } from '../core/types';
+import type { ProtocolNodeJSON } from './types';
 
 // Fixture loading helpers
 import { readFileSync } from 'fs';
@@ -629,18 +619,6 @@ describe('validateProtocolJSON', () => {
   });
 
   // v1.2 validation
-  it('accepts pipe as valid chainType (v1.2)', () => {
-    expect(
-      validateProtocolJSON({
-        kind: 'compound',
-        action: 'compound',
-        roles: {},
-        statements: [],
-        chainType: 'pipe',
-      })
-    ).toEqual([]);
-  });
-
   it('validates diagnostics array entries (v1.2)', () => {
     const errors = validateProtocolJSON({
       kind: 'command',
@@ -660,274 +638,19 @@ describe('validateProtocolJSON', () => {
     });
     expect(errors.some(e => e.code === 'MISSING_ANNOTATION_NAME')).toBe(true);
   });
-
-  it('validates asyncVariant (v1.2)', () => {
-    const errors = validateProtocolJSON({
-      kind: 'command',
-      action: 'all',
-      roles: {},
-      asyncVariant: 'invalid',
-    });
-    expect(errors.some(e => e.code === 'INVALID_ASYNC_VARIANT')).toBe(true);
-  });
-
-  it('validates arms entries (v1.2)', () => {
-    const errors = validateProtocolJSON({
-      kind: 'command',
-      action: 'match',
-      roles: {},
-      arms: [{ pattern: null }],
-    });
-    expect(
-      errors.some(e => e.code === 'MISSING_ARM_PATTERN' || e.code === 'MISSING_ARM_BODY')
-    ).toBe(true);
-  });
 });
 
 // ===========================================================================
 // v1.2: try/catch/finally
 // ===========================================================================
 
-describe('v1.2: try/catch/finally', () => {
-  it('createTryNode produces correct structure', () => {
-    const body = [createCommandNode('fetch', { source: createLiteral('/api', 'string') })];
-    const catchBranch = [createCommandNode('log', { patient: createLiteral('error', 'string') })];
-    const node = createTryNode(body, catchBranch);
-    expect(node.kind).toBe('command');
-    expect(node.action).toBe('try');
-    expect(node.body).toHaveLength(1);
-    expect(node.catchBranch).toHaveLength(1);
-    expect(node.finallyBranch).toBeUndefined();
-  });
-
-  it('serializes try/catch/finally to protocol JSON', () => {
-    const node = createTryNode(
-      [createCommandNode('fetch', { source: createLiteral('/api/users', 'string') })],
-      [createCommandNode('show', { patient: createSelector('#error-message') })],
-      [createCommandNode('remove', { patient: createSelector('.loading') })]
-    );
-    const json = toProtocolJSON(node);
-    expect(json.kind).toBe('command');
-    expect(json.action).toBe('try');
-    expect(json.body).toHaveLength(1);
-    expect(json.catchBranch).toHaveLength(1);
-    expect(json.finallyBranch).toHaveLength(1);
-  });
-
-  it('deserializes try/catch/finally from protocol JSON', () => {
-    const json: ProtocolNodeJSON = {
-      kind: 'command',
-      action: 'try',
-      roles: {},
-      body: [
-        {
-          kind: 'command',
-          action: 'fetch',
-          roles: { source: { type: 'literal', value: '/api', dataType: 'string' } },
-        },
-      ],
-      catchBranch: [
-        {
-          kind: 'command',
-          action: 'log',
-          roles: { patient: { type: 'literal', value: 'error', dataType: 'string' } },
-        },
-      ],
-      finallyBranch: [
-        {
-          kind: 'command',
-          action: 'remove',
-          roles: { patient: { type: 'selector', value: '.loading' } },
-        },
-      ],
-    };
-    const node = fromProtocolJSON(json) as CommandSemanticNode;
-    expect(node.kind).toBe('command');
-    expect(node.action).toBe('try');
-    expect(node.body).toHaveLength(1);
-    expect(node.catchBranch).toHaveLength(1);
-    expect(node.finallyBranch).toHaveLength(1);
-  });
-
-  describe('fixture conformance: try-catch.json', () => {
-    const fixtures = loadFixtures('try-catch.json');
-    for (const fixture of fixtures) {
-      const f = fixture as {
-        id: string;
-        description: string;
-        jsonInput: ProtocolNodeJSON;
-        expectedRoundTrip?: boolean;
-      };
-      if (f.expectedRoundTrip) {
-        it(`${f.id}: ${f.description}`, () => {
-          const node = fromProtocolJSON(f.jsonInput);
-          const roundTripped = toProtocolJSON(node);
-          expect(roundTripped).toEqual(f.jsonInput);
-        });
-      }
-    }
-  });
-});
-
 // ===========================================================================
 // v1.2: async coordination (all/race)
 // ===========================================================================
 
-describe('v1.2: async coordination', () => {
-  it('createAsyncNode produces correct structure', () => {
-    const body = [
-      createCommandNode('fetch', { source: createLiteral('/api/user', 'string') }),
-      createCommandNode('fetch', { source: createLiteral('/api/prefs', 'string') }),
-    ];
-    const node = createAsyncNode('all', body);
-    expect(node.kind).toBe('command');
-    expect(node.action).toBe('all');
-    expect(node.asyncVariant).toBe('all');
-    expect(node.asyncBody).toHaveLength(2);
-  });
-
-  it('serializes async all to protocol JSON', () => {
-    const node = createAsyncNode('all', [
-      createCommandNode('fetch', { source: createLiteral('/api/user', 'string') }),
-    ]);
-    const json = toProtocolJSON(node);
-    expect(json.asyncVariant).toBe('all');
-    expect(json.asyncBody).toHaveLength(1);
-  });
-
-  it('deserializes async race from protocol JSON', () => {
-    const json: ProtocolNodeJSON = {
-      kind: 'command',
-      action: 'race',
-      roles: {},
-      asyncVariant: 'race',
-      asyncBody: [
-        {
-          kind: 'command',
-          action: 'fetch',
-          roles: { source: { type: 'literal', value: '/cache', dataType: 'string' } },
-        },
-        {
-          kind: 'command',
-          action: 'fetch',
-          roles: { source: { type: 'literal', value: '/api', dataType: 'string' } },
-        },
-      ],
-    };
-    const node = fromProtocolJSON(json) as CommandSemanticNode;
-    expect(node.asyncVariant).toBe('race');
-    expect(node.asyncBody).toHaveLength(2);
-  });
-
-  describe('fixture conformance: async-coordination.json', () => {
-    const fixtures = loadFixtures('async-coordination.json');
-    for (const fixture of fixtures) {
-      const f = fixture as {
-        id: string;
-        description: string;
-        jsonInput: ProtocolNodeJSON;
-        expectedRoundTrip?: boolean;
-      };
-      if (f.expectedRoundTrip) {
-        it(`${f.id}: ${f.description}`, () => {
-          const node = fromProtocolJSON(f.jsonInput);
-          const roundTripped = toProtocolJSON(node);
-          expect(roundTripped).toEqual(f.jsonInput);
-        });
-      }
-    }
-  });
-});
-
 // ===========================================================================
 // v1.2: match/arms
 // ===========================================================================
-
-describe('v1.2: match', () => {
-  it('createMatchNode produces correct structure', () => {
-    const arms = [
-      {
-        pattern: createLiteral('200', 'string'),
-        body: [createCommandNode('show', { patient: createSelector('#success') })],
-      },
-      {
-        pattern: createLiteral('404', 'string'),
-        body: [createCommandNode('show', { patient: createSelector('#not-found') })],
-      },
-    ];
-    const node = createMatchNode({ patient: createReference('result') }, arms, [
-      createCommandNode('log', { patient: createReference('result') }),
-    ]);
-    expect(node.kind).toBe('command');
-    expect(node.action).toBe('match');
-    expect(node.arms).toHaveLength(2);
-    expect(node.defaultArm).toHaveLength(1);
-  });
-
-  it('serializes match arms to protocol JSON', () => {
-    const node = createMatchNode({ patient: createReference('result') }, [
-      {
-        pattern: createLiteral('ok', 'string'),
-        body: [createCommandNode('toggle', { patient: createSelector('.active') })],
-      },
-    ]);
-    const json = toProtocolJSON(node);
-    expect(json.arms).toHaveLength(1);
-    expect(json.arms![0].pattern).toEqual({ type: 'literal', value: 'ok', dataType: 'string' });
-    expect(json.arms![0].body).toHaveLength(1);
-    expect(json.defaultArm).toBeUndefined();
-  });
-
-  it('deserializes match with default arm from protocol JSON', () => {
-    const json: ProtocolNodeJSON = {
-      kind: 'command',
-      action: 'match',
-      roles: { patient: { type: 'reference', value: 'result' } },
-      arms: [
-        {
-          pattern: { type: 'literal', value: '200', dataType: 'string' },
-          body: [
-            {
-              kind: 'command',
-              action: 'show',
-              roles: { patient: { type: 'selector', value: '#success' } },
-            },
-          ],
-        },
-      ],
-      defaultArm: [
-        {
-          kind: 'command',
-          action: 'log',
-          roles: { patient: { type: 'reference', value: 'result' } },
-        },
-      ],
-    };
-    const node = fromProtocolJSON(json) as CommandSemanticNode;
-    expect(node.arms).toHaveLength(1);
-    expect(node.defaultArm).toHaveLength(1);
-    expect(node.roles.get('patient')).toEqual({ type: 'reference', value: 'result' });
-  });
-
-  describe('fixture conformance: match.json', () => {
-    const fixtures = loadFixtures('match.json');
-    for (const fixture of fixtures) {
-      const f = fixture as {
-        id: string;
-        description: string;
-        jsonInput: ProtocolNodeJSON;
-        expectedRoundTrip?: boolean;
-      };
-      if (f.expectedRoundTrip) {
-        it(`${f.id}: ${f.description}`, () => {
-          const node = fromProtocolJSON(f.jsonInput);
-          const roundTripped = toProtocolJSON(node);
-          expect(roundTripped).toEqual(f.jsonInput);
-        });
-      }
-    }
-  });
-});
 
 // ===========================================================================
 // v1.2: annotations
@@ -1083,135 +806,6 @@ describe('v1.2: diagnostics', () => {
 // v1.2: pipe chainType
 // ===========================================================================
 
-describe('v1.2: pipe', () => {
-  it('serializes pipe compound node', () => {
-    const node = createCompoundNode(
-      [
-        createCommandNode('fetch', { source: createLiteral('/api/users', 'string') }),
-        createCommandNode('put', { destination: createSelector('#user-list') }),
-      ],
-      'pipe'
-    );
-    const json = toProtocolJSON(node);
-    expect(json.chainType).toBe('pipe');
-    expect(json.statements).toHaveLength(2);
-  });
-
-  it('deserializes pipe compound node', () => {
-    const json: ProtocolNodeJSON = {
-      kind: 'compound',
-      action: 'compound',
-      roles: {},
-      chainType: 'pipe',
-      statements: [
-        {
-          kind: 'command',
-          action: 'fetch',
-          roles: { source: { type: 'literal', value: '/api', dataType: 'string' } },
-        },
-        {
-          kind: 'command',
-          action: 'put',
-          roles: { destination: { type: 'selector', value: '#list' } },
-        },
-      ],
-    };
-    const node = fromProtocolJSON(json) as CompoundSemanticNode;
-    expect(node.chainType).toBe('pipe');
-    expect(node.statements).toHaveLength(2);
-  });
-
-  describe('fixture conformance: pipe.json', () => {
-    const fixtures = loadFixtures('pipe.json');
-    for (const fixture of fixtures) {
-      const f = fixture as {
-        id: string;
-        description: string;
-        jsonInput: ProtocolNodeJSON;
-        expectedRoundTrip?: boolean;
-      };
-      if (f.expectedRoundTrip) {
-        it(`${f.id}: ${f.description}`, () => {
-          const node = fromProtocolJSON(f.jsonInput);
-          const roundTripped = toProtocolJSON(node);
-          expect(roundTripped).toEqual(f.jsonInput);
-        });
-      }
-    }
-  });
-});
-
 // ===========================================================================
 // v1.2: version envelope
 // ===========================================================================
-
-describe('v1.2: envelope', () => {
-  it('serializes envelope with nodes', () => {
-    const envelope = {
-      lseVersion: '1.2',
-      nodes: [
-        createCommandNode('toggle', { patient: createSelector('.active') }),
-        createCommandNode('add', { patient: createSelector('.highlight') }),
-      ],
-    };
-    const json = toEnvelopeJSON(envelope);
-    expect(json.lseVersion).toBe('1.2');
-    expect(json.nodes).toHaveLength(2);
-    expect(json.features).toBeUndefined();
-  });
-
-  it('serializes envelope with features', () => {
-    const envelope = {
-      lseVersion: '1.2',
-      features: ['diagnostics', 'version-header'] as readonly string[],
-      nodes: [createCommandNode('fetch', { source: createLiteral('/api', 'string') })],
-    };
-    const json = toEnvelopeJSON(envelope);
-    expect(json.features).toEqual(['diagnostics', 'version-header']);
-  });
-
-  it('deserializes envelope', () => {
-    const json: LSEEnvelopeJSON = {
-      lseVersion: '1.2',
-      nodes: [
-        {
-          kind: 'command',
-          action: 'toggle',
-          roles: { patient: { type: 'selector', value: '.active' } },
-        },
-      ],
-    };
-    const envelope = fromEnvelopeJSON(json);
-    expect(envelope.lseVersion).toBe('1.2');
-    expect(envelope.nodes).toHaveLength(1);
-    expect(envelope.nodes[0].action).toBe('toggle');
-  });
-
-  it('isEnvelope detects envelope', () => {
-    expect(isEnvelope({ lseVersion: '1.2', nodes: [] })).toBe(true);
-    expect(isEnvelope({ kind: 'command', action: 'toggle', roles: {} })).toBe(false);
-    expect(isEnvelope(null)).toBe(false);
-    expect(isEnvelope('string')).toBe(false);
-  });
-
-  describe('fixture conformance: version-envelope.json', () => {
-    const fixtures = loadFixtures('version-envelope.json');
-    for (const fixture of fixtures) {
-      const f = fixture as {
-        id: string;
-        description: string;
-        jsonInput?: LSEEnvelopeJSON;
-        expectedRoundTrip?: boolean;
-        streamingInput?: string;
-      };
-      // Only test JSON round-trips (skip streaming fixtures)
-      if (f.expectedRoundTrip && f.jsonInput && !f.streamingInput) {
-        it(`${f.id}: ${f.description}`, () => {
-          const envelope = fromEnvelopeJSON(f.jsonInput!);
-          const roundTripped = toEnvelopeJSON(envelope);
-          expect(roundTripped).toEqual(f.jsonInput);
-        });
-      }
-    }
-  });
-});

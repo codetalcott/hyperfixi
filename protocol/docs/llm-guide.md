@@ -244,7 +244,7 @@ See [Compact shortcuts](#compact-shortcuts) below for the complete list.
 | expression | `{ "type": "expression", "raw": "x + 1" }`                        |
 | flag       | `{ "type": "flag", "name": "primary-key", "enabled": true }`      |
 
-See [wire-format.md](../spec/wire-format.md) for the complete specification of all value shapes, node kinds (command, event-handler, compound, conditional, loop), and v1.2 features (annotations, diagnostics, match arms, async variants).
+See [wire-format.md](../spec/wire-format.md) for the complete specification of all value shapes, node kinds (command, event-handler, compound; a conditional or loop is a command with branch fields), annotations and diagnostics.
 
 ## Compact shortcuts
 
@@ -328,30 +328,6 @@ Examples:
   { "action": "toggle", "roles": { "patient": { "type": "selector", "value": ".active" } }, "trigger": { "event": "click" } }
   { "action": "fetch", "roles": { "source": { "type": "literal", "value": "/api/users" }, "destination": { "type": "selector", "value": "#list" } } }
 ```
-
-## Multi-node documents (envelope format)
-
-For LSE documents containing multiple top-level nodes (e.g., a file with several event handlers), wrap the nodes in an envelope:
-
-```json
-{
-  "lseVersion": "2.0.0",
-  "nodes": [
-    {
-      "action": "toggle",
-      "roles": { "patient": { "type": "selector", "value": ".active" } },
-      "trigger": { "event": "click" }
-    },
-    {
-      "action": "fetch",
-      "roles": { "source": { "type": "literal", "value": "/api/users" } },
-      "trigger": { "event": "load" }
-    }
-  ]
-}
-```
-
-Single-node documents do NOT need the envelope — the bare node is valid LSE on its own.
 
 ## Validation
 

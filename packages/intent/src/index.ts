@@ -38,8 +38,6 @@ export type {
   FlagValue,
   Annotation,
   ProtocolDiagnostic,
-  AsyncVariant,
-  MatchArm,
   SemanticNode,
   SemanticMetadata,
   SourcePosition,
@@ -50,7 +48,6 @@ export type {
   CompoundSemanticNode,
   LoopVariant,
   LoopSemanticNode,
-  LSEEnvelope,
 } from './types';
 
 // Factory functions
@@ -66,9 +63,6 @@ export {
   createConditionalNode,
   createCompoundNode,
   createLoopNode,
-  createTryNode,
-  createAsyncNode,
-  createMatchNode,
   extractValue,
   extractRoleValue,
   getRoleValue,
@@ -109,8 +103,6 @@ export type {
   ProtocolNodeJSON,
   ProtocolDiagnosticJSON,
   AnnotationJSON,
-  MatchArmJSON,
-  LSEEnvelopeJSON,
 } from './ir/types';
 
 // IR: bracket syntax parser
@@ -119,24 +111,15 @@ export {
   parseExplicit,
   isExplicitSyntax,
   parseCompound,
-  parseDocument,
   isCompoundSyntax,
-  isDocumentSyntax,
 } from './ir/parser';
 
 // IR: bracket syntax renderer
-export { renderExplicit, renderDocument } from './ir/renderer';
+export { renderExplicit } from './ir/renderer';
 
 // IR: what the encodings cannot carry
 export { LossyEncodingError, findUnencodable } from './ir/encodable';
 export type { EncodeOptions, EncodingSurface } from './ir/encodable';
 
 // IR: protocol JSON serialization
-export {
-  toProtocolJSON,
-  fromProtocolJSON,
-  validateProtocolJSON,
-  toEnvelopeJSON,
-  fromEnvelopeJSON,
-  isEnvelope,
-} from './ir/protocol';
+export { toProtocolJSON, fromProtocolJSON, validateProtocolJSON } from './ir/protocol';

@@ -64,18 +64,12 @@ const NODE_META = ['kind', 'action', 'roles', 'metadata', 'annotations', 'diagno
 
 // Per node kind: fields whose value is a list of child nodes, and scalar fields.
 const NODE_FIELDS: Record<string, { children: string[]; scalars: string[] }> = {
-  command: {
-    children: ['body', 'catchBranch', 'finallyBranch', 'asyncBody', 'defaultArm'],
-    scalars: ['asyncVariant', 'arms'],
-  },
+  command: { children: ['body'], scalars: [] },
   'event-handler': { children: ['body'], scalars: ['eventModifiers'] },
   compound: { children: ['statements'], scalars: ['chainType'] },
   conditional: { children: ['thenBranch', 'elseBranch'], scalars: [] },
   loop: { children: ['body'], scalars: ['loopVariant', 'loopVariable', 'indexVariable'] },
 };
-
-// The bracket renderer has no line for a `match` command's arms.
-const BRACKET_UNWRITTEN = new Set(['arms', 'defaultArm']);
 
 // Modifiers the JSON `trigger` sugar carries. The verbose event-handler form
 // and bracket syntax carry none.
@@ -135,7 +129,7 @@ export function findUnencodable(
     for (const key of Object.keys(rec)) {
       if (NODE_META.includes(key) || !holdsSomething(rec[key])) continue;
       const known = fields.children.includes(key) || fields.scalars.includes(key);
-      if (!known || (surface === 'bracket' && BRACKET_UNWRITTEN.has(key))) {
+      if (!known) {
         add(`${n.kind}.${key}`);
         continue;
       }
@@ -152,13 +146,6 @@ export function findUnencodable(
     for (const key of fields.children) {
       const list = rec[key];
       if (Array.isArray(list)) for (const child of list) visit(child as SemanticNode);
-    }
-    const arms = rec.arms;
-    if (Array.isArray(arms)) {
-      for (const arm of arms as Array<{ pattern: SemanticValue; body: SemanticNode[] }>) {
-        visitValue(arm.pattern, `${n.action}.arm`);
-        for (const child of arm.body) visit(child);
-      }
     }
   };
 

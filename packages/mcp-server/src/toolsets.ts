@@ -29,7 +29,7 @@ export type ToolsetName = 'core' | (typeof TOOLSET_NAMES)[number];
 export const TOOLSET_DESCRIPTIONS: Record<ToolsetName, string> = {
   core: 'validate, repair, look up, translate, and prove meaning preserved',
   domains: 'parse/compile/validate/translate for each domain DSL, and composite inputs',
-  lse: 'LSE bracket syntax and protocol JSON: conversion, envelopes, feedback, training data',
+  lse: 'LSE bracket syntax and protocol JSON: conversion, feedback, training data',
   grail: "GRAIL condition/affordance workflows (reads grail.yaml in the server's directory)",
   debug: 'explain a handler, and reason over debug snapshots you assemble',
   editor: 'completions, hover and document symbols (what the language server does)',
@@ -62,8 +62,6 @@ export const STATIC_TOOLSETS: Readonly<Record<string, ToolsetName>> = {
   convert_format: 'lse',
   validate_explicit: 'lse',
   validate_protocol: 'lse',
-  to_envelope: 'lse',
-  from_envelope: 'lse',
   validate_lse: 'lse',
   translate_lse: 'lse',
   lse_from_hyperscript: 'lse',
