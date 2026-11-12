@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`ProtocolNodeJSON` is a union discriminated by `kind`** (`ProtocolCommandJSON`,
+  `ProtocolEventHandlerJSON`, `ProtocolCompoundJSON`), where it was one interface with every
+  field optional. A field on the wrong kind (`thenBranch` on a compound, `statements` on a
+  command, `trigger` on a verbose event handler) is now a type error, and a compound's `roles` is
+  optional, as the writer has always left it out: code that read `json.roles` on an unnarrowed
+  node needs `json.roles ?? {}` or a check of `kind`. Types only; the JSON is unchanged.
 - **`@lokascript/intent` (and `@lokascript/framework`, `@lokascript/semantic`, which re-export it):
   `toProtocolJSON` and `renderExplicit` refuse a node they cannot carry in full.** They throw a
   `LossyEncodingError` (`losses`: each part with no place in the encoding; `partial`: what would

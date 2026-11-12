@@ -119,7 +119,7 @@ function encode(node: SemanticNode): ProtocolNodeJSON {
         action: 'compound',
         statements: c.statements.map(encode),
         chainType: c.chainType,
-      } as ProtocolNodeJSON;
+      };
       break;
     }
     case 'conditional': {
