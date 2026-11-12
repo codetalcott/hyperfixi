@@ -46,7 +46,7 @@
   },
   "dependencies": {
     "@hyperfixi/engine": "^7.6.0",
-    "glob": "^13.0.6"
+    "glob": "^14.0.6"
   },
   "devDependencies": {
     "tsup": "^9.0.0",
