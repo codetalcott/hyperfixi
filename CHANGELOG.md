@@ -29,6 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- **`inferRolesFromSchema` and `ValueAdapter`** (`@lokascript/intent`). It bound core's parser's
+  positional arguments to roles and has had no caller since core's engine retired in 4.0.
+  `CommandSchema.argSkipTokens`, which only it read, is deprecated.
 - **The LSE reference parsers** (`protocol/go`, `protocol/rust`, `protocol/python`,
   `protocol/typescript`), the streaming convention and CI's `protocol-conformance` job. None was
   published or imported, and their conformance suite did not run in full on the parser that ships.
