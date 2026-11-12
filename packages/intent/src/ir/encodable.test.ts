@@ -18,6 +18,7 @@ import {
   parseExplicit,
   renderExplicit,
   toProtocolJSON,
+  validateProtocolJSON,
   type SemanticNode,
   type CommandSemanticNode,
   type ConditionalSemanticNode,
@@ -207,5 +208,92 @@ describe('renderExplicit refuses what bracket syntax cannot carry', () => {
 
     const chain = createCompoundNode([toggle(), toggle()], 'then');
     expect(renderExplicit(chain)).toBe('[toggle patient:.a] then [toggle patient:.a]');
+  });
+});
+
+describe('the marks a renderer reads', () => {
+  const implicitMe = { ...createReference('me'), implicit: true as const };
+
+  it('JSON carries implicit, quoted and interpolates', () => {
+    const node = createCommandNode('send', {
+      event: { ...createLiteral('a-b', 'string'), quoted: true as const },
+      source: { ...createLiteral('/api/${id}', 'string'), interpolates: true as const },
+      destination: implicitMe,
+    });
+    const wire = JSON.parse(JSON.stringify(toProtocolJSON(node)));
+    expect(wire.roles.event.quoted).toBe(true);
+    expect(wire.roles.source.interpolates).toBe(true);
+    expect(wire.roles.destination.implicit).toBe(true);
+    expect(fromProtocolJSON(wire).roles).toEqual(node.roles);
+  });
+
+  it('JSON writes a property path as itself, owner marks and all', () => {
+    const path = {
+      type: 'property-path' as const,
+      object: createSelector('#d2', 'id'),
+      property: '*color',
+      access: 'possessive' as const,
+    };
+    const node = createCommandNode('put', { destination: path });
+    const wire = JSON.parse(JSON.stringify(toProtocolJSON(node)));
+    expect(wire.roles.destination).toEqual({
+      type: 'property-path',
+      object: { type: 'selector', value: '#d2', selectorKind: 'id' },
+      property: '*color',
+      access: 'possessive',
+    });
+    expect(fromProtocolJSON(wire).roles.get('destination')).toEqual(path);
+  });
+
+  it('JSON still reads the older one-string property path, as an expression', () => {
+    const node = fromProtocolJSON({
+      action: 'get',
+      roles: { patient: { type: 'property-path', value: "#a's b" } },
+    });
+    expect(node.roles.get('patient')).toEqual(createExpression("#a's b"));
+  });
+
+  it('validation rejects a property path whose owner is not a value', () => {
+    const codes = (roles: unknown) =>
+      validateProtocolJSON({ action: 'get', roles }).map(d => d.code);
+    expect(codes({ p: { type: 'property-path', object: 'me', property: 'x' } })).toContain(
+      'INVALID_PATH_OBJECT'
+    );
+    expect(
+      codes({ p: { type: 'property-path', object: { type: 'nope' }, property: 'x' } })
+    ).toContain('INVALID_VALUE_TYPE');
+    expect(
+      codes({ p: { type: 'property-path', object: { type: 'reference', value: 'me' } } })
+    ).toContain('MISSING_PATH_PROPERTY');
+    expect(codes({ p: { type: 'property-path' } })).toContain('MISSING_PATH_OBJECT');
+  });
+
+  it('bracket syntax leaves an implicit reference out', () => {
+    const node = createCommandNode('toggle', {
+      patient: createSelector('.a'),
+      destination: implicitMe,
+    });
+    expect(renderExplicit(node)).toBe('[toggle patient:.a]');
+  });
+
+  it('bracket syntax writes an implicit word of the command', () => {
+    const node = createCommandNode('put', {
+      patient: createSelector('#a'),
+      manner: { ...createLiteral('before'), implicit: true as const },
+    });
+    expect(renderExplicit(node)).toBe('[put patient:#a manner:before]');
+  });
+
+  it('bracket syntax refuses a bare literal of several words', () => {
+    const node = createCommandNode('add', { patient: createLiteral('{color: red; top: 0}') });
+    expect(lossesOf(() => renderExplicit(node)).join()).toContain(
+      'a bare literal of several words'
+    );
+  });
+
+  it('the bracket reader reads an object literal as code', () => {
+    const node = parseExplicit('[render patient:"x" style:{name:"World"}]');
+    expect(node.roles.get('patient')).toEqual(createLiteral('x', 'string'));
+    expect(node.roles.get('style')).toEqual(createExpression('{name:"World"}'));
   });
 });

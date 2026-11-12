@@ -35,35 +35,51 @@ export type SemanticValue =
 /** Expected value types for role tokens. */
 export type ExpectedType = SemanticValue['type'];
 
-export interface LiteralValue {
+/**
+ * What any value may carry: `implicit` marks a value the parser supplied from a
+ * command's default (`toggle .active` acts on `me`) and the author did not
+ * write. A renderer leaves an implicit value out, so an encoding that dropped
+ * the mark would write `remove #x` back as `remove #x from me`.
+ */
+interface ValueMarks {
+  readonly implicit?: true;
+}
+
+export interface LiteralValue extends ValueMarks {
   readonly type: 'literal';
   readonly value: string | number | boolean;
   readonly dataType?: 'string' | 'number' | 'boolean' | 'duration';
+  /** Written in quotes where a bare word was possible (`send "a-b"`): written back so. */
+  readonly quoted?: true;
+  /** A naked `${…}` URL: written back naked, as quoted it would not interpolate. */
+  readonly interpolates?: true;
 }
 
-export interface SelectorValue {
+export interface SelectorValue extends ValueMarks {
   readonly type: 'selector';
   readonly value: string;
   readonly selectorKind?: 'id' | 'class' | 'attribute' | 'element' | 'complex' | 'identifier';
 }
 
-export interface ReferenceValue {
+export interface ReferenceValue extends ValueMarks {
   readonly type: 'reference';
   readonly value: string;
 }
 
-export interface PropertyPathValue {
+export interface PropertyPathValue extends ValueMarks {
   readonly type: 'property-path';
   readonly object: SemanticValue;
   readonly property: string;
+  /** Which spelling was read: `#input.value` or `#input's value`. */
+  readonly access?: 'dot' | 'possessive';
 }
 
-export interface ExpressionValue {
+export interface ExpressionValue extends ValueMarks {
   readonly type: 'expression';
   readonly raw: string;
 }
 
-export interface FlagValue {
+export interface FlagValue extends ValueMarks {
   readonly type: 'flag';
   readonly name: string;
   readonly enabled: boolean;

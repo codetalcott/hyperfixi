@@ -729,8 +729,12 @@ The **LSE round-trip gate** (`lse-round-trip.test.ts`, 2026-11-12) holds the bou
 `protocol/README.md`). It parses the command-shape sources, writes each node in both encodings and
 reads it back: `faithful`, `type-only` (a value's type differs, nothing else), `refused` (the
 writer threw `LossyEncodingError`) or `silent` (written with something missing). `silent` is never
-allowed, and is judged by the scorer AND by `structure()`, a field-by-field comparison, because the
-scorer does not read every field (a dropped `in me` scope scores faithful). The baseline
+allowed, and is judged by the scorer, by `structure()`, a field-by-field comparison (the
+scorer does not read every field: a dropped `in me` scope scores faithful), AND by the script the
+read-back node renders to against the one the node renders to, as the engine reads both (the two
+node checks scored 94 JSON cases carried whose `implicit` mark or property path was gone:
+`remove #x` came back `remove #x from me`). Two bracket cases are silent by the syntax being untyped
+(`BRACKET_UNTYPED`, shrink-only). The baseline
 (`baselines/lse-round-trip.json`) lists the type-only and refused cases; the gate fails on a case
 worse than listed and on one better. A parser change that adds a field to a node shows here as new
 refusals until a writer learns the field: regenerate with

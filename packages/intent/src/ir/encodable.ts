@@ -75,14 +75,18 @@ const NODE_FIELDS: Record<string, { children: string[]; scalars: string[] }> = {
 // and bracket syntax carry none.
 const TRIGGER_MODIFIERS = new Set(['once', 'debounce', 'throttle', 'queue']);
 
+// `implicit` and `quoted` are read by renderers, so they are not meta: JSON
+// writes both; bracket syntax leaves an implicit reference out (`[toggle
+// patient:.active]`) and has no place for `quoted` (it quotes every string).
 const VALUE_META = ['type', 'position', 'implicit', 'quoted'];
+// What only JSON has a place for.
+const JSON_VALUE_FIELDS: Record<string, string[]> = { literal: ['interpolates'] };
 const VALUE_FIELDS: Record<string, string[]> = {
   literal: ['value', 'dataType'],
   selector: ['value', 'selectorKind'],
   reference: ['value'],
   // `value` repeats `raw` (the wire format's shorthand).
   expression: ['raw', 'value'],
-  // Written flattened to its text: a change of type the wire format documents.
   'property-path': ['object', 'property', 'access'],
   flag: ['name', 'enabled'],
 };
@@ -114,9 +118,21 @@ export function findUnencodable(
   const visitValue = (value: SemanticValue, path: string): void => {
     const carried = VALUE_FIELDS[value.type];
     if (!carried) return add(`${path}:${String(value.type)}`);
+    const jsonOnly = surface === 'json' ? (JSON_VALUE_FIELDS[value.type] ?? []) : [];
     for (const key of Object.keys(value)) {
-      if (VALUE_META.includes(key) || carried.includes(key)) continue;
+      if (VALUE_META.includes(key) || carried.includes(key) || jsonOnly.includes(key)) continue;
       if (holdsSomething((value as unknown as Record<string, unknown>)[key])) add(`${path}.${key}`);
+    }
+    // Bracket syntax writes a literal of several words in quotes, and a quoted
+    // literal is a string: `add {color: red}` came back as `add "{color: red}"`.
+    if (
+      surface === 'bracket' &&
+      value.type === 'literal' &&
+      typeof value.value === 'string' &&
+      value.dataType !== 'string' &&
+      /\s/.test(value.value)
+    ) {
+      add(`${path} (a bare literal of several words)`);
     }
     if (value.type === 'property-path') visitValue(value.object, path);
   };

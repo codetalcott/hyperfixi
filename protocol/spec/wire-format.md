@@ -90,6 +90,34 @@ Lossless round-trip between parse and render, for the nodes it has fields for. U
 | flag (enabled)     | `{ "type": "flag", "name": "primary-key", "enabled": true }`            | `+flag`                                               |
 | flag (disabled)    | `{ "type": "flag", "name": "nullable", "enabled": false }`              | `~flag`                                               |
 
+A **property path** is written as itself, its owner a value of any type:
+
+```json
+{
+  "type": "property-path",
+  "object": { "type": "selector", "value": "#input", "selectorKind": "id" },
+  "property": "value",
+  "access": "possessive"
+}
+```
+
+`access` (`dot` or `possessive`, optional) is the spelling that was read: `#input.value` or
+`#input's value`. The older shape, the whole path as one string under `value`, is still read, as an
+expression. Until 3.0's last revision a writer flattened a path to an expression (`#input.value`);
+for a style or an attribute that was text no reader takes (`me.@bar`, `#d2.*color`).
+
+**Marks.** Three optional fields say how a value was written. A renderer reads each, so an encoding
+that drops one changes the script:
+
+| Field          | On        | Meaning                                                                                                                                            |
+| -------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `implicit`     | any value | The parser supplied it from the command's default (`remove #x` has the source `me`). It is not written back: without the mark, `remove #x from me` |
+| `quoted`       | a literal | Written in quotes where a bare word was possible (`send "a-b"`). Written back in quotes                                                            |
+| `interpolates` | a literal | A naked `${…}` URL. Written back naked: quoted, it would not interpolate                                                                           |
+
+Each is `true` or absent. Bracket syntax has no field for them: its writer leaves an implicit reference out
+(`[toggle patient:.active]`) and quotes every string, quoted by the author or not.
+
 > **Note (v1.1):** `selectorKind` is optional on selector values and may be omitted. The `enabled` field on flag values is **required** and MUST be present in all conformant implementations.
 
 ### Conditional Node (v1.1)
@@ -342,13 +370,14 @@ The schema enforces:
 The TypeScript framework (`packages/framework`) extends the internal AST with additional
 node kinds and value fields. These are losslessly encoded in the wire format (v1.1).
 
-| TS feature                        | Wire format handling                                                     |
-| --------------------------------- | ------------------------------------------------------------------------ |
-| `kind: 'conditional'`             | Lossless: encoded as `command` with `thenBranch`/`elseBranch` arrays     |
-| `kind: 'loop'`                    | Lossless: encoded as `command` with `loopVariant`/`loopBody`/etc. fields |
-| `selectorKind` on `SelectorValue` | Preserved as optional field (v1.1)                                       |
-| `roles: ReadonlyMap`              | Converted to `Record<string, ...>`                                       |
-| `property-path` value             | Flattened to `expression` via `extractValue()`                           |
+| TS feature                           | Wire format handling                                                     |
+| ------------------------------------ | ------------------------------------------------------------------------ |
+| `kind: 'conditional'`                | Lossless: encoded as `command` with `thenBranch`/`elseBranch` arrays     |
+| `kind: 'loop'`                       | Lossless: encoded as `command` with `loopVariant`/`loopBody`/etc. fields |
+| `selectorKind` on `SelectorValue`    | Preserved as optional field (v1.1)                                       |
+| `roles: ReadonlyMap`                 | Converted to `Record<string, ...>`                                       |
+| `property-path` value                | As itself: `object`, `property`, `access` (see Value Shapes)             |
+| `implicit`, `quoted`, `interpolates` | Carried as optional `true` fields on the value                           |
 
 Use `toProtocolJSON()` from `@lokascript/framework/ir` to serialize with these rules applied:
 

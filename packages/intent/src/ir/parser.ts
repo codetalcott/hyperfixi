@@ -26,6 +26,7 @@ import {
   createCompoundNode,
   createSelector,
   createLiteral,
+  createExpression,
   createReference,
   createFlag,
 } from '../types';
@@ -635,6 +636,8 @@ function parseExplicitValue(valueStr: string, referenceSet: ReadonlySet<string>)
   if (valueStr.startsWith('"') || valueStr.startsWith("'")) {
     return createLiteral(unescapeString(valueStr.slice(1, -1)), 'string');
   }
+  // An object literal is code, not a word (`[render patient:#t style:{name:"World"}]`).
+  if (valueStr.startsWith('{') && valueStr.endsWith('}')) return createExpression(valueStr);
   if (valueStr === 'true') return createLiteral(true, 'boolean');
   if (valueStr === 'false') return createLiteral(false, 'boolean');
   const lowerRef = valueStr.toLowerCase();

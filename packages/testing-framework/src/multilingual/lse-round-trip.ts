@@ -16,6 +16,7 @@
  *   toProtocolJSON / renderExplicit         refused, or written
  *   fromProtocolJSON / parseCompound        read back
  *   scoreNodes(node, readBack)              the multilingual gate's scorer
+ *   render(readBack, 'en')                  the script the read-back node IS
  *
  * and one of four outcomes, best first:
  *
@@ -28,9 +29,18 @@
  *   silent     written, and a command, a value or any other field is missing or
  *              added on the way back (the scorer's report, and `structure()`
  *              for the fields the scorer does not read), or the reader rejects
- *              the writer's own output
+ *              the writer's own output, or the read-back node renders to a
+ *              script the engine reads differently from the one the node
+ *              renders to
  *
- * `silent` is never allowed. The baseline lists the `type-only` and `refused`
+ * The last check is the one that counts for a consumer (`<lse-intent>` runs the
+ * rendered script). Until it was added the gate compared nodes only, and scored
+ * 94 cases faithful or type-only whose JSON rendered to another script: the
+ * `implicit` mark was dropped (`remove #x` came back `remove #x from me`), and
+ * a property path was flattened to text no reader takes (`me.@bar`).
+ *
+ * `silent` is never allowed, but for the bracket cases in `BRACKET_UNTYPED` (two,
+ * each with its reason). The baseline lists the `type-only` and `refused`
  * cases; the gate fails on a case worse than listed and on one better than
  * listed (regenerate: tools/regen-lse-round-trip-baseline.ts).
  */
@@ -46,7 +56,8 @@ import {
   toProtocolJSON,
   type SemanticValue,
 } from '@lokascript/intent';
-import { parse } from '@lokascript/semantic';
+import { parse, render } from '@lokascript/semantic';
+import { loadEngineReaders, normalize, plainParse, readerOf } from './command-shapes';
 import { scoreNodes } from '@lokascript/semantic/fidelity';
 
 export const ENCODINGS = ['json', 'bracket'] as const;
@@ -82,12 +93,16 @@ export const BASELINE_PATH = path.join(here, '..', '..', 'baselines', 'lse-round
 interface Case {
   id: string;
   source: string;
+  origin: string;
   family: string;
 }
 
 // Fields that hold no part of a script's meaning, and the fields that say what
 // TYPE a value is (compared by the scorer; here a value is its text).
-const META_FIELDS = new Set(['metadata', 'diagnostics', 'position', 'implicit', 'quoted']);
+const META_FIELDS = new Set(['metadata', 'diagnostics', 'position']);
+// Bracket syntax does not write an implicit reference and has no place for
+// either mark: what either does to the script is the render check's to say.
+const BRACKET_UNWRITTEN = new Set(['quoted', 'implicit']);
 const TYPE_FIELDS = new Set([
   'type',
   'dataType',
@@ -119,15 +134,15 @@ function isValue(v: object): v is SemanticValue {
  * faithful with the `in me` gone), so this is the gate's own check that nothing
  * was dropped: any field a writer skips shows here.
  */
-export function structure(v: unknown): unknown {
+export function structure(v: unknown, skip: ReadonlySet<string> = new Set()): unknown {
   if (v instanceof Map) {
     return Object.fromEntries(
       [...v]
-        .map(([k, x]) => [String(k), structure(x)] as const)
+        .map(([k, x]) => [String(k), structure(x, skip)] as const)
         .sort((a, b) => (a[0] < b[0] ? -1 : 1))
     );
   }
-  if (Array.isArray(v)) return v.map(structure);
+  if (Array.isArray(v)) return v.map(x => structure(x, skip));
   if (v === null || typeof v !== 'object') return v;
   const out: Record<string, unknown> = {};
   const value = isValue(v);
@@ -135,27 +150,102 @@ export function structure(v: unknown): unknown {
     out.$text = v.type === 'flag' ? `${v.enabled ? '+' : '~'}${v.name}` : String(extractValue(v));
   }
   for (const key of Object.keys(v).sort()) {
-    if (META_FIELDS.has(key) || (value && TYPE_FIELDS.has(key))) continue;
+    if (META_FIELDS.has(key) || skip.has(key) || (value && TYPE_FIELDS.has(key))) continue;
     const field = (v as Record<string, unknown>)[key];
-    if (!holdsNothing(field)) out[key] = structure(field);
+    if (!holdsNothing(field)) out[key] = structure(field, skip);
   }
   return out;
 }
 
-export function grade(
+/** A node without the roles its parser supplied: what bracket syntax writes. */
+export function withoutImplicit<T>(v: T): T {
+  if (v instanceof Map) {
+    return new Map(
+      [...v]
+        .filter(
+          ([, x]) =>
+            !(
+              x &&
+              typeof x === 'object' &&
+              (x as { implicit?: unknown }).implicit &&
+              (x as { type?: unknown }).type === 'reference'
+            )
+        )
+        .map(([k, x]) => [k, withoutImplicit(x)])
+    ) as T;
+  }
+  if (Array.isArray(v)) return v.map(withoutImplicit) as T;
+  if (v === null || typeof v !== 'object') return v;
+  return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, withoutImplicit(x)])) as T;
+}
+
+/**
+ * Whether two nodes are the same script: undefined, or how the second differs.
+ * Each is rendered to English and the two texts compared; where they differ, as
+ * the engine reads them (positions stripped, the command-shape gate's named
+ * equivalences applied). A reference the renderer or the engine does not take
+ * is not this gate's subject: the texts must then be equal.
+ */
+export type ScriptJudge = (
+  shape: Pick<Case, 'origin'>,
   reference: unknown,
   readBack: unknown
+) => string | undefined;
+
+export async function loadScriptJudge(): Promise<ScriptJudge> {
+  const readers = await loadEngineReaders();
+  type Node = Parameters<typeof render>[0];
+  return (shape, reference, readBack) => {
+    let want: string;
+    try {
+      want = render(reference as Node, 'en');
+    } catch {
+      return undefined;
+    }
+    let got: string;
+    try {
+      got = render(readBack as Node, 'en');
+    } catch (error) {
+      return `does not render: ${error instanceof Error ? error.message.split('\n')[0] : String(error)}`;
+    }
+    if (got === want) return undefined;
+    const engine = readers[readerOf(shape)];
+    const read = (text: string): string =>
+      JSON.stringify(normalize(plainParse(engine.parse(text))));
+    let wantRead: string;
+    try {
+      wantRead = read(want);
+    } catch {
+      return `renders as: ${got}`;
+    }
+    try {
+      return read(got) === wantRead ? undefined : `renders as: ${got}`;
+    } catch {
+      return `renders as a script the engine rejects: ${got}`;
+    }
+  };
+}
+
+export function grade(
+  reference: unknown,
+  readBack: unknown,
+  options: { encoding?: Encoding; sameScript?: () => string | undefined } = {}
 ): { outcome: Outcome; detail?: string } {
-  const report = scoreNodes(reference, readBack);
+  const bracket = options.encoding === 'bracket';
+  const expected = bracket ? withoutImplicit(reference) : reference;
+  const skip = bracket ? BRACKET_UNWRITTEN : undefined;
+  const report = scoreNodes(expected, readBack);
   const lost = [
     ...report.missingActions.map(a => `-${a}`),
     ...report.spuriousActions.map(a => `+${a}`),
     ...report.missingValues,
   ];
   if (lost.length > 0) return { outcome: 'silent', detail: lost.join(', ') };
-  if (JSON.stringify(structure(reference)) !== JSON.stringify(structure(readBack))) {
+  if (JSON.stringify(structure(expected, skip)) !== JSON.stringify(structure(readBack, skip))) {
     return { outcome: 'silent', detail: 'a field or a value text differs (structure())' };
   }
+  const script = options.sameScript?.();
+  if (script) return { outcome: 'silent', detail: script };
   return { outcome: report.faithful ? 'faithful' : 'type-only' };
 }
 
@@ -178,7 +268,10 @@ export function loadCases(): Case[] {
   return (JSON.parse(readFileSync(CASES_PATH, 'utf8')) as { cases: Case[] }).cases;
 }
 
-export function runLseRoundTrip(cases: readonly Case[] = loadCases()): LseCaseResult[] {
+export async function runLseRoundTrip(
+  cases: readonly Case[] = loadCases()
+): Promise<LseCaseResult[]> {
+  const judge = await loadScriptJudge();
   return cases.map(c => {
     const base = { id: c.id, source: c.source, family: c.family };
     let node: ReturnType<typeof parse>;
@@ -192,9 +285,16 @@ export function runLseRoundTrip(cases: readonly Case[] = loadCases()): LseCaseRe
     const json = attempt(() => {
       // Through text, as it would cross a wire.
       const wire = JSON.parse(JSON.stringify(toProtocolJSON(node)));
-      return grade(node, fromProtocolJSON(wire));
+      const readBack = fromProtocolJSON(wire);
+      return grade(node, readBack, { sameScript: () => judge(c, node, readBack) });
     });
-    const bracket = attempt(() => grade(node, parseCompound(renderExplicit(node))));
+    const bracket = attempt(() => {
+      const readBack = parseCompound(renderExplicit(node));
+      return grade(node, readBack, {
+        encoding: 'bracket',
+        sameScript: () => judge(c, node, readBack),
+      });
+    });
 
     const detail: Partial<Record<Encoding, string>> = {};
     if (json.detail) detail.json = json.detail;
@@ -261,6 +361,20 @@ export interface LseDiff {
   orphaned: string[];
 }
 
+/**
+ * Bracket cases that read back as another script because the syntax is untyped,
+ * with no rule a writer could refuse them by: listed, and only ever removed.
+ * Protocol JSON, which is typed, carries each of them.
+ */
+export const BRACKET_UNTYPED: Readonly<Record<string, string>> = {
+  a68f0afa94:
+    '`go back`: `back` is an expression; written as a bare word it reads back as a literal, ' +
+    'and `go` takes a literal for a URL (`go url back`)',
+  f80f138a60:
+    '`send "a-b"`: bracket syntax has no place for the `quoted` mark (its writer quotes every ' +
+    'string, so its reader cannot tell), and the event name is written back bare (`send a-b`)',
+};
+
 export function diffBaseline(
   results: readonly LseCaseResult[],
   baseline: LseRoundTripBaseline
@@ -281,7 +395,10 @@ export function diffBaseline(
       const got = r.outcomes[encoding];
       const was = want.get(r.id) ?? 'faithful';
       const line = `${encoding} ${r.id} ${JSON.stringify(r.source.replace(/\s+/g, ' ').slice(0, 80))}`;
-      if (got === 'silent') {
+      const known = encoding === 'bracket' && r.id in BRACKET_UNTYPED;
+      if (known) {
+        if (got !== 'silent') diff.better.push(`${line}: listed in BRACKET_UNTYPED, now ${got}`);
+      } else if (got === 'silent') {
         diff.silent.push(`${line}: ${r.detail?.[encoding] ?? ''}`);
       } else if (OUTCOMES.indexOf(got) > OUTCOMES.indexOf(was)) {
         diff.worse.push(

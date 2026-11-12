@@ -97,13 +97,17 @@ describe('toProtocolJSON', () => {
       expect(json.roles['goal']).toEqual({ type: 'expression', raw: 'x + 1' });
     });
 
-    it('flattens property-path to expression', () => {
+    it('writes a property path as itself, and reads it back', () => {
       const node = createCommandNode('put', {
         patient: createPropertyPath(createReference('me'), 'value'),
       });
       const json = toProtocolJSON(node);
-      expect(json.roles['patient'].type).toBe('expression');
-      expect(typeof (json.roles['patient'] as { raw: string }).raw).toBe('string');
+      expect(json.roles['patient']).toEqual({
+        type: 'property-path',
+        object: { type: 'reference', value: 'me' },
+        property: 'value',
+      });
+      expect(fromProtocolJSON(json).roles.get('patient')).toEqual(node.roles.get('patient'));
     });
 
     it('serializes flag values', () => {
