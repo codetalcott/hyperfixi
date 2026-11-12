@@ -75,6 +75,9 @@ untyped): the text is the same, and no command, role or value is missing.
 Expressions are opaque. Three in ten role values in those scripts (965 of 3,332) are `expression` values whose
 `raw` text is hyperscript; a consumer that needs more than the text needs a hyperscript parser.
 
+These counts are a gate: `packages/testing-framework`'s `lse-round-trip.test.ts` fails on any
+encoding written with something missing, and on a case that moves from its baseline.
+
 **The writers refuse rather than truncate.** `toProtocolJSON(node)` and `renderExplicit(node)` throw
 a `LossyEncodingError` (`losses`: each part with no place in the encoding, `partial`: what would
 have been written) for a node they cannot carry in full, and `{ lossy: 'allow' }` returns the
