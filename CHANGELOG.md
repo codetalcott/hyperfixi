@@ -27,6 +27,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     `lse_from_hyperscript` reports each form's losses, and still returns the protocol JSON when
     only bracket syntax refused.
 
+### Removed
+
+- **The LSE reference parsers** (`protocol/go`, `protocol/rust`, `protocol/python`,
+  `protocol/typescript`), the streaming convention and CI's `protocol-conformance` job. None was
+  published or imported, and their conformance suite did not run in full on the parser that ships.
+  They are at tag `archived/lse-reference-parsers-2026-11-12`. The 142 fixtures moved to
+  `packages/intent/fixtures` and all run on `@lokascript/intent` (it ran 8 of the 23 files). Where
+  the two disagreed the fixtures now say what the shipped parser does: a bare string has no
+  `dataType`, and a render keeps the author's quoting and role order. `protocol/` keeps the
+  grammar, the wire format and their docs; its README now says what LSE cannot carry.
+
 ### Fixed
 
 - **`fromProtocolJSON` read every block command as `try`.** `tell #d2 add .bar` came back as a

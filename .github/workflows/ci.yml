@@ -59,12 +59,13 @@ env:
 
 jobs:
   # ============================================
-  # Job 0: Detect which surface changed: npm stack ("code"), LSE protocol, or
-  # the Go client. EVERY npm-stack job gates on `code` — `build` carries the
+  # Job 0: Detect which surface changed: npm stack ("code") or the Go client. EVERY npm-stack job gates on `code` — `build` carries the
   # gate and the rest inherit it through `needs: build` (a skipped need skips
-  # the dependent). Doc-only, protocol-only, and go-client-only diffs therefore
-  # skip the whole npm fan-out; protocol/** and clients/go-client/** have their
-  # own dedicated jobs below. Skipped REQUIRED checks (Build, Unit Tests, …)
+  # the dependent). Doc-only and go-client-only diffs therefore
+  # skip the whole npm fan-out; clients/go-client/** has its own job below.
+  # (protocol/ is the LSE spec, documents only since 2026-11-12: its reference
+  # parsers retired, and the fixtures moved to packages/intent/fixtures, where
+  # the unit tests read them.) Skipped REQUIRED checks (Build, Unit Tests, …)
   # report "skipped" and satisfy branch protection — the same mechanism the
   # required Multilingual Validation check has always relied on for doc-only
   # PRs, so nothing blocks on a skipped tier.
@@ -79,7 +80,6 @@ jobs:
     if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
     outputs:
       code: ${{ steps.filter.outputs.code }}
-      protocol: ${{ steps.filter.outputs.protocol }}
       goclient: ${{ steps.filter.outputs.goclient }}
       docsources: ${{ steps.docsources.outputs.docsources }}
       domaingate: ${{ steps.domaingate.outputs.domaingate }}
@@ -94,15 +94,13 @@ jobs:
           # `code` evaluated true on EVERY diff (observed live: go.mod-only
           # #664 ran the full npm stack). 'every' = a file counts only when it
           # matches ALL patterns (inside '**' AND outside each excluded set).
-          # Single-positive-pattern filters (protocol, goclient) are unaffected;
+          # A single-positive-pattern filter (goclient) is unaffected;
           # a filter with SEVERAL positive patterns is not (see `docsources`).
           predicate-quantifier: 'every'
           # `code` is true when any changed file is OUTSIDE the doc set and
-          # outside the non-npm surfaces (protocol/, clients/) that carry their
-          # own jobs. `protocol` is true when the LSE spec, fixtures, or any of
-          # the four reference parsers changed; `goclient` when the Go client
-          # changed — both live outside the npm workspaces and are otherwise
-          # never exercised by CI.
+          # outside clients/ (the Go client has its own job) and protocol/ (the
+          # LSE spec: documents). `goclient` is true when the Go client changed:
+          # it lives outside the npm workspaces and no other job exercises it.
           filters: |
             code:
               - '**'
@@ -116,8 +114,6 @@ jobs:
               - '!LICENSE'
               - '!protocol/**'
               - '!clients/**'
-            protocol:
-              - 'protocol/**'
             goclient:
               - 'clients/go-client/**'
       # The trees the shipped-sources validity gate walks (its DEFAULT_ROOTS).
@@ -1611,74 +1607,6 @@ jobs:
           exit $failed
 
   # ============================================
-  # Job 10: LSE protocol conformance (4 reference parsers)
-  #
-  # protocol/ lives outside the npm workspaces, so `build` and `unit-tests` never
-  # touch it. A grammar change must land identically in TypeScript, Python, Go and
-  # Rust (protocol/docs/boundary.md Rule 3); without this job that fork is silent.
-  #
-  # Gated on `paths: protocol/**`, so it costs nothing on an ordinary PR.
-  # fail-fast: false so all four report independently — for a cross-language
-  # grammar change, knowing *which* parsers disagree is the whole signal.
-  # ============================================
-  protocol-conformance:
-    name: Protocol Conformance (${{ matrix.lang }})
-    runs-on: ubuntu-latest
-    needs: changes
-    if: github.event_name == 'pull_request' && needs.changes.outputs.protocol == 'true'
-    timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        lang: [typescript, python, go, rust]
-
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Setup Node
-        if: matrix.lang == 'typescript'
-        uses: actions/setup-node@v7
-        with:
-          node-version: '24'
-      - name: TypeScript conformance
-        if: matrix.lang == 'typescript'
-        working-directory: protocol/typescript
-        run: |
-          npm ci
-          npm run typecheck
-          npm test
-
-      - name: Setup Python
-        if: matrix.lang == 'python'
-        uses: actions/setup-python@v7
-        with:
-          python-version: '3.12'
-      - name: Python conformance
-        if: matrix.lang == 'python'
-        working-directory: protocol/python
-        run: |
-          pip install -e ".[dev]"
-          pytest -q
-
-      - name: Setup Go
-        if: matrix.lang == 'go'
-        uses: actions/setup-go@v7
-        with:
-          go-version: '1.23'
-      - name: Go conformance
-        if: matrix.lang == 'go'
-        working-directory: protocol/go
-        run: go test ./...
-
-      - name: Setup Rust
-        if: matrix.lang == 'rust'
-        uses: dtolnay/rust-toolchain@stable
-      - name: Rust conformance
-        if: matrix.lang == 'rust'
-        working-directory: protocol/rust
-        run: cargo test
-
-  # ============================================
   # Job 10.5: Go client build + test
   #
   # clients/go-client lives outside the npm workspaces, so no other job
@@ -1794,7 +1722,6 @@ jobs:
       - browser-tests
       - multilingual-validation
       - bundle-size
-      - protocol-conformance
       - go-client
       - domain-gate
 

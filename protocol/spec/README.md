@@ -27,8 +27,8 @@ All of these are valid LSE. All parse via the same grammar and serialize to the 
 3. **Self-documenting.** Every value is labeled with its role name. Role names are chosen by the vocabulary.
 4. **Machine-readable.** Trivial to parse: `[action role:value +flag ...]`.
 5. **LLM-friendly.** Bracket syntax is compact and structured enough for reliable LLM generation. For LLMs constrained to JSON output (function-calling APIs), an LLM-simplified JSON format is also supported.
-6. **Roundtrip-safe.** `parse → render → parse` is identity within Layer A. Vocabularies that use non-standard role names round-trip just as reliably as the reference UI-behavior vocabulary.
-7. **Domain-extensible.** A new domain adds a vocabulary (Layer B). It does not need to modify the grammar, the wire format, or any reference parser.
+6. **Roundtrip-safe, or refused.** `parse → render → parse` is identity within Layer A, for any vocabulary's role names. A node the syntax cannot carry (an expression of several words, several commands in one `body:`, an event modifier) is refused by the writer, not written in part: see [What LSE cannot carry](../README.md#what-lse-cannot-carry).
+7. **Domain-extensible.** A new domain adds a vocabulary (Layer B). It does not need to modify the grammar, the wire format, or the parser.
 
 ## Scope and Non-goals
 
@@ -247,7 +247,7 @@ Chain operators: `then`, `and`, `async`, `sequential`.
 
 Compound statements are rendered by joining each bracket command with the chain operator surrounded by spaces.
 
-> **Note:** In v1.0.0, compound statement _parsing_ from bracket syntax is not yet implemented in the reference parsers. Compound nodes can be constructed from JSON (via `from_json`) and rendered to bracket syntax (via `render_explicit`). Parsing compound bracket syntax is planned for a future minor version.
+A pipe chain is written with `|>`. `parseCompound` reads a chain at the top level; a chain inside a structural role (`body:[a] then [b]`) has no reading, and `renderExplicit` refuses a node that would need one.
 
 ## MIME Types
 
@@ -258,7 +258,7 @@ Compound statements are rendered by joining each bracket command with the chain 
 
 File extension: `.lse`
 
-See [streaming.md](streaming.md) for the streaming convention.
+A stream is a document: an optional `#!lse <version>` line, then one statement per line (the grammar's `document` rule; `parseDocument` reads it). The separate streaming convention retired with the reference parsers (tag `archived/lse-reference-parsers-2026-11-12`).
 
 ## Wire Format
 

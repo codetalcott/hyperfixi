@@ -360,7 +360,7 @@ Both surface forms validate against the same schemas:
 - **Bracket syntax:** the ABNF grammar at [spec/lokascript-explicit-syntax.abnf](../spec/lokascript-explicit-syntax.abnf)
 - **JSON wire format:** the JSON Schema (Draft 7) at [spec/lse-wire-format.schema.json](../spec/lse-wire-format.schema.json)
 
-All four reference parsers (TypeScript, Python, Go, Rust) accept both forms. The conformance test fixtures in [test-fixtures/](../test-fixtures/) include a dedicated `llm-simplified.json` suite (13 cases) that exercises the compact JSON shortcuts.
+`@lokascript/intent` accepts both forms. Its fixtures in [packages/intent/fixtures/](../../packages/intent/fixtures/) include a dedicated `llm-simplified.json` suite (13 cases) that exercises the compact JSON shortcuts.
 
 ## Round-trip guarantee
 

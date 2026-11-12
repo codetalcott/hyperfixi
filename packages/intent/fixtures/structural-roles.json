@@ -7,7 +7,11 @@
       "kind": "command",
       "action": "if",
       "roles": {
-        "condition": { "type": "selector", "value": "[data-active]", "selectorKind": "attribute" }
+        "condition": {
+          "type": "selector",
+          "value": "[data-active]",
+          "selectorKind": "attribute"
+        }
       }
     }
   },
@@ -19,14 +23,21 @@
       "kind": "command",
       "action": "if",
       "roles": {
-        "condition": { "type": "literal", "value": "x > 0", "dataType": "string" }
+        "condition": {
+          "type": "literal",
+          "value": "x > 0",
+          "dataType": "string"
+        }
       },
       "thenBranch": [
         {
           "kind": "command",
           "action": "toggle",
           "roles": {
-            "patient": { "type": "selector", "value": ".active" }
+            "patient": {
+              "type": "selector",
+              "value": ".active"
+            }
           }
         }
       ]
@@ -40,7 +51,10 @@
       "kind": "event-handler",
       "action": "on",
       "roles": {
-        "event": { "type": "literal", "value": "click", "dataType": "string" }
+        "event": {
+          "type": "literal",
+          "value": "click"
+        }
       },
       "body": [
         {
@@ -82,7 +96,11 @@
       "kind": "command",
       "action": "toggle",
       "roles": {
-        "patient": { "type": "selector", "value": "[data-active]", "selectorKind": "attribute" }
+        "patient": {
+          "type": "selector",
+          "value": "[data-active]",
+          "selectorKind": "attribute"
+        }
       }
     }
   }

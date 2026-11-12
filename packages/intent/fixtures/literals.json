@@ -7,8 +7,15 @@
       "kind": "command",
       "action": "put",
       "roles": {
-        "patient": { "type": "literal", "value": "hello world", "dataType": "string" },
-        "destination": { "type": "selector", "value": "#output" }
+        "patient": {
+          "type": "literal",
+          "value": "hello world",
+          "dataType": "string"
+        },
+        "destination": {
+          "type": "selector",
+          "value": "#output"
+        }
       }
     }
   },
@@ -20,8 +27,15 @@
       "kind": "command",
       "action": "set",
       "roles": {
-        "destination": { "type": "literal", "value": "myVar", "dataType": "string" },
-        "goal": { "type": "literal", "value": true, "dataType": "boolean" }
+        "destination": {
+          "type": "literal",
+          "value": "myVar"
+        },
+        "goal": {
+          "type": "literal",
+          "value": true,
+          "dataType": "boolean"
+        }
       }
     }
   },
@@ -33,8 +47,15 @@
       "kind": "command",
       "action": "set",
       "roles": {
-        "destination": { "type": "literal", "value": "myVar", "dataType": "string" },
-        "goal": { "type": "literal", "value": false, "dataType": "boolean" }
+        "destination": {
+          "type": "literal",
+          "value": "myVar"
+        },
+        "goal": {
+          "type": "literal",
+          "value": false,
+          "dataType": "boolean"
+        }
       }
     }
   },
@@ -46,8 +67,15 @@
       "kind": "command",
       "action": "increment",
       "roles": {
-        "destination": { "type": "literal", "value": "count", "dataType": "string" },
-        "quantity": { "type": "literal", "value": 5, "dataType": "number" }
+        "destination": {
+          "type": "literal",
+          "value": "count"
+        },
+        "quantity": {
+          "type": "literal",
+          "value": 5,
+          "dataType": "number"
+        }
       }
     }
   },
@@ -59,8 +87,15 @@
       "kind": "command",
       "action": "set",
       "roles": {
-        "destination": { "type": "literal", "value": "ratio", "dataType": "string" },
-        "goal": { "type": "literal", "value": 3.14, "dataType": "number" }
+        "destination": {
+          "type": "literal",
+          "value": "ratio"
+        },
+        "goal": {
+          "type": "literal",
+          "value": 3.14,
+          "dataType": "number"
+        }
       }
     }
   },
@@ -72,7 +107,11 @@
       "kind": "command",
       "action": "wait",
       "roles": {
-        "duration": { "type": "literal", "value": "500ms", "dataType": "duration" }
+        "duration": {
+          "type": "literal",
+          "value": "500ms",
+          "dataType": "duration"
+        }
       }
     }
   },
@@ -84,7 +123,11 @@
       "kind": "command",
       "action": "wait",
       "roles": {
-        "duration": { "type": "literal", "value": "2s", "dataType": "duration" }
+        "duration": {
+          "type": "literal",
+          "value": "2s",
+          "dataType": "duration"
+        }
       }
     }
   },
@@ -96,8 +139,15 @@
       "kind": "command",
       "action": "set",
       "roles": {
-        "destination": { "type": "literal", "value": "offset", "dataType": "string" },
-        "goal": { "type": "literal", "value": -10, "dataType": "number" }
+        "destination": {
+          "type": "literal",
+          "value": "offset"
+        },
+        "goal": {
+          "type": "literal",
+          "value": -10,
+          "dataType": "number"
+        }
       }
     }
   },
@@ -109,7 +159,10 @@
       "kind": "command",
       "action": "fetch",
       "roles": {
-        "source": { "type": "literal", "value": "/api/users", "dataType": "string" }
+        "source": {
+          "type": "literal",
+          "value": "/api/users"
+        }
       }
     }
   },
@@ -121,7 +174,10 @@
       "kind": "command",
       "action": "fetch",
       "roles": {
-        "responseType": { "type": "literal", "value": "json", "dataType": "string" }
+        "responseType": {
+          "type": "literal",
+          "value": "json"
+        }
       }
     }
   },
@@ -133,8 +189,15 @@
       "kind": "command",
       "action": "put",
       "roles": {
-        "patient": { "type": "literal", "value": "hello world", "dataType": "string" },
-        "destination": { "type": "selector", "value": "#output" }
+        "patient": {
+          "type": "literal",
+          "value": "hello world",
+          "dataType": "string"
+        },
+        "destination": {
+          "type": "selector",
+          "value": "#output"
+        }
       }
     }
   },
@@ -146,7 +209,11 @@
       "kind": "command",
       "action": "adjust",
       "roles": {
-        "duration": { "type": "literal", "value": "-500ms", "dataType": "duration" }
+        "duration": {
+          "type": "literal",
+          "value": "-500ms",
+          "dataType": "duration"
+        }
       }
     }
   },
@@ -158,7 +225,11 @@
       "kind": "command",
       "action": "wait",
       "roles": {
-        "duration": { "type": "literal", "value": "1.5s", "dataType": "duration" }
+        "duration": {
+          "type": "literal",
+          "value": "1.5s",
+          "dataType": "duration"
+        }
       }
     }
   },
@@ -170,8 +241,15 @@
       "kind": "command",
       "action": "put",
       "roles": {
-        "patient": { "type": "literal", "value": "test\\", "dataType": "string" },
-        "destination": { "type": "selector", "value": "#output" }
+        "patient": {
+          "type": "literal",
+          "value": "test\\",
+          "dataType": "string"
+        },
+        "destination": {
+          "type": "selector",
+          "value": "#output"
+        }
       }
     }
   },
@@ -183,7 +261,11 @@
       "kind": "command",
       "action": "wait",
       "roles": {
-        "duration": { "type": "literal", "value": "2m", "dataType": "duration" }
+        "duration": {
+          "type": "literal",
+          "value": "2m",
+          "dataType": "duration"
+        }
       }
     }
   },
@@ -195,7 +277,11 @@
       "kind": "command",
       "action": "wait",
       "roles": {
-        "duration": { "type": "literal", "value": "1h", "dataType": "duration" }
+        "duration": {
+          "type": "literal",
+          "value": "1h",
+          "dataType": "duration"
+        }
       }
     }
   }

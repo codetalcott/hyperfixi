@@ -7,14 +7,20 @@
       "kind": "event-handler",
       "action": "on",
       "roles": {
-        "event": { "type": "literal", "value": "click", "dataType": "string" }
+        "event": {
+          "type": "literal",
+          "value": "click"
+        }
       },
       "body": [
         {
           "kind": "command",
           "action": "toggle",
           "roles": {
-            "patient": { "type": "selector", "value": ".active" }
+            "patient": {
+              "type": "selector",
+              "value": ".active"
+            }
           }
         }
       ]
@@ -28,15 +34,24 @@
       "kind": "event-handler",
       "action": "on",
       "roles": {
-        "event": { "type": "literal", "value": "click", "dataType": "string" }
+        "event": {
+          "type": "literal",
+          "value": "click"
+        }
       },
       "body": [
         {
           "kind": "command",
           "action": "add",
           "roles": {
-            "patient": { "type": "selector", "value": ".highlight" },
-            "destination": { "type": "selector", "value": "#output" }
+            "patient": {
+              "type": "selector",
+              "value": ".highlight"
+            },
+            "destination": {
+              "type": "selector",
+              "value": "#output"
+            }
           }
         }
       ]
