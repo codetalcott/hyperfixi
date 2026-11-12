@@ -66,7 +66,9 @@ patient:.active]`, not `… destination:me`), its reader reads a bare `{…}` as
   not the script. `planIntent(json, options)` exports the decision without a DOM.
 - **`<lse-intent>` has a corpus test.** Of the 781 command-shape scripts protocol JSON carries, it
   runs 745 as written and refuses 36; none runs as another script (`src/corpus.test.ts`, counts
-  pinned). Its browser spec was untagged and ran in no CI project; it is `@comprehensive` now.
+  pinned). Its browser spec was untagged and ran in no CI project; it is `@comprehensive` now, and
+  runs the element on upstream `_hyperscript` as the host, which the README claimed and nothing
+  tested. The published package no longer carries its test files.
 - **The LSE round-trip gate judges scripts, not only nodes.** Each read-back node is rendered to
   English and compared, as the engine reads it, with what the original node renders to. The gate
   had treated `implicit` and `quoted` as fields with no meaning.

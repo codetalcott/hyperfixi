@@ -157,6 +157,47 @@ test.describe('<lse-intent> browser integration @comprehensive', () => {
     expect(state.log).toEqual(['lse:validated:', 'lse:executed:', 'lse:error:NO_INTENT']);
   });
 
+  test('runs on upstream _hyperscript as the host', async ({ page, baseURL }) => {
+    const intent = {
+      kind: 'event-handler',
+      action: 'on',
+      roles: { event: { type: 'literal', value: 'click' } },
+      body: [
+        { action: 'get', roles: { source: { type: 'expression', raw: '1 + 2' } } },
+        {
+          action: 'put',
+          roles: {
+            patient: { type: 'expression', raw: "it + ' ' + event.type + ' ' + me.id" },
+            destination: { type: 'selector', value: '#out' },
+          },
+        },
+      ],
+    };
+    // A page of its own (a fresh window: no engine global), scripts ahead of the markup.
+    await page.route('**/lse-intent-upstream.html', route =>
+      route.fulfill({
+        contentType: 'text/html',
+        body: `<!DOCTYPE html><html><head>
+      <script src="/node_modules/hyperscript.org/dist/_hyperscript.min.js"></script>
+      <script src="/packages/semantic/dist/browser-en.en.global.js"></script>
+      <script src="/packages/intent-element/dist/intent-element.iife.global.js"></script>
+      </head><body><div id="out"></div>
+      <lse-intent id="chain"><script type="application/lse+json">${JSON.stringify(intent)}</script>
+      <button>go</button></lse-intent></body></html>`,
+      })
+    );
+    await page.goto(`${baseURL}/lse-intent-upstream.html`);
+    await page.waitForFunction(() => customElements.get('lse-intent') !== undefined);
+    const host = await page.evaluate(() => ({
+      upstream: typeof (window as any)._hyperscript?.evaluate,
+      engine: typeof (window as any).hyperfixi,
+    }));
+    expect(host).toEqual({ upstream: 'function', engine: 'undefined' });
+    await page.waitForTimeout(200);
+    await page.click('#chain button');
+    await expect(page.locator('#out')).toHaveText('3 click chain');
+  });
+
   test('console has no uncaught errors from intent-element', async ({ page }) => {
     const errors: string[] = [];
     page.on('pageerror', err => errors.push(err.message));
