@@ -8,7 +8,7 @@
 
 import type { Diagnostic } from '../generation/diagnostics';
 import type { CommandSchema } from '../schema/command-schema';
-import type { SchemaLookup, SemanticJSON, SemanticJSONValue } from '../ir/types';
+import type { SchemaLookup, ProtocolNodeJSON, ProtocolValueJSON } from '../ir/types';
 import { renderExplicit } from '../ir/explicit-renderer';
 import { createCommandNode } from '../core/types';
 import type { LSEFeedback, FeedbackDiagnostic, FixType } from './types';
@@ -240,22 +240,25 @@ function extractSchemaInfo(schema: CommandSchema): LSEFeedback['schema'] {
 // Corrected Example Generation
 // =============================================================================
 
-function generateCorrectedExample(schema: CommandSchema): { explicit: string; json: SemanticJSON } {
+function generateCorrectedExample(schema: CommandSchema): {
+  explicit: string;
+  json: ProtocolNodeJSON;
+} {
   const roles = new Map<string, unknown>();
-  const jsonRoles: Record<string, SemanticJSONValue> = {};
+  const jsonRoles: Record<string, ProtocolValueJSON> = {};
 
   for (const role of schema.roles) {
     if (!role.required) continue;
     const sample = sampleDefaultValue(role.role, role.expectedTypes[0] || 'expression');
     roles.set(role.role, toSemanticValue(sample));
-    jsonRoles[role.role] = sample as SemanticJSONValue;
+    jsonRoles[role.role] = sample as ProtocolValueJSON;
   }
 
   const node = createCommandNode(schema.action, roles as never);
   // A template to fill in: its values are placeholders (`<source-value>`), which
   // are not meant to read back.
   const explicit = renderExplicit(node, { lossy: 'allow' });
-  const json: SemanticJSON = { action: schema.action, roles: jsonRoles };
+  const json: ProtocolNodeJSON = { action: schema.action, roles: jsonRoles };
 
   return { explicit, json };
 }

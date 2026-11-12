@@ -29,6 +29,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- **`SemanticJSON`, the older "LLM JSON" shape**, and its functions. `SemanticJSON` /
+  `SemanticJSONValue` (`@lokascript/intent`, framework, compilation-service) and
+  `validateSemanticJSON` / `jsonToSemanticNode` / `semanticNodeToJSON` (framework,
+  compilation-service; deprecated since protocol JSON took an optional `kind` and a `trigger`)
+  are gone. Use `ProtocolNodeJSON` with `validateProtocolJSON` / `fromProtocolJSON` /
+  `toProtocolJSON`: `{ action, roles, trigger? }` is valid protocol JSON, so input in the old
+  shape still reads. compilation-service's `semantic` request field is typed `ProtocolNodeJSON`,
+  and its response IR has its own value type (`SemanticIRValue`).
 - **`inferRolesFromSchema` and `ValueAdapter`** (`@lokascript/intent`). It bound core's parser's
   positional arguments to roles and has had no caller since core's engine retired in 4.0.
   `CommandSchema.argSkipTokens`, which only it read, is deprecated.

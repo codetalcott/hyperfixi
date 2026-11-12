@@ -3,8 +3,6 @@
  */
 
 export type {
-  SemanticJSON,
-  SemanticJSONValue,
   SchemaLookup,
   ParseExplicitOptions,
   IRDiagnostic,

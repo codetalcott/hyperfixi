@@ -7,7 +7,7 @@
  */
 
 import type { CommandSchema, RoleSpec } from '../schema/command-schema';
-import type { SemanticJSON, SemanticJSONValue } from '../ir/types';
+import type { ProtocolNodeJSON, ProtocolValueJSON } from '../ir/types';
 import { renderExplicit } from '../ir/explicit-renderer';
 import { createCommandNode } from '../core/types';
 import type { TrainingPair, SynthesisConfig, SynthesisResult, SynthesisMetadata } from './types';
@@ -148,11 +148,11 @@ function buildTrainingPair(
   const explicit = renderExplicit(node);
 
   // Build JSON format
-  const jsonRoles: Record<string, SemanticJSONValue> = {};
+  const jsonRoles: Record<string, ProtocolValueJSON> = {};
   for (const [name, sample] of sampledRoles) {
-    jsonRoles[name] = sample as SemanticJSONValue;
+    jsonRoles[name] = sample as ProtocolValueJSON;
   }
-  const json: SemanticJSON = { action: schema.action, roles: jsonRoles };
+  const json: ProtocolNodeJSON = { action: schema.action, roles: jsonRoles };
 
   // Build natural language form
   const natural = buildNaturalForm(schema, sampledRoles, language);

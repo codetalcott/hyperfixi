@@ -15,7 +15,7 @@
  */
 
 import type { CommandSchema, RoleSpec } from '../schema/command-schema';
-import type { SemanticJSON, SemanticJSONValue } from '../ir/types';
+import type { ProtocolNodeJSON, ProtocolValueJSON } from '../ir/types';
 import { renderExplicit } from '../ir/explicit-renderer';
 import { createCommandNode } from '../core/types';
 import type {
@@ -86,9 +86,9 @@ export function generatePrompt(config: PromptGeneratorConfig): GeneratedPrompt {
 export function generateExamples(
   schema: CommandSchema,
   count: number = 2
-): Array<{ explicit: string; json: SemanticJSON }> {
+): Array<{ explicit: string; json: ProtocolNodeJSON }> {
   const combos = generateRoleCombinations(schema);
-  const examples: Array<{ explicit: string; json: SemanticJSON }> = [];
+  const examples: Array<{ explicit: string; json: ProtocolNodeJSON }> = [];
 
   for (let i = 0; i < Math.min(count, combos.length); i++) {
     const combo = combos[i];
@@ -118,11 +118,11 @@ export function generateExamples(
     const explicit = renderExplicit(node);
 
     // Build JSON format
-    const jsonRoles: Record<string, SemanticJSONValue> = {};
+    const jsonRoles: Record<string, ProtocolValueJSON> = {};
     for (const [roleName, sample] of roles) {
-      jsonRoles[roleName] = sample as SemanticJSONValue;
+      jsonRoles[roleName] = sample as ProtocolValueJSON;
     }
-    const json: SemanticJSON = { action: schema.action, roles: jsonRoles };
+    const json: ProtocolNodeJSON = { action: schema.action, roles: jsonRoles };
 
     examples.push({ explicit, json });
   }

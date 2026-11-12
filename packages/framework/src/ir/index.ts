@@ -11,22 +11,16 @@
  *
  * @example
  * ```typescript
- * import { parseExplicit, renderExplicit, jsonToSemanticNode } from '@lokascript/framework/ir';
+ * import { parseExplicit, renderExplicit, toProtocolJSON } from '@lokascript/framework/ir';
  *
  * const node = parseExplicit('[toggle patient:.active]');
  * const bracket = renderExplicit(node);   // "[toggle patient:.active]"
- * const json = semanticNodeToJSON(node);  // { action: "toggle", roles: { ... } }
+ * const json = toProtocolJSON(node);      // { kind: "command", action: "toggle", roles: { ... } }
  * ```
  */
 
 // Types
-export type {
-  SemanticJSON,
-  SemanticJSONValue,
-  SchemaLookup,
-  ParseExplicitOptions,
-  IRDiagnostic,
-} from './types';
+export type { SchemaLookup, ParseExplicitOptions, IRDiagnostic } from './types';
 
 // References
 export { DEFAULT_REFERENCES, isValidReference } from './references';
@@ -42,9 +36,6 @@ export {
 // Explicit syntax renderer
 export { renderExplicit, LossyEncodingError, findUnencodable } from './explicit-renderer';
 export type { EncodeOptions, EncodingSurface } from './explicit-renderer';
-
-// JSON schema conversion (deprecated — use fromProtocolJSON/validateProtocolJSON/toProtocolJSON)
-export { jsonToSemanticNode, validateSemanticJSON, semanticNodeToJSON } from './json-schema';
 
 // Protocol full-fidelity wire format
 export type {

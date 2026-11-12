@@ -5,7 +5,7 @@
  * to a SemanticNode for downstream validation, translation and rendering.
  */
 
-import type { CompileRequest, NormalizeResult, SemanticJSON, Diagnostic } from '../types.js';
+import type { CompileRequest, NormalizeResult, ProtocolNodeJSON, Diagnostic } from '../types.js';
 import { detectFormat } from './detect.js';
 import { validateProtocolJSON, fromProtocolJSON } from '@lokascript/framework';
 
@@ -69,7 +69,7 @@ export function normalize(request: CompileRequest): NormalizeResult {
     case 'explicit':
       return normalizeExplicit(input);
     case 'json':
-      return normalizeJSON(JSON.parse(input.trim()) as SemanticJSON);
+      return normalizeJSON(JSON.parse(input.trim()) as ProtocolNodeJSON);
     case 'natural':
       return normalizeNatural(input, request.language ?? 'en');
   }
@@ -194,7 +194,7 @@ function normalizeExplicit(input: string): NormalizeResult {
   }
 }
 
-function normalizeJSON(input: SemanticJSON): NormalizeResult {
+function normalizeJSON(input: ProtocolNodeJSON): NormalizeResult {
   // Validate structure (unified protocol JSON validator accepts optional kind + trigger)
   const validationErrors = validateProtocolJSON(input);
   if (validationErrors.some(d => d.severity === 'error')) {
@@ -207,7 +207,7 @@ function normalizeJSON(input: SemanticJSON): NormalizeResult {
   }
 
   // Convert to SemanticNode (unified path accepts optional kind + trigger)
-  const node = fromProtocolJSON(input as any);
+  const node = fromProtocolJSON(input);
   return {
     node,
     confidence: 1.0,

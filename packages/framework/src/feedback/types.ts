@@ -5,7 +5,7 @@
  * and pattern hit-rate tracking in the LLM ↔ LSE integration.
  */
 
-import type { SemanticJSON } from '../ir/types';
+import type { ProtocolNodeJSON } from '../ir/types';
 
 // =============================================================================
 // Structured Error Feedback (Level 1)
@@ -41,7 +41,7 @@ export interface LSEFeedback {
   /** Corrected example (if fixable) */
   readonly correctedExample?: {
     readonly explicit: string;
-    readonly json: SemanticJSON;
+    readonly json: ProtocolNodeJSON;
   };
 }
 

@@ -10,26 +10,6 @@ import type { CommandSchema } from '../schema';
 // =============================================================================
 // LLM JSON Format
 // =============================================================================
-
-/**
- * Structured input format for LLMs.
- * No parsing ambiguity — action and roles are explicitly typed.
- */
-export interface SemanticJSON {
-  action: string;
-  roles: Record<string, SemanticJSONValue>;
-  trigger?: {
-    event: string;
-    modifiers?: Record<string, unknown>;
-  };
-}
-
-export interface SemanticJSONValue {
-  type: 'selector' | 'literal' | 'reference' | 'expression' | 'property-path' | 'flag';
-  value: string | number | boolean;
-}
-
-// =============================================================================
 // Schema Lookup
 // =============================================================================
 
