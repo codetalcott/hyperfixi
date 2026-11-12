@@ -6,7 +6,7 @@
  * to output valid LokaScript Explicit Syntax.
  */
 
-import type { SemanticJSON } from '../ir/types';
+import type { ProtocolNodeJSON } from '../ir/types';
 
 // =============================================================================
 // Training Pairs
@@ -29,7 +29,7 @@ export interface TrainingPair {
   readonly explicit: string;
 
   /** LLM-simplified JSON wire format */
-  readonly json: SemanticJSON;
+  readonly json: ProtocolNodeJSON;
 
   /** Domain this pair belongs to */
   readonly domain: string;

@@ -18,13 +18,13 @@ import {
   PatternTracker,
   parseExplicit,
   renderExplicit,
-  semanticNodeToJSON,
   createCommandNode,
   createSelector,
   createLiteral,
   createExpression,
   defineCommand,
   defineRole,
+  toProtocolJSON,
 } from '../index';
 
 // =============================================================================
@@ -450,7 +450,7 @@ describe('Cross-Cutting: Explicit ↔ JSON Round-trip', () => {
       patient: createSelector('.active'),
     });
 
-    const json = semanticNodeToJSON(original);
+    const json = toProtocolJSON(original);
     expect(json.action).toBe('toggle');
     expect(json.roles['patient']).toBeDefined();
   });

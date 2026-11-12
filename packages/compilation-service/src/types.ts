@@ -24,7 +24,7 @@ export interface CompileRequest {
   /** Explicit syntax: [command role:value ...] */
   explicit?: string;
   /** LLM JSON — structured semantic representation */
-  semantic?: SemanticJSON;
+  semantic?: ProtocolNodeJSON;
 
   /** ISO 639-1 language code (required for `code`, ignored for `explicit`/`semantic`) */
   language?: string;
@@ -50,21 +50,27 @@ export interface TranslateRequest {
 // LLM JSON Format (re-exported from @lokascript/framework)
 // =============================================================================
 
-import type {
-  SemanticJSON as _SemanticJSON,
-  SemanticJSONValue as _SemanticJSONValue,
-} from '@lokascript/framework/ir';
-export type SemanticJSON = _SemanticJSON;
-export type SemanticJSONValue = _SemanticJSONValue;
+import type { ProtocolNodeJSON as _ProtocolNodeJSON } from '@lokascript/framework/ir';
+/** LSE protocol JSON: what a request's `semantic` field holds (`{ action, roles, trigger? }` at its smallest). */
+export type ProtocolNodeJSON = _ProtocolNodeJSON;
+
+/** A role value in the IR a validation returns. */
+export interface SemanticIRValue {
+  type: 'selector' | 'literal' | 'reference' | 'expression' | 'property-path' | 'flag';
+  value: string | number | boolean;
+}
 
 /**
- * The IR validation returns: {@link SemanticJSON} with the commands a node holds. A `then`
+ * The IR validation returns: an action, its roles, and the commands a node holds. A `then`
  * chain is `compound` with each command in `body`; an `if` has its branches in `body` and
  * `else`; a loop or a block command (`tell`, `repeat`) has its commands in `body`. Until 7.5.0
  * a chain came back as `compound` with no commands at all, so its IR could not be checked
  * against an intent.
  */
-export interface SemanticIR extends SemanticJSON {
+export interface SemanticIR {
+  action: string;
+  roles: Record<string, SemanticIRValue>;
+  trigger?: { event: string; modifiers?: Record<string, unknown> };
   body?: SemanticIR[];
   else?: SemanticIR[];
 }

@@ -5,7 +5,7 @@
 import { describe, it, expect } from 'vitest';
 import { toJSONL, toJSONLRow, parseJSONL } from './jsonl-writer';
 import type { TrainingPair } from './types';
-import type { SemanticJSON } from '../ir/types';
+import type { ProtocolNodeJSON } from '../ir/types';
 
 // =============================================================================
 // Test Data
@@ -24,7 +24,7 @@ function makePair(overrides?: Partial<TrainingPair>): TrainingPair {
         style: { type: 'expression', value: 'json' },
         destination: { type: 'selector', value: '#list' },
       },
-    } as SemanticJSON,
+    } as ProtocolNodeJSON,
     domain: 'flow',
     action: 'fetch',
     source: 'synthetic',

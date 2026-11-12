@@ -16,7 +16,7 @@ import type {
   DiffResponse,
   ServiceOptions,
   SemanticIR,
-  SemanticJSONValue,
+  SemanticIRValue,
   Diagnostic,
   NormalizeResult,
 } from './types.js';
@@ -600,7 +600,7 @@ function extractSemanticValueString(v: unknown): string {
 }
 
 /**
- * Convert a SemanticNode to SemanticJSON for the response.
+ * Convert a SemanticNode to the IR a response carries.
  */
 function nodeToSemanticJSON(node: unknown): SemanticIR | undefined {
   if (!node || typeof node !== 'object') return undefined;
@@ -620,7 +620,7 @@ function nodeToSemanticJSON(node: unknown): SemanticIR | undefined {
   const list = (nodes: unknown[]): SemanticIR[] =>
     nodes.map(nodeToSemanticJSON).filter((x): x is SemanticIR => x !== undefined);
 
-  const roles: Record<string, SemanticJSONValue> = {};
+  const roles: Record<string, SemanticIRValue> = {};
 
   if (n.roles && typeof n.roles.entries === 'function') {
     for (const [role, value] of n.roles.entries()) {
@@ -633,11 +633,11 @@ function nodeToSemanticJSON(node: unknown): SemanticIR | undefined {
             value: extractSemanticValueString(v),
           };
         } else {
-          const valueType = v.type as SemanticJSONValue['type'];
+          const valueType = v.type as SemanticIRValue['type'];
           roles[role] = {
             type: (['selector', 'literal', 'reference', 'expression'].includes(valueType)
               ? valueType
-              : 'literal') as SemanticJSONValue['type'],
+              : 'literal') as SemanticIRValue['type'],
             value: (v.value ?? v.raw ?? '') as string | number | boolean,
           };
         }

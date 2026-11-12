@@ -24,8 +24,8 @@ export type {
   OperationDiff,
   OperationChangeKind,
   ServiceOptions,
-  SemanticJSON,
-  SemanticJSONValue,
+  ProtocolNodeJSON,
+  SemanticIRValue,
   SemanticIR,
   Diagnostic,
   InputFormat,
@@ -33,7 +33,6 @@ export type {
 
 // Input utilities (for custom pipelines)
 export { detectFormat } from './input/detect.js';
-export { validateSemanticJSON, jsonToSemanticNode } from './input/json-schema.js';
 
 // Abstract operations (for custom renderers / Phase 3 codegen targets)
 export type {

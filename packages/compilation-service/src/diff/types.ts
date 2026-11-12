@@ -5,7 +5,7 @@
  */
 
 import type { AbstractOperation } from '../operations/types.js';
-import type { Diagnostic, SemanticJSON } from '../types.js';
+import type { Diagnostic, ProtocolNodeJSON } from '../types.js';
 
 // =============================================================================
 // Request / Response
@@ -18,7 +18,7 @@ export interface DiffInput {
   /** Explicit syntax: [command role:value ...] */
   explicit?: string;
   /** LLM JSON — structured semantic representation */
-  semantic?: SemanticJSON;
+  semantic?: ProtocolNodeJSON;
   /** ISO 639-1 language code (required for `code`) */
   language?: string;
 }
