@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **The LSE round-trip gate** (`packages/testing-framework`, `lse-round-trip.test.ts`). It writes
+  each of the 1,166 parsed command-shape sources as protocol JSON and as bracket syntax, reads
+  it back, and fails on any encoding written with something missing, on a case worse than its
+  baseline and on one better. Baseline: protocol JSON 603 faithful, 178 type-only, 385 refused;
+  bracket syntax 232, 158, 776; none silent. Its loss check is the fidelity scorer plus a
+  field-by-field comparison, since the scorer alone scores a dropped `in me` scope as faithful.
 - **`@lokascript/intent/lse` and `@lokascript/intent/schema`.** The package holds three things
   (the node model, the command-schema vocabulary, and the LSE codec), and its description named
   one. The root still exports everything; the two subpaths give the codec and the schema

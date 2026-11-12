@@ -724,6 +724,19 @@ regenerate with `npx tsx tools/regen-command-shapes-baseline.ts` (it refuses to 
 worse pair without `--allow-new`). Its tables — by family, by node type, by lane — are
 M1's queue (`docs-internal/MULTILINGUAL_NEXT_STEPS.md`).
 
+The **LSE round-trip gate** (`lse-round-trip.test.ts`, 2026-11-12) holds the boundary of LSE
+(`@lokascript/intent`'s bracket syntax and protocol JSON, which carry commands and simple handlers:
+`protocol/README.md`). It parses the command-shape sources, writes each node in both encodings and
+reads it back: `faithful`, `type-only` (a value's type differs, nothing else), `refused` (the
+writer threw `LossyEncodingError`) or `silent` (written with something missing). `silent` is never
+allowed, and is judged by the scorer AND by `structure()`, a field-by-field comparison, because the
+scorer does not read every field (a dropped `in me` scope scores faithful). The baseline
+(`baselines/lse-round-trip.json`) lists the type-only and refused cases; the gate fails on a case
+worse than listed and on one better. A parser change that adds a field to a node shows here as new
+refusals until a writer learns the field: regenerate with
+`npx tsx tools/regen-lse-round-trip-baseline.ts` (`--allow-new` for worse cases, `--report` for the
+refusal reasons).
+
 After an _intentional_ fidelity change, regenerate the baseline (`--save-baseline`).
 **The baseline must be regenerated against a freshly `populate`d patterns.db** — a
 baseline generated against a stale/transitional DB will read as drifted.
