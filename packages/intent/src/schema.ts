@@ -138,11 +138,8 @@ export interface RoleSpec<Role extends string = SemanticRole, Value = SemanticVa
   readonly markerOptional?: Record<string, boolean>;
   /**
    * Additional alternate marker keywords for this role, beyond {@link markerOverride}.
-   * Used by schema-driven role inference (e.g., `inferRolesFromSchema`) to
-   * recognize any of the listed markers as signaling this role; the matched marker
-   * is recorded in {@link methodCarrier} if set.
    *
-   * semantic's generator ALSO merges them into every generated pattern as marker
+   * semantic's generator merges them into every generated pattern as marker
    * alternatives, on both the override and profile-default branches
    * (`schemaMarkerAlternatives` in `parser/utils/marker-resolution.ts`) —
    * **unless the role sets {@link methodCarrier}.** There the variants are not
@@ -379,9 +376,11 @@ export interface CommandSchema<
   }>;
   readonly notes?: string;
   /**
-   * Identifier tokens that may appear in the core parser's positional `args`
-   * but are not bound to any role — e.g., scroll's `top|bottom|smoothly`.
-   * These are skipped when scanning args for role values.
+   * Identifier tokens that appeared in core's parser's positional `args` without
+   * being bound to a role (scroll's `top|bottom|smoothly`).
+   *
+   * @deprecated Nothing reads it: its one reader, `inferRolesFromSchema`, was
+   * removed in 8.0 (it had no caller since core's engine retired in 4.0).
    */
   readonly argSkipTokens?: ReadonlyArray<string>;
   /**
