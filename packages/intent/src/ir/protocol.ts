@@ -544,6 +544,25 @@ function validateValue(
       message: `${label} (expression) is missing required field: raw (or value)`,
     });
   }
+  // What each type's reader takes: without it the node was read with an empty
+  // or a stringified value (`add `, `put [object Object] into …`).
+  if (
+    (v.type === 'selector' || v.type === 'reference') &&
+    (typeof v.value !== 'string' || v.value.length === 0)
+  ) {
+    diagnostics.push({
+      severity: 'error',
+      code: 'INVALID_VALUE',
+      message: `${label} (${v.type}) needs a non-empty string value`,
+    });
+  }
+  if (v.type === 'literal' && !['string', 'number', 'boolean'].includes(typeof v.value)) {
+    diagnostics.push({
+      severity: 'error',
+      code: 'INVALID_VALUE',
+      message: `${label} (literal) needs a string, number or boolean value`,
+    });
+  }
   if (v.type === 'property-path' && 'object' in v) {
     const owner = v.object;
     if (typeof v.property !== 'string' || v.property.length === 0) {

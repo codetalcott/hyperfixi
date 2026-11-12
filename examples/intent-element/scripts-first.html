@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>&lt;lse-intent&gt;: scripts loaded before the markup</title>
+  <!--
+    The order a page usually has: scripts in the head, elements in the body. The parser then
+    connects each <lse-intent> at its start tag, before its JSON child exists. The element waits
+    for the document; before it did, a page in this order ran nothing and reported nothing.
+  -->
+  <script src="../../packages/engine/dist/hyperfixi-hs.js"></script>
+  <script src="../../packages/semantic/dist/browser-en.en.global.js"></script>
+  <script src="../../packages/intent-element/dist/intent-element.iife.global.js"></script>
+  <script>
+    window.lseLog = [];
+    for (const type of ['lse:validated', 'lse:executed', 'lse:error']) {
+      document.addEventListener(type, e =>
+        window.lseLog.push(type + ':' + (e.detail.diagnostics || []).map(d => d.code).join(','))
+      );
+    }
+  </script>
+</head>
+<body>
+  <h1>Scripts first</h1>
+  <div id="box">This box gets <code>.ran</code> on load.</div>
+
+  <lse-intent id="on-load">
+    <script type="application/lse+json">
+      {
+        "action": "add",
+        "roles": {
+          "patient": { "type": "selector", "value": ".ran" },
+          "destination": { "type": "selector", "value": "#box" }
+        }
+      }
+    </script>
+  </lse-intent>
+
+  <lse-intent id="empty"></lse-intent>
+</body>
+</html>

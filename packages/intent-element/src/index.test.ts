@@ -7,7 +7,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
 import { LSEIntentElement } from './lse-intent.js';
 import { intentRegistry } from './schema-registry.js';
-import { sandboxed } from './sandbox.js';
+import { withTimeout as sandboxed } from './timeout.js';
 
 // Register the element for all tests
 if (!customElements.get('lse-intent')) {
@@ -24,11 +24,25 @@ type HostRun = (node: RenderedNode, me: unknown) => unknown;
  * executes: the renderer records the node it is handed and renders its index, and the
  * host's `evaluate` looks the node up and returns `run`'s result.
  */
+function valuesOf(node: RenderedNode): string[] {
+  const own = [...node.roles.values()].map(v => ('value' in v ? String(v.value) : ''));
+  const children = node as unknown as Record<string, RenderedNode[] | undefined>;
+  return [
+    ...own,
+    ...['body', 'statements', 'thenBranch', 'elseBranch'].flatMap(field =>
+      (children[field] ?? []).flatMap(valuesOf)
+    ),
+  ];
+}
+
 function installHost(run: HostRun): void {
   const nodes: RenderedNode[] = [];
-  LSEIntentElement.render = node => String(nodes.push(node) - 1);
+  // The element checks that the script holds every value written as it is, so
+  // the stub writes them after the index.
+  LSEIntentElement.render = node => `${nodes.push(node) - 1}|${JSON.stringify(valuesOf(node))}`;
   (globalThis as Record<string, unknown>)['hyperfixi'] = {
-    evaluate: (source: string, context: { me: unknown }) => run(nodes[Number(source)], context.me),
+    evaluate: (source: string, context: { me: unknown }) =>
+      run(nodes[parseInt(source, 10)], context.me),
   };
 }
 
@@ -264,7 +278,9 @@ describe('LSEIntentElement — validation', () => {
 describe('LSEIntentElement — schema validation', () => {
   beforeEach(() => intentRegistry.clear());
 
-  it('adds schema diagnostics for missing required role', async () => {
+  it('a missing required role refuses the intent: lse:error, nothing runs', async () => {
+    const evaluate = vi.fn();
+    installHost(evaluate);
     intentRegistry.register({
       action: 'toggle',
       roles: [
@@ -275,15 +291,20 @@ describe('LSEIntentElement — schema validation', () => {
       category: 'dom',
     });
 
-    // JSON with no roles at all (passes wire validation, fails schema check)
+    // Passes wire validation, fails the schema.
     const el = makeElement(JSON.stringify({ action: 'toggle', roles: {} }));
-    const validated = waitForEvent(el, 'lse:validated');
+    const validated = vi.fn();
+    el.addEventListener('lse:validated', validated);
+    const refused = waitForEvent(el, 'lse:error');
     document.body.appendChild(el);
-    const event = await validated;
-    const schemaDiag = event.detail.diagnostics.find(
-      (d: { code: string }) => d.code === 'MISSING_REQUIRED_ROLE'
+    const event = await refused;
+    expect(event.detail.diagnostics.map((d: { code: string }) => d.code)).toContain(
+      'MISSING_REQUIRED_ROLE'
     );
-    expect(schemaDiag).toBeDefined();
+    await new Promise(r => setTimeout(r, 20));
+    expect(validated).not.toHaveBeenCalled();
+    expect(evaluate).not.toHaveBeenCalled();
+    expect(el.node).toBeNull();
     document.body.removeChild(el);
   });
 
@@ -355,15 +376,19 @@ describe('LSEIntentElement — execution', () => {
     document.body.removeChild(el);
   });
 
-  it('emits NO_RUNTIME warning when window.hyperfixi is absent', async () => {
+  it('no host is an lse:error (NO_RUNTIME), and repeated runs do not pile diagnostics up', async () => {
     delete (globalThis as Record<string, unknown>)['hyperfixi'];
     const el = makeElement(VALID_JSON);
-    const validated = waitForEvent(el, 'lse:validated');
+    el.setAttribute('trigger', 'click');
     document.body.appendChild(el);
-    await validated;
-    await new Promise(r => setTimeout(r, 20));
-    const hasWarning = el.diagnostics.some(d => d.code === 'NO_RUNTIME');
-    expect(hasWarning).toBe(true);
+    await waitForEvent(el, 'lse:validated');
+    for (let i = 0; i < 3; i++) {
+      const errored = waitForEvent(el, 'lse:error');
+      el.click();
+      const event = await errored;
+      expect(event.detail.diagnostics.map((d: { code: string }) => d.code)).toEqual(['NO_RUNTIME']);
+    }
+    expect(el.diagnostics.map(d => d.code)).toEqual(['NO_RUNTIME']);
     document.body.removeChild(el);
   });
 
@@ -372,11 +397,10 @@ describe('LSEIntentElement — execution', () => {
     LSEIntentElement.render = null;
     (globalThis as Record<string, unknown>)['_hyperscript'] = { evaluate: vi.fn() };
     const el = makeElement(VALID_JSON);
-    const validated = waitForEvent(el, 'lse:validated');
+    const errored = waitForEvent(el, 'lse:error');
     document.body.appendChild(el);
-    await validated;
-    await new Promise(r => setTimeout(r, 20));
-    expect(el.diagnostics.some(d => d.code === 'NO_RENDERER')).toBe(true);
+    await errored;
+    expect(el.diagnostics.map(d => d.code)).toEqual(['NO_RENDERER']);
     delete (globalThis as Record<string, unknown>)['_hyperscript'];
     document.body.removeChild(el);
   });
@@ -425,33 +449,36 @@ describe('LSEIntentElement — text path on a hyperscript host', () => {
   it('LSEIntentElement.render overrides the bundle lookup', async () => {
     const evaluate = vi.fn();
     g['hyperfixi'] = { evaluate };
-    LSEIntentElement.render = () => 'add .x to me';
+    LSEIntentElement.render = () => 'add .active to me';
     const el = makeElement(VALID_JSON);
     const executed = waitForEvent(el, 'lse:executed');
     document.body.appendChild(el);
     await executed;
-    expect(evaluate).toHaveBeenCalledWith('add .x to me', { me: el });
+    expect(evaluate).toHaveBeenCalledWith('add .active to me', { me: el });
     document.body.removeChild(el);
   });
 
-  it('stamps a string literal without dataType as a string before rendering', async () => {
+  it('a literal is read as the wire format says: no dataType is a bare word, with a warning for several', async () => {
     g['hyperfixi'] = { evaluate: vi.fn() };
-    const render = vi.fn().mockReturnValue('put "Hello" into #out');
+    const render = vi.fn().mockReturnValue('put Hello world into #out');
     g['LokaScriptSemanticEn'] = { render };
     const el = makeElement(
       JSON.stringify({
         action: 'put',
         roles: {
-          patient: { type: 'literal', value: 'Hello' },
+          patient: { type: 'literal', value: 'Hello world' },
           destination: { type: 'selector', value: '#out' },
         },
       })
     );
+    const validated = waitForEvent(el, 'lse:validated');
     const executed = waitForEvent(el, 'lse:executed');
     document.body.appendChild(el);
+    const event = await validated;
     await executed;
     const node = render.mock.calls[0][0] as { roles: Map<string, { dataType?: string }> };
-    expect(node.roles.get('patient')?.dataType).toBe('string');
+    expect(node.roles.get('patient')?.dataType).toBeUndefined();
+    expect(event.detail.diagnostics.map((d: { code: string }) => d.code)).toEqual(['BARE_LITERAL']);
     document.body.removeChild(el);
   });
 
@@ -461,7 +488,7 @@ describe('LSEIntentElement — text path on a hyperscript host', () => {
         throw new Error('no such command');
       }),
     };
-    g['LokaScriptSemanticEn'] = { render: () => 'frobnicate me' };
+    g['LokaScriptSemanticEn'] = { render: () => 'frobnicate .active' };
     const el = makeElement(VALID_JSON);
     const errored = waitForEvent(el, 'lse:error');
     document.body.appendChild(el);
@@ -594,14 +621,13 @@ describe('LSEIntentElement — trigger modes', () => {
     document.body.removeChild(form);
   });
 
-  it('trigger="submit" emits a diagnostic warning when no ancestor form exists', async () => {
+  it('trigger="submit" with no ancestor form is refused', async () => {
     const el = makeElement(VALID_JSON);
     el.setAttribute('trigger', 'submit');
-    const validated = waitForEvent(el, 'lse:validated');
+    const errored = waitForEvent(el, 'lse:error');
     document.body.appendChild(el);
-    await validated;
-    await new Promise(r => setTimeout(r, 20));
-    expect(el.diagnostics.some(d => d.code === 'NO_ANCESTOR_FORM')).toBe(true);
+    await errored;
+    expect(el.diagnostics.map(d => d.code)).toEqual(['NO_ANCESTOR_FORM']);
     expect(evalMock).not.toHaveBeenCalled();
     document.body.removeChild(el);
   });
@@ -652,17 +678,16 @@ describe('LSEIntentElement — trigger modes', () => {
     }
   });
 
-  it('trigger="intersect" emits a diagnostic warning when IntersectionObserver is unavailable', async () => {
+  it('trigger="intersect" without IntersectionObserver is refused', async () => {
     const OriginalIO = globalThis.IntersectionObserver;
     (globalThis as unknown as { IntersectionObserver: unknown }).IntersectionObserver = undefined;
     try {
       const el = makeElement(VALID_JSON);
       el.setAttribute('trigger', 'intersect');
-      const validated = waitForEvent(el, 'lse:validated');
+      const errored = waitForEvent(el, 'lse:error');
       document.body.appendChild(el);
-      await validated;
-      await new Promise(r => setTimeout(r, 20));
-      expect(el.diagnostics.some(d => d.code === 'NO_INTERSECTION_OBSERVER')).toBe(true);
+      await errored;
+      expect(el.diagnostics.map(d => d.code)).toEqual(['NO_INTERSECTION_OBSERVER']);
       expect(evalMock).not.toHaveBeenCalled();
       document.body.removeChild(el);
     } finally {
@@ -685,15 +710,25 @@ describe('LSEIntentElement — trigger modes', () => {
     document.body.removeChild(el);
   });
 
-  it('trigger attribute is case-insensitive', async () => {
+  it('a trigger keyword is read in any case; an event name keeps its case', async () => {
+    const manual = makeElement(VALID_JSON);
+    manual.setAttribute('trigger', 'MANUAL');
+    document.body.appendChild(manual);
+    await waitForEvent(manual, 'lse:validated');
+    await new Promise(r => setTimeout(r, 20));
+    expect(evalMock).not.toHaveBeenCalled();
+    document.body.removeChild(manual);
+
     const el = makeElement(VALID_JSON);
-    el.setAttribute('trigger', 'CLICK');
+    el.setAttribute('trigger', 'myEvent');
     document.body.appendChild(el);
     await waitForEvent(el, 'lse:validated');
+    el.dispatchEvent(new Event('myevent'));
+    await new Promise(r => setTimeout(r, 20));
     expect(evalMock).not.toHaveBeenCalled();
 
     const executed = waitForEvent(el, 'lse:executed');
-    el.click();
+    el.dispatchEvent(new Event('myEvent'));
     await executed;
     expect(evalMock).toHaveBeenCalledTimes(1);
     document.body.removeChild(el);
@@ -894,9 +929,7 @@ describe('LSEIntentElement — event-handler unwrap', () => {
     document.body.removeChild(el);
   });
 
-  it('unwraps multi-command bodies and executes each in sequence', async () => {
-    // Verbose form with multiple body commands. Each should be executed
-    // sequentially. The final lse:executed event carries the results array.
+  it('runs a body of several commands as ONE script, a then chain', async () => {
     const multiJson = JSON.stringify({
       kind: 'event-handler',
       action: 'on',
@@ -914,61 +947,45 @@ describe('LSEIntentElement — event-handler unwrap', () => {
         },
       ],
     });
-
-    let callIndex = 0;
-    evalMock.mockImplementation(async () => `result-${callIndex++}`);
+    evalMock.mockImplementation(async () => 'the result');
 
     const el = makeElement(multiJson);
-    el.setAttribute('trigger', 'click');
     document.body.appendChild(el);
     await waitForEvent(el, 'lse:validated');
+    expect(evalMock).not.toHaveBeenCalled();
 
     const executed = waitForEvent(el, 'lse:executed');
     el.click();
     const event = await executed;
 
-    expect(evalMock).toHaveBeenCalledTimes(2);
-    expect(evalMock.mock.calls[0][0].action).toBe('add');
-    expect(evalMock.mock.calls[1][0].action).toBe('remove');
-    expect(event.detail.results).toEqual(['result-0', 'result-1']);
+    expect(evalMock).toHaveBeenCalledTimes(1);
+    const ran = evalMock.mock.calls[0][0] as unknown as {
+      kind: string;
+      chainType: string;
+      statements: Array<{ action: string }>;
+    };
+    expect(ran.kind).toBe('compound');
+    expect(ran.chainType).toBe('then');
+    expect(ran.statements.map(n => n.action)).toEqual(['add', 'remove']);
+    expect(event.detail.result).toBe('the result');
     document.body.removeChild(el);
   });
 
-  it('stops execution on first body command failure and emits lse:error', async () => {
-    const multiJson = JSON.stringify({
-      kind: 'event-handler',
-      action: 'on',
-      roles: { event: { type: 'literal', value: 'click', dataType: 'string' } },
-      body: [
-        { kind: 'command', action: 'add', roles: { patient: { type: 'selector', value: '.a' } } },
-        { kind: 'command', action: 'fail', roles: {} },
-        {
-          kind: 'command',
-          action: 'remove',
-          roles: { patient: { type: 'selector', value: '.a' } },
-        },
-      ],
+  it('a failing script is one lse:error', async () => {
+    evalMock.mockImplementation(async () => {
+      throw new Error('boom');
     });
-
-    evalMock.mockImplementation(async (n: { action: string }) => {
-      if (n.action === 'fail') throw new Error('boom');
-      return 'ok';
-    });
-
-    const el = makeElement(multiJson);
+    const el = makeElement(VALID_JSON);
     el.setAttribute('trigger', 'click');
     document.body.appendChild(el);
     await waitForEvent(el, 'lse:validated');
 
     const errored = waitForEvent(el, 'lse:error');
     el.click();
-    await errored;
-
-    // Should have executed the first two (add, fail) but not the third (remove)
-    expect(evalMock).toHaveBeenCalledTimes(2);
-    expect(evalMock.mock.calls[0][0].action).toBe('add');
-    expect(evalMock.mock.calls[1][0].action).toBe('fail');
-    expect(el.diagnostics.some(d => d.code === 'EXECUTION_ERROR')).toBe(true);
+    const event = await errored;
+    expect(evalMock).toHaveBeenCalledTimes(1);
+    expect(event.detail.error.message).toBe('boom');
+    expect(el.diagnostics.map(d => d.code)).toEqual(['EXECUTION_ERROR']);
     document.body.removeChild(el);
   });
 });
