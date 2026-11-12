@@ -59,6 +59,16 @@ export interface ProtocolValueJSON {
   name?: string;
   enabled?: boolean;
   selectorKind?: 'id' | 'class' | 'attribute' | 'element' | 'complex';
+  /** A property path's owner and property (`#input`, `value`); `access` is its spelling. */
+  object?: ProtocolValueJSON;
+  property?: string;
+  access?: 'dot' | 'possessive';
+  /** Supplied from the command's default, not written by the author. */
+  implicit?: true;
+  /** A literal written in quotes where a bare word was possible. */
+  quoted?: true;
+  /** A literal that is a naked `${…}` URL. */
+  interpolates?: true;
 }
 
 /** What every protocol node carries. */

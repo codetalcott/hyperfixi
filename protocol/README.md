@@ -50,12 +50,13 @@ People do not write it by hand in a codebase: write hyperscript, or the DSL's ow
 
 LSE is not a full encoding of hyperscript. Measured on 1,166 scripts the engine accepts (upstream's
 test suite and the reference examples), scoring each semantic parse against what comes back from
-the encoding (2026-11-12):
+the encoding, and the script that renders to against the script the parse renders to, as the engine
+reads the two (2026-11-12):
 
-| Encoding       | Carried in full | Only a value's type changed | Refused |
-| -------------- | --------------- | --------------------------- | ------- |
-| Protocol JSON  | 603             | 178                         | 385     |
-| Bracket syntax | 232             | 158                         | 776     |
+| Encoding       | Carried in full | Only a value's type changed | Refused | Reads back as another script |
+| -------------- | --------------- | --------------------------- | ------- | ---------------------------- |
+| Protocol JSON  | 781             | 0                           | 385     | 0                            |
+| Bracket syntax | 225             | 150                         | 789     | 2                            |
 
 What is refused, and why:
 
@@ -64,13 +65,22 @@ What is refused, and why:
   `trigger` form carries `once`, `debounce`, `throttle` and `queue`; the verbose form, for a handler
   of several commands, carries none), `catch`/`finally` on a handler, parameter names, a selector's
   `in` scope.
-- **Bracket syntax only:** a value of several words that is not a string (`it matches .x`: there is
-  no expression delimiter), more than one command in a `body:`, `then:` or `loop-body:` (a
-  structural role holds one command).
+- **Bracket syntax only:** a value of several words that is not a string (`it matches .x`, `{color:
+red; top: 0}`: there is no expression delimiter), more than one command in a `body:`, `then:` or
+  `loop-body:` (a structural role holds one command).
 
-"Only a value's type changed" is the documented flattening of a property path to an expression in
-JSON, and, in bracket syntax, the parser's classification of each bare value (the syntax is
-untyped): the text is the same, and no command, role or value is missing.
+"Only a value's type changed" is, in bracket syntax, the parser's classification of each bare value
+(the syntax is untyped): the text is the same, no command, role or value is missing, and the script
+it renders to is the same. In two cases that is not enough: `go back`, where `back` is an expression, is read back
+as a literal, which `go` takes for a URL; and `send "a-b"` comes back `send a-b`, as the syntax
+quotes every string and so cannot say the author quoted this one. The gate lists both
+(`BRACKET_UNTYPED`); protocol JSON carries both.
+
+Protocol JSON carries the three marks a renderer reads (`implicit`, `quoted`, `interpolates`) and a
+property path as itself. Before it did, 94 of the cases counted above as carried rendered to
+another script (`remove #x` came back as `remove #x from me`; `put "foo" into my @bar` as `put
+"foo" into me.@bar`, which no reader takes), and the gate, which compared nodes and not scripts,
+did not see it.
 
 Expressions are opaque. Three in ten role values in those scripts (965 of 3,332) are `expression` values whose
 `raw` text is hyperscript; a consumer that needs more than the text needs a hyperscript parser.

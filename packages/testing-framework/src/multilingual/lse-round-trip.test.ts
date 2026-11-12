@@ -11,6 +11,8 @@ import {
   grade,
   loadBaseline,
   loadCases,
+  BRACKET_UNTYPED,
+  loadScriptJudge,
   runLseRoundTrip,
   type LseCaseResult,
   type LseDiff,
@@ -44,13 +46,47 @@ describe('the gate sees a loss when a writer is told to allow one', () => {
   });
 });
 
+describe('the gate reads the script a read-back node renders to', () => {
+  // The node comparison alone scored these faithful: the marks were "meta".
+  const strip = (wire: unknown, field: string): unknown =>
+    JSON.parse(JSON.stringify(wire, (key, value) => (key === field ? undefined : value)));
+  const shape = { origin: 'reference:example' };
+
+  it.each([
+    ['implicit', 'remove #temp-element', 'remove #temp-element from me'],
+    ['quoted', 'send "a-b" to #d1', 'send a-b to #d1'],
+  ])('a dropped %s mark is silent', async (field, source, rendersAs) => {
+    const judge = await loadScriptJudge();
+    const node = parse(source, 'en');
+    const whole = fromProtocolJSON(JSON.parse(JSON.stringify(toProtocolJSON(node))));
+    expect(judge(shape, node, whole)).toBeUndefined();
+    const readBack = fromProtocolJSON(strip(toProtocolJSON(node), field) as never);
+    const graded = grade(node, readBack, { sameScript: () => judge(shape, node, readBack) });
+    expect(graded.outcome).toBe('silent');
+    expect(judge(shape, node, readBack)).toContain(rendersAs);
+  });
+
+  it('a property path comes back a property path', () => {
+    const node = parse('put "foo" into my @bar', 'en');
+    const wire = JSON.parse(JSON.stringify(toProtocolJSON(node)));
+    expect(wire.roles.destination.type).toBe('property-path');
+    expect(grade(node, fromProtocolJSON(wire)).outcome).toBe('faithful');
+  });
+
+  it('every listed untyped bracket case is still silent, and JSON carries it', async () => {
+    const results = await runLseRoundTrip(loadCases().filter(c => c.id in BRACKET_UNTYPED));
+    expect(results.map(r => r.id).sort()).toEqual(Object.keys(BRACKET_UNTYPED).sort());
+    for (const r of results) expect(r.outcomes).toEqual({ json: 'faithful', bracket: 'silent' });
+  });
+});
+
 describe('LSE round trip (bracket syntax and protocol JSON) on the command-shape cases', () => {
   let results: LseCaseResult[];
   let diff: LseDiff;
   const baseline = loadBaseline();
 
-  beforeAll(() => {
-    results = runLseRoundTrip(loadCases());
+  beforeAll(async () => {
+    results = await runLseRoundTrip(loadCases());
     diff = diffBaseline(results, baseline);
   });
 

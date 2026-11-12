@@ -7,13 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Protocol JSON read back as another script in 94 of the 781 corpus cases it wrote**, with no
+  error and with the round-trip gate green. It dropped the `implicit` mark, so a value the parser
+  had supplied from a command's default was written back as if the author wrote it (`remove #x`
+  rendered as `remove #x from me`, `measure #other` as `measure #other of me`, which the engine
+  rejects); it dropped `quoted` (`send "a-b"` rendered as `send a-b`); and it flattened a property
+  path to dotted text (`put "foo" into my @bar` rendered as `… into me.@bar`, which no reader
+  takes). JSON now carries `implicit`, `quoted` and `interpolates` on a value, and a property path
+  as `{ type: 'property-path', object, property, access }`; the older one-string property path is
+  still read. `validateProtocolJSON` checks a path's owner. All 781 now render to the same script
+  (0 type-only, was 178). This is what `<lse-intent>` and the `lse` MCP tools run.
+- **Bracket syntax, the same loss.** Its writer leaves an implicit reference out (`[toggle
+patient:.active]`, not `… destination:me`), its reader reads a bare `{…}` as an expression, and the writer refuses a bare literal of several words, which it
+  could only write as a string. 225 carried, 150 type-only, 789 refused (was 232, 158, 776 by the node comparison). Two cases stay wrong and are listed: `go back` and `send "a-b"`.
+
+### Changed
+
+- **The LSE round-trip gate judges scripts, not only nodes.** Each read-back node is rendered to
+  English and compared, as the engine reads it, with what the original node renders to. The gate
+  had treated `implicit` and `quoted` as fields with no meaning.
+
 ### Added
 
 - **The LSE round-trip gate** (`packages/testing-framework`, `lse-round-trip.test.ts`). It writes
   each of the 1,166 parsed command-shape sources as protocol JSON and as bracket syntax, reads
   it back, and fails on any encoding written with something missing, on a case worse than its
-  baseline and on one better. Baseline: protocol JSON 603 faithful, 178 type-only, 385 refused;
-  bracket syntax 232, 158, 776; none silent. Its loss check is the fidelity scorer plus a
+  baseline and on one better. Baseline when it landed: protocol JSON 603 faithful, 178 type-only,
+  385 refused; bracket syntax 232, 158, 776; none silent by its node comparison (see Fixed). Its loss check is the fidelity scorer plus a
   field-by-field comparison, since the scorer alone scores a dropped `in me` scope as faithful.
 - **`@lokascript/intent/lse` and `@lokascript/intent/schema`.** The package holds three things
   (the node model, the command-schema vocabulary, and the LSE codec), and its description named

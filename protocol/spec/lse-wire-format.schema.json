@@ -18,6 +18,10 @@
         },
         "selectorKind": {
           "enum": ["id", "class", "attribute", "element", "complex"]
+        },
+        "implicit": {
+          "const": true,
+          "description": "Supplied by the parser from the command's default, not written by the author. A renderer leaves an implicit value out."
         }
       }
     },
@@ -44,6 +48,18 @@
         },
         "dataType": {
           "enum": ["string", "number", "boolean", "duration"]
+        },
+        "implicit": {
+          "const": true,
+          "description": "Supplied by the parser from the command's default, not written by the author. A renderer leaves an implicit value out."
+        },
+        "quoted": {
+          "const": true,
+          "description": "Written in quotes where a bare word was possible; written back in quotes."
+        },
+        "interpolates": {
+          "const": true,
+          "description": "A naked ${…} URL; written back naked."
         }
       }
     },
@@ -58,6 +74,10 @@
         "value": {
           "type": "string",
           "minLength": 1
+        },
+        "implicit": {
+          "const": true,
+          "description": "Supplied by the parser from the command's default, not written by the author. A renderer leaves an implicit value out."
         }
       }
     },
@@ -74,6 +94,10 @@
         },
         "value": {
           "type": "string"
+        },
+        "implicit": {
+          "const": true,
+          "description": "Supplied by the parser from the command's default, not written by the author. A renderer leaves an implicit value out."
         }
       },
       "anyOf": [
@@ -87,16 +111,41 @@
     },
     "PropertyPathValue": {
       "type": "object",
-      "required": ["type", "value"],
+      "required": ["type"],
       "additionalProperties": false,
       "properties": {
         "type": {
           "const": "property-path"
         },
         "value": {
-          "type": "string"
+          "type": "string",
+          "description": "The older shape: the whole path as one string, read as an expression."
+        },
+        "implicit": {
+          "const": true,
+          "description": "Supplied by the parser from the command's default, not written by the author. A renderer leaves an implicit value out."
+        },
+        "object": {
+          "$ref": "#/$defs/SemanticValue",
+          "description": "The owner: any value."
+        },
+        "property": {
+          "type": "string",
+          "minLength": 1
+        },
+        "access": {
+          "enum": ["dot", "possessive"],
+          "description": "Which spelling was read: #a.b or #a's b."
         }
-      }
+      },
+      "anyOf": [
+        {
+          "required": ["object", "property"]
+        },
+        {
+          "required": ["value"]
+        }
+      ]
     },
     "FlagValue": {
       "type": "object",
@@ -115,6 +164,10 @@
         },
         "value": {
           "type": "boolean"
+        },
+        "implicit": {
+          "const": true,
+          "description": "Supplied by the parser from the command's default, not written by the author. A renderer leaves an implicit value out."
         }
       },
       "anyOf": [

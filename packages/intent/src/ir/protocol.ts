@@ -31,7 +31,7 @@ import {
   createReference,
   createExpression,
   createFlag,
-  extractValue,
+  createPropertyPath,
 } from '../types';
 import type {
   ProtocolNodeJSON,
@@ -189,6 +189,18 @@ function rolesToProtocol(
 }
 
 function valueToProtocol(value: SemanticValue): ProtocolValueJSON {
+  const json = bareValueToProtocol(value);
+  // The marks a renderer reads. Without `implicit`, `remove #x` came back as
+  // `remove #x from me`; without `quoted`, `send "a-b"` as `send a-b`.
+  if (value.implicit) json.implicit = true;
+  if (value.type === 'literal') {
+    if (value.quoted) json.quoted = true;
+    if (value.interpolates) json.interpolates = true;
+  }
+  return json;
+}
+
+function bareValueToProtocol(value: SemanticValue): ProtocolValueJSON {
   switch (value.type) {
     case 'selector': {
       const PROTOCOL_SELECTOR_KINDS = new Set([
@@ -212,8 +224,17 @@ function valueToProtocol(value: SemanticValue): ProtocolValueJSON {
       return { type: 'reference', value: value.value };
     case 'expression':
       return { type: 'expression', raw: value.raw };
-    case 'property-path':
-      return { type: 'expression', raw: extractValue(value) };
+    case 'property-path': {
+      // As itself. Flattened to an expression (`me.@bar`, `#d2.*color`), it was
+      // text no hyperscript reader takes.
+      const path: ProtocolValueJSON = {
+        type: 'property-path',
+        object: valueToProtocol(value.object),
+        property: value.property,
+      };
+      if (value.access) path.access = value.access;
+      return path;
+    }
     case 'flag':
       return { type: 'flag', name: value.name, enabled: value.enabled };
   }
@@ -434,6 +455,17 @@ function applyV12Metadata(
 }
 
 function valueFromProtocol(value: ProtocolValueJSON): SemanticValue {
+  const read = bareValueFromProtocol(value);
+  const marks: { implicit?: true; quoted?: true; interpolates?: true } = {};
+  if (value.implicit === true) marks.implicit = true;
+  if (read.type === 'literal') {
+    if (value.quoted === true) marks.quoted = true;
+    if (value.interpolates === true) marks.interpolates = true;
+  }
+  return Object.keys(marks).length > 0 ? ({ ...read, ...marks } as SemanticValue) : read;
+}
+
+function bareValueFromProtocol(value: ProtocolValueJSON): SemanticValue {
   switch (value.type) {
     case 'selector':
       return createSelector(String(value.value ?? ''), value.selectorKind);
@@ -452,6 +484,11 @@ function valueFromProtocol(value: ProtocolValueJSON): SemanticValue {
         value.enabled ?? (typeof value.value === 'boolean' ? value.value : true)
       );
     case 'property-path':
+      if (value.object && typeof value.property === 'string') {
+        const path = createPropertyPath(valueFromProtocol(value.object), value.property);
+        return value.access ? { ...path, access: value.access } : path;
+      }
+      // The older shape, a path as one string: an expression.
       return createExpression(String(value.value ?? value.raw ?? ''));
   }
 }
@@ -471,6 +508,72 @@ const VALID_VALUE_TYPES = new Set([
 ]);
 const VALID_CHAIN_TYPES = new Set(['then', 'and', 'async', 'sequential']);
 const VALID_DIAGNOSTIC_LEVELS = new Set(['error', 'warning', 'info']);
+
+/** One value's checks; a property path's owner is a value too. */
+function validateValue(
+  label: string,
+  v: Record<string, unknown>,
+  diagnostics: IRDiagnostic[],
+  depth = 0
+): void {
+  if (!('type' in v) || !VALID_VALUE_TYPES.has(String(v.type))) {
+    diagnostics.push({
+      severity: 'error',
+      code: 'INVALID_VALUE_TYPE',
+      message: `${label} has invalid type "${v.type}"`,
+    });
+  }
+  if (v.type === 'flag') {
+    if (typeof v.name !== 'string' && !('value' in v))
+      diagnostics.push({
+        severity: 'error',
+        code: 'MISSING_FLAG_NAME',
+        message: `${label} (flag) is missing required field: name (or value)`,
+      });
+    if (typeof v.enabled !== 'boolean' && !('value' in v))
+      diagnostics.push({
+        severity: 'error',
+        code: 'MISSING_FLAG_ENABLED',
+        message: `${label} (flag) is missing required field: enabled (or value)`,
+      });
+  }
+  if (v.type === 'expression' && typeof v.raw !== 'string' && !('value' in v)) {
+    diagnostics.push({
+      severity: 'error',
+      code: 'MISSING_EXPRESSION_RAW',
+      message: `${label} (expression) is missing required field: raw (or value)`,
+    });
+  }
+  if (v.type === 'property-path' && 'object' in v) {
+    const owner = v.object;
+    if (typeof v.property !== 'string' || v.property.length === 0) {
+      diagnostics.push({
+        severity: 'error',
+        code: 'MISSING_PATH_PROPERTY',
+        message: `${label} (property-path) is missing required field: property`,
+      });
+    }
+    if (typeof owner !== 'object' || owner === null || Array.isArray(owner) || depth >= 32) {
+      diagnostics.push({
+        severity: 'error',
+        code: 'INVALID_PATH_OBJECT',
+        message: `${label} (property-path) object must be a value`,
+      });
+    } else {
+      validateValue(`${label} object`, owner as Record<string, unknown>, diagnostics, depth + 1);
+    }
+  } else if (
+    v.type === 'property-path' &&
+    typeof v.value !== 'string' &&
+    typeof v.raw !== 'string'
+  ) {
+    diagnostics.push({
+      severity: 'error',
+      code: 'MISSING_PATH_OBJECT',
+      message: `${label} (property-path) needs object and property (or the older one-string value)`,
+    });
+  }
+}
 
 export function validateProtocolJSON(json: unknown): IRDiagnostic[] {
   const diagnostics: IRDiagnostic[] = [];
@@ -529,35 +632,7 @@ export function validateProtocolJSON(json: unknown): IRDiagnostic[] {
         });
         continue;
       }
-      const v = value as Record<string, unknown>;
-      if (!('type' in v) || !VALID_VALUE_TYPES.has(String(v.type))) {
-        diagnostics.push({
-          severity: 'error',
-          code: 'INVALID_VALUE_TYPE',
-          message: `Role "${role}" has invalid type "${v.type}"`,
-        });
-      }
-      if (v.type === 'flag') {
-        if (typeof v.name !== 'string' && !('value' in v))
-          diagnostics.push({
-            severity: 'error',
-            code: 'MISSING_FLAG_NAME',
-            message: `Flag role "${role}" missing required field: name (or value)`,
-          });
-        if (typeof v.enabled !== 'boolean' && !('value' in v))
-          diagnostics.push({
-            severity: 'error',
-            code: 'MISSING_FLAG_ENABLED',
-            message: `Flag role "${role}" missing required field: enabled (or value)`,
-          });
-      }
-      if (v.type === 'expression' && typeof v.raw !== 'string' && !('value' in v)) {
-        diagnostics.push({
-          severity: 'error',
-          code: 'MISSING_EXPRESSION_RAW',
-          message: `Expression role "${role}" missing required field: raw (or value)`,
-        });
-      }
+      validateValue(`Role "${role}"`, value as Record<string, unknown>, diagnostics);
     }
   }
 

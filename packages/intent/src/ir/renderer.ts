@@ -81,6 +81,11 @@ function renderBracketCommand(node: AnyNode): string {
   const parts: string[] = [node.action];
 
   for (const [role, value] of node.roles) {
+    // A reference the parser supplied from the command's default (`toggle
+    // .active` acts on `me`): not written, as the author did not write it. Any
+    // other implicit value is a word of the command (`put … before`, `repeat …
+    // times`) and is written.
+    if (value.implicit && value.type === 'reference') continue;
     if (value.type === 'flag') {
       parts.push(value.enabled ? `+${value.name}` : `~${value.name}`);
     } else {
