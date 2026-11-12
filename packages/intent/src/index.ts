@@ -1,8 +1,10 @@
 /**
  * @lokascript/intent
  *
- * LSE (LokaScript Explicit Syntax): role-labeled node types, bracket syntax
- * parsing/rendering, and protocol JSON serialization.
+ * The base of the LokaScript stack, in three parts:
+ *   - the node model (SemanticNode, value types, factories);
+ *   - the command-schema vocabulary (also `@lokascript/intent/schema`);
+ *   - LSE: bracket syntax and protocol JSON (also `@lokascript/intent/lse`).
  *
  * Scope: commands and simple handlers, not whole hyperscript programs. The
  * writers refuse a node outside it (LossyEncodingError); see protocol/README.md.

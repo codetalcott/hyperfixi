@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`@lokascript/intent/lse` and `@lokascript/intent/schema`.** The package holds three things
+  (the node model, the command-schema vocabulary, and the LSE codec), and its description named
+  one. The root still exports everything; the two subpaths give the codec and the schema
+  vocabulary on their own, and the README and description now cover all three. The build shares
+  chunks between the entries in both module formats, so `LossyEncodingError` from the root and
+  from `/lse` is one class.
+
 ### Changed
 
 - **`ProtocolNodeJSON` is a union discriminated by `kind`** (`ProtocolCommandJSON`,

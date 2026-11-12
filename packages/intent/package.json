@@ -1,7 +1,7 @@
 {
   "name": "@lokascript/intent",
   "version": "7.6.0",
-  "description": "LSE (LokaScript Explicit Syntax): role-labeled node types, bracket syntax and protocol JSON for commands and simple handlers. Zero dependencies.",
+  "description": "The base of the LokaScript stack: the role-labeled node model, the command-schema vocabulary, and LSE (bracket syntax and protocol JSON for commands and simple handlers). Zero dependencies.",
   "type": "module",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
@@ -11,6 +11,16 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
+    },
+    "./lse": {
+      "types": "./dist/lse.d.ts",
+      "import": "./dist/lse.js",
+      "require": "./dist/lse.cjs"
+    },
+    "./schema": {
+      "types": "./dist/schema.d.ts",
+      "import": "./dist/schema.js",
+      "require": "./dist/schema.cjs"
     }
   },
   "sideEffects": false,

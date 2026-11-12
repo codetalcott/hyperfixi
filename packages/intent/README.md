@@ -1,13 +1,19 @@
 # @lokascript/intent
 
-> LSE types, bracket syntax, and protocol JSON for commands and simple handlers. Zero dependencies.
+> The base of the LokaScript stack: the node model, the command-schema vocabulary, and LSE. Zero dependencies.
 
-LSE (LokaScript Explicit Syntax) is a role-labeled notation for one UI action:
-`[toggle patient:.active destination:#button]`, or the same as JSON. `@lokascript/intent` holds its
-node types, parser, writers and schema primitives. `@lokascript/semantic` and the domain DSLs build
-on the node types; `<lse-intent>` and the MCP server's `lse` tools read and write the encodings.
+Three things live here, because everything above builds on them:
 
-**Scope.** LSE carries commands and simple handlers, not whole hyperscript programs. `toProtocolJSON`
+| Part               | Entry point                 | What it is                                                                                                                                                                                         |
+| ------------------ | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Node model**     | `@lokascript/intent`        | `SemanticNode`, its value types and factories: the role-labeled tree `@lokascript/semantic` and the domain DSLs parse to and render from                                                           |
+| **Command schema** | `@lokascript/intent/schema` | `defineCommand`, `defineRole`, `CommandSchema`, `RoleSpec`: how a DSL declares its commands, roles, markers and word-order positions                                                               |
+| **LSE**            | `@lokascript/intent/lse`    | Bracket syntax (`[toggle patient:.active]`) and protocol JSON for one command or a simple handler: `parseExplicit`, `renderExplicit`, `toProtocolJSON`, `fromProtocolJSON`, `validateProtocolJSON` |
+
+The root entry exports all three; the subpaths are for a consumer that wants one part. Most
+packages reach these through `@lokascript/framework`, which re-exports them.
+
+**LSE's scope.** LSE carries commands and simple handlers, not whole hyperscript programs. `toProtocolJSON`
 and `renderExplicit` throw a `LossyEncodingError` for a node outside that (a `behavior`, a handler
 with a `from` modifier, an expression of several words in bracket syntax); `{ lossy: 'allow' }`
 returns the partial encoding. The specification, with what is and is not carried, is in
