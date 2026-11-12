@@ -132,133 +132,7 @@ describe('validate_explicit', () => {
 // v1.2 Protocol Features
 // =============================================================================
 
-describe('convert_format — v1.2 protocol JSON', () => {
-  it('round-trips try/catch/finally', async () => {
-    const response = await handleIRTool('convert_format', {
-      semantic: {
-        kind: 'command',
-        action: 'try',
-        roles: {},
-        body: [
-          {
-            kind: 'command',
-            action: 'fetch',
-            roles: { patient: { type: 'literal', value: '/api' } },
-          },
-        ],
-        catchBranch: [
-          {
-            kind: 'command',
-            action: 'log',
-            roles: { patient: { type: 'literal', value: 'error' } },
-          },
-        ],
-        finallyBranch: [{ kind: 'command', action: 'settle', roles: {} }],
-      },
-    });
-
-    expect(response.isError).toBeUndefined();
-    const data = parseResult(response);
-    expect(data.ok).toBe(true);
-    expect(data.semantic.action).toBe('try');
-    expect(data.semantic.body).toHaveLength(1);
-    expect(data.semantic.catchBranch).toHaveLength(1);
-    expect(data.semantic.finallyBranch).toHaveLength(1);
-  });
-
-  it('round-trips async all/race', async () => {
-    const response = await handleIRTool('convert_format', {
-      semantic: {
-        kind: 'command',
-        action: 'async',
-        roles: {},
-        asyncVariant: 'all',
-        asyncBody: [
-          {
-            kind: 'command',
-            action: 'fetch',
-            roles: { patient: { type: 'literal', value: '/a' } },
-          },
-          {
-            kind: 'command',
-            action: 'fetch',
-            roles: { patient: { type: 'literal', value: '/b' } },
-          },
-        ],
-      },
-    });
-
-    expect(response.isError).toBeUndefined();
-    const data = parseResult(response);
-    expect(data.ok).toBe(true);
-    expect(data.semantic.asyncVariant).toBe('all');
-    expect(data.semantic.asyncBody).toHaveLength(2);
-  });
-
-  it('round-trips match/arms', async () => {
-    const response = await handleIRTool('convert_format', {
-      semantic: {
-        kind: 'command',
-        action: 'match',
-        roles: { patient: { type: 'reference', value: 'status' } },
-        arms: [
-          {
-            pattern: { type: 'literal', value: 200, dataType: 'number' },
-            body: [
-              {
-                kind: 'command',
-                action: 'log',
-                roles: { patient: { type: 'literal', value: 'ok' } },
-              },
-            ],
-          },
-        ],
-        defaultArm: [
-          {
-            kind: 'command',
-            action: 'log',
-            roles: { patient: { type: 'literal', value: 'unknown' } },
-          },
-        ],
-      },
-    });
-
-    expect(response.isError).toBeUndefined();
-    const data = parseResult(response);
-    expect(data.ok).toBe(true);
-    // Bracket syntax has no `match`: the tool leaves that form out and says why,
-    // where it used to return brackets without the arms.
-    expect(data.explicit).toBeUndefined();
-    expect(data.refused.explicit).toContain('command.arms');
-    expect(data.semantic.arms).toHaveLength(1);
-    expect(data.semantic.arms[0].pattern.value).toBe(200);
-    expect(data.semantic.defaultArm).toHaveLength(1);
-  });
-
-  it('round-trips pipe chainType', async () => {
-    const response = await handleIRTool('convert_format', {
-      semantic: {
-        kind: 'compound',
-        action: 'compound',
-        chainType: 'pipe',
-        statements: [
-          {
-            kind: 'command',
-            action: 'get',
-            roles: { patient: { type: 'reference', value: 'input' } },
-          },
-          { kind: 'command', action: 'trim', roles: {} },
-        ],
-      },
-    });
-
-    expect(response.isError).toBeUndefined();
-    const data = parseResult(response);
-    expect(data.ok).toBe(true);
-    expect(data.semantic.chainType).toBe('pipe');
-    expect(data.semantic.statements).toHaveLength(2);
-  });
-
+describe('convert_format — annotations and diagnostics', () => {
   it('round-trips annotations and diagnostics', async () => {
     const response = await handleIRTool('convert_format', {
       semantic: {
@@ -279,34 +153,6 @@ describe('convert_format — v1.2 protocol JSON', () => {
     expect(data.semantic.annotations[0].name).toBe('deprecated');
     expect(data.semantic.diagnostics).toHaveLength(1);
     expect(data.semantic.diagnostics[0].code).toBe('W001');
-  });
-
-  it('handles envelope input in convert_format', async () => {
-    const response = await handleIRTool('convert_format', {
-      semantic: {
-        lseVersion: '1.2',
-        nodes: [
-          {
-            kind: 'command',
-            action: 'toggle',
-            roles: { patient: { type: 'selector', value: '.active' } },
-          },
-          {
-            kind: 'command',
-            action: 'add',
-            roles: { patient: { type: 'selector', value: '.highlight' } },
-          },
-        ],
-      },
-    });
-
-    expect(response.isError).toBeUndefined();
-    const data = parseResult(response);
-    expect(data.ok).toBe(true);
-    expect(data.envelope.lseVersion).toBe('1.2');
-    expect(data.nodes).toHaveLength(2);
-    expect(data.nodes[0].semantic.action).toBe('toggle');
-    expect(data.nodes[1].semantic.action).toBe('add');
   });
 });
 
@@ -335,7 +181,7 @@ describe('validate_protocol', () => {
     expect(data.errors.length).toBeGreaterThan(0);
   });
 
-  it('validates v1.2 fields', async () => {
+  it('reports a construct LSE 3.0 removed', async () => {
     const response = await handleIRTool('validate_protocol', {
       json: {
         kind: 'command',
@@ -343,140 +189,16 @@ describe('validate_protocol', () => {
         roles: {},
         body: [{ kind: 'command', action: 'fetch', roles: {} }],
         catchBranch: [{ kind: 'command', action: 'log', roles: {} }],
-        asyncVariant: 'all', // invalid on try node, but structurally valid
       },
     });
 
     const data = parseResult(response);
-    // Should pass structural validation (asyncVariant is valid enum)
-    expect(data.ok).toBe(true);
+    expect(data.ok).toBe(false);
+    expect(JSON.stringify(data)).toContain('REMOVED_IN_LSE_3');
   });
 
   it('returns error for missing json parameter', async () => {
     const response = await handleIRTool('validate_protocol', {});
-    expect(response.isError).toBe(true);
-  });
-});
-
-describe('to_envelope', () => {
-  it('wraps protocol JSON nodes into an envelope', async () => {
-    const response = await handleIRTool('to_envelope', {
-      nodes: [
-        {
-          kind: 'command',
-          action: 'toggle',
-          roles: { patient: { type: 'selector', value: '.active' } },
-        },
-        {
-          kind: 'command',
-          action: 'add',
-          roles: { patient: { type: 'selector', value: '.highlight' } },
-        },
-      ],
-    });
-
-    expect(response.isError).toBeUndefined();
-    const data = parseResult(response);
-    expect(data.ok).toBe(true);
-    expect(data.envelope.lseVersion).toBe('1.2');
-    expect(data.envelope.nodes).toHaveLength(2);
-    expect(data.envelope.nodes[0].action).toBe('toggle');
-  });
-
-  it('accepts explicit bracket strings as nodes', async () => {
-    const response = await handleIRTool('to_envelope', {
-      nodes: ['[toggle patient:.active]', '[add patient:.highlight]'],
-    });
-
-    expect(response.isError).toBeUndefined();
-    const data = parseResult(response);
-    expect(data.ok).toBe(true);
-    expect(data.envelope.nodes).toHaveLength(2);
-  });
-
-  it('accepts mixed strings and JSON objects', async () => {
-    const response = await handleIRTool('to_envelope', {
-      nodes: [
-        '[toggle patient:.active]',
-        { kind: 'command', action: 'add', roles: { patient: { type: 'selector', value: '.x' } } },
-      ],
-    });
-
-    expect(response.isError).toBeUndefined();
-    const data = parseResult(response);
-    expect(data.ok).toBe(true);
-    expect(data.envelope.nodes).toHaveLength(2);
-  });
-
-  it('uses custom version when provided', async () => {
-    const response = await handleIRTool('to_envelope', {
-      nodes: [{ kind: 'command', action: 'noop', roles: {} }],
-      version: '1.3',
-    });
-
-    const data = parseResult(response);
-    expect(data.envelope.lseVersion).toBe('1.3');
-  });
-
-  it('returns error for empty nodes', async () => {
-    const response = await handleIRTool('to_envelope', { nodes: [] });
-    expect(response.isError).toBe(true);
-  });
-
-  it('returns error for missing nodes', async () => {
-    const response = await handleIRTool('to_envelope', {});
-    expect(response.isError).toBe(true);
-  });
-});
-
-describe('from_envelope', () => {
-  it('unwraps an envelope into nodes', async () => {
-    const response = await handleIRTool('from_envelope', {
-      envelope: {
-        lseVersion: '1.2',
-        nodes: [
-          {
-            kind: 'command',
-            action: 'toggle',
-            roles: { patient: { type: 'selector', value: '.active' } },
-          },
-        ],
-      },
-    });
-
-    expect(response.isError).toBeUndefined();
-    const data = parseResult(response);
-    expect(data.ok).toBe(true);
-    expect(data.lseVersion).toBe('1.2');
-    expect(data.nodes).toHaveLength(1);
-    expect(data.nodes[0].semantic.action).toBe('toggle');
-    expect(data.nodes[0].explicit).toContain('toggle');
-  });
-
-  it('preserves features from envelope', async () => {
-    const response = await handleIRTool('from_envelope', {
-      envelope: {
-        lseVersion: '1.2',
-        features: ['try-catch', 'pipe'],
-        nodes: [{ kind: 'command', action: 'noop', roles: {} }],
-      },
-    });
-
-    const data = parseResult(response);
-    expect(data.ok).toBe(true);
-    expect(data.features).toEqual(['try-catch', 'pipe']);
-  });
-
-  it('returns error for invalid envelope', async () => {
-    const response = await handleIRTool('from_envelope', {
-      envelope: { nodes: [] }, // missing lseVersion
-    });
-
-    expect(response.isError).toBe(true);
-  });
-
-  it('returns error for missing envelope parameter', async () => {
-    const response = await handleIRTool('from_envelope', {});
     expect(response.isError).toBe(true);
   });
 });

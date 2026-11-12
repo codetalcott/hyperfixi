@@ -69,7 +69,7 @@ export interface IRDiagnostic {
 // =============================================================================
 
 export type ProtocolNodeKind = 'command' | 'event-handler' | 'compound';
-export type ProtocolChainType = 'then' | 'and' | 'async' | 'sequential' | 'pipe';
+export type ProtocolChainType = 'then' | 'and' | 'async' | 'sequential';
 
 export interface ProtocolValueJSON {
   type: 'selector' | 'literal' | 'reference' | 'expression' | 'property-path' | 'flag';
@@ -100,12 +100,6 @@ export interface ProtocolNodeJSON {
   // v1.2 fields
   diagnostics?: ProtocolDiagnosticJSON[];
   annotations?: AnnotationJSON[];
-  catchBranch?: ProtocolNodeJSON[];
-  finallyBranch?: ProtocolNodeJSON[];
-  asyncVariant?: 'all' | 'race';
-  asyncBody?: ProtocolNodeJSON[];
-  arms?: MatchArmJSON[];
-  defaultArm?: ProtocolNodeJSON[];
 }
 
 // =============================================================================
@@ -124,15 +118,4 @@ export interface ProtocolDiagnosticJSON {
 export interface AnnotationJSON {
   name: string;
   value?: string;
-}
-
-export interface MatchArmJSON {
-  pattern: ProtocolValueJSON;
-  body: ProtocolNodeJSON[];
-}
-
-export interface LSEEnvelopeJSON {
-  lseVersion: string;
-  features?: string[];
-  nodes: ProtocolNodeJSON[];
 }

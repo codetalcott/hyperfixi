@@ -1,5 +1,5 @@
 ; LokaScript Explicit Syntax (LSE) - Formal Grammar
-; Version 2.0.0
+; Version 3.0.0
 ;
 ; RFC 5234 ABNF (Augmented Backus-Naur Form)
 ; https://www.rfc-editor.org/rfc/rfc5234
@@ -13,24 +13,14 @@
 ; spec README for the stateful tokenizer specification.
 
 ; =============================================================================
-; 1. Document (streaming format)
+; 1. Statement line
 ; =============================================================================
 
-; An LSE document is a sequence of lines, one statement per line.
-; This is the streaming format (like JSONL).
+; LSE is one statement: a bracket command or a chain of them, with optional
+; annotations. (v3.0 removed the multi-line document and its "#!lse" version
+; header: LSE carries commands and simple handlers, one statement at a time.)
 
-document       = [ version-header LF ] *( line LF ) [ line ]
-line           = comment / blank-line / statement-line
-comment        = ("//" / "#") *VCHAR
-blank-line     = *WSP
 statement-line = *WSP *annotation compound-stmt *WSP
-
-; --- Version Header (v1.2) ---
-; Optional first line declaring the LSE version. Starts with "#!" so v1.0/v1.1
-; parsers treat it as a comment and ignore it gracefully.
-
-version-header = "#!lse" 1*WSP version-number
-version-number = 1*DIGIT "." 1*DIGIT [ "." 1*DIGIT ]
 
 ; --- Annotations (v1.2) ---
 ; Zero or more @name or @name(value) decorators precede a statement.
@@ -51,9 +41,8 @@ ann-value-char   = ALPHA / DIGIT / "-" / "_" / "." / "/" / ":"
 
 compound-stmt  = bracket-cmd *( 1*WSP chain-op 1*WSP bracket-cmd )
 
-chain-op       = "then" / "and" / "async" / "sequential" / "|>"
-; "|>" (pipe) threads the output of the left command into the patient/source
-; role of the right command. Wire format: chainType "pipe" on compound nodes.
+chain-op       = "then" / "and" / "async" / "sequential"
+; (v3.0 removed the "|>" pipe operator.)
 
 ; =============================================================================
 ; 3. Bracket Command
@@ -237,7 +226,7 @@ reference      = "me" / "you" / "it" / "result"
 ; selectors in structural roles use the selector-literal form.
 
 structural-role-names = "body" / "then" / "else" / "condition" / "loop-body" / "variable"
-                      / "catch" / "finally"
+; (v3.0 removed "catch" and "finally" with the try command.)
 
 nested-structural  = bracket-cmd
 

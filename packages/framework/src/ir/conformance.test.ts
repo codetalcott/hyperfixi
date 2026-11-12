@@ -6,14 +6,13 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parseCompound, parseDocument } from './explicit-parser';
-import { renderExplicit, renderDocument } from './explicit-renderer';
+import { parseCompound } from './explicit-parser';
+import { renderExplicit } from './explicit-renderer';
 import { fromProtocolJSON, toProtocolJSON } from './protocol-json';
 import type { CompoundSemanticNode } from '../core/types';
 
 import compoundFixtures from '../../../intent/fixtures/compound.json';
 import annotationFixtures from '../../../intent/fixtures/annotations.json';
-import versionFixtures from '../../../intent/fixtures/version-envelope.json';
 
 // =============================================================================
 // Compound Fixtures
@@ -80,41 +79,3 @@ describe('conformance: annotations.json', () => {
 // =============================================================================
 // Version Envelope Fixtures (streaming format)
 // =============================================================================
-
-describe('conformance: version-envelope.json (streaming)', () => {
-  for (const fixture of versionFixtures) {
-    const f = fixture as any;
-    if (!f.streamingInput) continue;
-
-    // ver-007 describes v1.0/v1.1 fallback behavior — our parser is v1.2,
-    // so we parse the version header correctly instead of treating it as a comment.
-    if (f.v1Fallback) {
-      it(`${f.id}: v1.2 parser parses version header — ${f.description}`, () => {
-        const envelope = parseDocument(f.streamingInput);
-        // v1.2 parser extracts the version (v1.0 parsers would ignore it)
-        expect(envelope.lseVersion).toBe('1.2');
-        expect(envelope.nodes).toHaveLength(f.v1Fallback.expectedNodeCount);
-      });
-      continue;
-    }
-
-    it(`${f.id}: ${f.description}`, () => {
-      const envelope = parseDocument(f.streamingInput);
-      expect(envelope.lseVersion).toBe(f.expectedVersion);
-      expect(envelope.nodes).toHaveLength(f.expectedNodeCount);
-    });
-  }
-
-  // Also test JSON-based envelope round-trips
-  for (const fixture of versionFixtures) {
-    const f = fixture as any;
-    if (f.streamingInput) continue;
-    if (!f.expectedRoundTrip) continue;
-
-    it(`${f.id}: JSON envelope round-trip — ${f.description}`, () => {
-      // For JSON envelopes: verify node count and version
-      expect(f.jsonInput.lseVersion).toBe(f.expectedVersion);
-      expect(f.jsonInput.nodes).toHaveLength(f.expectedNodeCount);
-    });
-  }
-});

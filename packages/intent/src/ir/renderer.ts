@@ -13,7 +13,6 @@ import type {
   EventHandlerSemanticNode,
   ConditionalSemanticNode,
   LoopSemanticNode,
-  LSEEnvelope,
 } from '../types';
 import { LossyEncodingError, allowsLoss, findUnencodable, type EncodeOptions } from './encodable';
 import { parseCompound } from './parser';
@@ -23,7 +22,7 @@ import { parseCompound } from './parser';
  *
  * Refuses a node the syntax cannot carry in full with a
  * {@link LossyEncodingError}: one with a part the syntax has no place for (an
- * event modifier, a `match` arm, a kind it has no bracket for), or one whose
+ * event modifier, a kind it has no bracket for), or one whose
  * text the bracket parser reads back as something else (an expression of
  * several words, a `then` chain inside a `body:`). `{ lossy: 'allow' }` returns
  * the text anyway.
@@ -59,9 +58,7 @@ function write(node: SemanticNode): string {
 
   if (node.kind === 'compound') {
     const compoundNode = node as CompoundSemanticNode;
-    // The grammar's chain operators are the chain types, except a pipe: `|>`.
-    const op = compoundNode.chainType === 'pipe' ? '|>' : compoundNode.chainType;
-    result = compoundNode.statements.map(stmt => write(stmt)).join(` ${op} `);
+    result = compoundNode.statements.map(stmt => write(stmt)).join(` ${compoundNode.chainType} `);
   } else {
     result = renderBracketCommand(node);
   }
@@ -74,20 +71,6 @@ function write(node: SemanticNode): string {
   }
 
   return result;
-}
-
-/**
- * Render an LSEEnvelope as a multi-line document string.
- */
-export function renderDocument(envelope: LSEEnvelope): string {
-  const lines: string[] = [];
-  if (envelope.lseVersion && envelope.lseVersion !== '1.0') {
-    lines.push(`#!lse ${envelope.lseVersion}`);
-  }
-  for (const node of envelope.nodes) {
-    lines.push(renderExplicit(node));
-  }
-  return lines.join('\n');
 }
 
 // =============================================================================
@@ -136,13 +119,6 @@ function renderBracketCommand(node: SemanticNode): string {
     const cmd = node as CommandSemanticNode;
     if (cmd.body && cmd.body.length > 0)
       parts.push(`body:${cmd.body.map(n => write(n)).join(' ')}`);
-    if (cmd.catchBranch && cmd.catchBranch.length > 0)
-      parts.push(`catch:${cmd.catchBranch.map(n => write(n)).join(' ')}`);
-    if (cmd.finallyBranch && cmd.finallyBranch.length > 0)
-      parts.push(`finally:${cmd.finallyBranch.map(n => write(n)).join(' ')}`);
-    if (cmd.asyncVariant) parts.push(`async-variant:${cmd.asyncVariant}`);
-    if (cmd.asyncBody && cmd.asyncBody.length > 0)
-      parts.push(`async-body:${cmd.asyncBody.map(n => write(n)).join(' ')}`);
   }
 
   return `[${parts.join(' ')}]`;

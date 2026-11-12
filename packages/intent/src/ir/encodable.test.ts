@@ -207,8 +207,5 @@ describe('renderExplicit refuses what bracket syntax cannot carry', () => {
 
     const chain = createCompoundNode([toggle(), toggle()], 'then');
     expect(renderExplicit(chain)).toBe('[toggle patient:.a] then [toggle patient:.a]');
-    // A pipe is written with the grammar's operator (was: the word `pipe`, which does not parse).
-    const pipe = createCompoundNode([toggle(), toggle()], 'pipe');
-    expect(renderExplicit(pipe)).toBe('[toggle patient:.a] |> [toggle patient:.a]');
   });
 });

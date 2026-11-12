@@ -13,9 +13,6 @@ import {
   fromProtocolJSON,
   toProtocolJSON,
   validateProtocolJSON,
-  toEnvelopeJSON,
-  fromEnvelopeJSON,
-  isEnvelope,
   fromInterchangeNode,
 } from '@lokascript/framework';
 import { jsonResponse, errorResponse, encodeNode } from './utils.js';
@@ -69,9 +66,7 @@ export const irTools: Tool[] = [
             '`trigger` is convenience sugar that wraps a command in an event handler. ' +
             'Full form: { kind?, action, roles, trigger?, body?, statements?, chainType?, ' +
             'thenBranch?, elseBranch?, loopVariant?, loopBody?, loopVariable?, indexVariable?, ' +
-            'catchBranch?, finallyBranch?, asyncVariant?, asyncBody?, arms?, defaultArm?, ' +
-            'annotations?, diagnostics? }. ' +
-            'Envelope: { lseVersion, nodes[], features? }.',
+            'annotations?, diagnostics? }.',
           properties: {
             kind: {
               type: 'string',
@@ -96,7 +91,7 @@ export const irTools: Tool[] = [
             },
             chainType: {
               type: 'string',
-              enum: ['then', 'and', 'async', 'sequential', 'pipe'],
+              enum: ['then', 'and', 'async', 'sequential'],
               description: 'Chain operator (compound nodes)',
             },
             thenBranch: {
@@ -123,31 +118,6 @@ export const irTools: Tool[] = [
             indexVariable: {
               type: 'string',
               description: 'Optional loop index variable name (v1.1 loop)',
-            },
-            catchBranch: {
-              type: 'array',
-              description: 'Catch branch commands (v1.2 try/catch)',
-            },
-            finallyBranch: {
-              type: 'array',
-              description: 'Finally branch commands (v1.2 try/finally)',
-            },
-            asyncVariant: {
-              type: 'string',
-              enum: ['all', 'race'],
-              description: 'Async coordination variant (v1.2)',
-            },
-            asyncBody: {
-              type: 'array',
-              description: 'Async body commands (v1.2)',
-            },
-            arms: {
-              type: 'array',
-              description: 'Match arms — array of { pattern, body } (v1.2)',
-            },
-            defaultArm: {
-              type: 'array',
-              description: 'Default match arm commands (v1.2)',
             },
             annotations: {
               type: 'array',
@@ -193,39 +163,6 @@ export const irTools: Tool[] = [
       required: ['json'],
     },
   },
-  {
-    name: 'to_envelope',
-    description:
-      'Wrap one or more protocol JSON nodes into an LSE v1.2 envelope with version metadata and feature flags.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        nodes: {
-          type: 'array',
-          description: 'Array of protocol JSON nodes (or explicit bracket strings to parse first)',
-        },
-        version: {
-          type: 'string',
-          description: 'LSE version string (default: "1.2")',
-        },
-      },
-      required: ['nodes'],
-    },
-  },
-  {
-    name: 'from_envelope',
-    description: 'Unwrap an LSE v1.2 envelope into its constituent semantic nodes and metadata.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        envelope: {
-          type: 'object',
-          description: 'LSE envelope JSON: { lseVersion, nodes[], features? }',
-        },
-      },
-      required: ['envelope'],
-    },
-  },
 ];
 
 // =============================================================================
@@ -244,10 +181,6 @@ export async function handleIRTool(
         return handleValidateExplicit(args);
       case 'validate_protocol':
         return handleValidateProtocol(args);
-      case 'to_envelope':
-        return handleToEnvelope(args);
-      case 'from_envelope':
-        return handleFromEnvelope(args);
       default:
         return errorResponse(`Unknown IR tool: ${name}`);
     }
@@ -292,17 +225,6 @@ function handleConvertFormat(args: Record<string, unknown>): ToolResponse {
 
   // JSON → Explicit
   const input = semanticInput as Record<string, unknown>;
-
-  // Detect LSE envelope by presence of `lseVersion` field
-  if (isEnvelope(input)) {
-    const envelope = fromEnvelopeJSON(input as any);
-    const results = envelope.nodes.map((node: SemanticNode) => encodeNode(node, WRITERS));
-    return jsonResponse({
-      ok: true,
-      envelope: { lseVersion: envelope.lseVersion, features: envelope.features },
-      nodes: results,
-    });
-  }
 
   // Unified protocol JSON path (kind optional, trigger accepted)
   const diagnostics = validateProtocolJSON(input);
@@ -357,57 +279,5 @@ function handleValidateProtocol(args: Record<string, unknown>): ToolResponse {
     ok: errors.length === 0,
     errors,
     warnings,
-  });
-}
-
-function handleToEnvelope(args: Record<string, unknown>): ToolResponse {
-  const nodes = Array.isArray(args.nodes) ? args.nodes : undefined;
-  if (!nodes || nodes.length === 0) {
-    return errorResponse('Missing required parameter: nodes (non-empty array)');
-  }
-
-  // Each node can be a string (explicit syntax) or an object (protocol JSON)
-  const semanticNodes = nodes.map((n, i) => {
-    if (typeof n === 'string') {
-      return parseExplicit(n);
-    }
-    if (typeof n === 'object' && n) {
-      const diags = validateProtocolJSON(n as Record<string, unknown>);
-      const errs = diags.filter(d => d.severity === 'error');
-      if (errs.length > 0) {
-        throw new Error(`Node ${i}: ${errs.map(e => e.message).join('; ')}`);
-      }
-      return fromProtocolJSON(n as any);
-    }
-    throw new Error(`Node ${i}: must be a string (explicit) or object (protocol JSON)`);
-  });
-
-  const version = typeof args.version === 'string' ? args.version : '1.2';
-  const envelope = toEnvelopeJSON({ lseVersion: version, nodes: semanticNodes });
-
-  return jsonResponse({
-    ok: true,
-    envelope,
-  });
-}
-
-function handleFromEnvelope(args: Record<string, unknown>): ToolResponse {
-  const envelope = typeof args.envelope === 'object' && args.envelope ? args.envelope : undefined;
-  if (!envelope) {
-    return errorResponse('Missing required parameter: envelope');
-  }
-
-  if (!isEnvelope(envelope as Record<string, unknown>)) {
-    return errorResponse('Invalid envelope: must have `lseVersion` and `nodes` fields');
-  }
-
-  const result = fromEnvelopeJSON(envelope as any);
-  const nodes = result.nodes.map((node: SemanticNode) => encodeNode(node, WRITERS));
-
-  return jsonResponse({
-    ok: true,
-    lseVersion: result.lseVersion,
-    features: result.features,
-    nodes,
   });
 }

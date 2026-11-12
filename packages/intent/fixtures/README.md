@@ -1,6 +1,6 @@
 # LSE fixtures
 
-142 cases in 23 files: what `@lokascript/intent` reads and writes for LSE bracket syntax and
+115 cases in 18 files: what `@lokascript/intent` reads and writes for LSE bracket syntax and
 protocol JSON (the specification is in [`protocol/`](../../../protocol/)). Every case runs in
 [`src/ir/conformance.test.ts`](../src/ir/conformance.test.ts), which fails on a case shape it does
 not know; `@lokascript/framework`'s IR tests read some of the files too.
@@ -16,6 +16,9 @@ fixtures moved here, to what the shipped parser does:
   order; the reference renderers quoted every string and one case had its roles sorted. (5
   `roundtrip` cases.)
 
+LSE 3.0 removed the constructs with no producer (`try`, `all`/`race`, `match`, pipe chains,
+envelopes and documents) and their 27 cases: 142 → 115.
+
 ## Case shapes
 
 | Fields                                  | Checked                                                       |
@@ -27,7 +30,6 @@ fixtures moved here, to what the shipped parser does:
 | `jsonInput`, `expectValidationError`    | `validateProtocolJSON` reports an error (with `errorCode`)    |
 | `node`, `renderOnly`, `rendered`        | `renderExplicit(fromProtocolJSON(node))` is `rendered`        |
 | `format: "llm-simplified"`, `input`     | `fromProtocolJSON(input)`: kind, action, the body's action    |
-| `streamingInput`                        | `parseDocument`: version and node count                       |
 
 `expected.kind` is the wire format's (`command`, `event-handler`, `compound`): the package's
 `conditional` and `loop` nodes are `command` there. The other `expected*` fields on a JSON case

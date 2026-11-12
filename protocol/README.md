@@ -16,7 +16,7 @@ It has one implementation, [`@lokascript/intent`](../packages/intent/) (re-expor
 > TypeScript, Python, Go and Rust. Nothing outside this repository implemented or consumed it, the
 > four parsers had no importers, and their conformance suite did not run in full on the parser that
 > ships. They are retired (tag `archived/lse-reference-parsers-2026-11-12`), the fixtures moved to
-> [`packages/intent/fixtures/`](../packages/intent/fixtures/), and all 142 run on `@lokascript/intent`.
+> [`packages/intent/fixtures/`](../packages/intent/fixtures/), and all of them run on `@lokascript/intent`.
 > The grammar and the wire format are unchanged.
 
 ## Scope
@@ -54,7 +54,7 @@ the encoding (2026-11-12):
 
 | Encoding       | Carried in full | Only a value's type changed | Refused |
 | -------------- | --------------- | --------------------------- | ------- |
-| Protocol JSON  | 603             | 181                         | 382     |
+| Protocol JSON  | 603             | 178                         | 385     |
 | Bracket syntax | 232             | 158                         | 776     |
 
 What is refused, and why:
@@ -66,7 +66,7 @@ What is refused, and why:
   `in` scope.
 - **Bracket syntax only:** a value of several words that is not a string (`it matches .x`: there is
   no expression delimiter), more than one command in a `body:`, `then:` or `loop-body:` (a
-  structural role holds one command), and a `match` command's arms.
+  structural role holds one command).
 
 "Only a value's type changed" is the documented flattening of a property path to an expression in
 JSON, and, in bracket syntax, the parser's classification of each bare value (the syntax is
@@ -122,11 +122,27 @@ fromProtocolJSON(toProtocolJSON(node)); // the same node
 ## Specification
 
 - [spec/README.md](spec/README.md): the syntax in prose
-- [spec/lokascript-explicit-syntax.abnf](spec/lokascript-explicit-syntax.abnf): the grammar (v2.0.0)
+- [spec/lokascript-explicit-syntax.abnf](spec/lokascript-explicit-syntax.abnf): the grammar (v3.0.0)
 - [spec/wire-format.md](spec/wire-format.md): the JSON representation
 - [spec/lse-wire-format.schema.json](spec/lse-wire-format.schema.json): its JSON Schema
-- [`packages/intent/fixtures/`](../packages/intent/fixtures/): 142 cases, run by
+- [`packages/intent/fixtures/`](../packages/intent/fixtures/): 115 cases, run by
   `npm test --prefix packages/intent`
+
+### Breaking changes in 3.0.0
+
+Version 3.0 removed what had no producer, to match the scope above:
+
+- **`try`** (`catch:` / `finally:`, `catchBranch` / `finallyBranch`), **`all` / `race`**
+  (`asyncVariant`, `asyncBody`), **`match`** (`arms`, `defaultArm`) and **pipe chains** (`|>`,
+  `chainType: "pipe"`).
+- **Documents and envelopes**: the `#!lse` version header, multi-line documents, and the
+  `{ lseVersion, nodes }` envelope. LSE is one statement at a time.
+- `fromProtocolJSON` refuses JSON that has one of these and `validateProtocolJSON` reports it
+  (`REMOVED_IN_LSE_3`); `parseExplicit` rejects text after a statement's closing bracket
+  (`[a x:1] zzz [b y:2]` used to read as one command).
+
+What stays: commands, chains (`then`, `and`, `async`, `sequential`), `if`, loops, event handlers,
+block commands (`body:`), annotations and diagnostics.
 
 ### Breaking changes in 2.0.0
 

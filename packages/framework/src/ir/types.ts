@@ -14,6 +14,4 @@ export type {
   ProtocolNodeJSON,
   ProtocolDiagnosticJSON,
   AnnotationJSON,
-  MatchArmJSON,
-  LSEEnvelopeJSON,
 } from '@lokascript/intent';

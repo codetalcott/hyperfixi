@@ -23,7 +23,7 @@ export const feedbackTools: Tool[] = [
         format: {
           type: 'string',
           description:
-            'Input format: explicit (default), json, protocol (full-fidelity v1.1/v1.2), envelope (v1.2 multi-node), or natural',
+            'Input format: explicit (default), json, protocol (full-fidelity protocol JSON), or natural',
         },
         domain: {
           type: 'string',
@@ -84,8 +84,7 @@ async function handleValidateAndFeedback(
       };
     }
 
-    const format =
-      (args.format as 'explicit' | 'json' | 'protocol' | 'envelope' | 'natural') || 'explicit';
+    const format = (args.format as 'explicit' | 'json' | 'protocol' | 'natural') || 'explicit';
     const domain = args.domain as string | undefined;
 
     let action: string | undefined;
@@ -152,47 +151,10 @@ async function handleValidateAndFeedback(
           code: 'parse-error',
         });
       }
-    } else if (format === 'envelope') {
-      // LSE v1.2 envelope: { lseVersion, nodes[], features? }
-      try {
-        const { isEnvelope, fromEnvelopeJSON, validateProtocolJSON } =
-          await import('@lokascript/framework');
-        const parsed = JSON.parse(input);
-        if (!isEnvelope(parsed)) {
-          diagnostics.push({
-            severity: 'error',
-            message: 'Not a valid LSE envelope: missing lseVersion or nodes',
-            code: 'invalid-envelope',
-          });
-        } else {
-          // Validate each node in the envelope
-          for (let i = 0; i < parsed.nodes.length; i++) {
-            const nodeDiags = validateProtocolJSON(parsed.nodes[i]);
-            for (const d of nodeDiags) {
-              diagnostics.push({
-                severity: d.severity,
-                message: `Node ${i}: ${d.message}`,
-                code: d.code,
-              });
-            }
-          }
-          if (diagnostics.filter(d => d.severity === 'error').length === 0) {
-            const envelope = fromEnvelopeJSON(parsed);
-            action = envelope.nodes[0]?.action;
-          }
-        }
-      } catch (e) {
-        diagnostics.push({
-          severity: 'error',
-          message: e instanceof Error ? e.message : 'Invalid envelope JSON',
-          code: 'parse-error',
-        });
-      }
     }
 
-    // Map protocol/envelope formats to 'json' for buildFeedback (which only knows explicit/json/natural)
-    const feedbackFormat: 'explicit' | 'json' | 'natural' =
-      format === 'protocol' || format === 'envelope' ? 'json' : format;
+    // Map the protocol format to 'json' for buildFeedback (which only knows explicit/json/natural)
+    const feedbackFormat: 'explicit' | 'json' | 'natural' = format === 'protocol' ? 'json' : format;
     const feedback = buildFeedback(input, feedbackFormat, diagnostics, schemaLookup, action);
 
     return {
