@@ -112,7 +112,7 @@ describe('toProtocolJSON refuses what the wire format cannot carry', () => {
 
   it('keeps a role named __proto__ (was: set the prototype, role gone)', () => {
     const json = toProtocolJSON(parseExplicit('[toggle __proto__:.active]'));
-    expect(Object.keys(json.roles)).toEqual(['__proto__']);
+    expect(Object.keys(json.roles ?? {})).toEqual(['__proto__']);
     expect(JSON.parse(JSON.stringify(json)).roles['__proto__']).toMatchObject({ value: '.active' });
   });
 });

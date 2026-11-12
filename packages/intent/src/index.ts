@@ -95,6 +95,9 @@ export type {
   ProtocolChainType,
   ProtocolValueJSON,
   ProtocolNodeJSON,
+  ProtocolCommandJSON,
+  ProtocolEventHandlerJSON,
+  ProtocolCompoundJSON,
   ProtocolDiagnosticJSON,
   AnnotationJSON,
 } from './ir/types';

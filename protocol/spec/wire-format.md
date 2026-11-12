@@ -201,29 +201,43 @@ Annotation order is preserved — order matters for middleware-like composition 
 ### Node Shape
 
 ```typescript
-interface SemanticNodeJSON {
-  kind?: 'command' | 'event-handler' | 'compound'; // defaults to "command"
+// `@lokascript/intent` exports these as ProtocolCommandJSON, ProtocolEventHandlerJSON,
+// ProtocolCompoundJSON and their union ProtocolNodeJSON. A field on the wrong kind is a type error.
+type SemanticNodeJSON = CommandJSON | EventHandlerJSON | CompoundJSON;
+
+interface NodeBaseJSON {
   action: string;
+  diagnostics?: DiagnosticJSON[]; // type-constraint results (v1.2)
+  annotations?: AnnotationJSON[]; // metadata (v1.2)
+}
+
+interface CommandJSON extends NodeBaseJSON {
+  kind?: 'command'; // the default
   roles: Record<string, SemanticValueJSON>;
-  // convenience sugar: wraps command in event handler
+  // convenience sugar: a handler around this one command
   trigger?: { event: string; modifiers?: Record<string, unknown> };
-  // event-handler, and a block command's commands (`tell`):
+  // a block command's commands (`tell`):
   body?: SemanticNodeJSON[];
-  // compound only:
-  statements?: SemanticNodeJSON[];
-  chainType?: 'then' | 'and' | 'async' | 'sequential';
-  // conditional (v1.1, command nodes only):
+  // conditional (v1.1):
   thenBranch?: SemanticNodeJSON[];
   elseBranch?: SemanticNodeJSON[];
-  // loop (v1.1, command nodes only):
+  // loop (v1.1):
   loopVariant?: 'forever' | 'times' | 'for' | 'while' | 'until';
   loopBody?: SemanticNodeJSON[];
   loopVariable?: string;
   indexVariable?: string;
-  // type constraint diagnostics (v1.2, command nodes only):
-  diagnostics?: DiagnosticJSON[];
-  // metadata annotations (v1.2, all node kinds):
-  annotations?: AnnotationJSON[];
+}
+
+interface EventHandlerJSON extends NodeBaseJSON {
+  kind: 'event-handler';
+  roles: Record<string, SemanticValueJSON>; // the event
+  body: SemanticNodeJSON[];
+}
+
+interface CompoundJSON extends NodeBaseJSON {
+  kind: 'compound';
+  statements: SemanticNodeJSON[];
+  chainType?: 'then' | 'and' | 'async' | 'sequential';
 }
 
 interface DiagnosticJSON {

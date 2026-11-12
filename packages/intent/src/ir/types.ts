@@ -61,26 +61,72 @@ export interface ProtocolValueJSON {
   selectorKind?: 'id' | 'class' | 'attribute' | 'element' | 'complex';
 }
 
-export interface ProtocolNodeJSON {
-  kind?: ProtocolNodeKind;
+/** What every protocol node carries. */
+interface ProtocolNodeBaseJSON {
   action: string;
+  diagnostics?: ProtocolDiagnosticJSON[];
+  annotations?: AnnotationJSON[];
+}
+
+/**
+ * A command. `kind` may be left out. With `trigger` it is a handler around this
+ * one command (the compact form); with `thenBranch`/`elseBranch` a conditional;
+ * with `loopVariant` a loop; with `body` a block command (`tell`).
+ */
+export interface ProtocolCommandJSON extends ProtocolNodeBaseJSON {
+  kind?: 'command';
   roles: Record<string, ProtocolValueJSON>;
   trigger?: { event: string; modifiers?: Record<string, unknown> };
   body?: ProtocolNodeJSON[];
-  statements?: ProtocolNodeJSON[];
-  chainType?: ProtocolChainType;
-  // v1.1 conditional fields
   thenBranch?: ProtocolNodeJSON[];
   elseBranch?: ProtocolNodeJSON[];
-  // v1.1 loop fields
   loopVariant?: string;
   loopBody?: ProtocolNodeJSON[];
   loopVariable?: string;
   indexVariable?: string;
-  // v1.2 fields
-  diagnostics?: ProtocolDiagnosticJSON[];
-  annotations?: AnnotationJSON[];
+  statements?: never;
+  chainType?: never;
 }
+
+/** An event handler in the verbose form: its event in `roles`, its commands in `body`. */
+export interface ProtocolEventHandlerJSON extends ProtocolNodeBaseJSON {
+  kind: 'event-handler';
+  roles: Record<string, ProtocolValueJSON>;
+  body: ProtocolNodeJSON[];
+  trigger?: never;
+  statements?: never;
+  chainType?: never;
+  thenBranch?: never;
+  elseBranch?: never;
+  loopVariant?: never;
+  loopBody?: never;
+  loopVariable?: never;
+  indexVariable?: never;
+}
+
+/** A chain of statements. It has no roles of its own. */
+export interface ProtocolCompoundJSON extends ProtocolNodeBaseJSON {
+  kind: 'compound';
+  statements: ProtocolNodeJSON[];
+  chainType?: ProtocolChainType;
+  roles?: Record<string, never>;
+  trigger?: never;
+  body?: never;
+  thenBranch?: never;
+  elseBranch?: never;
+  loopVariant?: never;
+  loopBody?: never;
+  loopVariable?: never;
+  indexVariable?: never;
+}
+
+/**
+ * A node of the wire format, discriminated by `kind` (absent means `command`).
+ * A field on the wrong kind (`thenBranch` on a compound, `statements` on a
+ * command) is a type error; it was one flat interface with every field optional.
+ */
+export type ProtocolNodeJSON =
+  ProtocolCommandJSON | ProtocolEventHandlerJSON | ProtocolCompoundJSON;
 
 // =============================================================================
 // v1.2 Sub-types
