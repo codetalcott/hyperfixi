@@ -18,6 +18,28 @@ export type {
 
 import type { SemanticRole } from './types/grammar-types';
 
+// The node model's base: `@lokascript/intent`'s, through framework. The value and
+// node types below EXTEND it (so a field the base gains, or a type that stops
+// fitting, is a compile error here), and add what hyperscript needs: three more
+// node kinds, error clauses, positions, the narrower action and role names.
+import type {
+  BaseNode,
+  CommandFields,
+  EventHandlerFields,
+  ConditionalFields,
+  CompoundFields,
+  LoopFields,
+  EventModifiers as BaseEventModifiers,
+  LiteralValue as BaseLiteralValue,
+  SelectorValue as BaseSelectorValue,
+  ReferenceValue as BaseReferenceValue,
+  PropertyPathValue as BasePropertyPathValue,
+  ExpressionValue as BaseExpressionValue,
+  FlagValue as BaseFlagValue,
+  SemanticMetadata as BaseSemanticMetadata,
+  SourcePosition as BaseSourcePosition,
+} from '@lokascript/framework';
+
 // Re-export Diagnostic from framework for structured error reporting (Phase 3.4)
 export type { Diagnostic, DiagnosticSeverity } from '@lokascript/framework';
 
@@ -168,7 +190,7 @@ export interface SourceSpanned {
  */
 export type ExpectedType = SemanticValue['type'];
 
-export interface LiteralValue extends ImplicitTaggable, SourceSpanned {
+export interface LiteralValue extends BaseLiteralValue, ImplicitTaggable, SourceSpanned {
   readonly type: 'literal';
   readonly value: string | number | boolean;
   readonly dataType?: 'string' | 'number' | 'boolean' | 'duration';
@@ -189,7 +211,7 @@ export interface LiteralValue extends ImplicitTaggable, SourceSpanned {
   readonly quoted?: true;
 }
 
-export interface SelectorValue extends ImplicitTaggable, SourceSpanned {
+export interface SelectorValue extends BaseSelectorValue, ImplicitTaggable, SourceSpanned {
   readonly type: 'selector';
   readonly value: string; // The CSS selector: #id, .class, [attr], etc.
   readonly selectorKind: 'id' | 'class' | 'attribute' | 'element' | 'complex';
@@ -200,13 +222,13 @@ export interface SelectorValue extends ImplicitTaggable, SourceSpanned {
   readonly scope?: SemanticValue;
 }
 
-export interface ReferenceValue extends ImplicitTaggable, SourceSpanned {
+export interface ReferenceValue extends BaseReferenceValue, ImplicitTaggable, SourceSpanned {
   readonly type: 'reference';
   readonly value:
     'me' | 'you' | 'it' | 'result' | 'event' | 'target' | 'body' | 'document' | 'window' | 'detail';
 }
 
-export interface PropertyPathValue extends ImplicitTaggable, SourceSpanned {
+export interface PropertyPathValue extends BasePropertyPathValue, ImplicitTaggable, SourceSpanned {
   readonly type: 'property-path';
   readonly object: SemanticValue;
   readonly property: string;
@@ -229,7 +251,7 @@ export interface PropertyPathValue extends ImplicitTaggable, SourceSpanned {
   readonly access?: 'dot' | 'possessive';
 }
 
-export interface ExpressionValue extends ImplicitTaggable, SourceSpanned {
+export interface ExpressionValue extends BaseExpressionValue, ImplicitTaggable, SourceSpanned {
   readonly type: 'expression';
   /** Raw expression string for complex expressions that need further parsing */
   readonly raw: string;
@@ -239,7 +261,7 @@ export interface ExpressionValue extends ImplicitTaggable, SourceSpanned {
  * A boolean flag value — present (+flag) or negated (~flag).
  * Used in declarative domains for no-value attributes like primary-key, not-null.
  */
-export interface FlagValue extends ImplicitTaggable, SourceSpanned {
+export interface FlagValue extends BaseFlagValue, ImplicitTaggable, SourceSpanned {
   readonly type: 'flag';
   readonly name: string;
   readonly enabled: boolean;
@@ -253,28 +275,28 @@ export interface FlagValue extends ImplicitTaggable, SourceSpanned {
  * Base interface for all semantic nodes.
  * Semantic nodes capture the MEANING of hyperscript constructs.
  */
-export interface SemanticNode {
-  readonly kind:
-    | 'command'
-    | 'event-handler'
-    | 'conditional'
-    | 'compound'
-    | 'loop'
-    | 'behavior'
-    | 'def'
-    | 'feature';
-  readonly action: ActionType;
-  readonly roles: ReadonlyMap<SemanticRole, SemanticValue>;
-  readonly metadata?: SemanticMetadata;
-  /** Structured diagnostics from parsing stages (Phase 3.4) */
-  readonly diagnostics?: readonly import('@lokascript/framework').Diagnostic[];
-}
+export type SemanticNodeKind =
+  | 'command'
+  | 'event-handler'
+  | 'conditional'
+  | 'compound'
+  | 'loop'
+  | 'behavior'
+  | 'def'
+  | 'feature';
+
+export interface SemanticNode extends BaseNode<
+  SemanticNodeKind,
+  ActionType,
+  SemanticRole,
+  SemanticValue
+> {}
 
 /**
  * Metadata about the source of a semantic node.
  * Useful for debugging, error messages, and round-trip conversion.
  */
-export interface SemanticMetadata {
+export interface SemanticMetadata extends BaseSemanticMetadata {
   readonly sourceLanguage?: string;
   readonly sourceText?: string;
   readonly sourcePosition?: SourcePosition;
@@ -290,7 +312,7 @@ export interface SemanticMetadata {
   readonly confidence?: number;
 }
 
-export interface SourcePosition {
+export interface SourcePosition extends BaseSourcePosition {
   readonly start: number;
   readonly end: number;
   readonly line?: number;
@@ -300,7 +322,7 @@ export interface SourcePosition {
 /**
  * A command semantic node - represents a single hyperscript command.
  */
-export interface CommandSemanticNode extends SemanticNode {
+export interface CommandSemanticNode extends SemanticNode, CommandFields<SemanticNode> {
   readonly kind: 'command';
   /**
    * A `wait for`'s events and timeouts, in order, when there is more to it than
@@ -356,7 +378,8 @@ export interface ErrorClauses {
   readonly finallyBody?: SemanticNode[];
 }
 
-export interface EventHandlerSemanticNode extends SemanticNode, ErrorClauses {
+export interface EventHandlerSemanticNode
+  extends SemanticNode, EventHandlerFields<SemanticNode, SemanticValue>, ErrorClauses {
   readonly kind: 'event-handler';
   readonly action: 'on';
   readonly body: SemanticNode[];
@@ -380,7 +403,7 @@ export interface EventHandlerSemanticNode extends SemanticNode, ErrorClauses {
   readonly headClause?: string;
 }
 
-export interface EventModifiers {
+export interface EventModifiers extends BaseEventModifiers<SemanticValue> {
   readonly once?: boolean;
   /**
    * `once` written `on first <event>`, the form both engines run once. Absent,
@@ -403,7 +426,7 @@ export interface EventModifiers {
 /**
  * A conditional semantic node - represents "if [condition] then [body] else [body]".
  */
-export interface ConditionalSemanticNode extends SemanticNode {
+export interface ConditionalSemanticNode extends SemanticNode, ConditionalFields<SemanticNode> {
   readonly kind: 'conditional';
   readonly action: 'if';
   readonly thenBranch: SemanticNode[];
@@ -413,7 +436,7 @@ export interface ConditionalSemanticNode extends SemanticNode {
 /**
  * A compound semantic node - represents multiple chained statements.
  */
-export interface CompoundSemanticNode extends SemanticNode {
+export interface CompoundSemanticNode extends SemanticNode, CompoundFields<SemanticNode> {
   readonly kind: 'compound';
   readonly statements: SemanticNode[];
   readonly chainType: 'then' | 'and' | 'async';
@@ -432,7 +455,7 @@ export type LoopVariant =
 /**
  * A loop semantic node - represents repeat/for/while loops.
  */
-export interface LoopSemanticNode extends SemanticNode {
+export interface LoopSemanticNode extends SemanticNode, LoopFields<SemanticNode> {
   readonly kind: 'loop';
   readonly action: 'repeat' | 'for' | 'while';
   /** The type of loop (forever, times, for, while, until) */

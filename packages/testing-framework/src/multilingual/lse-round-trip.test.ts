@@ -31,16 +31,14 @@ describe('the gate sees a loss when a writer is told to allow one', () => {
   ] as const;
 
   it.each(lossy)('%s', (_name, source) => {
-    const node = parse(source, 'en') as unknown as Parameters<typeof toProtocolJSON>[0];
+    const node = parse(source, 'en');
     expect(() => toProtocolJSON(node)).toThrow(LossyEncodingError);
     const wire = JSON.parse(JSON.stringify(toProtocolJSON(node, { lossy: 'allow' })));
     expect(grade(node, fromProtocolJSON(wire)).outcome).toBe('silent');
   });
 
   it('and grades a whole round trip faithful', () => {
-    const node = parse('on click toggle .active on #menu', 'en') as unknown as Parameters<
-      typeof toProtocolJSON
-    >[0];
+    const node = parse('on click toggle .active on #menu', 'en');
     const wire = JSON.parse(JSON.stringify(toProtocolJSON(node)));
     expect(grade(node, fromProtocolJSON(wire)).outcome).toBe('faithful');
   });

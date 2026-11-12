@@ -9,6 +9,7 @@
  */
 
 import type {
+  AnyNode,
   SemanticNode,
   SemanticValue,
   SemanticRole,
@@ -52,7 +53,7 @@ import { LossyEncodingError, allowsLoss, findUnencodable, type EncodeOptions } f
  * event modifier or a clause it has no field for) with a
  * {@link LossyEncodingError}; `{ lossy: 'allow' }` returns the partial encoding.
  */
-export function toProtocolJSON(node: SemanticNode, opts?: EncodeOptions): ProtocolNodeJSON {
+export function toProtocolJSON(node: AnyNode, opts?: EncodeOptions): ProtocolNodeJSON {
   if (!allowsLoss(opts)) {
     const losses = findUnencodable(node, 'json', n =>
       canEmitCompactTrigger(n as EventHandlerSemanticNode)
@@ -62,7 +63,7 @@ export function toProtocolJSON(node: SemanticNode, opts?: EncodeOptions): Protoc
   return encode(node);
 }
 
-function encode(node: SemanticNode): ProtocolNodeJSON {
+function encode(node: AnyNode): ProtocolNodeJSON {
   const roles = rolesToProtocol(node.roles);
   let result: ProtocolNodeJSON;
 
@@ -144,8 +145,7 @@ function encode(node: SemanticNode): ProtocolNodeJSON {
       // `lossy: 'allow'`): what a command node can hold of it.
       result = { kind: 'command', action: node.action, roles };
       const body = (node as { body?: unknown }).body;
-      if (Array.isArray(body) && body.length > 0)
-        result.body = (body as SemanticNode[]).map(encode);
+      if (Array.isArray(body) && body.length > 0) result.body = (body as AnyNode[]).map(encode);
     }
   }
 

@@ -44,7 +44,6 @@ import {
   parseCompound,
   renderExplicit,
   toProtocolJSON,
-  type SemanticNode as IntentNode,
   type SemanticValue,
 } from '@lokascript/intent';
 import { parse } from '@lokascript/semantic';
@@ -182,9 +181,9 @@ export function loadCases(): Case[] {
 export function runLseRoundTrip(cases: readonly Case[] = loadCases()): LseCaseResult[] {
   return cases.map(c => {
     const base = { id: c.id, source: c.source, family: c.family };
-    let node: IntentNode;
+    let node: ReturnType<typeof parse>;
     try {
-      node = parse(c.source, 'en') as unknown as IntentNode;
+      node = parse(c.source, 'en');
     } catch {
       return base;
     }
