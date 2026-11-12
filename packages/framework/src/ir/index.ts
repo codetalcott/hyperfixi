@@ -42,7 +42,13 @@ export {
 } from './explicit-parser';
 
 // Explicit syntax renderer
-export { renderExplicit, renderDocument } from './explicit-renderer';
+export {
+  renderExplicit,
+  renderDocument,
+  LossyEncodingError,
+  findUnencodable,
+} from './explicit-renderer';
+export type { EncodeOptions, EncodingSurface } from './explicit-renderer';
 
 // JSON schema conversion (deprecated — use fromProtocolJSON/validateProtocolJSON/toProtocolJSON)
 export { jsonToSemanticNode, validateSemanticJSON, semanticNodeToJSON } from './json-schema';

@@ -27,8 +27,7 @@ export const feedbackTools: Tool[] = [
         },
         domain: {
           type: 'string',
-          description:
-            'Domain to validate against (flow, sql, llm, todo, behaviorspec, voice)',
+          description: 'Domain to validate against (flow, sql, llm, todo, behaviorspec, voice)',
         },
       },
       required: ['input'],

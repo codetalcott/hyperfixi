@@ -148,6 +148,8 @@ import {
   type PatternRenderHooks,
 } from '@lokascript/framework';
 
+type ExplicitRenderOptions = Parameters<typeof renderExplicitBase>[1];
+
 /** A reference value's name (`me`), or undefined for any other value. */
 function referenceOf(value: SemanticValue | undefined): string | undefined {
   return value?.type === 'reference' ? value.value : undefined;
@@ -421,15 +423,16 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     const patterns = getPatternsForLanguageAndCommand(language, node.action);
 
     if (patterns.length === 0) {
-      // Fall back to explicit syntax if no patterns
-      return this.renderExplicit(node);
+      // Fall back to explicit syntax if no patterns. This is a natural-language
+      // render, whose losses translate()'s own checks report: not refused here.
+      return this.renderExplicit(node, { lossy: 'allow' });
     }
 
     // Find the best pattern for rendering (prefer patterns that match our roles)
     const bestPattern = this.findBestPattern(node, patterns);
 
     if (!bestPattern) {
-      return this.renderExplicit(node);
+      return this.renderExplicit(node, { lossy: 'allow' });
     }
 
     const rendered = this.renderWithPattern(node, bestPattern);
@@ -860,12 +863,12 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    * Render a semantic node in explicit mode.
    * Delegates to @lokascript/framework/ir for the core logic.
    */
-  renderExplicit(node: SemanticNode): string {
+  renderExplicit(node: SemanticNode, opts?: ExplicitRenderOptions): string {
     // The framework IR renderer predates the `behavior` block kind and types its
     // input to the single-statement node union. A behavior block is not rendered
     // through the explicit IR path, so bridge the (structurally compatible) type
     // at this boundary rather than widen the framework package's union.
-    return renderExplicitBase(node as Parameters<typeof renderExplicitBase>[0]);
+    return renderExplicitBase(node as Parameters<typeof renderExplicitBase>[0], opts);
   }
 
   /**
@@ -2227,8 +2230,9 @@ export function render(node: SemanticNode, language: string): string {
 }
 
 /**
- * Render a semantic node in explicit mode.
+ * Render a semantic node in explicit mode. Refuses a node bracket syntax cannot
+ * carry in full (`LossyEncodingError`); `{ lossy: 'allow' }` returns the text.
  */
-export function renderExplicit(node: SemanticNode): string {
-  return semanticRenderer.renderExplicit(node);
+export function renderExplicit(node: SemanticNode, opts?: ExplicitRenderOptions): string {
+  return semanticRenderer.renderExplicit(node, opts);
 }

@@ -15,9 +15,18 @@ import type {
   LoopSemanticNode,
   LSEEnvelope,
 } from '../types';
+import { LossyEncodingError, allowsLoss, findUnencodable, type EncodeOptions } from './encodable';
+import { parseCompound } from './parser';
 
 /**
  * Render a semantic node as explicit bracket syntax.
+ *
+ * Refuses a node the syntax cannot carry in full with a
+ * {@link LossyEncodingError}: one with a part the syntax has no place for (an
+ * event modifier, a `match` arm, a kind it has no bracket for), or one whose
+ * text the bracket parser reads back as something else (an expression of
+ * several words, a `then` chain inside a `body:`). `{ lossy: 'allow' }` returns
+ * the text anyway.
  *
  * @example
  * ```typescript
@@ -25,14 +34,34 @@ import type {
  * renderExplicit(annotatedNode) // "@timeout(5s) [fetch source:\"/api/users\"]"
  * ```
  */
-export function renderExplicit(node: SemanticNode): string {
+export function renderExplicit(node: SemanticNode, opts?: EncodeOptions): string {
+  const text = write(node);
+  if (allowsLoss(opts)) return text;
+
+  const losses = findUnencodable(node, 'bracket');
+  if (losses.length === 0) {
+    // The syntax is untyped (the parser classifies each value), so the test is
+    // on text: what the parser reads from `text` must write `text` again.
+    let readBack: string | undefined;
+    try {
+      readBack = write(parseCompound(text));
+    } catch (err) {
+      losses.push(`does not read back: ${err instanceof Error ? err.message : String(err)}`);
+    }
+    if (readBack !== undefined && readBack !== text) losses.push(`reads back as ${readBack}`);
+  }
+  if (losses.length > 0) throw new LossyEncodingError('bracket', losses, text);
+  return text;
+}
+
+function write(node: SemanticNode): string {
   let result: string;
 
   if (node.kind === 'compound') {
     const compoundNode = node as CompoundSemanticNode;
-    result = compoundNode.statements
-      .map(stmt => renderExplicit(stmt))
-      .join(` ${compoundNode.chainType} `);
+    // The grammar's chain operators are the chain types, except a pipe: `|>`.
+    const op = compoundNode.chainType === 'pipe' ? '|>' : compoundNode.chainType;
+    result = compoundNode.statements.map(stmt => write(stmt)).join(` ${op} `);
   } else {
     result = renderBracketCommand(node);
   }
@@ -79,17 +108,17 @@ function renderBracketCommand(node: SemanticNode): string {
   if (node.kind === 'event-handler') {
     const eventNode = node as EventHandlerSemanticNode;
     if (eventNode.body && eventNode.body.length > 0) {
-      parts.push(`body:${eventNode.body.map(n => renderExplicit(n)).join(' ')}`);
+      parts.push(`body:${eventNode.body.map(n => write(n)).join(' ')}`);
     }
   }
 
   if (node.kind === 'conditional') {
     const condNode = node as ConditionalSemanticNode;
     if (condNode.thenBranch && condNode.thenBranch.length > 0) {
-      parts.push(`then:${condNode.thenBranch.map(n => renderExplicit(n)).join(' ')}`);
+      parts.push(`then:${condNode.thenBranch.map(n => write(n)).join(' ')}`);
     }
     if (condNode.elseBranch && condNode.elseBranch.length > 0) {
-      parts.push(`else:${condNode.elseBranch.map(n => renderExplicit(n)).join(' ')}`);
+      parts.push(`else:${condNode.elseBranch.map(n => write(n)).join(' ')}`);
     }
   }
 
@@ -99,21 +128,21 @@ function renderBracketCommand(node: SemanticNode): string {
     if (loopNode.loopVariable) parts.push(`variable:${loopNode.loopVariable}`);
     if (loopNode.indexVariable) parts.push(`index-variable:${loopNode.indexVariable}`);
     if (loopNode.body && loopNode.body.length > 0) {
-      parts.push(`loop-body:${loopNode.body.map(n => renderExplicit(n)).join(' ')}`);
+      parts.push(`loop-body:${loopNode.body.map(n => write(n)).join(' ')}`);
     }
   }
 
   if (node.kind === 'command') {
     const cmd = node as CommandSemanticNode;
     if (cmd.body && cmd.body.length > 0)
-      parts.push(`body:${cmd.body.map(n => renderExplicit(n)).join(' ')}`);
+      parts.push(`body:${cmd.body.map(n => write(n)).join(' ')}`);
     if (cmd.catchBranch && cmd.catchBranch.length > 0)
-      parts.push(`catch:${cmd.catchBranch.map(n => renderExplicit(n)).join(' ')}`);
+      parts.push(`catch:${cmd.catchBranch.map(n => write(n)).join(' ')}`);
     if (cmd.finallyBranch && cmd.finallyBranch.length > 0)
-      parts.push(`finally:${cmd.finallyBranch.map(n => renderExplicit(n)).join(' ')}`);
+      parts.push(`finally:${cmd.finallyBranch.map(n => write(n)).join(' ')}`);
     if (cmd.asyncVariant) parts.push(`async-variant:${cmd.asyncVariant}`);
     if (cmd.asyncBody && cmd.asyncBody.length > 0)
-      parts.push(`async-body:${cmd.asyncBody.map(n => renderExplicit(n)).join(' ')}`);
+      parts.push(`async-body:${cmd.asyncBody.map(n => write(n)).join(' ')}`);
   }
 
   return `[${parts.join(' ')}]`;

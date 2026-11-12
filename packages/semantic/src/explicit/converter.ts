@@ -218,8 +218,12 @@ export function getAllTranslationsWithStatus(
     }
   }
 
-  // Also include explicit
-  translations['explicit'] = renderExplicit(node);
+  // Also include explicit, when bracket syntax can carry the node in full.
+  try {
+    translations['explicit'] = renderExplicit(node);
+  } catch (error) {
+    failed['explicit'] = error instanceof Error ? error.message : String(error);
+  }
 
   return { translations, failed };
 }

@@ -298,8 +298,30 @@ export function parseExplicit(input: string, options: ParseExplicitOptions = {})
       );
     }
 
-    default:
-      return attachDiagnostics(createCommandNode(command, roles, { sourceLanguage: 'explicit' }));
+    default: {
+      // A block command (`tell`, `try`, …) holds its commands in fields, as the
+      // renderer and the wire format have them. Left as roles they were one
+      // opaque expression each: text that read back, commands that did not.
+      const blocks: {
+        body?: SemanticNode[];
+        catchBranch?: SemanticNode[];
+        finallyBranch?: SemanticNode[];
+      } = {};
+      for (const [role, field] of [
+        ['body', 'body'],
+        ['catch', 'catchBranch'],
+        ['finally', 'finallyBranch'],
+      ] as const) {
+        const nodes = extractStructuralBody(roles, role, options);
+        if (nodes.length === 0) continue;
+        roles.delete(role as SemanticRole);
+        blocks[field] = nodes;
+      }
+      return attachDiagnostics({
+        ...createCommandNode(command, roles, { sourceLanguage: 'explicit' }),
+        ...blocks,
+      });
+    }
   }
 }
 

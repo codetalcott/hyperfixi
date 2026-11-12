@@ -47,7 +47,8 @@ export function buildDisambiguation(
   const disambiguationCandidates: DisambiguationCandidate[] = sortedCandidates.map((c, i) => ({
     action: c.action,
     confidence: c.confidence,
-    explicit: renderExplicit(c.node),
+    // Shown to a person choosing between candidates, never parsed.
+    explicit: renderExplicit(c.node, { lossy: 'allow' }),
     description: c.description || `${c.action} (option ${String.fromCharCode(97 + i)})`,
   }));
 

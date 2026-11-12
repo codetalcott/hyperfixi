@@ -16,7 +16,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { fromInterchangeNode } from './from-interchange';
-import { renderExplicit } from './explicit-renderer';
+import { renderExplicit, LossyEncodingError } from './explicit-renderer';
 import { parseExplicit } from './explicit-parser';
 import { toProtocolJSON, fromProtocolJSON } from './protocol-json';
 
@@ -182,8 +182,10 @@ describe('LLM round-trip: event handlers', () => {
     expect(restored.action).toBe(semantic.action);
   });
 
-  it('multi-command event handler LSE contains all commands', () => {
-    const { lse } = bracketRoundTrip({
+  it('multi-command event handler: bracket syntax refuses it, and says why', () => {
+    // A `body:` holds one command. Written `body:[a] [b] [c]`, the parser read
+    // back one command in the body and two stray ones, without an error.
+    const semantic = fromInterchangeNode({
       type: 'event',
       event: 'click',
       body: [
@@ -205,9 +207,15 @@ describe('LLM round-trip: event handlers', () => {
       ],
     });
 
+    expect(() => renderExplicit(semantic)).toThrow(LossyEncodingError);
+    const lse = renderExplicit(semantic, { lossy: 'allow' });
     expect(lse).toContain('add');
     expect(lse).toContain('fetch');
     expect(lse).toContain('remove');
+    // Protocol JSON carries all three.
+    expect(fromProtocolJSON(toProtocolJSON(semantic))).toMatchObject({
+      body: [{ action: 'add' }, { action: 'fetch' }, { action: 'remove' }],
+    });
   });
 });
 
@@ -236,7 +244,7 @@ describe('LLM round-trip: control flow', () => {
     expect(parsed.action).toBe('if');
   });
 
-  it('if condition with complex expression — renders but complex exprs need protocol JSON', () => {
+  it('if condition with complex expression: bracket syntax refuses it (use protocol JSON)', () => {
     // Note: bracket syntax for complex conditions (containing operators like ==)
     // doesn't cleanly round-trip through parseExplicit because the parser treats
     // tokens like "==" as role-format markers. Use protocol JSON for lossless round-trip.
@@ -258,8 +266,9 @@ describe('LLM round-trip: control flow', () => {
       elseBranch: [],
     });
 
-    // Verify it renders to bracket syntax (for LLM display)
-    const lse = renderExplicit(semantic);
+    expect(() => renderExplicit(semantic)).toThrow(/does not read back/);
+    // The text is still there to show.
+    const lse = renderExplicit(semantic, { lossy: 'allow' });
     expect(lse).toContain('if');
     expect(lse).toContain('show');
   });
