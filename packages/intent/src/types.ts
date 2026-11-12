@@ -95,18 +95,51 @@ export interface ProtocolDiagnostic {
 }
 
 // =============================================================================
-// Semantic Nodes (5 kinds)
+// Semantic Nodes
 // =============================================================================
+//
+// One node model. A parser built on this package has its own node type: more
+// kinds (`behavior`, `def`), narrower actions and roles, values with more
+// fields. That type is an INSTANCE of {@link BaseNode}, and its node kinds
+// EXTEND the field sets below, so the two cannot drift apart. They used to be
+// two hand-written copies (this file and `@lokascript/semantic`'s), joined by
+// casts, and a field one had and the other did not was dropped by the writers
+// with no type error.
 
-/** Base interface for all semantic nodes. */
-export interface SemanticNode {
-  readonly kind: 'command' | 'event-handler' | 'conditional' | 'compound' | 'loop';
-  readonly action: ActionType;
-  readonly roles: ReadonlyMap<SemanticRole, SemanticValue>;
+/**
+ * The shape every node has, whatever parser built it.
+ *
+ * @typeParam Kind   the node kinds (`'command' | 'event-handler' | …`)
+ * @typeParam Action the command names
+ * @typeParam Role   the role names
+ * @typeParam Value  the value type; it must be a {@link SemanticValue}
+ */
+export interface BaseNode<
+  Kind extends string = string,
+  Action extends string = string,
+  Role extends string = string,
+  Value extends SemanticValue = SemanticValue,
+> {
+  readonly kind: Kind;
+  readonly action: Action;
+  readonly roles: ReadonlyMap<Role, Value>;
   readonly metadata?: SemanticMetadata;
   readonly annotations?: readonly Annotation[];
   readonly diagnostics?: readonly Diagnostic[];
 }
+
+/**
+ * Any node, from any parser: what `toProtocolJSON`, `renderExplicit` and
+ * `findUnencodable` accept. They read a node's kind and fields at run time and
+ * refuse what they cannot carry, so they do not need a narrower type.
+ */
+export type AnyNode = BaseNode;
+
+/** The node kinds this package builds and LSE has a place for. */
+export type NodeKind = 'command' | 'event-handler' | 'conditional' | 'compound' | 'loop';
+
+/** This package's node: any action, any role. */
+export interface SemanticNode extends BaseNode<NodeKind, ActionType, SemanticRole, SemanticValue> {}
 
 export interface SemanticMetadata {
   readonly sourceLanguage?: string;
@@ -123,54 +156,80 @@ export interface SourcePosition {
   readonly column?: number;
 }
 
-/** A single DSL command. */
-export interface CommandSemanticNode extends SemanticNode {
-  readonly kind: 'command';
+// --- The fields of each kind, over a parser's own node type `N` and value type `V` ---
+
+/** A command's own fields. */
+export interface CommandFields<N> {
   /** A block command's commands (`tell #x … end`). */
-  readonly body?: readonly SemanticNode[];
+  readonly body?: readonly N[];
 }
 
-/** Trigger-based commands (e.g., "on click"). */
-export interface EventHandlerSemanticNode extends SemanticNode {
-  readonly kind: 'event-handler';
-  readonly body: SemanticNode[];
-  readonly eventModifiers?: EventModifiers;
-  readonly additionalEvents?: readonly SemanticValue[];
+/** An event handler's own fields. */
+export interface EventHandlerFields<N, V = SemanticValue> {
+  readonly body: N[];
+  readonly eventModifiers?: EventModifiers<V>;
+  readonly additionalEvents?: readonly V[];
   readonly parameterNames?: readonly string[];
 }
 
-export interface EventModifiers {
+export interface EventModifiers<V = SemanticValue> {
   readonly once?: boolean;
   readonly debounce?: number;
   readonly throttle?: number;
   readonly queue?: 'first' | 'last' | 'all' | 'none';
-  readonly from?: SemanticValue;
+  readonly from?: V;
 }
 
-/** Conditional: "if [condition] then [body] else [body]". */
-export interface ConditionalSemanticNode extends SemanticNode {
-  readonly kind: 'conditional';
-  readonly thenBranch: SemanticNode[];
-  readonly elseBranch?: SemanticNode[];
+/** A conditional's own fields. */
+export interface ConditionalFields<N> {
+  readonly thenBranch: N[];
+  readonly elseBranch?: N[];
 }
 
-/** Multiple chained statements. */
-export interface CompoundSemanticNode extends SemanticNode {
-  readonly kind: 'compound';
-  readonly statements: SemanticNode[];
-  readonly chainType: 'then' | 'and' | 'async' | 'sequential';
+export type ChainType = 'then' | 'and' | 'async' | 'sequential';
+
+/** A chain's own fields. */
+export interface CompoundFields<N> {
+  readonly statements: N[];
+  readonly chainType: ChainType;
 }
 
 /** Loop variant discriminant. */
 export type LoopVariant = 'forever' | 'times' | 'for' | 'while' | 'until';
 
-/** Repeat/for/while loops. */
-export interface LoopSemanticNode extends SemanticNode {
-  readonly kind: 'loop';
+/** A loop's own fields. */
+export interface LoopFields<N> {
   readonly loopVariant: LoopVariant;
-  readonly body: SemanticNode[];
+  readonly body: N[];
   readonly loopVariable?: string;
   readonly indexVariable?: string;
+}
+
+// --- This package's nodes ---
+
+/** A single DSL command. */
+export interface CommandSemanticNode extends SemanticNode, CommandFields<SemanticNode> {
+  readonly kind: 'command';
+}
+
+/** Trigger-based commands (e.g., "on click"). */
+export interface EventHandlerSemanticNode extends SemanticNode, EventHandlerFields<SemanticNode> {
+  readonly kind: 'event-handler';
+}
+
+/** Conditional: "if [condition] then [body] else [body]". */
+export interface ConditionalSemanticNode extends SemanticNode, ConditionalFields<SemanticNode> {
+  readonly kind: 'conditional';
+}
+
+/** Multiple chained statements. */
+export interface CompoundSemanticNode extends SemanticNode, CompoundFields<SemanticNode> {
+  readonly kind: 'compound';
+}
+
+/** Repeat/for/while loops. */
+export interface LoopSemanticNode extends SemanticNode, LoopFields<SemanticNode> {
+  readonly kind: 'loop';
 }
 
 // =============================================================================

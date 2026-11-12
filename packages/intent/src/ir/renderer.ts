@@ -6,7 +6,7 @@
  */
 
 import type {
-  SemanticNode,
+  AnyNode,
   SemanticValue,
   CommandSemanticNode,
   CompoundSemanticNode,
@@ -33,7 +33,7 @@ import { parseCompound } from './parser';
  * renderExplicit(annotatedNode) // "@timeout(5s) [fetch source:\"/api/users\"]"
  * ```
  */
-export function renderExplicit(node: SemanticNode, opts?: EncodeOptions): string {
+export function renderExplicit(node: AnyNode, opts?: EncodeOptions): string {
   const text = write(node);
   if (allowsLoss(opts)) return text;
 
@@ -53,7 +53,7 @@ export function renderExplicit(node: SemanticNode, opts?: EncodeOptions): string
   return text;
 }
 
-function write(node: SemanticNode): string {
+function write(node: AnyNode): string {
   let result: string;
 
   if (node.kind === 'compound') {
@@ -77,7 +77,7 @@ function write(node: SemanticNode): string {
 // Internal Helpers
 // =============================================================================
 
-function renderBracketCommand(node: SemanticNode): string {
+function renderBracketCommand(node: AnyNode): string {
   const parts: string[] = [node.action];
 
   for (const [role, value] of node.roles) {

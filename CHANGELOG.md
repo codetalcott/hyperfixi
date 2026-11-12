@@ -24,6 +24,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **One node model.** `@lokascript/intent` and `@lokascript/semantic` each had a hand-written
+  node type family, joined by casts; a field one had and the other did not was dropped by the
+  LSE writers with no type error. Intent now exports the base (`BaseNode<Kind, Action, Role,
+Value>`, `AnyNode`) and each kind's fields (`CommandFields`, `EventHandlerFields`,
+  `ConditionalFields`, `CompoundFields`, `LoopFields`, a generic `EventModifiers`); its own node
+  types are built from them, and semantic's value and node types extend them, so the two cannot
+  drift. `toProtocolJSON`, `renderExplicit` and `findUnencodable` take `AnyNode`: a parser's own
+  node goes to them without a cast (they read its kind and fields at run time). Semantic's types
+  already fit; no field changed. Types only.
 - **`ProtocolNodeJSON` is a union discriminated by `kind`** (`ProtocolCommandJSON`,
   `ProtocolEventHandlerJSON`, `ProtocolCompoundJSON`), where it was one interface with every
   field optional. A field on the wrong kind (`thenBranch` on a compound, `statements` on a

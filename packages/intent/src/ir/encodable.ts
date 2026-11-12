@@ -19,7 +19,7 @@
  * for it, so a field a parser adds tomorrow is refused until a writer learns it.
  */
 
-import type { SemanticNode, SemanticValue } from '../types';
+import type { AnyNode, SemanticValue } from '../types';
 
 export interface EncodeOptions {
   /**
@@ -101,10 +101,10 @@ function holdsSomething(v: unknown): boolean {
  * text its own parser reads differently: `renderExplicit` checks that itself.)
  */
 export function findUnencodable(
-  node: SemanticNode,
+  node: AnyNode,
   surface: EncodingSurface,
   /** Whether JSON writes this event handler in the compact `trigger` form. */
-  isCompactTrigger: (node: SemanticNode) => boolean = () => false
+  isCompactTrigger: (node: AnyNode) => boolean = () => false
 ): string[] {
   const losses: string[] = [];
   const add = (path: string): void => {
@@ -121,7 +121,7 @@ export function findUnencodable(
     if (value.type === 'property-path') visitValue(value.object, path);
   };
 
-  const visit = (n: SemanticNode): void => {
+  const visit = (n: AnyNode): void => {
     const fields = NODE_FIELDS[n.kind];
     if (!fields) return add(`kind '${String(n.kind)}'`);
     const rec = n as unknown as Record<string, unknown>;
@@ -145,7 +145,7 @@ export function findUnencodable(
     for (const [role, value] of n.roles) visitValue(value, `${n.action}.${role}`);
     for (const key of fields.children) {
       const list = rec[key];
-      if (Array.isArray(list)) for (const child of list) visit(child as SemanticNode);
+      if (Array.isArray(list)) for (const child of list) visit(child as AnyNode);
     }
   };
 
