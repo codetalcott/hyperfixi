@@ -194,7 +194,7 @@ async function main() {
   }
 
   console.log(`Building ${bundlesToBuild.length} bundle(s):`);
-  bundlesToBuild.forEach(([key, config]) => {
+  bundlesToBuild.forEach(([, config]) => {
     console.log(`  - ${config.name}${config.critical ? ' (critical)' : ''}`);
   });
   console.log('');

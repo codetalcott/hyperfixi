@@ -220,7 +220,7 @@ function validateAuthoredVocab() {
           throw new Error(`htmx-attr-vocab: ${lang}.${ns}.${key} is not a known ${ns}- key`);
         }
         for (const name of [authored].flat()) {
-          if (!name || /[\s"'<>\/=]/.test(name) || name !== name.toLowerCase()) {
+          if (!name || /[\s"'<>/=]/.test(name) || name !== name.toLowerCase()) {
             throw new Error(
               `htmx-attr-vocab: ${lang}.${ns}.${key} = "${name}" is not a valid attribute name ` +
                 `(no whitespace, quotes, "=", "/", "<", ">" or uppercase)`
@@ -236,7 +236,7 @@ function validateAuthoredVocab() {
         throw new Error(`htmx-attr-vocab: ${lang}.events.${canonical} is not a valid event name`);
       }
       for (const name of [authored].flat()) {
-        if (!name || /[\s"'<>\/=\[\],]/.test(name)) {
+        if (!name || /[\s"'<>/=[\],]/.test(name)) {
           throw new Error(
             `htmx-attr-vocab: ${lang}.events.${canonical} = "${name}" is not a valid trigger head ` +
               `(no whitespace, quotes, "=", "/", "<", ">", "[", "]" or ",")`
