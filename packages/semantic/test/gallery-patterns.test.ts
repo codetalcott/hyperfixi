@@ -236,11 +236,6 @@ describe('Gallery Patterns - Semantic Parsing', () => {
 
   describe('Parsed node structure', () => {
     it('returns valid SemanticNode for toggle', () => {
-      if (!canParse('toggle .active', 'en')) {
-        console.log('toggle .active not supported, skipping');
-        return;
-      }
-
       const node = parse('toggle .active', 'en');
       expect(node).toBeDefined();
       expect(node.kind).toBe('command');
@@ -248,11 +243,6 @@ describe('Gallery Patterns - Semantic Parsing', () => {
     });
 
     it('returns valid EventHandler with body for on click toggle', () => {
-      if (!canParse('on click toggle .active', 'en')) {
-        console.log('on click toggle .active not supported, skipping');
-        return;
-      }
-
       const node = parse('on click toggle .active', 'en') as any;
       expect(node).toBeDefined();
       expect(node.kind).toBe('event-handler');

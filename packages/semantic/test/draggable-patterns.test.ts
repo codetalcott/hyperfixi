@@ -98,27 +98,17 @@ describe('Phase 1: Verify Existing Commands', () => {
 
   describe('halt command', () => {
     it('parses "halt" in English', () => {
-      const canParseResult = canParse('halt', 'en');
-      if (canParseResult) {
-        const node = parse('halt', 'en') as CommandSemanticNode;
-        expect(node.action).toBe('halt');
-      } else {
-        console.log('  [SKIP] halt command not yet supported');
-      }
+      const node = parse('halt', 'en') as CommandSemanticNode;
+      expect(node.action).toBe('halt');
     });
 
     it('parses "halt the event" in English', () => {
       // Note: "halt the event" is tricky because "the event" is two tokens
       // The current implementation captures just "the" - full multi-word support
       // would require hand-crafted patterns. For now, verify halt parses.
-      const canParseResult = canParse('halt the event', 'en');
-      if (canParseResult) {
-        const node = parse('halt the event', 'en') as CommandSemanticNode;
-        expect(node.action).toBe('halt');
-        // Just verify halt action is recognized; multi-word args need more work
-      } else {
-        console.log('  [SKIP] "halt the event" not yet supported');
-      }
+      const node = parse('halt the event', 'en') as CommandSemanticNode;
+      expect(node.action).toBe('halt');
+      // Just verify halt action is recognized; multi-word args need more work
     });
   });
 });
@@ -130,52 +120,32 @@ describe('Phase 1: Verify Existing Commands', () => {
 describe('Phase 2: New Command Schemas', () => {
   describe('measure command', () => {
     it('parses "measure x" in English', () => {
-      const canParseResult = canParse('measure x', 'en');
-      if (canParseResult) {
-        const node = parse('measure x', 'en') as CommandSemanticNode;
-        expect(node.action).toBe('measure');
-        const patient = node.roles.get('patient') as any;
-        // Identifiers are stored as expression type with 'raw' property
-        expect(patient?.raw || patient?.value).toBe('x');
-      } else {
-        console.log('  [SKIP] measure command not yet supported');
-      }
+      const node = parse('measure x', 'en') as CommandSemanticNode;
+      expect(node.action).toBe('measure');
+      const patient = node.roles.get('patient') as any;
+      // Identifiers are stored as expression type with 'raw' property
+      expect(patient?.raw || patient?.value).toBe('x');
     });
 
     it('parses "measure width of #element" in English', () => {
-      const canParseResult = canParse('measure width of #element', 'en');
-      if (canParseResult) {
-        const node = parse('measure width of #element', 'en') as CommandSemanticNode;
-        expect(node.action).toBe('measure');
-      } else {
-        console.log('  [SKIP] "measure width of #element" not yet supported');
-      }
+      const node = parse('measure width of #element', 'en') as CommandSemanticNode;
+      expect(node.action).toBe('measure');
     });
   });
 
   describe('install command', () => {
     it('parses "install Draggable" in English', () => {
-      const canParseResult = canParse('install Draggable', 'en');
-      if (canParseResult) {
-        const node = parse('install Draggable', 'en') as CommandSemanticNode;
-        expect(node.action).toBe('install');
-        const patient = node.roles.get('patient') as any;
-        // Identifiers are stored as expression type with 'raw' property
-        expect(patient?.raw || patient?.value).toBe('Draggable');
-      } else {
-        console.log('  [SKIP] install command not yet supported');
-      }
+      const node = parse('install Draggable', 'en') as CommandSemanticNode;
+      expect(node.action).toBe('install');
+      const patient = node.roles.get('patient') as any;
+      // Identifiers are stored as expression type with 'raw' property
+      expect(patient?.raw || patient?.value).toBe('Draggable');
     });
 
     it('parses "install Draggable(dragHandle: .titlebar)" in English', () => {
       const input = 'install Draggable(dragHandle: .titlebar)';
-      const canParseResult = canParse(input, 'en');
-      if (canParseResult) {
-        const node = parse(input, 'en') as CommandSemanticNode;
-        expect(node.action).toBe('install');
-      } else {
-        console.log('  [SKIP] install with parameters not yet supported');
-      }
+      const node = parse(input, 'en') as CommandSemanticNode;
+      expect(node.action).toBe('install');
     });
   });
 });
@@ -187,26 +157,16 @@ describe('Phase 2: New Command Schemas', () => {
 describe('Phase 3: Behavior System Patterns', () => {
   describe('behavior definition', () => {
     it('parses "behavior Draggable" in English', () => {
-      const canParseResult = canParse('behavior Draggable', 'en');
-      if (canParseResult) {
-        const node = parse('behavior Draggable', 'en') as CommandSemanticNode;
-        expect(node.action).toBe('behavior');
-        const patient = node.roles.get('patient') as any;
-        expect(patient?.raw || patient?.value).toBe('Draggable');
-      } else {
-        console.log('  [SKIP] behavior definition not yet supported');
-      }
+      const node = parse('behavior Draggable', 'en') as CommandSemanticNode;
+      expect(node.action).toBe('behavior');
+      const patient = node.roles.get('patient') as any;
+      expect(patient?.raw || patient?.value).toBe('Draggable');
     });
 
     it('parses "behavior Draggable(dragHandle)" in English', () => {
       const input = 'behavior Draggable(dragHandle)';
-      const canParseResult = canParse(input, 'en');
-      if (canParseResult) {
-        const node = parse(input, 'en') as CommandSemanticNode;
-        expect(node.action).toBe('behavior');
-      } else {
-        console.log('  [SKIP] behavior with parameters not yet supported');
-      }
+      const node = parse(input, 'en') as CommandSemanticNode;
+      expect(node.action).toBe('behavior');
     });
 
     // Multilingual behavior definition
@@ -245,48 +205,28 @@ describe('Phase 3: Behavior System Patterns', () => {
 describe('Phase 4: Async Event Patterns', () => {
   describe('wait for event', () => {
     it('parses "wait for click" in English', () => {
-      const canParseResult = canParse('wait for click', 'en');
-      if (canParseResult) {
-        const node = parse('wait for click', 'en') as CommandSemanticNode;
-        expect(node.action).toBe('wait');
-      } else {
-        console.log('  [SKIP] "wait for click" not yet supported');
-      }
+      const node = parse('wait for click', 'en') as CommandSemanticNode;
+      expect(node.action).toBe('wait');
     });
 
     it('parses "wait for pointermove or pointerup from document" in English', () => {
       const input = 'wait for pointermove or pointerup from document';
-      const canParseResult = canParse(input, 'en');
-      if (canParseResult) {
-        const node = parse(input, 'en') as CommandSemanticNode;
-        expect(node.action).toBe('wait');
-      } else {
-        console.log('  [SKIP] "wait for X or Y from Z" not yet supported');
-      }
+      const node = parse(input, 'en') as CommandSemanticNode;
+      expect(node.action).toBe('wait');
     });
   });
 
   describe('repeat until event', () => {
     it('parses "repeat until event pointerup" in English', () => {
       const input = 'repeat until event pointerup';
-      const canParseResult = canParse(input, 'en');
-      if (canParseResult) {
-        const node = parse(input, 'en') as CommandSemanticNode;
-        expect(node.action).toBe('repeat');
-      } else {
-        console.log('  [SKIP] "repeat until event" not yet supported');
-      }
+      const node = parse(input, 'en') as CommandSemanticNode;
+      expect(node.action).toBe('repeat');
     });
 
     it('parses "repeat until event pointerup from document" in English', () => {
       const input = 'repeat until event pointerup from document';
-      const canParseResult = canParse(input, 'en');
-      if (canParseResult) {
-        const node = parse(input, 'en') as CommandSemanticNode;
-        expect(node.action).toBe('repeat');
-      } else {
-        console.log('  [SKIP] "repeat until event from" not yet supported');
-      }
+      const node = parse(input, 'en') as CommandSemanticNode;
+      expect(node.action).toBe('repeat');
     });
   });
 });
@@ -299,29 +239,19 @@ describe('Phase 5: Full Draggable Usage Patterns', () => {
   describe('element-level usage', () => {
     it('parses "on draggable:start add .dragging" in English', () => {
       const input = 'on draggable:start add .dragging';
-      const canParseResult = canParse(input, 'en');
-      if (canParseResult) {
-        const node = parse(input, 'en') as EventHandlerSemanticNode;
-        expect(node.action).toBe('on');
-        expect(node.body.length).toBeGreaterThan(0);
-        if (node.body.length > 0) {
-          expect((node.body[0] as CommandSemanticNode).action).toBe('add');
-        }
-      } else {
-        console.log('  [SKIP] event handler with body not yet supported');
+      const node = parse(input, 'en') as EventHandlerSemanticNode;
+      expect(node.action).toBe('on');
+      expect(node.body.length).toBeGreaterThan(0);
+      if (node.body.length > 0) {
+        expect((node.body[0] as CommandSemanticNode).action).toBe('add');
       }
     });
 
     it('parses "on draggable:end remove .dragging" in English', () => {
       const input = 'on draggable:end remove .dragging';
-      const canParseResult = canParse(input, 'en');
-      if (canParseResult) {
-        const node = parse(input, 'en') as EventHandlerSemanticNode;
-        expect(node.action).toBe('on');
-        expect(node.body.length).toBeGreaterThan(0);
-      } else {
-        console.log('  [SKIP] event handler with body not yet supported');
-      }
+      const node = parse(input, 'en') as EventHandlerSemanticNode;
+      expect(node.action).toBe('on');
+      expect(node.body.length).toBeGreaterThan(0);
     });
   });
 
