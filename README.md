@@ -79,27 +79,29 @@ The MCP server (`@hyperfixi/mcp-server`) exposes the whole loop: generate → `v
 
 ## What You Get
 
-- **43 commands** -- toggle, add, remove, set, put, fetch, repeat, if/else, and more
-- **\_hyperscript compatible** -- existing hyperscript code works as-is
+- **53 commands** -- toggle, add, remove, set, put, fetch, repeat, if/else, and more
+- **\_hyperscript compatible** -- the engine passes 1,450 of the 1,498 tests in upstream \_hyperscript 0.9.93's own suite; the rest are [listed](./packages/engine/upstream-suite/known-failures.json)
 - **Tree-shakeable** -- the Vite plugin ships only the engine modules you use (18–34 KB gz); `hyperfixi-hs.js` is ~34 KB
-- **TypeScript types** -- full type safety with comprehensive definitions
+- **TypeScript types** -- the engine is written in TypeScript and ships its types
 - **Agent-ready** -- MCP server with a deterministic validate/repair/compile loop ([AGENTS.md](./AGENTS.md))
 - **Optional multilingual** -- read and write hyperscript in 24 languages ([lokascript.org](https://lokascript.org))
 - **htmx alongside** -- real htmx 4 or fixi beside the engine; `@lokascript/htmx-adapter` localizes `hx-*` names
-- **8100+ tests** across all packages
 
 ## Package Scopes
 
-- **`@hyperfixi/*`** -- Core engine: runtime, parser, commands, vite-plugin, behaviors
-- **`@lokascript/*`** -- Multilingual: semantic parser, i18n grammar, language tools, domain DSLs
+- **`@hyperfixi/*`** -- the engine and what is built on it: `engine`, `core` (the engine plus tooling), `vite-plugin`, `behaviors`, `mcp-server`
+- **`@lokascript/*`** -- multilingual: the semantic parser, vocabulary, the adapters that run non-English hyperscript on the engine or on upstream \_hyperscript, and the DSL framework
+- **`@hyperscript-tools/*`** -- the same multilingual tools packaged for projects on upstream \_hyperscript
 
-Use `@hyperfixi/*` packages. Add `@lokascript/*` only if you need multilingual support.
+Use `@hyperfixi/*` packages. Add `@lokascript/*` only if you need multilingual support. The domain DSLs built on the framework live in [lokascript-domains](https://github.com/codetalcott/lokascript-domains).
 
 ## Under the Hood: the Multilingual Engine
 
 The optional `@lokascript/*` layer lets you author hyperscript in 24 languages with
-real SOV/VSO/V2 **word-order transformation** — and, unusually, it **proves** the
-translation preserved meaning rather than merely "parsed". Two writeups go deep:
+real SOV/VSO **word-order transformation**, and it checks that a translation preserved
+the script's structure rather than merely "parsed": a translation that would lose part of a
+script is refused. (The vocabulary is another matter: most languages have not been reviewed by
+native speakers.) Two writeups go deep:
 
 - **[Word order across 24 languages](docs/WORD-ORDER.md)** -- the linguistic
   phenomena the semantic engine solves (verb-medial commands, fronted markers,
@@ -125,14 +127,15 @@ translation preserved meaning rather than merely "parsed". Two writeups go deep:
 - [DSL framework](./packages/framework/docs/DOMAIN_AUTHOR_GUIDE.md) -- build your own multilingual DSL
 - [About this project](./docs/ABOUT.md) -- motivation, experiment notes, current gaps
 - [Contributing](./CONTRIBUTING.md)
-- [Migration from v1.x](./MIGRATION.md)
+- [Migration between majors](./MIGRATION.md)
 
 ## Development
 
 ```bash
 npm install
-npm test --prefix packages/core
-npm run build:browser --prefix packages/core
+npm run build --prefix packages/engine
+npm run test:own --prefix packages/engine   # the engine's own tests
+npm run test:check                           # every package's suite, summarised
 ```
 
 ## License
