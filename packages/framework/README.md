@@ -2,17 +2,16 @@
 
 > **Generic framework for building multilingual domain-specific languages (DSLs)**
 
-Build DSLs that work in 24+ human languages with semantic parsing, pattern generation, and grammar transformation.
+Build DSLs that work in many human languages (grammars for 24 ship in `@lokascript/framework/languages`) with semantic parsing, pattern generation, and grammar transformation.
 
 ## Features
 
-- **🌍 Multilingual**: Support 24+ languages out of the box (English, Japanese, Spanish, Arabic, etc.)
+- **🌍 Multilingual**: Grammars for 24 languages (English, Japanese, Spanish, Arabic, etc.); you supply your DSL's vocabulary
 - **🧠 Semantic Parsing**: Parse natural language commands into language-neutral semantic representations
 - **🔄 Grammar Transformation**: Automatically handle word order (SVO/SOV/VSO) and grammatical markers
-- **📦 Zero Dependencies**: Pure TypeScript, no runtime dependencies
+- **📦 One Dependency**: Pure TypeScript; the only runtime dependency is `@lokascript/intent`
 - **🎯 Type-Safe**: Full TypeScript support with generic types
 - **🔌 Extensible**: Custom roles, value types, and transformation rules
-- **⚡ Fast**: Efficient pattern matching and caching
 
 ## Installation
 
@@ -23,33 +22,48 @@ npm install @lokascript/framework
 ## Quick Start
 
 ```typescript
-import { createMultilingualDSL } from '@lokascript/framework';
+import {
+  createMultilingualDSL,
+  defineCommand,
+  defineRole,
+  createSimpleTokenizer,
+} from '@lokascript/framework';
 
 // Define your DSL's commands
-const selectCommand = {
+const selectCommand = defineCommand({
   action: 'select',
   primaryRole: 'columns',
   roles: [
-    { role: 'columns', required: true, expectedTypes: ['expression'] },
-    { role: 'source', required: true, expectedTypes: ['literal'] },
+    defineRole({ role: 'columns', required: true, expectedTypes: ['expression'], svoPosition: 2 }),
+    defineRole({ role: 'source', required: true, expectedTypes: ['expression'], svoPosition: 1 }),
   ],
-};
+});
 
 // Create your DSL instance
 const sqlDSL = createMultilingualDSL({
+  name: 'SQL',
   schemas: [selectCommand],
   languages: [
     {
       code: 'en',
-      profile: { wordOrder: 'SVO', keywords: { select: 'select' } },
-      tokenizer: new EnglishTokenizer(),
+      name: 'English',
+      nativeName: 'English',
+      tokenizer: createSimpleTokenizer({ language: 'en', keywords: ['select', 'from'] }),
+      patternProfile: {
+        code: 'en',
+        wordOrder: 'SVO',
+        keywords: { select: { primary: 'select' } },
+        roleMarkers: { source: { primary: 'from', position: 'before' } },
+      },
     },
   ],
 });
 
 // Use your DSL
 const node = sqlDSL.parse('select name from users', 'en');
-// → { action: 'select', roles: { columns: 'name', source: 'users' } }
+// node.action → 'select'
+// node.roles  → Map { 'columns' => { type: 'expression', raw: 'name' },
+//                     'source'  => { type: 'expression', raw: 'users' } }
 ```
 
 ## Core Concepts
@@ -117,6 +131,7 @@ const schema = {
 ## Documentation
 
 - [API Reference](./docs/API.md)
+- [Domain Author Guide](./docs/DOMAIN_AUTHOR_GUIDE.md)
 - [Language Profiles](./docs/LANGUAGE_PROFILES.md)
 - [Grammar Transformation](./docs/GRAMMAR.md)
 - [Examples](./examples/)
@@ -127,13 +142,10 @@ const schema = {
 
 ## Status
 
-🚧 **Alpha** - API is stable but may change before 1.0.0
-
-Currently extracted from [HyperFixi/LokaScript](https://github.com/codetalcott/hyperfixi), a production-tested multilingual hyperscript implementation with:
-
-- 8100+ tests passing
-- 24 languages supported
-- Used in real applications
+Published at the same version as the rest of the LokaScript packages (see `package.json`). The
+surface domain packages build on is pinned by a snapshot test: [docs/API_SURFACE.md](./docs/API_SURFACE.md).
+[HyperFixi/LokaScript](https://github.com/codetalcott/hyperfixi)'s multilingual hyperscript
+(`@lokascript/semantic`) and the `@lokascript/domains` DSLs are built on it.
 
 ## License
 
