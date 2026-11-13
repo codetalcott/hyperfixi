@@ -1,6 +1,6 @@
 # HyperFixi Example Gallery
 
-Welcome to the HyperFixi Example Gallery! This collection of interactive examples demonstrates the full power of hyperscript patterns, from basic event handling to advanced behaviors and animations.
+Welcome to the HyperFixi Example Gallery! This collection of interactive examples demonstrates hyperscript patterns, from basic event handling to advanced behaviors and animations.
 
 ## 🎯 What is this?
 
@@ -57,8 +57,14 @@ examples/
 ├── toggle-and-state/           # Toggle patterns and state management
 │   ├── toggle-class.html
 │   └── toggle-attributes.html
-├── multilingual/               # Live grammar transformation demo
-└── gallery/                    # Feature showcase
+├── tables-and-data/            # Sortable and filterable tables
+│   ├── sortable-table.html
+│   └── filterable-table.html
+├── behaviors/                  # @hyperfixi/behaviors demos
+├── hx-v4/                      # htmx 4 beside the engine (SSE, WebSocket, live/bind)
+├── hx-v4-i18n/                 # htmx 4 with localized attribute names
+├── intent-element/             # <lse-intent> demos
+└── multilingual/               # Multilingual demos (24 languages)
 ```
 
 ## 🚀 Getting Started
@@ -166,7 +172,6 @@ Demonstrates:
 
 - Reusable behaviors
 - Custom events and hooks
-- Element measurement
 - Event parameter destructuring
 - CSS injection via template strings
 
@@ -178,26 +183,12 @@ behavior Draggable(dragHandle)
   on pointerdown(clientX, clientY) from dragHandle
     halt the event
     trigger draggable:start
-    measure my x, y
-    -- ... drag logic
+    set xoff to clientX - my offsetLeft
+    set yoff to clientY - my offsetTop
+    -- ... drag loop
   end
 end
 ```
-
-## 🔗 Complete Example Showcase
-
-Want to see multiple advanced examples on one page?
-
-**Visit:** [compound-examples.html](../compound-examples.html)
-
-This page combines:
-
-- Color cycling with HSL animation
-- Draggable behavior with custom events
-- Live metrics display
-- Debug mode toggle
-
-Perfect for testing multiple patterns together!
 
 ## 🛠️ Development
 
@@ -241,7 +232,7 @@ Perfect for testing multiple patterns together!
       <!-- Code Explanation -->
       <!-- Navigation -->
     </div>
-    <script src="../../packages/core/dist/hyperfixi.js"></script>
+    <script src="../../packages/engine/dist/hyperfixi-hs.js"></script>
   </body>
 </html>
 ```
@@ -250,7 +241,6 @@ Perfect for testing multiple patterns together!
 
 - **HyperFixi Docs:** [packages/core/docs/](../packages/core/docs/)
 - **API Reference:** [packages/core/docs/API.md](../packages/core/docs/API.md)
-- **Test Dashboard:** [packages/core/test-dashboard.html](../packages/core/test-dashboard.html)
 - **Compatibility Tests:** [packages/core/compatibility-test.html](../packages/core/compatibility-test.html)
 
 ## 🎓 Learning Tips
@@ -279,7 +269,7 @@ Perfect for testing multiple patterns together!
 
 ### Control Flow
 
-- Conditionals (`if`, `unless`)
+- Conditionals (`if`, a trailing `unless`)
 - Loops (`repeat`, `repeat until`)
 - Waiting (`wait`)
 - Event-driven loops
@@ -312,7 +302,7 @@ Perfect for testing multiple patterns together!
 
 ## 💡 Pro Tips
 
-- **Debug Mode**: Open browser console to see HyperFixi debug output
+- **Parse Errors**: A script that fails to parse logs a `console.error` naming the token where the engine stopped
 - **Live Edit**: Use browser DevTools to modify `_=""` attributes live
 - **Inspect Network**: Watch AJAX requests in the Network tab
 - **Test Responsive**: Resize window to test on different screen sizes
@@ -334,6 +324,5 @@ These examples are part of the HyperFixi project and follow the same license.
 ---
 
 **Built with ❤️ using HyperFixi**
-100% \_hyperscript compatible • TypeScript powered • Production ready
 
 **Questions?** Check the [main documentation](../packages/core/docs/) or open an issue!

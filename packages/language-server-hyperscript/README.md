@@ -40,20 +40,19 @@ Upstream `_hyperscript` ships its own VS Code extension and language server (`to
 
 This is a thin wrapper around `@lokascript/language-server` that defaults to `hyperscript` mode. In this mode:
 
-- Only \_hyperscript-compatible commands are suggested (51 of the engine's 59, plus the `for`/`while` loop keywords and the 7 feature definitions)
-- LokaScript extensions (`prepend`, `process`, `copy`, `push`/`replace`, `async`, `unless`, bare `beep`) are flagged as errors — the full list is `LOKASCRIPT_ONLY_COMMANDS` in `@lokascript/language-server`, where each entry records the probe against the published `hyperscript.org` engine that classified it
-- LokaScript syntax patterns (dot notation, optional chaining) produce warnings
+- Completions use the canonical English keywords only
+- The two forms `@hyperfixi/engine` adds to upstream's grammar (`new X()`, `toggle <element>`) are flagged as errors when the engine is installed. There are no LokaScript-only commands any more (`LOKASCRIPT_ONLY_COMMANDS` in `@lokascript/language-server` is empty): the engine follows upstream's grammar, and code neither engine parses gets the engine's parse error
 - No multilingual features are exposed
 
-If you want multilingual support or LokaScript extensions, use `@lokascript/language-server` directly.
+If you want multilingual support, use `@lokascript/language-server` directly.
 
 ## Modes
 
 The underlying server supports four modes. This wrapper forces `hyperscript`:
 
-| Mode               | Commands                | Multilingual | Use case                |
-| ------------------ | ----------------------- | ------------ | ----------------------- |
-| **`hyperscript`**  | 31 (\_hyperscript only) | No           | **This package**        |
-| `hyperscript-i18n` | 31 (\_hyperscript only) | Yes          | \_hyperscript + adapter |
-| `lokascript`       | 39 (all)                | Yes          | Full LokaScript         |
-| `auto`             | Detected                | Detected     | Default in LS           |
+| Mode               | Engine additions | Multilingual | Use case                |
+| ------------------ | ---------------- | ------------ | ----------------------- |
+| **`hyperscript`**  | Flagged          | No           | **This package**        |
+| `hyperscript-i18n` | Flagged          | Yes          | \_hyperscript + adapter |
+| `lokascript`       | Accepted         | Yes          | Full LokaScript         |
+| `auto`             | Detected         | Detected     | Default in LS           |
