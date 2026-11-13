@@ -5,7 +5,7 @@ attributes in 24 languages against the stock htmx library.
 
 ```html
 <script src="htmx-i18n.global.js"></script>
-<!-- this adapter (3.6 KB gz) -->
+<!-- this adapter (3.7 KB gz) -->
 <script src="vocab/es.js"></script>
 <!-- vocab module(s) -->
 <script src="htmx.js"></script>

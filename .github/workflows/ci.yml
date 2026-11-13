@@ -1384,11 +1384,12 @@ jobs:
       #   cd packages/testing-framework && npx tsx src/multilingual/cli.ts \
       #     --languages <…> --full --bundle browser-priority --save-baseline \
       #     --baseline ./baselines/multilingual-priority.json
-      # QU (Quechua), BN (Bengali), MS (Malay) are excluded — under development.
+      # All 24 languages. (Until 2026-11-13 qu, bn and ms were left out as "under development"
+      # while the baseline carried all 24 and the docs claimed 24 gated.)
       - name: Test supported languages (full mode, regression gate)
         run: |
           cd packages/testing-framework
-          npx tsx src/multilingual/cli.ts --languages ar,de,en,es,fr,he,hi,id,it,ja,ko,pl,pt,ru,sw,th,tl,tr,uk,vi,zh --full --bundle browser-priority --regression --baseline ./baselines/multilingual-priority.json
+          npx tsx src/multilingual/cli.ts --languages ar,bn,de,en,es,fr,he,hi,id,it,ja,ko,ms,pl,pt,qu,ru,sw,th,tl,tr,uk,vi,zh --full --bundle browser-priority --regression --baseline ./baselines/multilingual-priority.json
 
       # Six DB-dependent gates, all of them testing-framework vitest files, so
       # they run HERE (not in unit-tests, which never runs testing-framework

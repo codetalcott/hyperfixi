@@ -30,9 +30,11 @@ on:
         type: string
         default: 'all'
 
+# A second dispatch waits for the first; it never cancels it. Cancelling a run between two
+# `npm publish` calls leaves a release half on the registry.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   NODE_OPTIONS: --max-old-space-size=4096
@@ -58,6 +60,14 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      # A real publish runs from main only: the bump is pushed back to the branch the run
+      # started on, and a release cut from another branch would publish code main never had.
+      - name: Refuse a real publish from a branch other than main
+        if: ${{ github.event.inputs.dry-run == 'false' && github.ref != 'refs/heads/main' }}
+        run: |
+          echo "::error::A real publish must be dispatched on main (this run is on ${{ github.ref_name }}). Use dry-run=true to rehearse on a branch."
+          exit 1
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -87,9 +97,9 @@ jobs:
 
       # Version calculation + sync run BEFORE the build, not after.
       # They used to sit after it, which meant every tarball was built
-      # from the PREVIOUS version's sources: set-version.cjs rewrites two
-      # generated files (packages/core/src/version.ts and
-      # packages/developer-tools/src/version.ts), so a build that ran
+      # from the PREVIOUS version's sources: set-version.cjs rewrites
+      # generated files (packages/core/src/version.ts and its siblings in
+      # GENERATED_VERSION_FILES), so a build that ran
       # first baked the stale literal into dist. v2.11.0 shipped to npm
       # with package.json 2.11.0 and dist reporting version:"2.10.0".
       # Building after the sync also means the test + export-validation
@@ -312,8 +322,20 @@ jobs:
             echo "→ $PKG_NAME@$PKG_VER"
 
             if [ "$DRY_RUN" = "true" ]; then
+              # A dry run fails the job on anything but "this version is already on npm"
+              # (what a `current` rehearsal meets for every package). It used to end in
+              # `|| true`, so a tarball npm would refuse rehearsed green.
               (cd "packages/$pkg" && npm publish --dry-run --access public \
-                --tag "${{ github.event.inputs.npm-tag }}" 2>&1 | tail -3) || true
+                --tag "${{ github.event.inputs.npm-tag }}" > /tmp/dry-$pkg.log 2>&1) || {
+                if grep -qi "previously published\|already exists\|cannot publish over" /tmp/dry-$pkg.log; then
+                  echo "  ⏭ already published"
+                else
+                  cat /tmp/dry-$pkg.log
+                  echo "::error::npm publish --dry-run failed for $PKG_NAME"
+                  exit 1
+                fi
+              }
+              tail -3 /tmp/dry-$pkg.log
             else
               (cd "packages/$pkg" && npm publish --access public --provenance \
                 --tag "${{ github.event.inputs.npm-tag }}" 2>&1 | tee /tmp/pub-$pkg.log) || {
