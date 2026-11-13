@@ -100,7 +100,7 @@ try {
 
 // Regenerate the single source of truth for each RUNTIME-reported version.
 // Without this, `hyperscript.version` / `lokascript.version` /
-// `packageInfo.version` / `hyperfixi --version` are hand-maintained literals
+// `packageInfo.version` are hand-maintained literals
 // that drift silently — before this step existed they reported 2.0.0, 2.7.2 and
 // 0.1.0 respectively, against a published 2.10.0.
 //
@@ -109,7 +109,6 @@ try {
 // exact shape and fails loudly rather than silently no-op'ing if it moves.
 const GENERATED_VERSION_FILES = [
   'packages/core/src/version.ts',
-  'packages/developer-tools/src/version.ts',
   // semantic's exported VERSION was a `0.1.0` literal from its first release
   // (and each browser bundle its own `1.0.0-<lang>`); test/version.test.ts.
   'packages/semantic/src/version.ts',
