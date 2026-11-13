@@ -10,7 +10,7 @@ subpaths. (Core's own parser and runtime were retired in 4.0; see
 
 ## Install
 
-The script-tag bundle (34 KB gzipped). It installs as `window._hyperscript` and
+The script-tag bundle (35 KB gzipped). It installs as `window._hyperscript` and
 `window.hyperfixi`, and reads the document when it is ready:
 
 ```html

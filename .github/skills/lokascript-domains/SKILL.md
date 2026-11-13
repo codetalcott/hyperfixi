@@ -128,7 +128,6 @@ Typical round-trip: `lse_from_hyperscript` → LLM modifies LSE → `lse_to_hype
 | --------------------------- | ------------------------------------------------- |
 | `generate_training_data`    | Synthesize (natural_language, LSE) JSONL pairs    |
 | `lse_validate_and_feedback` | Validate LSE input with structured error feedback |
-| `lse_pattern_stats`         | Hit-rate statistics by command/language           |
 
 ### Server Routes: `project` toolset
 

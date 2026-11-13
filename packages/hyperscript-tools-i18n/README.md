@@ -53,10 +53,9 @@ the same engine the browser runs. This is checked for:
   an invalid canonical source before it ships in all 24 languages, and
 - **output** when a target language is `en` (foreign → English).
 
-Foreign-language _output_ is deliberately **not** round-trip-checked here: this
-package's grammar transformer is lossy in reverse, so a round-trip gate would be
-noise. Faithful foreign-output gating belongs to the semantic-engine transpiler
-(roadmap §5, "later").
+Foreign-language _output_ is not parsed here: `hyperscript.org`'s parser reads
+English. A translation that would lose part of the script is refused before it
+is written (see [Refused translations](#refused-translations)).
 
 By default, invalid English prints a deduped warning and the run continues:
 
@@ -110,7 +109,7 @@ Adds three filters:
 ```njk
 {# Translate a single hyperscript snippet #}
 {{ "toggle .active" | translateHs("ja") }}
-{# → ".active を 切り替え" #}
+{# → ".activeを 切り替え" #}
 
 {# Get every translation at once #}
 {% set variants = "toggle .active" | translateHsAll(["ja","es","ko"]) %}
@@ -137,7 +136,7 @@ import { translate, translateHtml, translateHtmlToManyLangs } from '@hyperscript
 
 // Snippet → snippet
 translate('toggle .active', 'en', 'ja');
-// → '.active を 切り替え'
+// → '.activeを 切り替え'
 
 // HTML → HTML (rewrites every _="..." attribute)
 const ja = translateHtml(html, 'ja');
@@ -148,19 +147,19 @@ const variants = translateHtmlToManyLangs(html, ['ja', 'es', 'ko']);
 
 ## Supported languages
 
-All 24 languages supported by `@lokascript/i18n`:
+All 24 languages supported by `@lokascript/semantic`, which does the translating:
 `ar, bn, de, en, es, fr, he, hi, id, it, ja, ko, ms, pl, pt, qu, ru, sw, th, tl, tr, uk, vi, zh`.
 
 Word order is handled automatically: SVO (Spanish, Chinese), SOV (Japanese,
-Korean, Turkish), VSO (Arabic). RTL languages preserve direction.
+Korean, Turkish), VSO (Arabic).
 
 ## When to use this vs. `@hyperscript-tools/multilingual`
 
-| Need                                                             | Reach for                                     |
-| ---------------------------------------------------------------- | --------------------------------------------- |
-| Visitors type hyperscript in their native language at runtime    | `@hyperscript-tools/multilingual`             |
-| Author once in English; ship pre-translated docs in 24 languages | `@hyperscript-tools/i18n` (this)              |
-| Both                                                             | Use both. They share no runtime dependencies. |
+| Need                                                             | Reach for                         |
+| ---------------------------------------------------------------- | --------------------------------- |
+| Visitors type hyperscript in their native language at runtime    | `@hyperscript-tools/multilingual` |
+| Author once in English; ship pre-translated docs in 24 languages | `@hyperscript-tools/i18n` (this)  |
+| Both                                                             | Use both.                         |
 
 ## License
 

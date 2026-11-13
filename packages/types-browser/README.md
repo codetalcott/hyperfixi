@@ -69,13 +69,13 @@ Semantic parsing and translation API (from `@lokascript/semantic`'s browser bund
 - `translate(source, fromLang, toLang)` - Translate between languages
 - `getAllTranslations(source, sourceLang)` - Get all translations
 - `createSemanticAnalyzer(options?)` - Create analyzer
-- `supportedLanguages` - Array of supported language codes
+- `getSupportedLanguages()` - Array of supported language codes
 
 ### window.LokaScriptI18n
 
 Language vocabulary API (from `lokascript-i18n.min.js`):
 
-- `supportedLocales` - Array of supported locales
+- `getSupportedLocales()` - Array of supported locales
 - `getProfile(locale)` - Get language grammar profile
 
 > `translate(source, fromLang, toLang)` and `createTransformer(options?)` were
