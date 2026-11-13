@@ -17,7 +17,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { canParse, parse, tokenize } from '../src';
+import { parse, tokenize } from '../src';
 
 /**
  * Helper to get tokens array from TokenStream
@@ -186,176 +186,86 @@ describe('Ukrainian Event Handler Patterns', () => {
 describe('Ukrainian Command Patterns', () => {
   describe('Toggle commands', () => {
     it('should parse "перемкнути .active"', () => {
-      const result = canParse('перемкнути .active', 'uk');
-      if (result) {
-        const node = parse('перемкнути .active', 'uk');
-        expect(node.action).toBe('toggle');
-      } else {
-        const tokens = getTokens('перемкнути .active', 'uk');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('перемкнути .active', 'uk');
+      expect(node.action).toBe('toggle');
     });
 
     it('should parse "перемкни .visible" (imperative)', () => {
-      const result = canParse('перемкни .visible', 'uk');
-      if (result) {
-        const node = parse('перемкни .visible', 'uk');
-        expect(node.action).toBe('toggle');
-      } else {
-        const tokens = getTokens('перемкни .visible', 'uk');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('перемкни .visible', 'uk');
+      expect(node.action).toBe('toggle');
     });
   });
 
   describe('Show/Hide commands', () => {
     it('should parse "показати #modal"', () => {
-      const result = canParse('показати #modal', 'uk');
-      if (result) {
-        const node = parse('показати #modal', 'uk');
-        expect(node.action).toBe('show');
-      } else {
-        const tokens = getTokens('показати #modal', 'uk');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('показати #modal', 'uk');
+      expect(node.action).toBe('show');
     });
 
     it('should parse "покажи #panel" (imperative)', () => {
-      const result = canParse('покажи #panel', 'uk');
-      if (result) {
-        const node = parse('покажи #panel', 'uk');
-        expect(node.action).toBe('show');
-      } else {
-        const tokens = getTokens('покажи #panel', 'uk');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('покажи #panel', 'uk');
+      expect(node.action).toBe('show');
     });
 
     it('should parse "сховати #modal"', () => {
-      const result = canParse('сховати #modal', 'uk');
-      if (result) {
-        const node = parse('сховати #modal', 'uk');
-        expect(node.action).toBe('hide');
-      } else {
-        const tokens = getTokens('сховати #modal', 'uk');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('сховати #modal', 'uk');
+      expect(node.action).toBe('hide');
     });
 
     it('should parse "приховати #dropdown" (alternate hide)', () => {
-      const result = canParse('приховати #dropdown', 'uk');
-      if (result) {
-        const node = parse('приховати #dropdown', 'uk');
-        expect(node.action).toBe('hide');
-      } else {
-        const tokens = getTokens('приховати #dropdown', 'uk');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('приховати #dropdown', 'uk');
+      expect(node.action).toBe('hide');
     });
   });
 
   describe('Add/Remove commands', () => {
     it('should parse "додати .highlight"', () => {
-      const result = canParse('додати .highlight', 'uk');
-      if (result) {
-        const node = parse('додати .highlight', 'uk');
-        expect(node.action).toBe('add');
-      } else {
-        const tokens = getTokens('додати .highlight', 'uk');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('додати .highlight', 'uk');
+      expect(node.action).toBe('add');
     });
 
     it('should parse "видалити .highlight"', () => {
-      const result = canParse('видалити .highlight', 'uk');
-      if (result) {
-        const node = parse('видалити .highlight', 'uk');
-        expect(node.action).toBe('remove');
-      } else {
-        const tokens = getTokens('видалити .highlight', 'uk');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('видалити .highlight', 'uk');
+      expect(node.action).toBe('remove');
     });
 
     it('should parse "прибрати .error" (alternate remove)', () => {
-      const result = canParse('прибрати .error', 'uk');
-      if (result) {
-        const node = parse('прибрати .error', 'uk');
-        expect(node.action).toBe('remove');
-      } else {
-        const tokens = getTokens('прибрати .error', 'uk');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('прибрати .error', 'uk');
+      expect(node.action).toBe('remove');
     });
   });
 
   describe('Increment/Decrement commands', () => {
     it('should parse "збільшити counter"', () => {
-      const result = canParse('збільшити counter', 'uk');
-      if (result) {
-        const node = parse('збільшити counter', 'uk');
-        expect(node.action).toBe('increment');
-      } else {
-        const tokens = getTokens('збільшити counter', 'uk');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('збільшити counter', 'uk');
+      expect(node.action).toBe('increment');
     });
 
     it('should parse "зменшити counter"', () => {
-      const result = canParse('зменшити counter', 'uk');
-      if (result) {
-        const node = parse('зменшити counter', 'uk');
-        expect(node.action).toBe('decrement');
-      } else {
-        const tokens = getTokens('зменшити counter', 'uk');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('зменшити counter', 'uk');
+      expect(node.action).toBe('decrement');
     });
   });
 
   describe('Put/Set/Get commands', () => {
     it('should parse "покласти \\"привіт\\" в #output"', () => {
-      const result = canParse('покласти "привіт" в #output', 'uk');
-      if (result) {
-        const node = parse('покласти "привіт" в #output', 'uk');
-        expect(node.action).toBe('put');
-      } else {
-        const tokens = getTokens('покласти "привіт" в #output', 'uk');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('покласти "привіт" в #output', 'uk');
+      expect(node.action).toBe('put');
     });
 
     it('should parse "встановити x на 10"', () => {
-      const result = canParse('встановити x на 10', 'uk');
-      if (result) {
-        const node = parse('встановити x на 10', 'uk');
-        expect(['set', 'put']).toContain(node.action);
-      } else {
-        const tokens = getTokens('встановити x на 10', 'uk');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('встановити x на 10', 'uk');
+      expect(['set', 'put']).toContain(node.action);
     });
 
     it('should parse "отримати #element"', () => {
-      const result = canParse('отримати #element', 'uk');
-      if (result) {
-        const node = parse('отримати #element', 'uk');
-        expect(node.action).toBe('get');
-      } else {
-        const tokens = getTokens('отримати #element', 'uk');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('отримати #element', 'uk');
+      expect(node.action).toBe('get');
     });
 
     it('should parse "помістити \\"текст\\" в #output" (alternate put)', () => {
-      const result = canParse('помістити "текст" в #output', 'uk');
-      if (result) {
-        const node = parse('помістити "текст" в #output', 'uk');
-        expect(node.action).toBe('put');
-      } else {
-        const tokens = getTokens('помістити "текст" в #output', 'uk');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('помістити "текст" в #output', 'uk');
+      expect(node.action).toBe('put');
     });
   });
 });

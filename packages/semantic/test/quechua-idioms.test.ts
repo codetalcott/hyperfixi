@@ -15,7 +15,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { canParse, parse, tokenize } from '../src';
+import { parse, tokenize } from '../src';
 
 /**
  * Helper to get tokens array from TokenStream
@@ -210,14 +210,8 @@ describe('Quechua Event Handler Patterns', () => {
 describe('Quechua Command Patterns', () => {
   describe('Toggle commands', () => {
     it('should parse ".active ta t\'ikray"', () => {
-      const result = canParse(".active ta t'ikray", 'qu');
-      if (result) {
-        const node = parse(".active ta t'ikray", 'qu');
-        expect(node.action).toBe('toggle');
-      } else {
-        const tokens = getTokens(".active ta t'ikray", 'qu');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse(".active ta t'ikray", 'qu');
+      expect(node.action).toBe('toggle');
     });
 
     it('should parse ".active ta tikray" (alternative spelling)', () => {
@@ -233,25 +227,13 @@ describe('Quechua Command Patterns', () => {
 
   describe('Show/Hide commands', () => {
     it('should parse "#modal ta rikuchiy"', () => {
-      const result = canParse('#modal ta rikuchiy', 'qu');
-      if (result) {
-        const node = parse('#modal ta rikuchiy', 'qu');
-        expect(node.action).toBe('show');
-      } else {
-        const tokens = getTokens('#modal ta rikuchiy', 'qu');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('#modal ta rikuchiy', 'qu');
+      expect(node.action).toBe('show');
     });
 
     it('should parse "#dropdown ta pakay"', () => {
-      const result = canParse('#dropdown ta pakay', 'qu');
-      if (result) {
-        const node = parse('#dropdown ta pakay', 'qu');
-        expect(node.action).toBe('hide');
-      } else {
-        const tokens = getTokens('#dropdown ta pakay', 'qu');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('#dropdown ta pakay', 'qu');
+      expect(node.action).toBe('hide');
     });
 
     it('should parse "#menu ta qawachiy" (show alternative)', () => {
@@ -267,25 +249,13 @@ describe('Quechua Command Patterns', () => {
 
   describe('Add/Remove commands', () => {
     it('should parse ".highlight ta yapay"', () => {
-      const result = canParse('.highlight ta yapay', 'qu');
-      if (result) {
-        const node = parse('.highlight ta yapay', 'qu');
-        expect(node.action).toBe('add');
-      } else {
-        const tokens = getTokens('.highlight ta yapay', 'qu');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('.highlight ta yapay', 'qu');
+      expect(node.action).toBe('add');
     });
 
     it('should parse ".active ta qichuy"', () => {
-      const result = canParse('.active ta qichuy', 'qu');
-      if (result) {
-        const node = parse('.active ta qichuy', 'qu');
-        expect(node.action).toBe('remove');
-      } else {
-        const tokens = getTokens('.active ta qichuy', 'qu');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('.active ta qichuy', 'qu');
+      expect(node.action).toBe('remove');
     });
 
     it('should parse ".class ta hurquy" (remove alternative)', () => {
@@ -306,25 +276,13 @@ describe('Quechua Command Patterns', () => {
 
   describe('Increment/Decrement commands', () => {
     it('should parse "counter ta yapachiy"', () => {
-      const result = canParse('counter ta yapachiy', 'qu');
-      if (result) {
-        const node = parse('counter ta yapachiy', 'qu');
-        expect(node.action).toBe('increment');
-      } else {
-        const tokens = getTokens('counter ta yapachiy', 'qu');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('counter ta yapachiy', 'qu');
+      expect(node.action).toBe('increment');
     });
 
     it('should parse "counter ta pisiyachiy"', () => {
-      const result = canParse('counter ta pisiyachiy', 'qu');
-      if (result) {
-        const node = parse('counter ta pisiyachiy', 'qu');
-        expect(node.action).toBe('decrement');
-      } else {
-        const tokens = getTokens('counter ta pisiyachiy', 'qu');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('counter ta pisiyachiy', 'qu');
+      expect(node.action).toBe('decrement');
     });
   });
 
@@ -335,14 +293,8 @@ describe('Quechua Command Patterns', () => {
     });
 
     it('should parse "#element ta taripay"', () => {
-      const result = canParse('#element ta taripay', 'qu');
-      if (result) {
-        const node = parse('#element ta taripay', 'qu');
-        expect(node.action).toBe('get');
-      } else {
-        const tokens = getTokens('#element ta taripay', 'qu');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('#element ta taripay', 'qu');
+      expect(node.action).toBe('get');
     });
 
     it('should parse "x ta 10 man churanay"', () => {

@@ -180,79 +180,48 @@ describe('Japanese Event Handler Patterns', () => {
   });
 
   describe('conditional したら patterns (native idiom)', () => {
-    it('should parse "クリックしたら 増加" as event handler', () => {
-      const result = canParse('クリックしたら 増加', 'ja');
-      if (result.canParse) {
-        const node = parse('クリックしたら 増加', 'ja');
-        // Conditional forms should also parse as event handlers
-        expect(node.action).toBe('on');
-        expect(node.roles.has('event')).toBe(true);
-      } else {
-        // Pattern may need registration - check if tokenization works
-        const tokens = getTokens('クリックしたら 増加', 'ja');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+    it.fails('should parse "クリックしたら 増加" as event handler', () => {
+      const node = parse('クリックしたら 増加', 'ja');
+      // Conditional forms should also parse as event handlers
+      expect(node.action).toBe('on');
+      expect(node.roles.has('event')).toBe(true);
     });
 
-    it('should parse "クリックしたら .active を 切り替え" as event handler', () => {
-      const result = canParse('クリックしたら .active を 切り替え', 'ja');
-      if (result.canParse) {
-        const node = parse('クリックしたら .active を 切り替え', 'ja');
-        expect(node.action).toBe('on');
-        expect(node.roles.has('event')).toBe(true);
-      } else {
-        const tokens = getTokens('クリックしたら .active を 切り替え', 'ja');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+    it.fails('should parse "クリックしたら .active を 切り替え" as event handler', () => {
+      const node = parse('クリックしたら .active を 切り替え', 'ja');
+      expect(node.action).toBe('on');
+      expect(node.roles.has('event')).toBe(true);
     });
 
-    it('should parse with すると alternative', () => {
-      const result = canParse('クリックすると 増加', 'ja');
-      if (result.canParse) {
-        const node = parse('クリックすると 増加', 'ja');
-        expect(node.action).toBe('on');
-      }
+    it.fails('should parse with すると alternative', () => {
+      const node = parse('クリックすると 増加', 'ja');
+      expect(node.action).toBe('on');
     });
 
-    it('should parse with すれば alternative', () => {
-      const result = canParse('クリックすれば 増加', 'ja');
-      if (result.canParse) {
-        const node = parse('クリックすれば 増加', 'ja');
-        expect(node.action).toBe('on');
-      }
+    it.fails('should parse with すれば alternative', () => {
+      const node = parse('クリックすれば 増加', 'ja');
+      expect(node.action).toBe('on');
     });
   });
 
   describe('temporal 時に patterns (native idiom)', () => {
-    it('should parse "クリック時に 増加" as event handler', () => {
-      const result = canParse('クリック時に 増加', 'ja');
-      if (result.canParse) {
-        const node = parse('クリック時に 増加', 'ja');
-        expect(node.action).toBe('on');
-        expect(node.roles.has('event')).toBe(true);
-      } else {
-        const tokens = getTokens('クリック時に 増加', 'ja');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+    it.fails('should parse "クリック時に 増加" as event handler', () => {
+      const node = parse('クリック時に 増加', 'ja');
+      expect(node.action).toBe('on');
+      expect(node.roles.has('event')).toBe(true);
     });
 
-    it('should parse "入力時に .active を 切り替え" as event handler', () => {
-      const result = canParse('入力時に .active を 切り替え', 'ja');
-      if (result.canParse) {
-        const node = parse('入力時に .active を 切り替え', 'ja');
-        expect(node.action).toBe('on');
-      }
+    it.fails('should parse "入力時に .active を 切り替え" as event handler', () => {
+      const node = parse('入力時に .active を 切り替え', 'ja');
+      expect(node.action).toBe('on');
     });
   });
 
   describe('conditional with source filter', () => {
-    it('should parse "#button から クリックしたら 増加" with source', () => {
-      const result = canParse('#button から クリックしたら 増加', 'ja');
-      if (result.canParse) {
-        const node = parse('#button から クリックしたら 増加', 'ja');
-        expect(node.action).toBe('on');
-        expect(node.roles.get('source')?.value).toBe('#button');
-      }
+    it.fails('should parse "#button から クリックしたら 増加" with source', () => {
+      const node = parse('#button から クリックしたら 増加', 'ja');
+      expect(node.action).toBe('on');
+      expect(node.roles.get('source')?.value).toBe('#button');
     });
   });
 });
@@ -279,54 +248,32 @@ describe('Japanese Toggle Patterns', () => {
 
   describe('compact patterns (native idiom - no spaces)', () => {
     it('should parse ".activeを切り替え"', () => {
-      const result = canParse('.activeを切り替え', 'ja');
-      if (result.canParse) {
-        const node = parse('.activeを切り替え', 'ja');
-        expect(node.action).toBe('toggle');
-        expect(node.roles.get('patient')?.value).toBe('.active');
-      } else {
-        // Verify tokenization at least recognizes the pattern
-        const tokens = getTokens('.activeを切り替え', 'ja');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('.activeを切り替え', 'ja');
+      expect(node.action).toBe('toggle');
+      expect(node.roles.get('patient')?.value).toBe('.active');
     });
 
     it('should parse ".activeを切り替える" with verb ending', () => {
-      const result = canParse('.activeを切り替える', 'ja');
-      if (result.canParse) {
-        const node = parse('.activeを切り替える', 'ja');
-        expect(node.action).toBe('toggle');
-      }
+      const node = parse('.activeを切り替える', 'ja');
+      expect(node.action).toBe('toggle');
     });
 
     it('should parse ".activeをトグル" with katakana loanword', () => {
-      const result = canParse('.activeをトグル', 'ja');
-      if (result.canParse) {
-        const node = parse('.activeをトグル', 'ja');
-        expect(node.action).toBe('toggle');
-      }
+      const node = parse('.activeをトグル', 'ja');
+      expect(node.action).toBe('toggle');
     });
   });
 
   describe('verb ending patterns (native idiom)', () => {
     it('should parse ".active を 切り替える"', () => {
-      const result = canParse('.active を 切り替える', 'ja');
-      if (result.canParse) {
-        const node = parse('.active を 切り替える', 'ja');
-        expect(node.action).toBe('toggle');
-        expect(node.roles.get('patient')?.value).toBe('.active');
-      } else {
-        const tokens = getTokens('.active を 切り替える', 'ja');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('.active を 切り替える', 'ja');
+      expect(node.action).toBe('toggle');
+      expect(node.roles.get('patient')?.value).toBe('.active');
     });
 
     it('should parse ".active を トグルする"', () => {
-      const result = canParse('.active を トグルする', 'ja');
-      if (result.canParse) {
-        const node = parse('.active を トグルする', 'ja');
-        expect(node.action).toBe('toggle');
-      }
+      const node = parse('.active を トグルする', 'ja');
+      expect(node.action).toBe('toggle');
     });
   });
 });
@@ -346,36 +293,24 @@ describe('Japanese Increment/Decrement Patterns', () => {
 
   describe('compact patterns', () => {
     it('should parse "#countを増加"', () => {
-      const result = canParse('#countを増加', 'ja');
-      if (result.canParse) {
-        const node = parse('#countを増加', 'ja');
-        expect(node.action).toBe('increment');
-        expect(node.roles.get('patient')?.value).toBe('#count');
-      }
+      const node = parse('#countを増加', 'ja');
+      expect(node.action).toBe('increment');
+      expect(node.roles.get('patient')?.value).toBe('#count');
     });
 
     it('should parse "#countを増やす" with native verb', () => {
-      const result = canParse('#countを増やす', 'ja');
-      if (result.canParse) {
-        const node = parse('#countを増やす', 'ja');
-        expect(node.action).toBe('increment');
-      }
+      const node = parse('#countを増やす', 'ja');
+      expect(node.action).toBe('increment');
     });
 
     it('should parse "#countを減少"', () => {
-      const result = canParse('#countを減少', 'ja');
-      if (result.canParse) {
-        const node = parse('#countを減少', 'ja');
-        expect(node.action).toBe('decrement');
-      }
+      const node = parse('#countを減少', 'ja');
+      expect(node.action).toBe('decrement');
     });
 
     it('should parse "#countを減らす" with native verb', () => {
-      const result = canParse('#countを減らす', 'ja');
-      if (result.canParse) {
-        const node = parse('#countを減らす', 'ja');
-        expect(node.action).toBe('decrement');
-      }
+      const node = parse('#countを減らす', 'ja');
+      expect(node.action).toBe('decrement');
     });
   });
 });
@@ -387,27 +322,18 @@ describe('Japanese Increment/Decrement Patterns', () => {
 describe('Japanese Show/Hide Patterns', () => {
   describe('compact patterns', () => {
     it('should parse "#dialogを表示"', () => {
-      const result = canParse('#dialogを表示', 'ja');
-      if (result.canParse) {
-        const node = parse('#dialogを表示', 'ja');
-        expect(node.action).toBe('show');
-      }
+      const node = parse('#dialogを表示', 'ja');
+      expect(node.action).toBe('show');
     });
 
     it('should parse "#dialogを隠す"', () => {
-      const result = canParse('#dialogを隠す', 'ja');
-      if (result.canParse) {
-        const node = parse('#dialogを隠す', 'ja');
-        expect(node.action).toBe('hide');
-      }
+      const node = parse('#dialogを隠す', 'ja');
+      expect(node.action).toBe('hide');
     });
 
     it('should parse "#dialogを非表示"', () => {
-      const result = canParse('#dialogを非表示', 'ja');
-      if (result.canParse) {
-        const node = parse('#dialogを非表示', 'ja');
-        expect(node.action).toBe('hide');
-      }
+      const node = parse('#dialogを非表示', 'ja');
+      expect(node.action).toBe('hide');
     });
   });
 });
@@ -419,48 +345,31 @@ describe('Japanese Show/Hide Patterns', () => {
 describe('Semantic Equivalence', () => {
   describe('toggle patterns should produce equivalent nodes', () => {
     it('spaced vs compact toggle should be equivalent', () => {
-      const spacedResult = canParse('.active を 切り替え', 'ja');
-      const compactResult = canParse('.activeを切り替え', 'ja');
+      const spacedNode = parse('.active を 切り替え', 'ja');
+      const compactNode = parse('.activeを切り替え', 'ja');
 
-      if (spacedResult.canParse && compactResult.canParse) {
-        const spacedNode = parse('.active を 切り替え', 'ja');
-        const compactNode = parse('.activeを切り替え', 'ja');
-
-        expect(spacedNode.action).toBe(compactNode.action);
-        expect(spacedNode.roles.get('patient')?.value).toBe(
-          compactNode.roles.get('patient')?.value
-        );
-      }
+      expect(spacedNode.action).toBe(compactNode.action);
+      expect(spacedNode.roles.get('patient')?.value).toBe(compactNode.roles.get('patient')?.value);
     });
 
     it('stem vs verb ending toggle should be equivalent', () => {
-      const stemResult = canParse('.active を 切り替え', 'ja');
-      const verbResult = canParse('.active を 切り替える', 'ja');
+      const stemNode = parse('.active を 切り替え', 'ja');
+      const verbNode = parse('.active を 切り替える', 'ja');
 
-      if (stemResult.canParse && verbResult.canParse) {
-        const stemNode = parse('.active を 切り替え', 'ja');
-        const verbNode = parse('.active を 切り替える', 'ja');
-
-        expect(stemNode.action).toBe(verbNode.action);
-        expect(stemNode.roles.get('patient')?.value).toBe(verbNode.roles.get('patient')?.value);
-      }
+      expect(stemNode.action).toBe(verbNode.action);
+      expect(stemNode.roles.get('patient')?.value).toBe(verbNode.roles.get('patient')?.value);
     });
   });
 
   describe('event handler patterns should produce equivalent nodes', () => {
-    it('で vs したら event handlers should be equivalent', () => {
-      const deResult = canParse('クリック で 増加', 'ja');
-      const taraResult = canParse('クリックしたら 増加', 'ja');
+    it.fails('で vs したら event handlers should be equivalent', () => {
+      const deNode = parse('クリック で 増加', 'ja');
+      const taraNode = parse('クリックしたら 増加', 'ja');
 
-      if (deResult.canParse && taraResult.canParse) {
-        const deNode = parse('クリック で 増加', 'ja');
-        const taraNode = parse('クリックしたら 増加', 'ja');
-
-        // Both should produce event handler with action='on'
-        expect(deNode.action).toBe('on');
-        expect(taraNode.action).toBe('on');
-        expect(deNode.action).toBe(taraNode.action);
-      }
+      // Both should produce event handler with action='on'
+      expect(deNode.action).toBe('on');
+      expect(taraNode.action).toBe('on');
+      expect(deNode.action).toBe(taraNode.action);
     });
   });
 });

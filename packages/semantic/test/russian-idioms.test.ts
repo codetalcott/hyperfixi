@@ -17,7 +17,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { canParse, parse, tokenize } from '../src';
+import { parse, tokenize } from '../src';
 
 /**
  * Helper to get tokens array from TokenStream
@@ -248,143 +248,71 @@ describe('Russian Event Handler Patterns', () => {
 describe('Russian Command Patterns', () => {
   describe('Toggle commands', () => {
     it('should parse "переключить .active"', () => {
-      const result = canParse('переключить .active', 'ru');
-      if (result) {
-        const node = parse('переключить .active', 'ru');
-        expect(node.action).toBe('toggle');
-      } else {
-        const tokens = getTokens('переключить .active', 'ru');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('переключить .active', 'ru');
+      expect(node.action).toBe('toggle');
     });
   });
 
   describe('Show/Hide commands', () => {
     it('should parse "показать #modal"', () => {
-      const result = canParse('показать #modal', 'ru');
-      if (result) {
-        const node = parse('показать #modal', 'ru');
-        expect(node.action).toBe('show');
-      } else {
-        const tokens = getTokens('показать #modal', 'ru');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('показать #modal', 'ru');
+      expect(node.action).toBe('show');
     });
 
     it('should parse "скрыть #modal"', () => {
-      const result = canParse('скрыть #modal', 'ru');
-      if (result) {
-        const node = parse('скрыть #modal', 'ru');
-        expect(node.action).toBe('hide');
-      } else {
-        const tokens = getTokens('скрыть #modal', 'ru');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('скрыть #modal', 'ru');
+      expect(node.action).toBe('hide');
     });
 
     it('should parse "спрятать #menu" (alternative hide)', () => {
-      const result = canParse('спрятать #menu', 'ru');
-      if (result) {
-        const node = parse('спрятать #menu', 'ru');
-        expect(node.action).toBe('hide');
-      } else {
-        const tokens = getTokens('спрятать #menu', 'ru');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('спрятать #menu', 'ru');
+      expect(node.action).toBe('hide');
     });
   });
 
   describe('Add/Remove commands', () => {
     it('should parse "добавить .highlight"', () => {
-      const result = canParse('добавить .highlight', 'ru');
-      if (result) {
-        const node = parse('добавить .highlight', 'ru');
-        expect(node.action).toBe('add');
-      } else {
-        const tokens = getTokens('добавить .highlight', 'ru');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('добавить .highlight', 'ru');
+      expect(node.action).toBe('add');
     });
 
     it('should parse "удалить .highlight"', () => {
-      const result = canParse('удалить .highlight', 'ru');
-      if (result) {
-        const node = parse('удалить .highlight', 'ru');
-        expect(node.action).toBe('remove');
-      } else {
-        const tokens = getTokens('удалить .highlight', 'ru');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('удалить .highlight', 'ru');
+      expect(node.action).toBe('remove');
     });
 
     it('should parse "убрать .error" (alternative remove)', () => {
-      const result = canParse('убрать .error', 'ru');
-      if (result) {
-        const node = parse('убрать .error', 'ru');
-        expect(node.action).toBe('remove');
-      } else {
-        const tokens = getTokens('убрать .error', 'ru');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('убрать .error', 'ru');
+      expect(node.action).toBe('remove');
     });
   });
 
   describe('Increment/Decrement commands', () => {
     it('should parse "увеличить counter"', () => {
-      const result = canParse('увеличить counter', 'ru');
-      if (result) {
-        const node = parse('увеличить counter', 'ru');
-        expect(node.action).toBe('increment');
-      } else {
-        const tokens = getTokens('увеличить counter', 'ru');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('увеличить counter', 'ru');
+      expect(node.action).toBe('increment');
     });
 
     it('should parse "уменьшить counter"', () => {
-      const result = canParse('уменьшить counter', 'ru');
-      if (result) {
-        const node = parse('уменьшить counter', 'ru');
-        expect(node.action).toBe('decrement');
-      } else {
-        const tokens = getTokens('уменьшить counter', 'ru');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('уменьшить counter', 'ru');
+      expect(node.action).toBe('decrement');
     });
   });
 
   describe('Put/Set/Get commands', () => {
     it('should parse "поместить \\"привет\\" в #output"', () => {
-      const result = canParse('поместить "привет" в #output', 'ru');
-      if (result) {
-        const node = parse('поместить "привет" в #output', 'ru');
-        expect(node.action).toBe('put');
-      } else {
-        const tokens = getTokens('поместить "привет" в #output', 'ru');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('поместить "привет" в #output', 'ru');
+      expect(node.action).toBe('put');
     });
 
     it('should parse "установить x в 10"', () => {
-      const result = canParse('установить x в 10', 'ru');
-      if (result) {
-        const node = parse('установить x в 10', 'ru');
-        expect(node.action).toBe('set');
-      } else {
-        const tokens = getTokens('установить x в 10', 'ru');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('установить x в 10', 'ru');
+      expect(node.action).toBe('set');
     });
 
     it('should parse "получить #element"', () => {
-      const result = canParse('получить #element', 'ru');
-      if (result) {
-        const node = parse('получить #element', 'ru');
-        expect(node.action).toBe('get');
-      } else {
-        const tokens = getTokens('получить #element', 'ru');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('получить #element', 'ru');
+      expect(node.action).toBe('get');
     });
   });
 });

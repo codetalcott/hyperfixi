@@ -15,7 +15,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { canParse, parse, tokenize } from '../src';
+import { parse, tokenize } from '../src';
 
 /**
  * Helper to get tokens array from TokenStream
@@ -218,14 +218,8 @@ describe('Indonesian Event Handler Patterns', () => {
 describe('Indonesian Command Patterns', () => {
   describe('Toggle commands', () => {
     it('should parse "alihkan .active"', () => {
-      const result = canParse('alihkan .active', 'id');
-      if (result) {
-        const node = parse('alihkan .active', 'id');
-        expect(node.action).toBe('toggle');
-      } else {
-        const tokens = getTokens('alihkan .active', 'id');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('alihkan .active', 'id');
+      expect(node.action).toBe('toggle');
     });
 
     it('should parse with alternative "ubah .visible"', () => {
@@ -236,14 +230,8 @@ describe('Indonesian Command Patterns', () => {
 
   describe('Show/Hide commands', () => {
     it('should parse "tampilkan #modal"', () => {
-      const result = canParse('tampilkan #modal', 'id');
-      if (result) {
-        const node = parse('tampilkan #modal', 'id');
-        expect(node.action).toBe('show');
-      } else {
-        const tokens = getTokens('tampilkan #modal', 'id');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('tampilkan #modal', 'id');
+      expect(node.action).toBe('show');
     });
 
     it('should parse "perlihatkan #menu"', () => {
@@ -252,14 +240,8 @@ describe('Indonesian Command Patterns', () => {
     });
 
     it('should parse "sembunyikan #dropdown"', () => {
-      const result = canParse('sembunyikan #dropdown', 'id');
-      if (result) {
-        const node = parse('sembunyikan #dropdown', 'id');
-        expect(node.action).toBe('hide');
-      } else {
-        const tokens = getTokens('sembunyikan #dropdown', 'id');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('sembunyikan #dropdown', 'id');
+      expect(node.action).toBe('hide');
     });
 
     it('should parse alternative "tutup #modal"', () => {
@@ -270,14 +252,8 @@ describe('Indonesian Command Patterns', () => {
 
   describe('Add/Remove commands', () => {
     it('should parse "tambah .highlight"', () => {
-      const result = canParse('tambah .highlight', 'id');
-      if (result) {
-        const node = parse('tambah .highlight', 'id');
-        expect(node.action).toBe('add');
-      } else {
-        const tokens = getTokens('tambah .highlight', 'id');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('tambah .highlight', 'id');
+      expect(node.action).toBe('add');
     });
 
     it('should parse "tambahkan .highlight"', () => {
@@ -286,14 +262,8 @@ describe('Indonesian Command Patterns', () => {
     });
 
     it('should parse "hapus .highlight"', () => {
-      const result = canParse('hapus .highlight', 'id');
-      if (result) {
-        const node = parse('hapus .highlight', 'id');
-        expect(node.action).toBe('remove');
-      } else {
-        const tokens = getTokens('hapus .highlight', 'id');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('hapus .highlight', 'id');
+      expect(node.action).toBe('remove');
     });
 
     it('should parse alternative "buang .highlight"', () => {
@@ -309,14 +279,8 @@ describe('Indonesian Command Patterns', () => {
 
   describe('Increment/Decrement commands', () => {
     it('should parse "tingkatkan counter"', () => {
-      const result = canParse('tingkatkan counter', 'id');
-      if (result) {
-        const node = parse('tingkatkan counter', 'id');
-        expect(node.action).toBe('increment');
-      } else {
-        const tokens = getTokens('tingkatkan counter', 'id');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('tingkatkan counter', 'id');
+      expect(node.action).toBe('increment');
     });
 
     it('should parse alternative "naikkan counter"', () => {
@@ -325,14 +289,8 @@ describe('Indonesian Command Patterns', () => {
     });
 
     it('should parse "turunkan counter"', () => {
-      const result = canParse('turunkan counter', 'id');
-      if (result) {
-        const node = parse('turunkan counter', 'id');
-        expect(node.action).toBe('decrement');
-      } else {
-        const tokens = getTokens('turunkan counter', 'id');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('turunkan counter', 'id');
+      expect(node.action).toBe('decrement');
     });
 
     it('should parse alternative "kurangi counter"', () => {
@@ -343,14 +301,8 @@ describe('Indonesian Command Patterns', () => {
 
   describe('Set/Get commands', () => {
     it('should parse "atur x ke 10"', () => {
-      const result = canParse('atur x ke 10', 'id');
-      if (result) {
-        const node = parse('atur x ke 10', 'id');
-        expect(node.action).toBe('set');
-      } else {
-        const tokens = getTokens('atur x ke 10', 'id');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('atur x ke 10', 'id');
+      expect(node.action).toBe('set');
     });
 
     it('should parse alternative "tetapkan x ke 10"', () => {
@@ -359,14 +311,8 @@ describe('Indonesian Command Patterns', () => {
     });
 
     it('should parse "dapatkan #element"', () => {
-      const result = canParse('dapatkan #element', 'id');
-      if (result) {
-        const node = parse('dapatkan #element', 'id');
-        expect(node.action).toBe('get');
-      } else {
-        const tokens = getTokens('dapatkan #element', 'id');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('dapatkan #element', 'id');
+      expect(node.action).toBe('get');
     });
 
     it('should parse alternative "peroleh #element"', () => {

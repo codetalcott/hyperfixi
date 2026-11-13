@@ -15,7 +15,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { canParse, parse, tokenize } from '../src';
+import { parse, tokenize } from '../src';
 
 /**
  * Helper to get tokens array from TokenStream
@@ -231,14 +231,8 @@ describe('Swahili Event Handler Patterns', () => {
 describe('Swahili Command Patterns', () => {
   describe('Toggle commands', () => {
     it('should parse "badilisha .active"', () => {
-      const result = canParse('badilisha .active', 'sw');
-      if (result) {
-        const node = parse('badilisha .active', 'sw');
-        expect(node.action).toBe('toggle');
-      } else {
-        const tokens = getTokens('badilisha .active', 'sw');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('badilisha .active', 'sw');
+      expect(node.action).toBe('toggle');
     });
 
     it('should tokenize "wakati bonyeza badilisha .active kwenye #button"', () => {
@@ -249,25 +243,13 @@ describe('Swahili Command Patterns', () => {
 
   describe('Show/Hide commands', () => {
     it('should parse "onyesha #modal"', () => {
-      const result = canParse('onyesha #modal', 'sw');
-      if (result) {
-        const node = parse('onyesha #modal', 'sw');
-        expect(node.action).toBe('show');
-      } else {
-        const tokens = getTokens('onyesha #modal', 'sw');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('onyesha #modal', 'sw');
+      expect(node.action).toBe('show');
     });
 
     it('should parse "ficha #modal"', () => {
-      const result = canParse('ficha #modal', 'sw');
-      if (result) {
-        const node = parse('ficha #modal', 'sw');
-        expect(node.action).toBe('hide');
-      } else {
-        const tokens = getTokens('ficha #modal', 'sw');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('ficha #modal', 'sw');
+      expect(node.action).toBe('hide');
     });
 
     it('should tokenize "wakati lenga onyesha #tooltip"', () => {
@@ -283,25 +265,13 @@ describe('Swahili Command Patterns', () => {
 
   describe('Add/Remove commands', () => {
     it('should parse "ongeza .highlight"', () => {
-      const result = canParse('ongeza .highlight', 'sw');
-      if (result) {
-        const node = parse('ongeza .highlight', 'sw');
-        expect(node.action).toBe('add');
-      } else {
-        const tokens = getTokens('ongeza .highlight', 'sw');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('ongeza .highlight', 'sw');
+      expect(node.action).toBe('add');
     });
 
     it('should parse "ondoa .highlight"', () => {
-      const result = canParse('ondoa .highlight', 'sw');
-      if (result) {
-        const node = parse('ondoa .highlight', 'sw');
-        expect(node.action).toBe('remove');
-      } else {
-        const tokens = getTokens('ondoa .highlight', 'sw');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('ondoa .highlight', 'sw');
+      expect(node.action).toBe('remove');
     });
 
     it('should tokenize "wakati bonyeza ondoa .error"', () => {
@@ -317,25 +287,13 @@ describe('Swahili Command Patterns', () => {
 
   describe('Increment/Decrement commands', () => {
     it('should parse "ongezeko counter"', () => {
-      const result = canParse('ongezeko counter', 'sw');
-      if (result) {
-        const node = parse('ongezeko counter', 'sw');
-        expect(node.action).toBe('increment');
-      } else {
-        const tokens = getTokens('ongezeko counter', 'sw');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('ongezeko counter', 'sw');
+      expect(node.action).toBe('increment');
     });
 
     it('should parse "punguza counter"', () => {
-      const result = canParse('punguza counter', 'sw');
-      if (result) {
-        const node = parse('punguza counter', 'sw');
-        expect(node.action).toBe('decrement');
-      } else {
-        const tokens = getTokens('punguza counter', 'sw');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('punguza counter', 'sw');
+      expect(node.action).toBe('decrement');
     });
 
     it('should tokenize "wakati bonyeza ongezeko #counter"', () => {
@@ -350,15 +308,9 @@ describe('Swahili Command Patterns', () => {
   });
 
   describe('Put/Get commands', () => {
-    it('should parse "weka "habari" ndani #output"', () => {
-      const result = canParse('weka "habari" ndani #output', 'sw');
-      if (result) {
-        const node = parse('weka "habari" ndani #output', 'sw');
-        expect(node.action).toBe('put');
-      } else {
-        const tokens = getTokens('weka "habari" ndani #output', 'sw');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+    it.fails('should parse "weka "habari" ndani #output"', () => {
+      const node = parse('weka "habari" ndani #output', 'sw');
+      expect(node.action).toBe('put');
     });
 
     it('should tokenize "wakati ingiza weka "test" ndani #output"', () => {
@@ -367,27 +319,15 @@ describe('Swahili Command Patterns', () => {
     });
 
     it('should parse "pata #element"', () => {
-      const result = canParse('pata #element', 'sw');
-      if (result) {
-        const node = parse('pata #element', 'sw');
-        expect(node.action).toBe('get');
-      } else {
-        const tokens = getTokens('pata #element', 'sw');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('pata #element', 'sw');
+      expect(node.action).toBe('get');
     });
   });
 
   describe('Set command', () => {
     it('should parse "seti x kwenye 10"', () => {
-      const result = canParse('seti x kwenye 10', 'sw');
-      if (result) {
-        const node = parse('seti x kwenye 10', 'sw');
-        expect(node.action).toBe('set');
-      } else {
-        const tokens = getTokens('seti x kwenye 10', 'sw');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('seti x kwenye 10', 'sw');
+      expect(node.action).toBe('set');
     });
 
     it('should tokenize "wakati badilisha seti x kwenye 10"', () => {

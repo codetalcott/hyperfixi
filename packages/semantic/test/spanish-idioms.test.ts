@@ -29,7 +29,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parse, canParse, tokenize } from '../src';
+import { parse, tokenize } from '../src';
 import { SpanishMorphologicalNormalizer } from '../src/tokenizers/morphology/spanish-normalizer';
 
 /**
@@ -232,14 +232,8 @@ describe('Spanish Tokenizer - Native Idioms', () => {
 describe('Spanish Event Handler Patterns', () => {
   describe('Native idiom: al + infinitive', () => {
     it('should parse "al clic alternar .active"', () => {
-      const result = canParse('al clic alternar .active', 'es');
-      if (result) {
-        const node = parse('al clic alternar .active', 'es');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('al clic alternar .active', 'es');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('al clic alternar .active', 'es');
+      expect(node.action).toBe('on');
     });
 
     it('should parse "al hacer clic alternar .active"', () => {
@@ -255,27 +249,15 @@ describe('Spanish Event Handler Patterns', () => {
 
   describe('Standard pattern: en {event}', () => {
     it('should parse "en clic alternar .active"', () => {
-      const result = canParse('en clic alternar .active', 'es');
-      if (result) {
-        const node = parse('en clic alternar .active', 'es');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('en clic alternar .active', 'es');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('en clic alternar .active', 'es');
+      expect(node.action).toBe('on');
     });
   });
 
   describe('Temporal pattern: cuando {event}', () => {
     it('should parse "cuando clic alternar .active"', () => {
-      const result = canParse('cuando clic alternar .active', 'es');
-      if (result) {
-        const node = parse('cuando clic alternar .active', 'es');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('cuando clic alternar .active', 'es');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('cuando clic alternar .active', 'es');
+      expect(node.action).toBe('on');
     });
 
     it('should parse "cuando cambio mostrar #result"', () => {
@@ -316,95 +298,47 @@ describe('Spanish Event Handler Patterns', () => {
 describe('Spanish Command Patterns', () => {
   describe('Toggle commands', () => {
     it('should parse "alternar .active"', () => {
-      const result = canParse('alternar .active', 'es');
-      if (result) {
-        const node = parse('alternar .active', 'es');
-        expect(node.action).toBe('toggle');
-      } else {
-        const tokens = getTokens('alternar .active', 'es');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('alternar .active', 'es');
+      expect(node.action).toBe('toggle');
     });
 
     it('should parse "cambiar .visible"', () => {
-      const result = canParse('cambiar .visible', 'es');
-      if (result) {
-        const node = parse('cambiar .visible', 'es');
-        expect(node.action).toBe('toggle');
-      } else {
-        const tokens = getTokens('cambiar .visible', 'es');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('cambiar .visible', 'es');
+      expect(node.action).toBe('toggle');
     });
   });
 
   describe('Show/Hide commands', () => {
     it('should parse "mostrar #modal"', () => {
-      const result = canParse('mostrar #modal', 'es');
-      if (result) {
-        const node = parse('mostrar #modal', 'es');
-        expect(node.action).toBe('show');
-      } else {
-        const tokens = getTokens('mostrar #modal', 'es');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('mostrar #modal', 'es');
+      expect(node.action).toBe('show');
     });
 
     it('should parse "ocultar #dropdown"', () => {
-      const result = canParse('ocultar #dropdown', 'es');
-      if (result) {
-        const node = parse('ocultar #dropdown', 'es');
-        expect(node.action).toBe('hide');
-      } else {
-        const tokens = getTokens('ocultar #dropdown', 'es');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('ocultar #dropdown', 'es');
+      expect(node.action).toBe('hide');
     });
 
     it('should parse "esconder #menu"', () => {
-      const result = canParse('esconder #menu', 'es');
-      if (result) {
-        const node = parse('esconder #menu', 'es');
-        expect(node.action).toBe('hide');
-      } else {
-        const tokens = getTokens('esconder #menu', 'es');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('esconder #menu', 'es');
+      expect(node.action).toBe('hide');
     });
   });
 
   describe('Add/Remove commands', () => {
     it('should parse "añadir .active"', () => {
-      const result = canParse('añadir .active', 'es');
-      if (result) {
-        const node = parse('añadir .active', 'es');
-        expect(node.action).toBe('add');
-      } else {
-        const tokens = getTokens('añadir .active', 'es');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('añadir .active', 'es');
+      expect(node.action).toBe('add');
     });
 
     it('should parse "quitar .active"', () => {
-      const result = canParse('quitar .active', 'es');
-      if (result) {
-        const node = parse('quitar .active', 'es');
-        expect(node.action).toBe('remove');
-      } else {
-        const tokens = getTokens('quitar .active', 'es');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('quitar .active', 'es');
+      expect(node.action).toBe('remove');
     });
 
     it('should parse "eliminar .active"', () => {
-      const result = canParse('eliminar .active', 'es');
-      if (result) {
-        const node = parse('eliminar .active', 'es');
-        expect(node.action).toBe('remove');
-      } else {
-        const tokens = getTokens('eliminar .active', 'es');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('eliminar .active', 'es');
+      expect(node.action).toBe('remove');
     });
   });
 });

@@ -16,7 +16,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { canParse, parse, tokenize } from '../src';
+import { parse, tokenize } from '../src';
 
 /**
  * Helper to get tokens array from TokenStream
@@ -200,222 +200,108 @@ describe('French Event Handler Patterns', () => {
 describe('French Command Patterns', () => {
   describe('Toggle commands', () => {
     it('should parse "basculer .active"', () => {
-      const result = canParse('basculer .active', 'fr');
-      if (result) {
-        const node = parse('basculer .active', 'fr');
-        expect(node.action).toBe('toggle');
-      } else {
-        const tokens = getTokens('basculer .active', 'fr');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('basculer .active', 'fr');
+      expect(node.action).toBe('toggle');
     });
 
     it('should parse "alterner .visible"', () => {
-      const result = canParse('alterner .visible', 'fr');
-      if (result) {
-        const node = parse('alterner .visible', 'fr');
-        expect(node.action).toBe('toggle');
-      } else {
-        const tokens = getTokens('alterner .visible', 'fr');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('alterner .visible', 'fr');
+      expect(node.action).toBe('toggle');
     });
   });
 
   describe('Show/Hide commands', () => {
     it('should parse "afficher #modal"', () => {
-      const result = canParse('afficher #modal', 'fr');
-      if (result) {
-        const node = parse('afficher #modal', 'fr');
-        expect(node.action).toBe('show');
-      } else {
-        const tokens = getTokens('afficher #modal', 'fr');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('afficher #modal', 'fr');
+      expect(node.action).toBe('show');
     });
 
     it('should parse "montrer #modal"', () => {
-      const result = canParse('montrer #modal', 'fr');
-      if (result) {
-        const node = parse('montrer #modal', 'fr');
-        expect(node.action).toBe('show');
-      } else {
-        const tokens = getTokens('montrer #modal', 'fr');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('montrer #modal', 'fr');
+      expect(node.action).toBe('show');
     });
 
     it('should parse "cacher #modal"', () => {
-      const result = canParse('cacher #modal', 'fr');
-      if (result) {
-        const node = parse('cacher #modal', 'fr');
-        expect(node.action).toBe('hide');
-      } else {
-        const tokens = getTokens('cacher #modal', 'fr');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('cacher #modal', 'fr');
+      expect(node.action).toBe('hide');
     });
 
     it('should parse "masquer #dropdown"', () => {
-      const result = canParse('masquer #dropdown', 'fr');
-      if (result) {
-        const node = parse('masquer #dropdown', 'fr');
-        expect(node.action).toBe('hide');
-      } else {
-        const tokens = getTokens('masquer #dropdown', 'fr');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('masquer #dropdown', 'fr');
+      expect(node.action).toBe('hide');
     });
   });
 
   describe('Add/Remove commands', () => {
     it('should parse "ajouter .highlight"', () => {
-      const result = canParse('ajouter .highlight', 'fr');
-      if (result) {
-        const node = parse('ajouter .highlight', 'fr');
-        expect(node.action).toBe('add');
-      } else {
-        const tokens = getTokens('ajouter .highlight', 'fr');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('ajouter .highlight', 'fr');
+      expect(node.action).toBe('add');
     });
 
     it('should parse "supprimer .highlight"', () => {
-      const result = canParse('supprimer .highlight', 'fr');
-      if (result) {
-        const node = parse('supprimer .highlight', 'fr');
-        expect(node.action).toBe('remove');
-      } else {
-        const tokens = getTokens('supprimer .highlight', 'fr');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('supprimer .highlight', 'fr');
+      expect(node.action).toBe('remove');
     });
 
     it('should parse "enlever .active"', () => {
-      const result = canParse('enlever .active', 'fr');
-      if (result) {
-        const node = parse('enlever .active', 'fr');
-        expect(node.action).toBe('remove');
-      } else {
-        const tokens = getTokens('enlever .active', 'fr');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('enlever .active', 'fr');
+      expect(node.action).toBe('remove');
     });
 
     it('should parse "retirer .active"', () => {
-      const result = canParse('retirer .active', 'fr');
-      if (result) {
-        const node = parse('retirer .active', 'fr');
-        expect(node.action).toBe('remove');
-      } else {
-        const tokens = getTokens('retirer .active', 'fr');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('retirer .active', 'fr');
+      expect(node.action).toBe('remove');
     });
   });
 
   describe('Increment/Decrement commands', () => {
     it('should parse "incrémenter compteur"', () => {
-      const result = canParse('incrémenter compteur', 'fr');
-      if (result) {
-        const node = parse('incrémenter compteur', 'fr');
-        expect(node.action).toBe('increment');
-      } else {
-        const tokens = getTokens('incrémenter compteur', 'fr');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('incrémenter compteur', 'fr');
+      expect(node.action).toBe('increment');
     });
 
     it('should parse "augmenter compteur" (alternative)', () => {
-      const result = canParse('augmenter compteur', 'fr');
-      if (result) {
-        const node = parse('augmenter compteur', 'fr');
-        expect(node.action).toBe('increment');
-      } else {
-        const tokens = getTokens('augmenter compteur', 'fr');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('augmenter compteur', 'fr');
+      expect(node.action).toBe('increment');
     });
 
     it('should parse "décrémenter compteur"', () => {
-      const result = canParse('décrémenter compteur', 'fr');
-      if (result) {
-        const node = parse('décrémenter compteur', 'fr');
-        expect(node.action).toBe('decrement');
-      } else {
-        const tokens = getTokens('décrémenter compteur', 'fr');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('décrémenter compteur', 'fr');
+      expect(node.action).toBe('decrement');
     });
 
     it('should parse "diminuer compteur" (alternative)', () => {
-      const result = canParse('diminuer compteur', 'fr');
-      if (result) {
-        const node = parse('diminuer compteur', 'fr');
-        expect(node.action).toBe('decrement');
-      } else {
-        const tokens = getTokens('diminuer compteur', 'fr');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('diminuer compteur', 'fr');
+      expect(node.action).toBe('decrement');
     });
   });
 
   describe('Put/Set/Get commands', () => {
     it('should parse "mettre \\"bonjour\\" dans #output"', () => {
-      const result = canParse('mettre "bonjour" dans #output', 'fr');
-      if (result) {
-        const node = parse('mettre "bonjour" dans #output', 'fr');
-        expect(node.action).toBe('put');
-      } else {
-        const tokens = getTokens('mettre "bonjour" dans #output', 'fr');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('mettre "bonjour" dans #output', 'fr');
+      expect(node.action).toBe('put');
     });
 
     it('should parse "définir x à 10"', () => {
-      const result = canParse('définir x à 10', 'fr');
-      if (result) {
-        const node = parse('définir x à 10', 'fr');
-        expect(node.action).toBe('set');
-      } else {
-        const tokens = getTokens('définir x à 10', 'fr');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('définir x à 10', 'fr');
+      expect(node.action).toBe('set');
     });
 
     it('should parse "obtenir #element"', () => {
-      const result = canParse('obtenir #element', 'fr');
-      if (result) {
-        const node = parse('obtenir #element', 'fr');
-        expect(node.action).toBe('get');
-      } else {
-        const tokens = getTokens('obtenir #element', 'fr');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('obtenir #element', 'fr');
+      expect(node.action).toBe('get');
     });
   });
 
   describe('Fetch command', () => {
     it('should parse "chercher /api/data"', () => {
-      const result = canParse('chercher /api/data', 'fr');
-      if (result) {
-        const node = parse('chercher /api/data', 'fr');
-        expect(node.action).toBe('fetch');
-      } else {
-        const tokens = getTokens('chercher /api/data', 'fr');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('chercher /api/data', 'fr');
+      expect(node.action).toBe('fetch');
     });
 
     it('should parse "récupérer /api/data" (alternative)', () => {
-      const result = canParse('récupérer /api/data', 'fr');
-      if (result) {
-        const node = parse('récupérer /api/data', 'fr');
-        expect(node.action).toBe('fetch');
-      } else {
-        const tokens = getTokens('récupérer /api/data', 'fr');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('récupérer /api/data', 'fr');
+      expect(node.action).toBe('fetch');
     });
   });
 });

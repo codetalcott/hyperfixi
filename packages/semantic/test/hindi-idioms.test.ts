@@ -25,7 +25,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { canParse, parse, tokenize } from '../src';
+import { parse, tokenize } from '../src';
 
 /**
  * Helper to get tokens array from TokenStream
@@ -190,25 +190,13 @@ describe('Hindi Event Handler Patterns', () => {
     });
 
     it('should parse "क्लिक पर #button का .active को टॉगल"', () => {
-      const result = canParse('क्लिक पर #button का .active को टॉगल', 'hi');
-      if (result) {
-        const node = parse('क्लिक पर #button का .active को टॉगल', 'hi');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('क्लिक पर #button का .active को टॉगल', 'hi');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('क्लिक पर #button का .active को टॉगल', 'hi');
+      expect(node.action).toBe('on');
     });
 
     it('should parse "सबमिट पर .loading को टॉगल"', () => {
-      const result = canParse('सबमिट पर .loading को टॉगल', 'hi');
-      if (result) {
-        const node = parse('सबमिट पर .loading को टॉगल', 'hi');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('सबमिट पर .loading को टॉगल', 'hi');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('सबमिट पर .loading को टॉगल', 'hi');
+      expect(node.action).toBe('on');
     });
   });
 
@@ -222,14 +210,8 @@ describe('Hindi Event Handler Patterns', () => {
     });
 
     it('should parse "जब क्लिक टॉगल .active"', () => {
-      const result = canParse('जब क्लिक टॉगल .active', 'hi');
-      if (result) {
-        const node = parse('जब क्लिक टॉगल .active', 'hi');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('जब क्लिक टॉगल .active', 'hi');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('जब क्लिक टॉगल .active', 'hi');
+      expect(node.action).toBe('on');
     });
   });
 
@@ -242,25 +224,13 @@ describe('Hindi Event Handler Patterns', () => {
 
   describe('Event handler with destination', () => {
     it('should parse "होवर पर .highlight को जोड़ें"', () => {
-      const result = canParse('होवर पर .highlight को जोड़ें', 'hi');
-      if (result) {
-        const node = parse('होवर पर .highlight को जोड़ें', 'hi');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('होवर पर .highlight को जोड़ें', 'hi');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('होवर पर .highlight को जोड़ें', 'hi');
+      expect(node.action).toBe('on');
     });
 
     it('should parse "क्लिक पर #counter को बढ़ाएं"', () => {
-      const result = canParse('क्लिक पर #counter को बढ़ाएं', 'hi');
-      if (result) {
-        const node = parse('क्लिक पर #counter को बढ़ाएं', 'hi');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('क्लिक पर #counter को बढ़ाएं', 'hi');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('क्लिक पर #counter को बढ़ाएं', 'hi');
+      expect(node.action).toBe('on');
     });
   });
 });
@@ -272,26 +242,14 @@ describe('Hindi Event Handler Patterns', () => {
 describe('Hindi Command Patterns', () => {
   describe('Toggle commands', () => {
     it('should parse "टॉगल .active"', () => {
-      const result = canParse('टॉगल .active', 'hi');
-      if (result) {
-        const node = parse('टॉगल .active', 'hi');
-        // Parser may wrap in event handler or return command directly
-        expect(['toggle', 'on']).toContain(node.action);
-      } else {
-        const tokens = getTokens('टॉगल .active', 'hi');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('टॉगल .active', 'hi');
+      // Parser may wrap in event handler or return command directly
+      expect(['toggle', 'on']).toContain(node.action);
     });
 
     it('should parse ".active को टॉगल" (SOV order)', () => {
-      const result = canParse('.active को टॉगल', 'hi');
-      if (result) {
-        const node = parse('.active को टॉगल', 'hi');
-        expect(['toggle', 'on']).toContain(node.action);
-      } else {
-        const tokens = getTokens('.active को टॉगल', 'hi');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('.active को टॉगल', 'hi');
+      expect(['toggle', 'on']).toContain(node.action);
     });
 
     it('should parse with alternative बदलें', () => {
@@ -303,185 +261,89 @@ describe('Hindi Command Patterns', () => {
 
   describe('Show/Hide commands', () => {
     it('should parse "दिखाएं #modal"', () => {
-      const result = canParse('दिखाएं #modal', 'hi');
-      if (result) {
-        const node = parse('दिखाएं #modal', 'hi');
-        expect(['show', 'on']).toContain(node.action);
-      } else {
-        const tokens = getTokens('दिखाएं #modal', 'hi');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('दिखाएं #modal', 'hi');
+      expect(['show', 'on']).toContain(node.action);
     });
 
     it('should parse "छिपाएं #modal"', () => {
-      const result = canParse('छिपाएं #modal', 'hi');
-      if (result) {
-        const node = parse('छिपाएं #modal', 'hi');
-        expect(['hide', 'on']).toContain(node.action);
-      } else {
-        const tokens = getTokens('छिपाएं #modal', 'hi');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('छिपाएं #modal', 'hi');
+      expect(['hide', 'on']).toContain(node.action);
     });
 
     it('should parse "#modal को दिखा" (SOV order, alt form)', () => {
-      const result = canParse('#modal को दिखा', 'hi');
-      if (result) {
-        const node = parse('#modal को दिखा', 'hi');
-        expect(['show', 'on']).toContain(node.action);
-      } else {
-        const tokens = getTokens('#modal को दिखा', 'hi');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('#modal को दिखा', 'hi');
+      expect(['show', 'on']).toContain(node.action);
     });
 
     it('should parse "#modal को छिपा" (SOV order, alt form)', () => {
-      const result = canParse('#modal को छिपा', 'hi');
-      if (result) {
-        const node = parse('#modal को छिपा', 'hi');
-        expect(['hide', 'on']).toContain(node.action);
-      } else {
-        const tokens = getTokens('#modal को छिपा', 'hi');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('#modal को छिपा', 'hi');
+      expect(['hide', 'on']).toContain(node.action);
     });
   });
 
   describe('Add/Remove commands', () => {
     it('should parse "जोड़ें .highlight"', () => {
-      const result = canParse('जोड़ें .highlight', 'hi');
-      if (result) {
-        const node = parse('जोड़ें .highlight', 'hi');
-        expect(['add', 'on']).toContain(node.action);
-      } else {
-        const tokens = getTokens('जोड़ें .highlight', 'hi');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('जोड़ें .highlight', 'hi');
+      expect(['add', 'on']).toContain(node.action);
     });
 
     it('should parse "हटाएं .highlight"', () => {
-      const result = canParse('हटाएं .highlight', 'hi');
-      if (result) {
-        const node = parse('हटाएं .highlight', 'hi');
-        expect(['remove', 'on']).toContain(node.action);
-      } else {
-        const tokens = getTokens('हटाएं .highlight', 'hi');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('हटाएं .highlight', 'hi');
+      expect(['remove', 'on']).toContain(node.action);
     });
 
     it('should parse ".highlight को जोड़ें" (SOV order)', () => {
-      const result = canParse('.highlight को जोड़ें', 'hi');
-      if (result) {
-        const node = parse('.highlight को जोड़ें', 'hi');
-        expect(['add', 'on']).toContain(node.action);
-      } else {
-        const tokens = getTokens('.highlight को जोड़ें', 'hi');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('.highlight को जोड़ें', 'hi');
+      expect(['add', 'on']).toContain(node.action);
     });
 
     it('should parse ".highlight को हटाएं" (SOV order)', () => {
-      const result = canParse('.highlight को हटाएं', 'hi');
-      if (result) {
-        const node = parse('.highlight को हटाएं', 'hi');
-        expect(['remove', 'on']).toContain(node.action);
-      } else {
-        const tokens = getTokens('.highlight को हटाएं', 'hi');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('.highlight को हटाएं', 'hi');
+      expect(['remove', 'on']).toContain(node.action);
     });
   });
 
   describe('Increment/Decrement commands', () => {
     it('should parse "बढ़ाएं counter"', () => {
-      const result = canParse('बढ़ाएं counter', 'hi');
-      if (result) {
-        const node = parse('बढ़ाएं counter', 'hi');
-        expect(['increment', 'on']).toContain(node.action);
-      } else {
-        const tokens = getTokens('बढ़ाएं counter', 'hi');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('बढ़ाएं counter', 'hi');
+      expect(['increment', 'on']).toContain(node.action);
     });
 
     it('should parse "घटाएं counter"', () => {
-      const result = canParse('घटाएं counter', 'hi');
-      if (result) {
-        const node = parse('घटाएं counter', 'hi');
-        expect(['decrement', 'on']).toContain(node.action);
-      } else {
-        const tokens = getTokens('घटाएं counter', 'hi');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('घटाएं counter', 'hi');
+      expect(['decrement', 'on']).toContain(node.action);
     });
 
     it('should parse "counter को बढ़ा" (SOV order, alt form)', () => {
-      const result = canParse('counter को बढ़ा', 'hi');
-      if (result) {
-        const node = parse('counter को बढ़ा', 'hi');
-        expect(['increment', 'on']).toContain(node.action);
-      } else {
-        const tokens = getTokens('counter को बढ़ा', 'hi');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('counter को बढ़ा', 'hi');
+      expect(['increment', 'on']).toContain(node.action);
     });
 
     it('should parse "counter को घटा" (SOV order, alt form)', () => {
-      const result = canParse('counter को घटा', 'hi');
-      if (result) {
-        const node = parse('counter को घटा', 'hi');
-        expect(['decrement', 'on']).toContain(node.action);
-      } else {
-        const tokens = getTokens('counter को घटा', 'hi');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('counter को घटा', 'hi');
+      expect(['decrement', 'on']).toContain(node.action);
     });
   });
 
   describe('Put/Set/Get commands', () => {
     it('should parse "रखें \\"नमस्ते\\" में #output"', () => {
-      const result = canParse('रखें "नमस्ते" में #output', 'hi');
-      if (result) {
-        const node = parse('रखें "नमस्ते" में #output', 'hi');
-        expect(['put', 'on']).toContain(node.action);
-      } else {
-        const tokens = getTokens('रखें "नमस्ते" में #output', 'hi');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('रखें "नमस्ते" में #output', 'hi');
+      expect(['put', 'on']).toContain(node.action);
     });
 
     it('should parse "\\"नमस्ते\\" को #output में रख" (SOV order, alt form)', () => {
-      const result = canParse('"नमस्ते" को #output में रख', 'hi');
-      if (result) {
-        const node = parse('"नमस्ते" को #output में रख', 'hi');
-        expect(['put', 'on']).toContain(node.action);
-      } else {
-        const tokens = getTokens('"नमस्ते" को #output में रख', 'hi');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('"नमस्ते" को #output में रख', 'hi');
+      expect(['put', 'on']).toContain(node.action);
     });
 
     it('should parse "सेट x पर 10"', () => {
-      const result = canParse('सेट x पर 10', 'hi');
-      if (result) {
-        const node = parse('सेट x पर 10', 'hi');
-        expect(['set', 'on']).toContain(node.action);
-      } else {
-        const tokens = getTokens('सेट x पर 10', 'hi');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('सेट x पर 10', 'hi');
+      expect(['set', 'on']).toContain(node.action);
     });
 
     it('should parse "प्राप्त #element"', () => {
-      const result = canParse('प्राप्त #element', 'hi');
-      if (result) {
-        const node = parse('प्राप्त #element', 'hi');
-        expect(['get', 'on']).toContain(node.action);
-      } else {
-        const tokens = getTokens('प्राप्त #element', 'hi');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('प्राप्त #element', 'hi');
+      expect(['get', 'on']).toContain(node.action);
     });
   });
 });
