@@ -16,7 +16,7 @@ const LSE_PROMPTS: Prompt[] = [
   {
     name: 'lse_generate',
     description:
-      'Generate LokaScript Explicit Syntax (LSE) from a task description. Includes schema-aware system prompt context.',
+      'Generate LokaScript Explicit Syntax (LSE) from a task description. The prompt carries the syntax rules; it does not carry the domain schema.',
     arguments: [
       {
         name: 'task',
@@ -161,7 +161,7 @@ function buildLSESystemPrompt(domain: string, format: string): string {
 - No spaces around the colon in role:value pairs
 - Selectors: \`#id\`, \`.class\`, \`[attr]\`, \`@aria\`, \`*wild\`
 - Strings with spaces: \`"hello world"\`
-- References: \`me\`, \`you\`, \`it\`, \`result\`, \`event\`, \`target\`, \`body\`
+- References: \`me\`, \`you\`, \`it\`, \`result\`, \`event\`, \`target\`, \`body\`, \`document\`, \`window\`, \`detail\`
 - Flags: \`+enabled\`, \`~disabled\`
 - Durations: \`500ms\`, \`2s\`, \`1m\`, \`1h\`
 - Compound: \`[add patient:.loading] then [fetch source:/api]\` (chain operators: then, and, async, sequential)
@@ -170,20 +170,23 @@ function buildLSESystemPrompt(domain: string, format: string): string {
 \`[on event:click body:[toggle patient:.active]]\`
 
 **Conditional (v1.1):**
-\`[if condition:"x > 0" then:[toggle patient:.active] else:[remove patient:.active]]\`
+\`[if condition:it then:[toggle patient:.active] else:[remove patient:.active]]\`
 
 **Loop (v1.1):**
-- \`[repeat loopVariant:forever body:[wait delay:1s]]\`
-- \`[repeat quantity:5 loopVariant:times body:[increment patient:#count]]\`
-- \`[repeat source:#items loopVariant:for loopVariable:item body:[add patient:.active]]\`
-- \`[repeat condition:"x > 0" loopVariant:while body:[decrement patient:#count]]\`
+- \`[repeat loop-variant:forever loop-body:[wait duration:1s]]\`
+- \`[repeat quantity:5 loop-variant:times loop-body:[increment patient:#count]]\`
+- \`[repeat source:#items loop-variant:for variable:item loop-body:[add patient:.active]]\`
+
+**Limits of bracket syntax:**
+- \`body:\`, \`then:\`, \`else:\` and \`loop-body:\` each hold ONE command.
+- There is no expression delimiter: a value of several words that is not a string (\`x > 0\`) cannot be written, and in quotes it is read as a string literal. Use JSON with \`{ "type": "expression", "raw": "x > 0" }\` for a condition like that (a \`while\` or \`until\` loop usually needs one).
 
 **Annotations (v1.2):**
 \`@timeout(5s) @retry(3) [fetch source:/api/users]\`
 - In JSON: \`annotations: [{name:"timeout",value:"5s"},{name:"retry",value:"3"}]\` on the node
 - Annotations are metadata; they do not change command semantics
 
-**Value types:** selector, literal (string/number/boolean/duration), reference, expression, property-path, flag.
+**Value types:** selector, literal (string/number/boolean/duration), reference, expression, property-path (JSON only), flag.
 
 **Node kinds (JSON):** command, event-handler, compound.
 - Conditionals are \`command\` nodes with \`thenBranch\`/\`elseBranch\` arrays.
@@ -194,5 +197,5 @@ function buildLSESystemPrompt(domain: string, format: string): string {
 
 **${formatInstructions}**
 
-Every value must have a role name. Do not invent commands or roles not in the schema. When unsure, use the "expression" value type.`;
+Every value must have a role name. Use only the commands and roles the "${domain}" domain defines; do not invent any.`;
 }

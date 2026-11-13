@@ -40,6 +40,8 @@ scripts), `scripts/analysis/`, `scripts/testing/` and nine other scripts nothing
 `.github/workflows/archive/`, the semantic package's three finished plans, and the root's
 `PROGRESS.md`, `publish-all.sh` and `playground.html`.
 
+The developer-tools prune of 2026-11-13 (tag `archived/developer-tools-2026-11-13`): the private package's CLI (`hyperfixi`/`hfx`/`lks`), visual builder, project generator, analyzer, dev server, profiler, migrator, bundle analyzer and quick-start helpers, about 11,000 lines with their tests. Nothing imported them; the scaffolder could not complete and the profiler measured nothing. The template inventory and the Prism highlighter stay.
+
 ```bash
 git show archived/cleanup-2026-11-12:<path>
 ```

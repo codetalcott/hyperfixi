@@ -2,7 +2,7 @@
  * MCP Tools — Feedback Loop
  *
  * Thin wrappers around the framework's feedback module.
- * Provides LSE validation with structured feedback and pattern statistics.
+ * Provides LSE validation with structured feedback.
  */
 
 import type { Tool } from '@modelcontextprotocol/server';
@@ -33,20 +33,6 @@ export const feedbackTools: Tool[] = [
       required: ['input'],
     },
   },
-  {
-    name: 'lse_pattern_stats',
-    description:
-      'Return pattern hit-rate statistics: success rates by command and language, top diagnostic failures, and outcome distribution.',
-    inputSchema: {
-      type: 'object' as const,
-      properties: {
-        domain: {
-          type: 'string',
-          description: 'Filter stats by domain (optional)',
-        },
-      },
-    },
-  },
 ];
 
 export async function handleFeedbackTool(
@@ -56,8 +42,6 @@ export async function handleFeedbackTool(
   switch (name) {
     case 'lse_validate_and_feedback':
       return handleValidateAndFeedback(args);
-    case 'lse_pattern_stats':
-      return handlePatternStats();
     default:
       return {
         content: [{ type: 'text', text: `Unknown feedback tool: ${name}` }],
@@ -166,57 +150,6 @@ async function handleValidateAndFeedback(
         {
           type: 'text',
           text: `Feedback tool error: ${error instanceof Error ? error.message : String(error)}`,
-        },
-      ],
-      isError: true,
-    };
-  }
-}
-
-// =============================================================================
-// lse_pattern_stats
-// =============================================================================
-
-// Shared tracker instance for the MCP server lifetime
-let _tracker: import('@lokascript/framework').PatternTracker | null = null;
-
-async function getTracker(): Promise<import('@lokascript/framework').PatternTracker> {
-  if (!_tracker) {
-    const { PatternTracker } = await import('@lokascript/framework');
-    _tracker = new PatternTracker(1000);
-  }
-  return _tracker;
-}
-
-/**
- * Get the shared PatternTracker instance (for recording events from other tools).
- */
-export async function getSharedTracker(): Promise<import('@lokascript/framework').PatternTracker> {
-  return getTracker();
-}
-
-async function handlePatternStats(): Promise<{
-  content: Array<{ type: string; text: string }>;
-  isError?: boolean;
-}> {
-  try {
-    const tracker = await getTracker();
-    const summary = tracker.getSummary();
-
-    const text =
-      summary.totalEvents === 0
-        ? 'No pattern events recorded yet. Events are recorded as LSE inputs are validated.'
-        : JSON.stringify(summary, null, 2);
-
-    return {
-      content: [{ type: 'text', text }],
-    };
-  } catch (error) {
-    return {
-      content: [
-        {
-          type: 'text',
-          text: `Pattern stats error: ${error instanceof Error ? error.message : String(error)}`,
         },
       ],
       isError: true,

@@ -102,7 +102,7 @@ describe('get_bundle_config', () => {
 
     const parsed = JSON.parse(result.content[0].text);
     expect(parsed.recommendedBundle).toBe('hyperfixi-hs.js');
-    expect(parsed.estimatedSize).toBe('34.1 KB');
+    expect(parsed.estimatedSize).toBe('35 KB gzipped');
   });
 
   it('recommends the same bundle for blocks usage', async () => {

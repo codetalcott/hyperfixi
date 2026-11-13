@@ -23,35 +23,35 @@ Choose the right bundle for your use case. All bundles are minified IIFE for dir
 
 ### Bundle Matrix
 
-Sizes are gzipped, measured locally on 2026-09-30 (`gzip -9`, macOS); CI's Linux zlib reads slightly higher. Most of every bundle is the shared parser — `browser-core.core.global.js`, with no language registered, is ~90 KB — so each language adds only a few KB on top. Every bundle is also exported by path: `@lokascript/semantic/browser` (all 24) and `@lokascript/semantic/browser/<name>` (e.g. `/browser/es`, `/browser/priority`).
+Sizes are gzipped (bytes / 1024), measured locally on 2026-11-13 at 7.6.0 (`gzip -9`, macOS). Most of every bundle is the shared parser: `browser-core.core.global.js`, with no language registered, is ~112 KB. Every bundle is also exported by path: `@lokascript/semantic/browser` (all 24) and `@lokascript/semantic/browser/<name>` (e.g. `/browser/es`, `/browser/priority`).
 
-#### Tier 1: Single Language (~94-98 KB gzip; English ~111 KB)
+#### Tier 1: Single Language (~129-138 KB gzip)
 
 | Bundle                    | Global                 | Size    | Languages |
 | ------------------------- | ---------------------- | ------- | --------- |
-| `browser-en.en.global.js` | `LokaScriptSemanticEn` | ~111 KB | en        |
-| `browser-es.es.global.js` | `LokaScriptSemanticEs` | ~96 KB  | es        |
-| `browser-ja.ja.global.js` | `LokaScriptSemanticJa` | ~97 KB  | ja        |
-| `browser-ar.ar.global.js` | `LokaScriptSemanticAr` | ~97 KB  | ar        |
-| `browser-ko.ko.global.js` | `LokaScriptSemanticKo` | ~97 KB  | ko        |
-| `browser-zh.zh.global.js` | `LokaScriptSemanticZh` | ~96 KB  | zh        |
-| `browser-tr.tr.global.js` | `LokaScriptSemanticTr` | ~96 KB  | tr        |
-| `browser-pt.pt.global.js` | `LokaScriptSemanticPt` | ~95 KB  | pt        |
-| `browser-fr.fr.global.js` | `LokaScriptSemanticFr` | ~95 KB  | fr        |
-| `browser-de.de.global.js` | `LokaScriptSemanticDe` | ~95 KB  | de        |
-| `browser-id.id.global.js` | `LokaScriptSemanticId` | ~94 KB  | id        |
-| `browser-qu.qu.global.js` | `LokaScriptSemanticQu` | ~96 KB  | qu        |
-| `browser-sw.sw.global.js` | `LokaScriptSemanticSw` | ~94 KB  | sw        |
-| `browser-bn.bn.global.js` | `LokaScriptSemanticBn` | ~96 KB  | bn        |
-| `browser-hi.hi.global.js` | `LokaScriptSemanticHi` | ~96 KB  | hi        |
-| `browser-it.it.global.js` | `LokaScriptSemanticIt` | ~96 KB  | it        |
-| `browser-ms.ms.global.js` | `LokaScriptSemanticMs` | ~94 KB  | ms        |
-| `browser-pl.pl.global.js` | `LokaScriptSemanticPl` | ~96 KB  | pl        |
-| `browser-ru.ru.global.js` | `LokaScriptSemanticRu` | ~98 KB  | ru        |
-| `browser-th.th.global.js` | `LokaScriptSemanticTh` | ~95 KB  | th        |
-| `browser-tl.tl.global.js` | `LokaScriptSemanticTl` | ~95 KB  | tl        |
-| `browser-uk.uk.global.js` | `LokaScriptSemanticUk` | ~98 KB  | uk        |
-| `browser-vi.vi.global.js` | `LokaScriptSemanticVi` | ~95 KB  | vi        |
+| `browser-en.en.global.js` | `LokaScriptSemanticEn` | ~129 KB | en        |
+| `browser-es.es.global.js` | `LokaScriptSemanticEs` | ~136 KB | es        |
+| `browser-ja.ja.global.js` | `LokaScriptSemanticJa` | ~135 KB | ja        |
+| `browser-ar.ar.global.js` | `LokaScriptSemanticAr` | ~137 KB | ar        |
+| `browser-ko.ko.global.js` | `LokaScriptSemanticKo` | ~136 KB | ko        |
+| `browser-zh.zh.global.js` | `LokaScriptSemanticZh` | ~136 KB | zh        |
+| `browser-tr.tr.global.js` | `LokaScriptSemanticTr` | ~136 KB | tr        |
+| `browser-pt.pt.global.js` | `LokaScriptSemanticPt` | ~135 KB | pt        |
+| `browser-fr.fr.global.js` | `LokaScriptSemanticFr` | ~135 KB | fr        |
+| `browser-de.de.global.js` | `LokaScriptSemanticDe` | ~135 KB | de        |
+| `browser-id.id.global.js` | `LokaScriptSemanticId` | ~133 KB | id        |
+| `browser-qu.qu.global.js` | `LokaScriptSemanticQu` | ~135 KB | qu        |
+| `browser-sw.sw.global.js` | `LokaScriptSemanticSw` | ~133 KB | sw        |
+| `browser-bn.bn.global.js` | `LokaScriptSemanticBn` | ~136 KB | bn        |
+| `browser-hi.hi.global.js` | `LokaScriptSemanticHi` | ~136 KB | hi        |
+| `browser-it.it.global.js` | `LokaScriptSemanticIt` | ~136 KB | it        |
+| `browser-ms.ms.global.js` | `LokaScriptSemanticMs` | ~132 KB | ms        |
+| `browser-pl.pl.global.js` | `LokaScriptSemanticPl` | ~135 KB | pl        |
+| `browser-ru.ru.global.js` | `LokaScriptSemanticRu` | ~137 KB | ru        |
+| `browser-th.th.global.js` | `LokaScriptSemanticTh` | ~134 KB | th        |
+| `browser-tl.tl.global.js` | `LokaScriptSemanticTl` | ~134 KB | tl        |
+| `browser-uk.uk.global.js` | `LokaScriptSemanticUk` | ~138 KB | uk        |
+| `browser-vi.vi.global.js` | `LokaScriptSemanticVi` | ~135 KB | vi        |
 
 Hebrew (`he`) has no single-language browser bundle; use the full or lazy bundle, or the ESM import `@lokascript/semantic/languages/he`.
 
@@ -59,37 +59,39 @@ Hebrew (`he`) has no single-language browser bundle; use the full or lazy bundle
 
 | Bundle                                    | Global                        | Size    | Languages                                                |
 | ----------------------------------------- | ----------------------------- | ------- | -------------------------------------------------------- |
-| `browser-es-en.es-en.global.js`           | `LokaScriptSemanticEsEn`      | ~116 KB | en, es                                                   |
-| `browser-en-tr.en-tr.global.js`           | `LokaScriptSemanticEnTr`      | ~116 KB | en, tr                                                   |
-| `browser-western.western.global.js`       | `LokaScriptSemanticWestern`   | ~128 KB | en, es, pt, fr, de, it                                   |
-| `browser-east-asian.east-asian.global.js` | `LokaScriptSemanticEastAsian` | ~106 KB | ja, zh, ko                                               |
-| `browser-priority.priority.global.js`     | `LokaScriptSemanticPriority`  | ~151 KB | 11 languages: en, es, pt, fr, de, ja, zh, ko, ar, tr, id |
-| `browser.global.js`                       | `LokaScriptSemantic`          | ~260 KB | All 24                                                   |
-| `browser-lazy.lazy.global.js`             | `LokaScriptSemanticLazy`      | ~194 KB | On-demand                                                |
-| `browser-core.core.global.js`             | `LokaScriptSemanticCore`      | ~90 KB  | None (load languages by URL)                             |
+| `browser-es-en.es-en.global.js`           | `LokaScriptSemanticEsEn`      | ~136 KB | en, es                                                   |
+| `browser-en-tr.en-tr.global.js`           | `LokaScriptSemanticEnTr`      | ~136 KB | en, tr                                                   |
+| `browser-western.western.global.js`       | `LokaScriptSemanticWestern`   | ~151 KB | en, es, pt, fr, de, it                                   |
+| `browser-east-asian.east-asian.global.js` | `LokaScriptSemanticEastAsian` | ~147 KB | ja, zh, ko                                               |
+| `browser-priority.priority.global.js`     | `LokaScriptSemanticPriority`  | ~180 KB | 11 languages: en, es, pt, fr, de, ja, zh, ko, ar, tr, id |
+| `browser.global.js`                       | `LokaScriptSemantic`          | ~297 KB | All 24                                                   |
+| `browser-lazy.lazy.global.js`             | `LokaScriptSemanticLazy`      | ~208 KB | On-demand                                                |
+| `browser-core.core.global.js`             | `LokaScriptSemanticCore`      | ~112 KB | None (load languages by URL)                             |
 
 ### Lazy Loading
 
-The lazy bundle registers no languages until you call `loadLanguage()`. It is an IIFE, so it still carries every language's code (~194 KB gzipped): it defers registration, not download. For the smallest download, pick a single-language or regional bundle.
+The lazy bundle registers no languages until you call `loadLanguage()`. It is an IIFE, so it still carries every language's code (~208 KB gzipped): it defers registration, not download. For the smallest download, pick a single-language or regional bundle.
 
 ```html
 <script src="node_modules/@lokascript/semantic/dist/browser-lazy.lazy.global.js"></script>
 <script>
   const { loadLanguage, parse } = LokaScriptSemanticLazy;
 
-  // Load languages on demand
-  await loadLanguage('en');
-  await loadLanguage('ja');
+  (async () => {
+    // Load languages on demand
+    await loadLanguage('en');
+    await loadLanguage('ja');
 
-  // Now parsing works for loaded languages
-  parse('toggle .active', 'en');
-  parse('トグル .active', 'ja');
+    // Now parsing works for loaded languages
+    parse('toggle .active', 'en');
+    parse('トグル .active', 'ja');
+  })();
 </script>
 ```
 
 ### Custom Bundle Generation
 
-Generate bundles with only the languages you need:
+Generate bundles with only the languages you need (from a checkout of this repository, in `packages/semantic`; the script is not in the published package):
 
 ```bash
 # Preview size estimate
@@ -177,10 +179,9 @@ try {
   if (e instanceof LossyTranslationError) console.log(e.loss.lost); // ['.b']
 }
 
-// Check if input can be parsed
-const result = canParse('クリックしたら 増加', 'ja');
-if (result.canParse) {
-  console.log('Confidence:', result.confidence);
+// Check if input can be parsed (returns a boolean)
+if (canParse('クリック で #count を 増加', 'ja')) {
+  console.log('parses');
 }
 ```
 
@@ -190,18 +191,19 @@ LokaScript accepts multiple beginner-friendly English forms to make hyperscript 
 
 ### Event Handler Alternatives
 
-| Form             | Example                        | Notes                  |
-| ---------------- | ------------------------------ | ---------------------- |
-| Standard         | `on click toggle .active`      | Original hyperscript   |
-| Upon (formal)    | `upon clicking toggle .active` | Formal/technical style |
-| If (conditional) | `if clicked toggle .active`    | Conditional framing    |
+| Form          | Example                     | Notes                  |
+| ------------- | --------------------------- | ---------------------- |
+| Standard      | `on click toggle .active`   | Original hyperscript   |
+| Upon (formal) | `upon click toggle .active` | Formal/technical style |
 
 ```typescript
 // All parse to equivalent event handler nodes:
 parse('on click toggle .active', 'en');
-parse('upon clicking toggle .active', 'en'); // Formal alternative
-parse('if clicked toggle .active', 'en'); // Conditional style
+parse('upon click toggle .active', 'en'); // Formal alternative
 ```
+
+`if clicked toggle .active` parses as an `if` command (a conditional on a variable named
+`clicked`), not as an event handler.
 
 > **`when` is not an event-handler alias.** In \_hyperscript `when` is the reactive
 > observer — `when <expr> [or <expr>]* changes … end` re-runs its body whenever a
@@ -267,7 +269,8 @@ parse('after 500ms', 'en'); // action: 'wait', duration: '500ms'
 
 ### British Spelling
 
-Common British spellings are automatically normalized:
+The tokenizer normalizes common British spellings (the token keeps its text and records the
+American form as `normalized`):
 
 | British      | American (normalized) |
 | ------------ | --------------------- |
@@ -278,35 +281,25 @@ Common British spellings are automatically normalized:
 | `initialise` | `initialize`          |
 | `favourite`  | `favorite`            |
 
-```typescript
-// Both work identically:
-parse('set colour to red', 'en');
-parse('set color to red', 'en');
-```
-
 ## Japanese Native Idioms
 
 LokaScript accepts multiple natural Japanese forms, following Nadeshiko's approach of "accepting multiple orthodox native Japanese expressions."
 
-| Form                 | Example                              | Notes                            |
-| -------------------- | ------------------------------------ | -------------------------------- |
-| Standard             | `クリック で .active を 切り替え`    | Instrumental particle (で)       |
-| Conditional (したら) | `クリックしたら .active を 切り替え` | Most natural - "if/when clicked" |
-| Conditional (すると) | `クリックすると .active を 切り替え` | Habitual/expected outcome        |
-| Conditional (すれば) | `クリックすれば .active を 切り替え` | Hypothetical condition           |
-| Temporal (時に)      | `クリック時に .active を 切り替え`   | Formal - "at the time of click"  |
-| Compact              | `.activeを切り替え`                  | No spaces - natural writing      |
+| Form     | Example                           | Notes                       |
+| -------- | --------------------------------- | --------------------------- |
+| Standard | `クリック で .active を 切り替え` | Instrumental particle (で)  |
+| Compact  | `.activeを切り替え`               | No spaces - natural writing |
+
+The conditional and temporal event forms (`クリックしたら`, `クリックすると`, `クリックすれば`,
+`クリック時に`) are tokenized and normalized (below) but do not parse as event handlers today.
 
 ### Event Handlers
 
 ```typescript
-// All parse to equivalent event handler nodes:
-parse('クリック で 増加', 'ja'); // Standard (instrumental)
-parse('クリックしたら 増加', 'ja'); // Conditional (native)
-parse('クリック時に 増加', 'ja'); // Temporal (formal)
+parse('クリック で #count を 増加', 'ja'); // on click increment #count
 
 // With source filter:
-parse('#button から クリックしたら 増加', 'ja');
+parse('#button から クリック で #count を 増加', 'ja'); // on click from #button increment #count
 ```
 
 ### Toggle Commands
@@ -321,7 +314,7 @@ parse('.active を トグルする', 'ja'); // With katakana loanword
 
 ### Morphological Normalization
 
-The parser handles Japanese verb conjugations automatically:
+The tokenizer's morphological normalizer reduces Japanese verb conjugations to their stem:
 
 | Conjugation        | Example        | Normalized |
 | ------------------ | -------------- | ---------- |
@@ -338,15 +331,13 @@ The parser handles Japanese verb conjugations automatically:
 
 LokaScript accepts multiple natural Korean forms, following Nadeshiko's approach.
 
-| Form                  | Example                      | Notes                          |
-| --------------------- | ---------------------------- | ------------------------------ |
-| Conditional (-면)     | `클릭하면 .active 를 토글`   | **Recommended** - "if clicked" |
-| Honorific (-시면)     | `클릭하시면 .active 를 토글` | Polite/formal - "if you click" |
-| Temporal (-ㄹ 때)     | `클릭할때 .active 를 토글`   | "When clicking"                |
-| Immediate (-자마자)   | `클릭하자마자 증가`          | "As soon as clicked"           |
-| Sequential (-고 나서) | `클릭하고 나서 증가`         | "After clicking"               |
-| With source           | `#button 에서 클릭하면 증가` | "When clicked from #button"    |
-| Compact               | `.active를토글`              | No spaces - natural writing    |
+| Form                | Example                       | Notes                          |
+| ------------------- | ----------------------------- | ------------------------------ |
+| Conditional (-면)   | `클릭하면 .active 를 토글`    | **Recommended** - "if clicked" |
+| Honorific (-시면)   | `클릭하시면 .active 를 토글`  | Polite/formal - "if you click" |
+| Temporal (-ㄹ 때)   | `클릭할때 .active 를 토글`    | "When clicking"                |
+| Immediate (-자마자) | `클릭하자마자 #count 를 증가` | "As soon as clicked"           |
+| Compact             | `.active를토글`               | No spaces - natural writing    |
 
 > **Note**: The `클릭 에` pattern is intentionally omitted because `에` is ambiguous (event marker vs destination marker). Use native conditional forms `-하면` or `-할때` instead—they're more natural Korean!
 
@@ -354,12 +345,8 @@ LokaScript accepts multiple natural Korean forms, following Nadeshiko's approach
 
 ```typescript
 // All parse to equivalent event handler nodes:
-parse('클릭 에 증가', 'ko'); // Standard (location particle)
-parse('클릭하면 증가', 'ko'); // Conditional (native)
-parse('클릭할때 증가', 'ko'); // Temporal (native)
-
-// With source filter:
-parse('#button 에서 클릭하면 증가', 'ko');
+parse('클릭하면 #count 를 증가', 'ko'); // Conditional (native)
+parse('클릭할때 #count 를 증가', 'ko'); // Temporal (native)
 ```
 
 ### Toggle Commands
@@ -374,7 +361,7 @@ parse('.active 를 토글해요', 'ko'); // With polite ending
 
 ### Morphological Normalization
 
-The parser handles Korean verb conjugations automatically:
+The tokenizer's morphological normalizer reduces Korean verb conjugations to their stem:
 
 | Conjugation         | Example    | Normalized |
 | ------------------- | ---------- | ---------- |
@@ -391,23 +378,24 @@ The parser handles Korean verb conjugations automatically:
 
 LokaScript accepts multiple natural Spanish forms.
 
-| Form                     | Example                        | Notes                                |
-| ------------------------ | ------------------------------ | ------------------------------------ |
-| Native (al + infinitive) | `al hacer clic toggle .active` | **Most idiomatic** - "upon clicking" |
-| Conditional (si)         | `si hace clic toggle .active`  | "If clicks"                          |
-| Standard (en)            | `en clic toggle .active`       | Direct translation                   |
-| Temporal (cuando)        | `cuando clic toggle .active`   | "When"                               |
+| Form                     | Example                                    | Notes                                |
+| ------------------------ | ------------------------------------------ | ------------------------------------ |
+| Native (al + infinitive) | `al hacer clic toggle .active`             | **Most idiomatic** - "upon clicking" |
+| Standard (en)            | `en clic toggle .active`                   | Direct translation                   |
+| Temporal (cuando)        | `cuando clic toggle .active`               | "When"                               |
+| With source              | `al hacer clic de #button aumentar #count` | "Upon clicking from #button"         |
+
+`si hace clic …` parses as an `if` command, not as an event handler.
 
 ### Event Handlers
 
 ```typescript
 // All parse to equivalent event handler nodes:
-parse('al hacer clic aumentar', 'es'); // Native (al + infinitive)
-parse('si hace clic aumentar', 'es'); // Conditional
-parse('en clic aumentar', 'es'); // Standard
+parse('al hacer clic aumentar #count', 'es'); // Native (al + infinitive)
+parse('en clic aumentar #count', 'es'); // Standard
 
 // With source filter:
-parse('al hacer clic en #button aumentar', 'es');
+parse('al hacer clic de #button aumentar #count', 'es');
 ```
 
 ### Toggle Commands
@@ -423,26 +411,23 @@ parse('alternar .active', 'es'); // Formal alternative
 
 LokaScript accepts multiple natural Chinese forms using native temporal and aspect markers.
 
-| Form                | Example                    | Notes             |
-| ------------------- | -------------------------- | ----------------- |
-| Standard (当)       | `当 点击 切换 .active`     | "When" - formal   |
-| Temporal (的时候)   | `点击 的时候 切换 .active` | "At the time of"  |
-| Immediate (一...就) | `一 点击 就 切换 .active`  | "As soon as"      |
-| Completion (了)     | `点击 了 切换 .active`     | Perfective aspect |
-| Whenever (每当)     | `每当 点击 切换 .active`   | "Whenever"        |
-| Conditional (如果)  | `如果 点击 切换 .active`   | "If"              |
+| Form                | Example                   | Notes             |
+| ------------------- | ------------------------- | ----------------- |
+| Standard (当)       | `当 点击 切换 .active`    | "When" - formal   |
+| Immediate (一...就) | `一 点击 就 切换 .active` | "As soon as"      |
+| Completion (了)     | `点击 了 切换 .active`    | Perfective aspect |
+
+`如果 点击 …` parses as an `if` command. `点击 的时候 …` and `每当 点击 …` do not parse today.
 
 ### Event Handlers
 
 ```typescript
 // All parse to equivalent event handler nodes:
 parse('当 点击 切换 .active', 'zh'); // Standard (当)
-parse('点击 的时候 切换 .active', 'zh'); // Temporal (的时候)
 parse('一 点击 就 切换 .active', 'zh'); // Immediate (一...就)
-parse('每当 点击 切换 .active', 'zh'); // Whenever (每当)
 
 // With source filter:
-parse('当 从 #button 点击 切换 .active', 'zh');
+parse('当 点击 从 #button 切换 .active', 'zh');
 ```
 
 ### Toggle Commands
@@ -457,25 +442,25 @@ parse('把 .active 切换', 'zh'); // BA construction (把)
 
 LokaScript accepts multiple natural Arabic forms, supporting VSO word order.
 
-| Form              | Example                             | Notes                     |
-| ----------------- | ----------------------------------- | ------------------------- |
-| Standard (عندما)  | `عندما نقر بدّل .active`            | "When" - formal           |
-| Classical (حين)   | `حين نقر بدّل .active`              | Classical Arabic          |
-| Conditional (إذا) | `إذا نقر بدّل .active`              | "If"                      |
-| With source       | `عندما نقر من #button بدّل .active` | "When click from #button" |
+| Form             | Example                             | Notes                     |
+| ---------------- | ----------------------------------- | ------------------------- |
+| Standard (عندما) | `عندما نقر بدّل .active`            | "When" - formal           |
+| Classical (حين)  | `حين نقر بدّل .active`              | Classical Arabic          |
+| With source      | `عندما نقر من #button بدّل .active` | "When click from #button" |
 
 ### Event Handlers
 
 ```typescript
 // All parse to equivalent event handler nodes:
-parse('عندما نقر زيادة', 'ar'); // Standard (عندما)
-parse('إذا نقر زيادة', 'ar'); // Conditional (إذا)
-parse('حين نقر زيادة', 'ar'); // Classical (حين)
+parse('عندما نقر زِد #count', 'ar'); // Standard (عندما)
+parse('حين نقر زِد #count', 'ar'); // Classical (حين)
 ```
+
+`إذا نقر …` parses as an `if` command, not as an event handler.
 
 ### Morphological Normalization
 
-The parser handles Arabic verb patterns and prefix stripping:
+The tokenizer's morphological normalizer strips Arabic prefixes:
 
 | Input  | Normalized | Notes                    |
 | ------ | ---------- | ------------------------ |
@@ -485,38 +470,21 @@ The parser handles Arabic verb patterns and prefix stripping:
 
 ## Turkish Native Idioms
 
-LokaScript accepts multiple natural Turkish forms with full vowel harmony support.
+| Form               | Example                                | Notes                   |
+| ------------------ | -------------------------------------- | ----------------------- |
+| Locative (-da/-de) | `tıklamada .active i değiştir`         | "On click"              |
+| With source        | `#button den tıklamada #count i artır` | "On click from #button" |
 
-| Form                   | Example                        | Notes                             |
-| ---------------------- | ------------------------------ | --------------------------------- |
-| Conditional (-dığında) | `tıklandığında toggle .active` | **Most natural** - "when clicked" |
-| Temporal (-ınca)       | `tıklayınca toggle .active`    | "When/upon"                       |
-| Hypothetical (-rsa)    | `tıklarsa toggle .active`      | "If"                              |
-| Simultaneous (-ken)    | `tıklarken toggle .active`     | "While"                           |
-| Repetitive (-dikçe)    | `tıkladıkça toggle .active`    | "Whenever"                        |
-
-### Vowel Harmony
-
-All Turkish suffixes support 4-way vowel harmony + consonant softening:
-
-| Base     | Back Unrounded | Front Unrounded | Back Rounded | Front Rounded |
-| -------- | -------------- | --------------- | ------------ | ------------- |
-| -dığında | -dığında       | -diğinde        | -duğunda     | -düğünde      |
-| -ınca    | -ınca          | -ince           | -unca        | -ünce         |
-| -dikçe   | -dıkça         | -dikçe          | -dukça       | -dükçe        |
-
-Consonant softening (d→t after voiceless consonants): `-tığında`, `-tikçe`, etc.
+The converb forms (`tıklandığında`, `tıklayınca`, `tıklarsa`, `tıklarken`, `tıkladıkça`) do not
+parse as event handlers today.
 
 ### Event Handlers
 
 ```typescript
-// All parse to equivalent event handler nodes:
-parse('tıklandığında artır', 'tr'); // Conditional
-parse('tıklayınca artır', 'tr'); // Temporal
-parse('tıklarsa artır', 'tr'); // Hypothetical
+parse('tıklamada #count i artır', 'tr'); // on click increment #count
 
 // With source filter:
-parse('#button den tıklandığında artır', 'tr');
+parse('#button den tıklamada #count i artır', 'tr');
 ```
 
 ## Portuguese Native Idioms
@@ -527,32 +495,31 @@ LokaScript accepts multiple natural Portuguese forms.
 | ------------------------ | --------------------------------------- | ------------------------------------ |
 | Native (ao + infinitive) | `ao clicar alternar .active`            | **Most idiomatic** - "upon clicking" |
 | Standard (quando)        | `quando clicar alternar .active`        | "When"                               |
-| Conditional (se)         | `se clicar alternar .active`            | "If"                                 |
-| With source              | `ao clicar em #button alternar .active` | "Upon clicking on #button"           |
+| With source              | `ao clicar de #button alternar .active` | "Upon clicking from #button"         |
+
+`se clicar …` parses as an `if` command, not as an event handler.
 
 ### Portuguese Event Handlers
 
 ```typescript
 // All parse to equivalent event handler nodes:
-parse('ao clicar incrementar', 'pt'); // Native (ao + infinitive)
-parse('quando clicar incrementar', 'pt'); // Standard (quando)
-parse('se clicar incrementar', 'pt'); // Conditional (se)
+parse('ao clicar incrementar #count', 'pt'); // Native (ao + infinitive)
+parse('quando clicar incrementar #count', 'pt'); // Standard (quando)
 
 // With source filter:
-parse('ao clicar em #button incrementar', 'pt');
+parse('ao clicar de #button alternar .active', 'pt');
 ```
 
 ### Portuguese Morphological Normalization
 
-The parser handles Portuguese verb conjugations automatically:
+The tokenizer's morphological normalizer reduces Portuguese verb conjugations to the infinitive:
 
 | Conjugation   | Example  | Normalized |
 | ------------- | -------- | ---------- |
-| Infinitive    | clicar   | clica      |
-| Gerund        | clicando | clica      |
-| Present (3sg) | clica    | clica      |
-| Past          | clicou   | clica      |
-| Subjunctive   | clique   | clica      |
+| Infinitive    | clicar   | clicar     |
+| Gerund        | clicando | clicar     |
+| Present (3sg) | clica    | clicar     |
+| Past          | clicou   | clicar     |
 
 ## Direct AST Building
 
@@ -578,20 +545,21 @@ import { parse, buildAST } from '@lokascript/semantic';
 // Parse input to semantic node
 const node = parse('#button の .active を 切り替え', 'ja');
 
-// Build AST directly
-const ast = buildAST(node);
+// Build AST directly: buildAST returns { ast, warnings }
+const { ast, warnings } = buildAST(node);
+// ast (positions and `semanticRoles` omitted):
 // {
 //   type: 'command',
 //   name: 'toggle',
-//   args: [{ type: 'selector', value: '.active' }],
-//   modifiers: { on: { type: 'selector', value: '#button' } }
+//   args: [{ type: 'selector', value: '.active', selector: '.active', selectorType: 'class' }],
+//   modifiers: { on: { type: 'selector', value: '#button', selector: '#button', selectorType: 'id' } }
 // }
 ```
 
 ### Through `@hyperfixi/core/multilingual`
 
-Core's multilingual entry is four functions over this package, on text —
-`parse`, `render`, `translate` and `schemaRoleInferrer`:
+Core's multilingual entry is three functions over this package, on text —
+`parse`, `render` and `translate`:
 
 ```typescript
 import { parse, render } from '@hyperfixi/core/multilingual';
@@ -601,36 +569,46 @@ const english = node && (await render(node, 'en')); // hyperscript any host read
 ```
 
 (Its `MultilingualHyperscript` class, whose `parseToAST` went through `buildAST` to
-core's AST, was removed in the 4.0 cycle; `buildAST` above is still the direct route.)
+core's AST, was removed in the 4.0 cycle, and `schemaRoleInferrer` with core's own engine.)
 
 ### AST Node Types
 
-| Semantic Node           | AST Node               |
-| ----------------------- | ---------------------- |
-| `kind: 'command'`       | `type: 'command'`      |
-| `kind: 'event-handler'` | `type: 'eventHandler'` |
-| `kind: 'conditional'`   | `type: 'if'`           |
-| `kind: 'compound'`      | `type: 'compound'`     |
+| Semantic Node           | AST Node                             |
+| ----------------------- | ------------------------------------ |
+| `kind: 'command'`       | `type: 'command'`                    |
+| `kind: 'event-handler'` | `type: 'eventHandler'`               |
+| `kind: 'conditional'`   | `type: 'command'` (`name: 'if'`)     |
+| `kind: 'loop'`          | `type: 'command'` (`name: 'repeat'`) |
+| `kind: 'compound'`      | `type: 'CommandSequence'`            |
 
 ### Command Mappers
 
-46 commands have dedicated mappers that convert semantic roles to AST structure:
+A command's AST shape comes from its schema's declarative `ast` descriptor; a few commands
+(`wait`, `put`, `go`, `pick`) have a registered mapper that overrides it:
 
 ```typescript
 // Semantic: toggle patient:.active destination:#button
 // AST: { name: 'toggle', args: ['.active'], modifiers: { on: '#button' } }
 
-import { getCommandMapper, registerCommandMapper } from '@lokascript/semantic';
+import {
+  getCommandMapper,
+  resolveCommandMapper,
+  registerCommandMapper,
+} from '@lokascript/semantic';
 
-// Get mapper for a command
-const mapper = getCommandMapper('toggle');
+// The mapper the AST builder applies (registered, else from the schema)
+const mapper = resolveCommandMapper('toggle');
+
+// Only an explicitly registered mapper
+getCommandMapper('wait'); // a mapper
+getCommandMapper('toggle'); // undefined
 
 // Register custom mapper
 registerCommandMapper({
   action: 'myCommand',
   toAST(node, builder) {
-    return { type: 'command', name: 'myCommand', args: [...] };
-  }
+    return { type: 'command', name: 'myCommand', args: [] };
+  },
 });
 ```
 
@@ -639,11 +617,11 @@ registerCommandMapper({
 ### Core Functions
 
 - `parse(input, language)` - Parse input to semantic node
-- `canParse(input, language)` - Check if input can be parsed with confidence
+- `canParse(input, language)` - Whether input can be parsed (boolean)
 - `translate(input, fromLang, toLang, options?)` - Translate between languages; throws `LossyTranslationError` when the translation would lose part of the script (`{ lossy: 'allow' }` returns it anyway)
 - `tokenize(input, language)` - Get token stream for input
 - `render(node, language)` - Render semantic node to language
-- `buildAST(node)` - Build AST directly from semantic node
+- `buildAST(node)` - Build AST directly from semantic node; returns `{ ast, warnings }`
 
 ### Supported Languages
 
@@ -656,7 +634,7 @@ registerCommandMapper({
 | zh   | Chinese    | SVO        | Tier 1 |
 | ar   | Arabic     | VSO        | Tier 2 |
 | tr   | Turkish    | SOV        | Tier 2 |
-| de   | German     | SVO/SOV    | Tier 2 |
+| de   | German     | SVO        | Tier 2 |
 | fr   | French     | SVO        | Tier 2 |
 | pt   | Portuguese | SVO        | Tier 2 |
 | id   | Indonesian | SVO        | Tier 3 |
@@ -680,18 +658,15 @@ The tiers predate 11 of the 24 languages (bn, he, hi, it, ms, pl, ru, th, tl, uk
 
 ### Tier 1: Native Idiom Support (en, ja, ko, es, zh)
 
-- Multiple natural phrasings accepted (conditional, temporal, compact forms)
+- Alternative phrasings accepted where the sections above list them
 - Idiom patterns are approximations; most have not been reviewed by native speakers
-- Comprehensive morphological normalization
-- Dedicated idiom test suites (50-400+ tests per language)
-- English: Event alternatives (`upon`, `if`), command synonyms, natural articles, British spelling
+- Morphological normalization (ja, ko)
+- English: `upon`, command synonyms, natural articles, British spelling
 
 ### Tier 2: Full Grammar Support (ar, tr, de, fr, pt)
 
-- Complete word order transformation (SVO/SOV/VSO)
-- Morphological normalization for verb conjugations
-- Dictionary-based translation
-- Language-specific grammar rules
+- Word order transformation (SVO/SOV/VSO)
+- Morphological normalization (ar, de, fr, pt, tr)
 
 ### Tier 3: Functional (id, qu, sw)
 
@@ -704,6 +679,7 @@ The tiers predate 11 of the 24 languages (bn, he, hi, it, ms, pl, ru, th, tl, uk
 A browser-based editor for viewing and editing language profiles is available at `editor/index.html`.
 
 ```bash
+# In a checkout of this repository (the editor is not in the published package).
 # From packages/semantic/editor:
 ./serve.sh
 

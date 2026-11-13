@@ -15,7 +15,7 @@
  * - **Language server and MCP server**: build nodes with `@lokascript/semantic`'s
  *   `fromSemanticAST`, give them `@hyperfixi/engine`'s source positions with
  *   `withEnginePositions`, and use `lsp.ts` for diagnostics, symbols and hover.
- * - **developer-tools**: the analysis half (complexity, smells, metrics).
+ * - **MCP server**: the analysis half (complexity, smells, metrics), in its `analysis` toolset.
  * (Core's own AST converters, `fromCoreAST` / `toCoreAST`, left with core's
  * engine in 4.0.)
  *

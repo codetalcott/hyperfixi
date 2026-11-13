@@ -67,7 +67,6 @@ export const STATIC_TOOLSETS: Readonly<Record<string, ToolsetName>> = {
   lse_from_hyperscript: 'lse',
   lse_to_hyperscript: 'lse',
   lse_validate_and_feedback: 'lse',
-  lse_pattern_stats: 'lse',
   lse_generate_with_correction: 'lse',
   generate_training_data: 'lse',
   // grail
@@ -144,4 +143,32 @@ export function listedTools<T extends { name: string }>(
     const toolset = toolsetOf(tool.name, isDomainTool);
     return toolset !== undefined && enabled.has(toolset);
   });
+}
+
+/**
+ * Toolsets whose tools act on the machine the server runs on: `grail` runs the shell commands a
+ * grail.yaml names, `project` reads the files under a directory the caller names. Their tools are
+ * refused unless the toolset is enabled; every other tool computes on its arguments alone and
+ * answers a call whether or not it is listed.
+ */
+export const MACHINE_TOOLSETS: ReadonlySet<ToolsetName> = new Set<ToolsetName>([
+  'grail',
+  'project',
+]);
+
+/** Why a call to `name` is refused, or undefined when it may run. */
+export function refusedCall(
+  name: string,
+  enabled: ReadonlySet<ToolsetName>,
+  isDomainTool: (name: string) => boolean
+): string | undefined {
+  const toolset = toolsetOf(name, isDomainTool);
+  if (toolset === undefined || !MACHINE_TOOLSETS.has(toolset) || enabled.has(toolset)) {
+    return undefined;
+  }
+  return (
+    `${name} is disabled: the \`${toolset}\` toolset acts on the machine the server runs on, so it ` +
+    `answers only when enabled (set LOKASCRIPT_MCP_TOOLSETS=${toolset} in the server's environment ` +
+    `and restart).`
+  );
 }

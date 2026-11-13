@@ -12,13 +12,14 @@ npm install @hyperfixi/patterns-reference
 
 The package ships with a **pre-populated SQLite database** — built at publish
 time from the released source, the same database CI's gates judge — containing
-(counts as of 2026-09-25):
+(counts from the `data/patterns.db` tracked in the repository at 7.6.0, which can lag
+the published one):
 
-- 168 code examples covering hyperscript commands and real-world UI patterns,
+- 164 code examples covering hyperscript commands and real-world UI patterns,
   each with the engine(s) mechanically verified to run it (`engine`: `both`,
   `lokascript` = hyperfixi, `hyperscript` = upstream _hyperscript)
 - 3,936 translations (164 patterns × 24 languages)
-- ~660 LLM few-shot examples for code generation (an example no engine runs is
+- ~650 LLM few-shot examples for code generation (an example no engine runs is
   never served)
 
 No setup required - just install and use:
@@ -53,6 +54,11 @@ ref.close();
 ```
 
 ## API Reference
+
+The functions below are exports of the package (they read the default database). The object
+`createPatternsReference()` returns carries `getPatternById`, `getPatternsByCategory`,
+`getPatternsByCommand`, `searchPatterns`, `getTranslation`, `getAllTranslations`,
+`verifyTranslation`, `getLLMExamples`, `getStats` and `close`.
 
 ### Pattern Queries
 
@@ -150,7 +156,7 @@ These scripts are for contributors regenerating the database. **End users don't 
 | `npm run verify`            | Re-measure `verified_parses` (populate already does)     |
 | `npm run verify:engines`    | Re-verify `engine` on both engines; commit the JSON      |
 | `npm run build`             | Build the package                                        |
-| `npm test`                  | Run tests in watch mode                                  |
+| `npm test`                  | Run tests (vitest; watch mode in a terminal)             |
 | `npm run test:run`          | Run tests once                                           |
 
 ## Database Schema
@@ -179,7 +185,7 @@ Multilingual translations of patterns.
 | code_example_id | TEXT    | Foreign key to code_examples                                                                                                         |
 | language        | TEXT    | Language code (en, ja, es, etc.)                                                                                                     |
 | hyperscript     | TEXT    | Translated code                                                                                                                      |
-| word_order      | TEXT    | SVO, SOV, VSO, or V2                                                                                                                 |
+| word_order      | TEXT    | SVO, SOV or VSO                                                                                                                      |
 | confidence      | REAL    | Translation confidence (0-1)                                                                                                         |
 | verified_parses | INTEGER | 1 when the semantic parser accepts every hyperscript body of the row in its language (measured at sync; says nothing about fidelity) |
 
@@ -201,33 +207,31 @@ Prompt/completion pairs for few-shot learning.
 
 The database supports 24 languages with different word orders:
 
-| Word Order | Languages                                  |
-| ---------- | ------------------------------------------ |
-| SVO        | en, es, fr, pt, it, id, ms, sw, zh, vi, tl |
-| SOV        | ja, ko, tr, qu, hi, bn                     |
-| VSO        | ar                                         |
-| V2         | de                                         |
-| Other      | ru, uk, pl, th, he                         |
+| Word Order | Languages                                                      |
+| ---------- | -------------------------------------------------------------- |
+| SVO        | en, de, es, fr, he, id, it, ms, pl, pt, ru, sw, th, uk, vi, zh |
+| SOV        | bn, hi, ja, ko, qu, tr                                         |
+| VSO        | ar, tl                                                         |
 
 Languages are derived dynamically from `KNOWN_PROFILES` in `@lokascript/semantic`;
 adding a profile there automatically picks up in the next `npm run sync:translations`.
 
 ## Integration with @lokascript/semantic
 
-The patterns-reference package integrates with @lokascript/semantic to provide runtime pattern matching from the database.
+The patterns-reference package can offer its database to @lokascript/semantic as a pattern source.
 
 ### Semantic Bridge
 
 ```typescript
 import { initializeSemanticIntegration } from '@hyperfixi/patterns-reference';
 
-// Initialize integration (registers database as pattern source)
+// Initialize integration (offers the database as a pattern source)
 const result = await initializeSemanticIntegration();
 
 if (result.success) {
   console.log(`Registered with: ${result.registeredWith}`);
-  // 'semantic' if @lokascript/semantic is available
-  // 'standalone' if running without semantic package
+  // 'semantic' when @lokascript/semantic exports `registerPatternsSource`
+  // 'standalone' otherwise (7.6.0's entry point does not export it, so this is the result today)
 }
 
 // Query patterns directly
@@ -237,9 +241,9 @@ const jaPatterns = await queryPatterns('ja');
 const languages = await getSupportedLanguages();
 ```
 
-### LLM Adapter (for @lokascript/core)
+### LLM Adapter
 
-The package provides a unified LLM adapter that replaces the deprecated `llm-examples-query.ts`:
+Synchronous lookups of the LLM examples:
 
 ```typescript
 import { findRelevantExamples, buildFewShotContextSync } from '@hyperfixi/patterns-reference';
@@ -291,7 +295,7 @@ sudo apt-get install build-essential python3
 npm install --global windows-build-tools
 ```
 
-`better-sqlite3` ships with prebuilt binaries for most platforms, so compilation is usually not required. If you encounter issues, ensure you're using a supported Node.js version (18, 20, or 22 LTS).
+`better-sqlite3` ships with prebuilt binaries for most platforms, so compilation is usually not required. If you encounter issues, ensure you're using a supported Node.js version (this package requires Node 24 or later).
 
 ### Database Not Found
 

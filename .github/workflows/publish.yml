@@ -97,9 +97,9 @@ jobs:
 
       # Version calculation + sync run BEFORE the build, not after.
       # They used to sit after it, which meant every tarball was built
-      # from the PREVIOUS version's sources: set-version.cjs rewrites two
-      # generated files (packages/core/src/version.ts and
-      # packages/developer-tools/src/version.ts), so a build that ran
+      # from the PREVIOUS version's sources: set-version.cjs rewrites
+      # generated files (packages/core/src/version.ts and its siblings in
+      # GENERATED_VERSION_FILES), so a build that ran
       # first baked the stale literal into dist. v2.11.0 shipped to npm
       # with package.json 2.11.0 and dist reporting version:"2.10.0".
       # Building after the sync also means the test + export-validation
