@@ -72,6 +72,7 @@ describe('Generator', () => {
         'add',
         'remove',
         'toggle',
+        'pseudoCommand',
         'toggleElement',
       ]);
     });
@@ -79,7 +80,9 @@ describe('Generator', () => {
     it('imports exactly what it registers, from the engine', () => {
       const code = generator.generate(createUsage(['put', 'set']), noOptions);
       const imported = code.match(/^import \{ ([^}]*) \} from '@hyperfixi\/engine';/m)?.[1];
-      expect(imported).toBe('api, boot, register, on, conversions, set, put');
+      expect(imported).toBe(
+        'api, boot, register, on, setFeature, conversions, set, put, pseudoCommand'
+      );
       expect(code).not.toContain('@hyperfixi/core');
     });
 
@@ -163,7 +166,15 @@ describe('Generator', () => {
       const bundle = JSON.parse(code.match(/bundle: (\{.*\}),/)![1]);
       expect(bundle).toEqual({
         generator: '@hyperfixi/vite-plugin',
-        modules: ['on', 'conversions', 'add', 'toggle', 'ifCommand', 'toggleElement'],
+        modules: [
+          'on',
+          'conversions',
+          'add',
+          'toggle',
+          'ifCommand',
+          'pseudoCommand',
+          'toggleElement',
+        ],
         commands: ['toggle', 'add'],
         blocks: ['if'],
         languages: [],
@@ -237,7 +248,7 @@ describe('Generator', () => {
     it('emits a bundle when only semantic is enabled', () => {
       const code = generator.generate(createUsage([]), { semantic: 'en' });
       expect(code).toContain("from '@hyperfixi/engine'");
-      expect(registered(code)).toEqual(['on', 'conversions']);
+      expect(registered(code)).toEqual(['on', 'conversions', 'pseudoCommand']);
     });
 
     it('dev fallback is the engine with every module, whatever name is asked for', () => {
@@ -257,7 +268,14 @@ describe('Generator', () => {
       const code = generator.generate(createUsage(['put']), extensions);
       expect(code).toContain("import { socket } from '@hyperfixi/engine/ext/socket';");
       expect(code).toContain("import { tailwind } from '@hyperfixi/engine/ext/tailwind';");
-      expect(registered(code)).toEqual(['on', 'conversions', 'put', 'socket', 'tailwind']);
+      expect(registered(code)).toEqual([
+        'on',
+        'conversions',
+        'put',
+        'pseudoCommand',
+        'socket',
+        'tailwind',
+      ]);
       expect(code).toContain('"extensions":["socket","tailwind"]');
     });
 
@@ -270,7 +288,7 @@ describe('Generator', () => {
     it('a listed extension is usage: no empty bundle', () => {
       const code = generator.generate(createUsage([]), { extensions: ['socket'] });
       expect(code).not.toContain('Empty Bundle');
-      expect(registered(code)).toEqual(['on', 'conversions', 'socket']);
+      expect(registered(code)).toEqual(['on', 'conversions', 'pseudoCommand', 'socket']);
     });
 
     it('the dev fallback registers them after everything', () => {
