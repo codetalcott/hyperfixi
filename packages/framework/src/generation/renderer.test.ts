@@ -6,9 +6,10 @@ import {
   buildTablesFromProfiles,
   detectWordOrders,
   createSchemaRenderer,
+  writeRoleValue,
 } from './renderer';
 import type { KeywordTable, MarkerTable } from './renderer';
-import type { SemanticNode } from '../core/types';
+import type { SemanticNode, SemanticValue } from '../core/types';
 import type { CommandSchema } from '../schema';
 import { defineCommand, defineRole } from '../schema';
 import type { PatternGenLanguageProfile } from './profile';
@@ -500,6 +501,82 @@ describe('createSchemaRenderer', () => {
       const renderer = createSchemaRenderer(capabilities, capProfiles);
       const node = makeNode('summarize', { patient: '#doc', source: '#feed' });
       expect(renderer.render(node, 'en')).toBe('summarize #doc #feed');
+    });
+  });
+
+  describe('string literals', () => {
+    // No quoteMultiword anywhere: a string literal is quoted because of what it is.
+    const addSchema: CommandSchema[] = [
+      defineCommand({
+        action: 'add',
+        description: 'Add an item to a list',
+        category: 'mutation',
+        primaryRole: 'item',
+        roles: [
+          defineRole({
+            role: 'item',
+            required: true,
+            expectedTypes: ['expression'],
+            svoPosition: 2,
+          }),
+          defineRole({
+            role: 'list',
+            required: false,
+            expectedTypes: ['expression'],
+            svoPosition: 1,
+            markerOverride: { en: 'to', es: 'a', ja: 'に' },
+          }),
+        ],
+      }),
+    ];
+    const addProfiles: PatternGenLanguageProfile[] = [
+      { code: 'en', wordOrder: 'SVO', keywords: { add: { primary: 'add' } }, roleMarkers: {} },
+      { code: 'es', wordOrder: 'SVO', keywords: { add: { primary: 'agregar' } }, roleMarkers: {} },
+      { code: 'ja', wordOrder: 'SOV', keywords: { add: { primary: '追加' } }, roleMarkers: {} },
+    ];
+    const literal = (value: string) => ({
+      type: 'literal' as const,
+      value,
+      dataType: 'string' as const,
+    });
+    const add = (item: SemanticValue, list?: string): SemanticNode => {
+      const roles = new Map<string, SemanticValue>([['item', item]]);
+      if (list !== undefined) roles.set('list', { type: 'expression', raw: list });
+      return { kind: 'command', action: 'add', roles };
+    };
+
+    it('writes a multi-word string literal in quotes, in every word order', () => {
+      const renderer = createSchemaRenderer(addSchema, addProfiles);
+      const node = add(literal('oat milk'), 'groceries');
+      expect(renderer.render(node, 'en')).toBe('add "oat milk" to groceries');
+      expect(renderer.render(node, 'es')).toBe('agregar "oat milk" a groceries');
+      // (ja: the schema gives no sovPosition, so the order is the comparator's default)
+      expect(renderer.render(node, 'ja')).toBe('"oat milk" groceries に 追加');
+    });
+
+    it('leaves a one-word string literal bare', () => {
+      const renderer = createSchemaRenderer(addSchema, addProfiles);
+      expect(renderer.render(add(literal('milk'), 'groceries'), 'en')).toBe(
+        'add milk to groceries'
+      );
+    });
+
+    it('leaves a multi-word expression bare: only a literal was quoted where it was read', () => {
+      const renderer = createSchemaRenderer(addSchema, addProfiles);
+      const node = add({ type: 'expression', raw: 'age > 30' });
+      expect(renderer.render(node, 'en')).toBe('add age > 30');
+    });
+
+    it('quotes with single quotes when the value holds a double quote', () => {
+      const renderer = createSchemaRenderer(addSchema, addProfiles);
+      expect(renderer.render(add(literal('the "final" report')), 'en')).toBe(
+        `add 'the "final" report'`
+      );
+    });
+
+    it('writes a value holding both quote characters bare (the read-back refuses it)', () => {
+      const node = add(literal(`it's "final"`));
+      expect(writeRoleValue(node, 'item')).toBe(`it's "final"`);
     });
   });
 });
