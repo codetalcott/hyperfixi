@@ -426,7 +426,6 @@ export {
   type SchemaValidation,
   /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   type SchemaValidationResult,
-  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   SchemaErrorCodes,
   validateCommandSchema,
   validateAllSchemas,
@@ -456,11 +455,17 @@ export {
 // =============================================================================
 
 export {
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   SemanticCache,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   semanticCache,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   createSemanticCache,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   withCache,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   type SemanticCacheConfig,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   type CacheStats,
 } from './cache';
 
@@ -497,24 +502,40 @@ export {
 
 export {
   // Main functions
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   analyze,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   analyzeAll,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   analyzeMultiple,
   // Individual checks
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   checkAccessibility,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   checkPerformance,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   checkSchema,
   // Dev mode
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   enableDevMode,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   disableDevMode,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   isDevModeEnabled,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   getDevModeConfig,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   devModeAnalyze,
   // Types
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   type AnalysisResult,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   type AnalysisWarning,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   type AnalysisConfig,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   type WarningSeverity,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   type WarningCode,
 } from './analysis';
 

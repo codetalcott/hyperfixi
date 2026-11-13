@@ -9,16 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Deprecated
 
-- **81 root exports of `@lokascript/semantic` with no known consumer are marked `@deprecated`**
+- **102 root exports of `@lokascript/semantic` with no known consumer are marked `@deprecated`**
   and will leave the root entry in 8.0. Nothing is removed and nothing behaves differently: the
   tag is on the export in the root entry, so an editor strikes the name through where it is
   imported from `@lokascript/semantic`. Ten of them stay exported from
   `@lokascript/semantic/core`, and eight are `@lokascript/framework`'s own exports passed along;
-  each tag says which. The list, with who imports every root export and what is proposed for
-  the rest, is in
-  [`docs-internal/SEMANTIC_ROOT_EXPORTS.md`](docs-internal/SEMANTIC_ROOT_EXPORTS.md). It was
-  measured in this repository and its sibling projects, which cannot show an npm user: if you
-  import one of the marked names, open an issue before 8.0.
+  each tag says which. The list is in
+  [`docs-internal/SEMANTIC_ROOT_EXPORTS.md`](docs-internal/SEMANTIC_ROOT_EXPORTS.md): who
+  imports every root export, and for each unconsumed one what it was for, whether it does that
+  (each was run from the built package), and what is proposed for 8.0. Among the marked: the
+  static-analysis functions (`analyze` and its dev mode, which `parse` never calls), the
+  `SemanticCache` family (connected to nothing since 3.0.0), and the parser, renderer and matcher
+  classes behind `parse` and `render` (`SemanticRendererImpl` skips the name-collision and
+  upstream-spelling steps `render` applies). The inventory was measured in this repository and
+  its sibling projects, which cannot show an npm user: if you import one of the marked names,
+  open an issue before 8.0.
 
 ### Fixed
 
