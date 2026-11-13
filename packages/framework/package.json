@@ -240,7 +240,7 @@
   },
   "files": [
     "dist",
-    "src",
+    "!dist/**/*.d.ts.map",
     "LICENSE",
     "README.md",
     "CHANGELOG.md"

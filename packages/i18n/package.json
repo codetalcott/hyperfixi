@@ -91,7 +91,6 @@
   },
   "files": [
     "dist",
-    "src",
     "CHANGELOG.md"
   ],
   "publishConfig": {

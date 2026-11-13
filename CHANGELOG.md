@@ -70,6 +70,18 @@ patient:.active]`, not `… destination:me`), its reader reads a bare `{…}` as
 
 ### Changed
 
+- **Published tarballs no longer carry `src`.** Thirteen packages shipped their TypeScript
+  sources beside `dist`, whose sourcemaps already embed the same text (`sourcesContent`):
+  `@lokascript/semantic` (373 files, 3.8 MB of a 50.2 MB unpacked tarball), `framework`, `i18n`,
+  `intent`, `hyperscript-adapter`, `htmx-adapter`, `patterns-reference`, and `@hyperfixi/`
+  `behaviors`, `intent-element`, `planner`, `server-bridge`, `speech`, `types-browser`. The
+  declaration maps that pointed into `src` go with it; the JavaScript sourcemaps stay, so a
+  debugger still steps through the sources. `@lokascript/patterns-reference` had no sourcemaps
+  and builds them now. No entry point resolved into `src`; an import of a
+  `…/src/…` path from an installed package no longer resolves. `scripts/check-published-files.cjs`
+  (CI's lint job, the pre-commit hook) fails on a published package that lists `src`.
+  (Measured with `npm pack --dry-run` on a local build, 2026-11-13.)
+
 - **`@lokascript/framework/testing` uses your vitest.** It `import`s `expect` from `vitest`, which
   was a devDependency only, so the build inlined a second copy: the entry was 674 KB, and its
   `expect` was not the one a caller's test ran under. vitest is an optional peer now and the entry
