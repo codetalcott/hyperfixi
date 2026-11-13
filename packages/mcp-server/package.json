@@ -9,11 +9,11 @@
   },
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts",
-    "prebuild": "../../scripts/ensure-fresh.sh ../intent ../framework ../semantic ../compilation-service ../planner",
+    "prebuild": "../../scripts/ensure-fresh.sh ../intent ../framework ../semantic ../compilation-service",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
     "dev:watch": "tsx watch src/index.ts",
-    "pretest": "../../scripts/ensure-fresh.sh ../intent ../framework ../semantic ../engine ../patterns-reference ../compilation-service ../planner ../server-bridge",
+    "pretest": "../../scripts/ensure-fresh.sh ../intent ../framework ../semantic ../engine ../patterns-reference ../compilation-service ../server-bridge",
     "test": "vitest",
     "typecheck": "tsc --noEmit",
     "service:setup": "echo 'Copy com.lokascript.mcp-server.plist.example to com.lokascript.mcp-server.plist and update paths, then run service:install'",
@@ -44,11 +44,9 @@
     "@lokascript/compilation-service": "^7.6.0",
     "@lokascript/domains": "^7.1.0",
     "@lokascript/framework": "^7.6.0",
-    "@lokascript/planner": "^7.6.0",
     "@lokascript/semantic": "^7.6.0",
     "@modelcontextprotocol/server": "^2.4.0",
-    "glob": "^13.0.6",
-    "yaml": "^2.9.1"
+    "glob": "^13.0.6"
   },
   "peerDependencies": {
     "@hyperfixi/core": "^7.6.0",

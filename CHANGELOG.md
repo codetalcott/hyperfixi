@@ -180,6 +180,13 @@ Value>`, `AnyNode`) and each kind's fields (`CommandFields`, `EventHandlerFields
 
 ### Removed
 
+- **The `grail` toolset** (`@hyperfixi/mcp-server`): `grail_check`, `grail_plan`, `grail_run`,
+  `grail_info` and `grail_list`, with `GRAIL.md`. **Breaking for a server started with
+  `LOKASCRIPT_MCP_TOOLSETS=grail`:** the name is now reported as unknown at startup, and a call
+  to one of the five tools answers `Unknown tool`. `grail_run` ran the shell commands a
+  `grail.yaml` in the server's directory named; `project` is the one toolset left whose tools
+  are refused unless it is enabled. The server no longer depends on `@lokascript/planner` or
+  `yaml`. 81 tools are defined, 76 listed with every toolset.
 - **`lse_pattern_stats`** (`@hyperfixi/mcp-server`). Nothing ever recorded an event for it to
   count: every call answered "No pattern events recorded yet". 86 tools are defined, 81 listed
   with every toolset.

@@ -279,7 +279,6 @@ jobs:
           # speech (an engine module) is listed after behaviors; it peers on
           # @hyperfixi/engine, in position 2.
           # intent is first — @hyperfixi/core and @lokascript/framework depend on it.
-          # planner sits before mcp-server (which depends on it).
           # intent-element depends on intent + core, so it follows them.
           # (The domain-* family moved to lokascript-domains in #909.)
           ALL_PACKAGES="intent engine semantic core i18n hyperscript-adapter patterns-reference \
