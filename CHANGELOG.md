@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`<lse-intent>`'s allow list could be passed with a value nested in a handler**
+  (`@lokascript/intent`, `@hyperfixi/intent-element`; not in a release). `validateProtocolJSON`
+  checked the root node's roles and stopped, and the allow check let any literal that was not a
+  string through: with `allow="toggle"`, a body command whose literal was the array
+  `[".a then call alert(1)"]` was planned and rendered to `toggle .a then call alert(1)`. The
+  validator now reads every node (`body`, `statements`, `thenBranch`, `elseBranch`, `loopBody`),
+  naming the path of an inner diagnostic, and refuses a child that is not a node
+  (`INVALID_CHILD`, `INVALID_CHILDREN`: `fromProtocolJSON` threw a `TypeError` on both after a
+  clean validation). The `trigger` shorthand keeps a block command's body and a conditional's
+  branches, which it dropped.
+- **A bundle from `@hyperfixi/vite-plugin` rejected a call used as a statement and a top-level
+  `set`.** `on click alert('hi')`, `on click me.focus()` and `set $count to 0` were parse errors
+  in a production build and ran with `devFallback: 'everything'`. The pseudo-command module adds
+  no keyword a scan can find, and `set` is a command and a feature in two modules, of which the
+  lookup took one. The first is registered always (with `on` and the conversions); a keyword in
+  both maps brings both. A test requires that some usage selects every engine module.
+- **`npx @hyperscript-tools/i18n` did nothing.** Started through its `node_modules/.bin`
+  symlink, as npm and npx start it, the CLI matched its own entry check against the link's path,
+  ran nothing and exited 0. It compares real paths now, and a test starts the bin through a
+  symlink.
 - **Protocol JSON read back as another script in 94 of the 781 corpus cases it wrote**, with no
   error and with the round-trip gate green. It dropped the `implicit` mark, so a value the parser
   had supplied from a command's default was written back as if the author wrote it (`remove #x`

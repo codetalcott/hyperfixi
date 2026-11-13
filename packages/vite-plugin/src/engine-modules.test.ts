@@ -5,7 +5,8 @@
  * upstream of this package shows up here, not in a user's bundle.
  */
 import { describe, it, expect } from 'vitest';
-import { everything } from '@hyperfixi/engine';
+import * as engine from '@hyperfixi/engine';
+import { everything, parseProgram, register, type Module } from '@hyperfixi/engine';
 import {
   ENGINE_MODULES,
   COMMAND_KEYWORDS,
@@ -75,14 +76,22 @@ describe('ENGINE_MODULES (derived from the engine)', () => {
 describe('resolveModules', () => {
   const base = { blocks: [], positional: false, reactivity: false };
 
-  it('always registers `on` and the conversions', () => {
+  it('always registers `on`, the conversions and the pseudo-command', () => {
     const { modules } = resolveModules({ ...base, commands: [] });
-    expect(modules).toEqual(['on', 'conversions']);
+    expect(modules).toEqual(['on', 'conversions', 'pseudoCommand']);
   });
 
   it('adds the module for each command, with `toggleElement` beside `toggle`', () => {
     const { modules, unknown } = resolveModules({ ...base, commands: ['toggle', 'add', 'show'] });
-    expect(modules).toEqual(['on', 'conversions', 'add', 'toggle', 'hideShow', 'toggleElement']);
+    expect(modules).toEqual([
+      'on',
+      'conversions',
+      'add',
+      'toggle',
+      'hideShow',
+      'pseudoCommand',
+      'toggleElement',
+    ]);
     expect(unknown).toEqual([]);
   });
 
@@ -134,5 +143,61 @@ describe('resolveModules', () => {
     const { modules, unknown } = resolveModules({ ...base, commands: ['toggle', 'copy', 'beep'] });
     expect(unknown).toEqual(['beep', 'copy']);
     expect(modules).not.toContain('copy');
+  });
+});
+
+/**
+ * Found by review (2026-11-12): two modules add nothing a scan can find, so no
+ * usage selected them, and a production bundle rejected `on click alert('hi')`
+ * and a top-level `set $count to 0` that the dev fallback (every module) ran.
+ */
+describe('resolveModules: every engine module can be selected', () => {
+  const allFlags = { positional: true, reactivity: true, construct: true, cookies: true };
+
+  it('selects every module in `everything` for a usage that names every keyword', () => {
+    const usage = {
+      commands: [...COMMAND_KEYWORDS.keys(), ...FEATURE_KEYWORDS.keys()],
+      blocks: ['if', 'repeat', 'for', 'while', 'fetch'],
+      ...allFlags,
+    };
+    const selected = new Set(resolveModules(usage).modules);
+    expect(ENGINE_MODULES.map(m => m.name).filter(name => !selected.has(name))).toEqual([]);
+  });
+
+  it('registers `pseudoCommand` always: a call used as a statement has no keyword', () => {
+    expect(
+      resolveModules({ commands: [], blocks: [], positional: false, reactivity: false }).modules
+    ).toContain('pseudoCommand');
+  });
+
+  it('brings both modules for a keyword that is a command and a feature', () => {
+    const { modules } = resolveModules({
+      commands: ['set'],
+      blocks: [],
+      positional: false,
+      reactivity: false,
+    });
+    expect(modules).toEqual(expect.arrayContaining(['set', 'setFeature']));
+  });
+
+  it.each([
+    ["on click alert('hi')", ['toggle']],
+    ['on click me.focus()', []],
+    ['set $count to 0', ['set']],
+    ['set :count to 0 end on click increment :count', ['set', 'increment']],
+  ])('the selected modules parse %s', (source, commands) => {
+    const { modules } = resolveModules({
+      commands,
+      blocks: [],
+      positional: false,
+      reactivity: false,
+    });
+    const byName = engine as unknown as Record<string, Module>;
+    register(...modules.map(name => byName[name]));
+    try {
+      expect(() => parseProgram(source)).not.toThrow();
+    } finally {
+      register(...everything);
+    }
   });
 });
