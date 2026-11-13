@@ -990,11 +990,11 @@ class ProfileDerivedKoreanTokenizer extends BaseTokenizer {
 }
 
 describe('Profile-Derived Korean Tokenizer Comparison', () => {
-  let originalTokenizer: OriginalKoreanTokenizer;
+  let _originalTokenizer: OriginalKoreanTokenizer;
   let profileDerivedTokenizer: ProfileDerivedKoreanTokenizer;
 
   beforeAll(() => {
-    originalTokenizer = new OriginalKoreanTokenizer();
+    _originalTokenizer = new OriginalKoreanTokenizer();
     profileDerivedTokenizer = new ProfileDerivedKoreanTokenizer();
   });
 

@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { createSQLDSL, testQueries, expectedSQL, expectedNodes } from './fixtures/sql-dsl';
+import { createSQLDSL, testQueries, expectedSQL } from './fixtures/sql-dsl';
 
 describe('SQL DSL Integration', () => {
   let sqlDSL: ReturnType<typeof createSQLDSL>;

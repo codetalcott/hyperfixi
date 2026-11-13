@@ -10,7 +10,6 @@ import {
   generatePattern,
   generatePatternsForCommand,
   toggleSchema,
-  putSchema,
   englishProfile,
   japaneseProfile,
   arabicProfile,
@@ -20,7 +19,6 @@ import {
 } from '../src/generators';
 // Import consolidated dispatch functions (Phase 3.2)
 import { getTogglePatternsForLanguage } from '../src/patterns/toggle';
-import { getPutPatternsForLanguage } from '../src/patterns/put';
 import type { LanguagePattern, PatternToken } from '../src/types';
 
 // Build pattern arrays for testing
@@ -32,13 +30,6 @@ const togglePatterns: LanguagePattern[] = [
   ...getTogglePatternsForLanguage('ko'),
   ...getTogglePatternsForLanguage('zh'),
   ...getTogglePatternsForLanguage('tr'),
-];
-
-const putPatterns: LanguagePattern[] = [
-  ...getPutPatternsForLanguage('en'),
-  ...getPutPatternsForLanguage('ja'),
-  ...getPutPatternsForLanguage('ar'),
-  ...getPutPatternsForLanguage('es'),
 ];
 
 // =============================================================================

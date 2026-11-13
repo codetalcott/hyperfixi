@@ -553,7 +553,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
 
       // Should have date/time in result
       const text = await result.textContent();
-      expect(text).toMatch(/\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}|\d{1,2}:\d{2}/);
+      expect(text).toMatch(/\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{1,2}:\d{2}/);
     });
 
     test('JS with parameters works (regex search)', async ({ page }) => {

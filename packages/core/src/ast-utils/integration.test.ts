@@ -546,7 +546,7 @@ describe('Integration Tests - Error Handling', () => {
 
     expect(() => {
       const visitor = new ASTVisitor({
-        enter(node) {
+        enter(_node) {
           // Should not crash
         },
       });

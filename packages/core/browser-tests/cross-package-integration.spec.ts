@@ -9,7 +9,7 @@
  *
  * This completes Phase 4b: Cross-package integration testing
  */
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 const BASE_URL = 'http://127.0.0.1:3000';
 

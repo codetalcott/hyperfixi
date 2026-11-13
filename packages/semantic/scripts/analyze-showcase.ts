@@ -96,7 +96,7 @@ function analyzeTranslation(
   english: string,
   langCode: string,
   output: string,
-  explicit: string
+  _explicit: string
 ): { isExplicit: boolean; hasIssues: boolean; issues: string[] } {
   const issues: string[] = [];
 

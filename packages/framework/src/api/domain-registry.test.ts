@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { DomainRegistry } from './domain-registry';
-import type { DomainDescriptor, MCPToolDefinition } from './domain-registry';
+import type { DomainDescriptor } from './domain-registry';
 import { UnreadInputError, type MultilingualDSL } from './create-dsl';
 import type { SemanticNode } from '../core/types';
 

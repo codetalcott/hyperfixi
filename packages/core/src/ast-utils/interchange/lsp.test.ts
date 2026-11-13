@@ -12,7 +12,6 @@ import {
   calculateCognitive,
   DiagnosticSeverity,
   SymbolKind,
-  CompletionItemKind,
 } from './lsp';
 
 // =============================================================================

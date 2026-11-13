@@ -96,6 +96,7 @@ describe('installAttributeTranslator', () => {
     // innerHTML round-trip discards the original element, so processed-set
     // membership is lost by design. The NEW element is re-processed — its
     // text is already English, so translation is an identity no-op.
+    // oxlint-disable-next-line no-self-assign -- deliberate: the innerHTML setter re-parses and replaces the subtree
     container.innerHTML = container.innerHTML;
     hs.process(container);
     expect(translate).toHaveBeenCalledTimes(2);

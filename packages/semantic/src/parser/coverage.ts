@@ -24,6 +24,7 @@ export const CLAUSE_OPENERS: ReadonlySet<string> = new Set(['when', 'for']);
  */
 export function isOwnWord(t: LanguageToken): boolean {
   if (t.normalized || t.kind === 'particle') return true;
+  // oxlint-disable-next-line no-control-regex -- deliberate: the class is "any non-ASCII character"
   return t.kind === 'identifier' && /[^\x00-\x7f]/.test(t.value);
 }
 

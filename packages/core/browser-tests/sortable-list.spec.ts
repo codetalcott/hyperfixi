@@ -294,7 +294,6 @@ test.describe('Sortable List Example', () => {
       // Check which APIs are available
       const w = window as any;
       const api = w.lokascript || w._hyperscript;
-      const hasProcessNode = typeof api?.processNode === 'function';
 
       // Minimal test: does processNode + custom event work at all?
       const el1 = document.createElement('div');

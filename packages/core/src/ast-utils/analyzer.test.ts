@@ -8,7 +8,7 @@ import {
   suggestOptimizations,
   analyzePatterns,
 } from './analyzer.js';
-import type { ASTNode, ComplexityMetrics, CodeSmell, AnalysisResult } from './types.js';
+import type { ASTNode } from './types.js';
 
 // Mock AST nodes for testing
 const createSimpleAST = (): ASTNode =>

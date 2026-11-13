@@ -14,7 +14,6 @@ import type {
   TestStatus,
   TestError,
   TestLog,
-  BrowserTestOptions,
   PerformanceMetrics,
 } from './types';
 import { createExpectAPI } from './assertions';
@@ -376,7 +375,7 @@ export class CoreTestRunner implements TestRunner {
       fail: (message: string) => {
         throw new Error(message);
       },
-      timeout: (ms: number) => {
+      timeout: (_ms: number) => {
         // Timeout functionality would be implemented here
       },
     };
@@ -398,7 +397,7 @@ export class CoreTestRunner implements TestRunner {
   /**
    * Setup test fixtures
    */
-  private async setupTestFixtures(test: TestCase, context: TestContext): Promise<void> {
+  private async setupTestFixtures(_test: TestCase, _context: TestContext): Promise<void> {
     // Fixture setup would be implemented here
     // This would load and initialize test fixtures
   }
@@ -406,21 +405,21 @@ export class CoreTestRunner implements TestRunner {
   /**
    * Cleanup test fixtures
    */
-  private async cleanupTestFixtures(test: TestCase, context: TestContext): Promise<void> {
+  private async cleanupTestFixtures(_test: TestCase, _context: TestContext): Promise<void> {
     // Fixture cleanup would be implemented here
   }
 
   /**
    * Run beforeEach hooks
    */
-  private async runBeforeEachHooks(context: TestContext): Promise<void> {
+  private async runBeforeEachHooks(_context: TestContext): Promise<void> {
     // Hook execution would be implemented here
   }
 
   /**
    * Run afterEach hooks
    */
-  private async runAfterEachHooks(context: TestContext): Promise<void> {
+  private async runAfterEachHooks(_context: TestContext): Promise<void> {
     // Hook execution would be implemented here
   }
 

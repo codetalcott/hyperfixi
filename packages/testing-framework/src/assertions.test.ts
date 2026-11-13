@@ -2,7 +2,7 @@
  * Tests for Assertion Library
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { createExpectAPI, createAssertAPI, AssertionError } from './assertions';
 
 describe('Assertions Library', () => {

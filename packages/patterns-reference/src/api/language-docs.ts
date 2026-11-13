@@ -9,7 +9,6 @@ import { getDatabase } from '../database/connection';
 import type {
   Command,
   Expression,
-  ExpressionOperator,
   Keyword,
   Feature,
   SpecialSymbol,
