@@ -26,7 +26,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "glob": "^13.0.6"
+    "glob": "^14.0.2"
   },
   "devDependencies": {
     "@lokascript/domains": "^7.1.0",
