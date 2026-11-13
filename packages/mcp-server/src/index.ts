@@ -16,7 +16,7 @@ import {
   staleSinceStartup,
   staleToolError,
 } from './freshness.js';
-import { TOOLSET_NAMES, listedTools, parseToolsets } from './toolsets.js';
+import { TOOLSET_NAMES, listedTools, parseToolsets, refusedCall } from './toolsets.js';
 
 // Tool implementations
 import { analysisTools, handleAnalysisTool } from './tools/analysis.js';
@@ -214,6 +214,13 @@ function buildServer(): Server {
       return staleToolError(stale);
     }
 
+    // The toolsets that act on the machine (shell commands, reading files) answer only when
+    // enabled; the others answer a call by name whether or not they are listed.
+    const refused = refusedCall(name, TOOLSETS.enabled, isDomainTool);
+    if (refused) {
+      return { content: [{ type: 'text', text: refused }], isError: true };
+    }
+
     // Analysis tools (from core/ast-utils). The prefix guard must not swallow
     // `analyze_content`, which is a sampling tool handled further down.
     if (
@@ -355,7 +362,7 @@ function buildServer(): Server {
     }
 
     // Feedback loop tools (LLM ↔ LSE)
-    if (name === 'lse_validate_and_feedback' || name === 'lse_pattern_stats') {
+    if (name === 'lse_validate_and_feedback') {
       return handleFeedbackTool(name, args as Record<string, unknown>);
     }
 

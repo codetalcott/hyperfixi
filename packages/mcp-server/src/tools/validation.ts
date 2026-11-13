@@ -615,28 +615,42 @@ function suggestCommand(
 // Bundle Configuration
 // =============================================================================
 
-// Adapter bundle metadata for original _hyperscript users
-const ADAPTER_BUNDLES: Record<string, { file: string; size: string; languages: string[] }> = {
-  es: { file: 'hyperscript-i18n-es.global.js', size: '94 KB', languages: ['es'] },
-  ja: { file: 'hyperscript-i18n-ja.global.js', size: '95 KB', languages: ['ja'] },
-  ko: { file: 'hyperscript-i18n-ko.global.js', size: '100 KB', languages: ['ko'] },
-  zh: { file: 'hyperscript-i18n-zh.global.js', size: '88 KB', languages: ['zh'] },
-  fr: { file: 'hyperscript-i18n-fr.global.js', size: '87 KB', languages: ['fr'] },
-  de: { file: 'hyperscript-i18n-de.global.js', size: '86 KB', languages: ['de'] },
-  pt: { file: 'hyperscript-i18n-pt.global.js', size: '86 KB', languages: ['pt'] },
-  ar: { file: 'hyperscript-i18n-ar.global.js', size: '95 KB', languages: ['ar'] },
-  tr: { file: 'hyperscript-i18n-tr.global.js', size: '101 KB', languages: ['tr'] },
-  id: { file: 'hyperscript-i18n-id.global.js', size: '85 KB', languages: ['id'] },
-  western: {
-    file: 'hyperscript-i18n-western.global.js',
-    size: '146 KB',
-    languages: ['es', 'pt', 'fr', 'de'],
-  },
-  'east-asian': {
-    file: 'hyperscript-i18n-east-asian.global.js',
-    size: '146 KB',
-    languages: ['ja', 'ko', 'zh'],
-  },
+// Adapter bundles (@lokascript/hyperscript-adapter), sizes gzipped; a test holds them to the dist.
+export const ADAPTER_BUNDLES: Record<string, { file: string; size: string; languages: string[] }> =
+  {
+    es: { file: 'hyperscript-i18n-es.global.js', size: '138 KB', languages: ['es'] },
+    ja: { file: 'hyperscript-i18n-ja.global.js', size: '137 KB', languages: ['ja'] },
+    ko: { file: 'hyperscript-i18n-ko.global.js', size: '138 KB', languages: ['ko'] },
+    zh: { file: 'hyperscript-i18n-zh.global.js', size: '138 KB', languages: ['zh'] },
+    fr: { file: 'hyperscript-i18n-fr.global.js', size: '137 KB', languages: ['fr'] },
+    de: { file: 'hyperscript-i18n-de.global.js', size: '137 KB', languages: ['de'] },
+    pt: { file: 'hyperscript-i18n-pt.global.js', size: '137 KB', languages: ['pt'] },
+    ar: { file: 'hyperscript-i18n-ar.global.js', size: '139 KB', languages: ['ar'] },
+    tr: { file: 'hyperscript-i18n-tr.global.js', size: '138 KB', languages: ['tr'] },
+    id: { file: 'hyperscript-i18n-id.global.js', size: '135 KB', languages: ['id'] },
+    western: {
+      file: 'hyperscript-i18n-western.global.js',
+      size: '148 KB',
+      languages: ['es', 'pt', 'fr', 'de'],
+    },
+    'east-asian': {
+      file: 'hyperscript-i18n-east-asian.global.js',
+      size: '147 KB',
+      languages: ['ja', 'ko', 'zh'],
+    },
+  };
+
+export const FULL_ADAPTER_BUNDLE = { file: 'hyperscript-i18n.global.js', size: '289 KB' };
+
+/** The engine's script-tag bundle (@hyperfixi/engine), gzipped. */
+export const ENGINE_BUNDLE = { file: 'hyperfixi-hs.js', size: '35 KB' };
+
+/** @lokascript/semantic's browser bundles, gzipped. */
+export const SEMANTIC_BUNDLES = {
+  all: { file: 'browser.global.js', size: '308 KB' },
+  en: { file: 'browser-en.en.global.js', size: '133 KB' },
+  western: { file: 'browser-western.western.global.js', size: '156 KB' },
+  'east-asian': { file: 'browser-east-asian.east-asian.global.js', size: '151 KB' },
 };
 
 function getAdapterBundle(languages: string[]): {
@@ -667,9 +681,9 @@ function getAdapterBundle(languages: string[]): {
 
   // Full bundle or lite + external semantic
   return {
-    bundle: 'hyperscript-i18n.global.js',
-    size: '568 KB',
-    note: 'Full adapter bundle (all 24 languages). Consider the lite adapter (~1.8 KB gz) beside a @lokascript/semantic bundle for a smaller total.',
+    bundle: FULL_ADAPTER_BUNDLE.file,
+    size: FULL_ADAPTER_BUNDLE.size,
+    note: 'Full adapter bundle (all 24 languages).',
   };
 }
 
@@ -692,8 +706,8 @@ function getBundleConfig(
   // in another language runs on the same bundle through
   // @lokascript/hyperscript-adapter (the `adapter` field below). core's
   // parser-free hyperfixi-multilingual.js retired in Phase C3 (C-R3).
-  const bundle = 'hyperfixi-hs.js';
-  const bundleSize = '34.1 KB';
+  const bundle = ENGINE_BUNDLE.file;
+  const bundleSize = `${ENGINE_BUNDLE.size} gzipped`;
 
   // Generate vite config
   const viteConfig = {
@@ -708,13 +722,14 @@ function getBundleConfig(
   };
 
   // Regional semantic bundle suggestion
-  let regionalBundle = 'browser.global.js';
+  const label = (b: { file: string; size: string }) => `${b.file} (${b.size} gzipped)`;
+  let regionalBundle = label(SEMANTIC_BUNDLES.all);
   if (languages.length === 1 && languages[0] === 'en') {
-    regionalBundle = 'browser-en.global.js (20 KB)';
+    regionalBundle = label(SEMANTIC_BUNDLES.en);
   } else if (languages.every(l => ['en', 'es', 'pt', 'fr', 'de'].includes(l))) {
-    regionalBundle = 'browser-western.global.js (30 KB)';
+    regionalBundle = label(SEMANTIC_BUNDLES.western);
   } else if (languages.every(l => ['ja', 'zh', 'ko'].includes(l))) {
-    regionalBundle = 'browser-east-asian.global.js (24 KB)';
+    regionalBundle = label(SEMANTIC_BUNDLES['east-asian']);
   }
 
   // ---- Adapter recommendation for original _hyperscript ----
