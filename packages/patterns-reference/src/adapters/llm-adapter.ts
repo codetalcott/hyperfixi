@@ -44,20 +44,6 @@ const RECORDS_FROM = `
   FROM llm_examples le
   JOIN code_examples ce ON ce.id = le.code_example_id`;
 
-/**
- * Database row type for internal use
- */
-interface LLMExampleRow {
-  id: number;
-  code_example_id: string;
-  language: string;
-  prompt: string;
-  completion: string;
-  quality_score: number;
-  usage_count: number;
-  created_at: string;
-}
-
 // State for sync operations
 let syncDatabaseAvailable = true;
 

@@ -3,12 +3,10 @@
  */
 
 import {
-  getAllPatterns,
   getTranslationsByLanguage,
   getVerifiedTranslations,
   getHighConfidenceTranslations,
   getPatternStats,
-  type Pattern,
   type Translation,
 } from '@hyperfixi/patterns-reference';
 import type { LanguageCode, PatternTranslation, TestConfig, SamplingStrategy } from './types';

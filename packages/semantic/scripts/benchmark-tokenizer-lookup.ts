@@ -159,7 +159,7 @@ function benchmarkFullTokenization() {
     ru: { name: 'Russian', tokenizer: russianTokenizer, inputs: testInputs.ru },
   };
 
-  for (const [code, { name, tokenizer, inputs }] of Object.entries(tokenizers)) {
+  for (const [_code, { name, tokenizer, inputs }] of Object.entries(tokenizers)) {
     const result = benchmark(`${name} tokenize()`, () => {
       for (const input of inputs) {
         tokenizer.tokenize(input);

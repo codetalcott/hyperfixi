@@ -24,7 +24,6 @@ const {
   loadCoverageSteps,
   loadExportValidationArgs,
   loadTypecheckDirs,
-  loadWorkspaces,
 } = require('./check-ci-job-lists.cjs');
 
 /** Build a workspaces map matching the shape the check functions expect. */

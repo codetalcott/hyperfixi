@@ -411,7 +411,7 @@ describe('Edge Cases', () => {
 
   describe('whitespace handling', () => {
     it('should handle no spaces between tokens', () => {
-      const result = canParse('.activeを切り替え', 'ja');
+      canParse('.activeを切り替え', 'ja');
       // Should at least tokenize correctly
       const tokens = getTokens('.activeを切り替え', 'ja');
       expect(tokens.length).toBeGreaterThan(0);

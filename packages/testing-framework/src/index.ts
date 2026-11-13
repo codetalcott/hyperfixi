@@ -15,7 +15,6 @@ import type {
   TestSuite,
   TestCase,
   TestFunction,
-  TestContext,
   TestConfig,
   TestResult,
   TestEnvironment,
@@ -409,7 +408,7 @@ export function createMock<T extends (...args: any[]) => any>(
 /**
  * Create a spy function
  */
-export function createSpy<T extends (...args: any[]) => any>(
+export function createSpy<_T extends (...args: any[]) => any>(
   target: any,
   method: string
 ): import('./types').SpyFunction {

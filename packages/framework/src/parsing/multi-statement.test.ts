@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   createMultiStatementParser,
   accumulateBlocks,
@@ -230,7 +230,7 @@ describe('createMultiStatementParser', () => {
       });
       const parser = createMultiStatementParser(dsl, config);
 
-      const result = parser.parse('and something', 'en');
+      parser.parse('and something', 'en');
       // Without previous category, continuation doesn't resolve — parses as-is
       expect(parseCalls).toContain('and something');
     });

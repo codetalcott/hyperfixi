@@ -5,7 +5,6 @@ import { extractHyperscriptRoutes } from './hyperscript-extractor.js';
 import { extractHtmxRoutes } from './htmx-extractor.js';
 import { extractFormBodies } from './form-scanner.js';
 import { detectConflicts } from './conflict-detector.js';
-import { normalizeUrl } from '../conventions/url-patterns.js';
 
 /**
  * Default file patterns to scan.

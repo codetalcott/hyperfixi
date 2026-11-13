@@ -84,29 +84,6 @@ function toProfileName(code: string): string {
   return `${name}Profile`;
 }
 
-/**
- * Convert language code to tokenizer variable name.
- * e.g., 'en' → 'englishTokenizer', 'ms' → 'malayTokenizer'
- */
-function toTokenizerName(code: string): string {
-  const name = LANGUAGE_NAMES[code] || code;
-  return `${name}Tokenizer`;
-}
-
-/**
- * Get file name (without extension) for a language in a specific directory.
- * Some directories use full names (english.ts), others use codes (en.ts).
- */
-function getFileName(dir: string, code: string): string {
-  const fullName = LANGUAGE_NAMES[code];
-  const codePath = path.join(dir, `${code}.ts`);
-  const fullNamePath = fullName ? path.join(dir, `${fullName}.ts`) : null;
-
-  if (fs.existsSync(codePath)) return code;
-  if (fullNamePath && fs.existsSync(fullNamePath)) return fullName!;
-  return code; // fallback
-}
-
 // =============================================================================
 // Generator Functions
 // =============================================================================
@@ -158,27 +135,6 @@ ${exports}
 
   fs.writeFileSync(path.join(dir, '_all.ts'), content);
   console.log(`  Generated: src/languages/_all.ts (${files.length} languages)`);
-}
-
-/**
- * Generate tokenizer re-exports for src/tokenizers/index.ts
- * Note: This only generates the re-exports section, not the full file.
- */
-function generateTokenizerExports(): void {
-  const dir = path.join(SEMANTIC_SRC, 'tokenizers');
-  const files = getLanguageFiles(dir, ['index.ts', 'base.ts']);
-
-  // Generate re-export lines
-  const exports = files.map(f => {
-    // Find the language code for this file
-    const code = Object.keys(LANGUAGE_NAMES).find(c => LANGUAGE_NAMES[c] === f || c === f) || f;
-    const tokenizerName = toTokenizerName(code);
-    return `export { ${tokenizerName} } from './${f}';`;
-  });
-
-  console.log(`  Tokenizer exports to add manually (${files.length} tokenizers):`);
-  console.log('  // Re-exports (tree-shakeable - only included if imported)');
-  exports.forEach(e => console.log(`  ${e}`));
 }
 
 /**

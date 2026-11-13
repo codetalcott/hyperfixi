@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import type { BehaviorModule, BehaviorSchema } from './schemas/types';
 
 // Initialize the registry with schemas and loaders (same side-effect as index.ts)
@@ -15,10 +15,6 @@ import {
   isRegistered,
   hasLoader,
   getRegisteredBehaviors,
-  getAvailableBehaviors,
-  getBehaviorsByCategory,
-  getBehaviorsByTier,
-  getAllSchemas,
   getAllSchemasRecord,
   loadBehavior,
   preloadTier,

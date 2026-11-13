@@ -36,7 +36,7 @@ test.describe('Multi-Word Command Parser (Session 32)', () => {
 
   <!-- Test: fetch...as command (mock) -->
   <button id="test-fetch" _="on click
-    set :mockData to '{\"name\":\"test\"}'
+    set :mockData to '{"name":"test"}'
     then put :mockData into #result-fetch">
     Test Fetch
   </button>

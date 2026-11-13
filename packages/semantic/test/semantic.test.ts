@@ -8,7 +8,6 @@ import { describe, it, expect } from 'vitest';
 import {
   parse,
   canParse,
-  render,
   renderExplicit,
   translate,
   parseExplicit,

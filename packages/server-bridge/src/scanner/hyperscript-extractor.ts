@@ -108,7 +108,6 @@ interface RegionInfo {
 
 function extractHyperscriptRegions(content: string): RegionInfo[] {
   const regions: RegionInfo[] = [];
-  const lines = content.split('\n');
 
   // Search for _="..." attributes
   for (const pattern of ATTR_PATTERNS) {

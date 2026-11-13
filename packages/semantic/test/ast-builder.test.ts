@@ -9,7 +9,6 @@ import {
   ASTBuilder,
   buildAST,
   type EventHandlerNode,
-  type ConditionalNode,
   type CommandSequenceNode,
   type CommandNode,
 } from '../src/ast-builder/index';

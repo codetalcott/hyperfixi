@@ -291,7 +291,6 @@ describe('Token Definitions', () => {
 describe('Pattern Matching', () => {
   it('should match English commands with word boundaries', () => {
     const patterns = generatePatterns('en');
-    const code = 'on click toggle .active';
 
     // The command pattern should match 'toggle' but not partial matches
     expect(patterns.patterns.command.test('toggle')).toBe(true);

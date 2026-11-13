@@ -11,12 +11,7 @@ import type { Tool } from '@modelcontextprotocol/server';
 import { jsonResponse, errorResponse, getString, getBoolean } from './utils.js';
 import { loadGrailConfig, findGrailYaml } from './grail-yaml-loader.js';
 import { GrailRegistry } from './grail-registry.js';
-import {
-  parseConditionMap,
-  plan as bfsPlan,
-  createPlanStep,
-  applyEffects,
-} from '@lokascript/planner';
+import { parseConditionMap, plan as bfsPlan, applyEffects } from '@lokascript/planner';
 
 // ---------- Tool Definitions ----------
 
@@ -257,7 +252,7 @@ async function handlePlan(args: Record<string, unknown>): Promise<ReturnType<typ
 
   // Use BFS planner from siren experiment (handles template effects, cost ranking)
   const conditionMap = registry.conditionMap();
-  const { defs, conditionNames, mutexPrefixes } = parseConditionMap(conditionMap);
+  const { defs, mutexPrefixes } = parseConditionMap(conditionMap);
 
   const goalDef = defs.find(d => d.name === goal);
   if (!goalDef) {

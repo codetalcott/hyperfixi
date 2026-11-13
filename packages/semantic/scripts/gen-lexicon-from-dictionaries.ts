@@ -27,7 +27,6 @@ import { execFileSync } from 'child_process';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROFILES_DIR = path.join(__dirname, '../src/generators/profiles');
-const REPO_ROOT = path.join(__dirname, '../../..');
 
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');

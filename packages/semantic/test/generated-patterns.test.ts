@@ -19,7 +19,6 @@ import {
   toggleSchema,
   addSchema,
   removeSchema,
-  putSchema,
   showSchema,
   hideSchema,
   englishProfile,
@@ -28,11 +27,8 @@ import {
   spanishProfile,
   koreanProfile,
   turkishProfile,
-  chineseProfile,
   KNOWN_PROFILES as languageProfiles,
-  getDefinedSchemas,
 } from '../src/generators';
-import type { LanguagePattern } from '../src/types';
 
 // =============================================================================
 // Generator Infrastructure Tests
@@ -89,7 +85,7 @@ describe('Pattern Generator Infrastructure', () => {
 
     it('should identify missing keywords', () => {
       // All profiles should have core keywords
-      for (const [code, profile] of Object.entries(languageProfiles)) {
+      for (const [_code, profile] of Object.entries(languageProfiles)) {
         const result = validateLanguageKeywords(profile);
         // Core commands should be available
         expect(result.available).toContain('toggle');

@@ -282,7 +282,7 @@ describe('generateExamples', () => {
     const patientValue = examples[0].json.roles['patient'];
     expect(patientValue).toBeDefined();
     expect(patientValue.type).toBe('selector');
-    expect(String(patientValue.value)).toMatch(/^[#.@*\[]/);
+    expect(String(patientValue.value)).toMatch(/^[#.@*[]/);
   });
 
   it('generates expression values for expression-typed roles', () => {

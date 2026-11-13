@@ -25,7 +25,7 @@ interface Conflict {
   mappings: Array<{ english: string; category: string }>;
 }
 
-function analyzeConflicts(dictionary: Dictionary, localeName: string): Conflict[] {
+function analyzeConflicts(dictionary: Dictionary, _localeName: string): Conflict[] {
   const conflicts: Conflict[] = [];
   const wordMap = new Map<string, Array<{ english: string; category: string }>>();
 

@@ -159,7 +159,7 @@ export async function verifyTranslation(
 ): Promise<VerificationResult> {
   let parseSuccess = false;
   let errorMessage: string | null = null;
-  let confidence = translation.confidence;
+  const confidence = translation.confidence;
 
   const db = getDatabase(options);
   const example = db
