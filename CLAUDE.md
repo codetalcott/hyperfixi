@@ -55,7 +55,7 @@ packages/
 │
 ├── framework/       # Shared DSL framework (createMultilingualDSL, DomainRegistry, CrossDomainDispatcher);
 │                    #   languages/<code>: each language's grammar, as data
-├── compilation-service/  # Validate, translate, diff, score hyperscript (library + HTTP; MCP's backend)
+├── compilation-service/  # Validate, translate, diff, score hyperscript (a library; MCP's backend)
 ├── mcp-server/      # MCP server exposing all tools (hyperscript + domain DSLs via @lokascript/domains)
 ├── server-bridge/   # Server-side route extraction from HTML
 │
@@ -400,7 +400,7 @@ As of 2026-01-23, all CI testing has been consolidated into a single `.github/wo
 | 7   | `unit-tests-packages`     | ✓   | —                 | —       | Vitest on Node 24: every other package; split off #6 by #833         |
 | 8   | `coverage`                | —   | —                 | ✓       | Codecov upload; nightly since 2026-07-29 (was push+main)             |
 | 9   | `browser-tests`           | ✓   | —                 | —       | Playwright `quick` + `comprehensive`; PR-only                        |
-| 10  | `multilingual-validation` | ✓   | —                 | —       | 21-language full sweep + regression gate; PR-only                    |
+| 10  | `multilingual-validation` | ✓   | —                 | —       | 24-language full sweep + regression gate; PR-only                    |
 | 11  | `bundle-size`             | ✓   | —                 | —       | Size report; PR-only (slim post-merge)                               |
 | 14  | `domain-gate`             | ✓   | —                 | —       | round trip + old-input read-back; gated on intent/framework          |
 | 15  | `ci-gate`                 | ✓   | ✓                 | ✓       | `always()` aggregate; fails if any job failed/cancelled (skip is OK) |
@@ -1186,8 +1186,8 @@ tracked gallery page runs on it since 2026-10-03); core ships the same file as `
 | `hyperfixi-hs.js`                   | ~34.9 KB       | **The engine** (`@hyperfixi/engine`): hyperscript only, every module, `live`/`when`/`bind` built in; pair with fixi (~1.3 KB) or htmx 4 (~13 KB, + `@lokascript/htmx-adapter` for localized names) for hypermedia attributes               |
 | via `@hyperfixi/vite-plugin`        | 18–34 KB       | **Default for Vite projects** — scans usage and registers only the engine modules it needs (one tier, upstream's grammar; Phase C1 done 2026-10-03)                                                                                        |
 | `hyperfixi.js`                      | ~34.9 KB       | The same file as `hyperfixi-hs.js`, under `@hyperfixi/core`'s name (`@hyperfixi/core/browser`) since C-R4b; core's own full bundle (~352 KB) retired                                                                                       |
-| + `@lokascript/hyperscript-adapter` | +1.7 / ~132 KB | Hyperscript in any of 24 languages on `hyperfixi-hs.js`: the lite adapter beside a semantic bundle, or a per-language adapter bundle; it translates each script as the engine reads it (replaced core's `hyperfixi-multilingual.js`, C-R3) |
-| semantic bundles                    | ~90–260 KB     | `LokaScriptSemantic*` globals; regional subsets (en/es/western/east-asian/priority/all-24) — each also registers English, the language the adapters render to                                                                              |
+| + `@lokascript/hyperscript-adapter` | +2.3 / ~135 KB | Hyperscript in any of 24 languages on `hyperfixi-hs.js`: the lite adapter beside a semantic bundle, or a per-language adapter bundle; it translates each script as the engine reads it (replaced core's `hyperfixi-multilingual.js`, C-R3) |
+| semantic bundles                    | ~130–300 KB    | `LokaScriptSemantic*` globals; regional subsets (en/es/western/east-asian/priority/all-24) — each also registers English, the language the adapters render to                                                                              |
 
 Rule of thumb: the plugin decides for Vite projects; a script-tag user starts
 with `hyperfixi-hs.js` and adds fixi or htmx 4 when the page needs hypermedia attributes
