@@ -11,7 +11,16 @@
  * `_=` attributes. The original English remains the canonical source.
  */
 
-import { mkdirSync, readFileSync, writeFileSync, existsSync, statSync, readdirSync } from 'node:fs';
+import {
+  mkdirSync,
+  readFileSync,
+  realpathSync,
+  writeFileSync,
+  existsSync,
+  statSync,
+  readdirSync,
+} from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { dirname, join, basename, extname, resolve } from 'node:path';
 import { translateHtml, checkHtmlInput } from './html.js';
 import { loadValidator, formatParseCheckReport } from './validate.js';
@@ -237,7 +246,23 @@ export async function run(argv: string[]): Promise<number> {
   return 0;
 }
 
-const isMain = import.meta.url === `file://${process.argv[1]}`;
-if (isMain) {
+/**
+ * Whether this file is the program being run. An npm bin is a symlink
+ * (`node_modules/.bin/hyperscript-i18n`): `process.argv[1]` is the link and
+ * `import.meta.url` the file it points at, so the two are compared as real
+ * paths. Compared as written, `npx hyperscript-i18n …` matched nothing, ran
+ * nothing and exited 0.
+ */
+function isMainModule(): boolean {
+  const entry = process.argv[1];
+  if (!entry) return false;
+  try {
+    return realpathSync(entry) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
+}
+
+if (isMainModule()) {
   run(process.argv.slice(2)).then(code => process.exit(code));
 }
