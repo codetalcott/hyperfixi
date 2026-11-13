@@ -68,9 +68,6 @@ import { feedbackTools, handleFeedbackTool } from './tools/feedback-tools.js';
 // LSE pipeline tools (LLM round-trip: hyperscript ↔ LSE)
 import { lsePipelineTools, handleLsePipelineTool } from './tools/lse-pipeline.js';
 
-// GRAIL tools (condition/affordance workflow)
-import { grailTools, handleGrailTool } from './tools/grail-tools.js';
-
 // LSE correction tool (stateless LLM-driven generation + self-correction)
 import { lseCorrectionTools, handleLseCorrectionTool } from './tools/lse-correction.js';
 
@@ -130,7 +127,7 @@ To PRESENT code to a user, translate_code renders it in any of 24 languages via 
 
 Prefer natural language input (code + language) for simple cases; use explicit bracket syntax ([toggle patient:.active]) or semantic JSON when you need unambiguous role control.
 
-These are the core tools. More (each domain DSL's own tools, LSE/IR, GRAIL, debugging, editor features, analysis, language profiles, project scanning) are listed when the server is started with LOKASCRIPT_MCP_TOOLSETS naming them.`;
+These are the core tools. More (each domain DSL's own tools, LSE/IR, debugging, editor features, analysis, language profiles, project scanning) are listed when the server is started with LOKASCRIPT_MCP_TOOLSETS naming them.`;
 
 // All list/read surfaces are static per process (tool/prompt/resource lists are
 // compile-time literals; resources are static docs). One hour rather than
@@ -192,7 +189,6 @@ function buildServer(): Server {
         ...trainingDataTools,
         ...feedbackTools,
         ...lsePipelineTools,
-        ...grailTools,
         ...lseCorrectionTools,
       ],
       TOOLSETS.enabled,
@@ -214,7 +210,7 @@ function buildServer(): Server {
       return staleToolError(stale);
     }
 
-    // The toolsets that act on the machine (shell commands, reading files) answer only when
+    // The toolsets that act on the machine (reading files) answer only when
     // enabled; the others answer a call by name whether or not they are listed.
     const refused = refusedCall(name, TOOLSETS.enabled, isDomainTool);
     if (refused) {
@@ -376,11 +372,6 @@ function buildServer(): Server {
       name === 'translate_lse'
     ) {
       return handleLsePipelineTool(name, args as Record<string, unknown>);
-    }
-
-    // GRAIL tools (condition/affordance workflow)
-    if (name.startsWith('grail_')) {
-      return handleGrailTool(name, args as Record<string, unknown>);
     }
 
     // LSE correction tool (stateless generation + self-correction loop)

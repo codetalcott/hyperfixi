@@ -36,6 +36,9 @@
     "**/*.mjs",
     "!scripts/**/*.js",
     "!scripts/**/*.cjs",
-    "!scripts/**/*.mjs"
+    "!scripts/**/*.mjs",
+    "!packages/*/scripts/**/*.js",
+    "!packages/*/scripts/**/*.cjs",
+    "!packages/*/scripts/**/*.mjs"
   ]
 }

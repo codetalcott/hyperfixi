@@ -7,16 +7,17 @@
  * reader uses to judge the server's surface: it derives the counts from the
  * actual tool arrays and fails if the README disagrees.
  *
- * Three numbers, because they differ: 86 tools are DEFINED; a default
+ * Three numbers, because they differ: 81 tools are DEFINED; a default
  * connection lists the 14 core tools (see ../toolsets.ts); with every toolset
- * on it lists 81, since the 5 MCP-sampling tools also need
+ * on it lists 76, since the 5 MCP-sampling tools also need
  * LOKASCRIPT_MCP_LLM_TOOLS=1. (Every tool was listed by default until the
  * toolsets: 84. 108 / 103 until 4.0, when compile_hyperscript and execute_lse
  * retired with the AOT compiler; 106 / 101 until domains 4.0.0 retired jsx and
  * its four tools; 96 / 91 until 7.0 removed validate_hyperscript,
  * translate_hyperscript and parse_multilingual; 93 / 88 until domains 7.1.0
  * took learn and its four tools; 89 / 84 until LSE 3.0 removed envelopes and
- * to_envelope / from_envelope.)
+ * to_envelope / from_envelope; 86 / 81 until the grail toolset and its five
+ * tools were removed.)
  */
 
 import { describe, it, expect } from 'vitest';
@@ -40,7 +41,6 @@ import { inventoryTools } from '../tools/inventory.js';
 import { trainingDataTools } from '../tools/training-data.js';
 import { feedbackTools } from '../tools/feedback-tools.js';
 import { lsePipelineTools } from '../tools/lse-pipeline.js';
-import { grailTools } from '../tools/grail-tools.js';
 import { lseCorrectionTools } from '../tools/lse-correction.js';
 import { createDomainRegistry } from '../tools/domain-registry-setup.js';
 import {
@@ -70,7 +70,6 @@ const STATIC_TOOL_ARRAYS = [
   trainingDataTools,
   feedbackTools,
   lsePipelineTools,
-  grailTools,
   lseCorrectionTools,
 ];
 
@@ -95,10 +94,10 @@ describe('Tool count guard', () => {
   ).length;
   const allListedCount = listedTools(listable, parseToolsets('all').enabled, isDomainTool).length;
 
-  it('defines 86 tools, lists 14 by default and 81 with every toolset', () => {
-    expect(definedCount).toBe(86);
+  it('defines 81 tools, lists 14 by default and 76 with every toolset', () => {
+    expect(definedCount).toBe(81);
     expect(defaultListedCount).toBe(14);
-    expect(allListedCount).toBe(81);
+    expect(allListedCount).toBe(76);
   });
 
   it('every listable tool belongs to a toolset', () => {
@@ -122,6 +121,12 @@ describe('Tool count guard', () => {
     for (const removed of ['validate_hyperscript', 'translate_hyperscript', 'parse_multilingual']) {
       expect(names).not.toContain(removed);
     }
+  });
+
+  it('the grail tools stay removed', () => {
+    const names = listable.map(t => t.name);
+    expect(names.filter(name => name.startsWith('grail_'))).toEqual([]);
+    expect(TOOLSET_NAMES as readonly string[]).not.toContain('grail');
   });
 
   it('every tool name is unique', () => {

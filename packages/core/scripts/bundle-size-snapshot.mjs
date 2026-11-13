@@ -16,7 +16,7 @@
  * Exit codes: 0 = within tolerance, 1 = regression, 2 = missing file / config error.
  */
 
-import { readFileSync, writeFileSync, existsSync, statSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { gzipSync } from 'zlib';
 import { execSync } from 'child_process';
 import { resolve, dirname } from 'path';
@@ -37,7 +37,8 @@ if (!existsSync(baselinePath)) {
 }
 
 const baseline = JSON.parse(readFileSync(baselinePath, 'utf8'));
-const tolerance = (baseline.tolerance_percent ?? 5) / 100;
+// A baseline without the field still gates: `x > undefined` is false for every x.
+const tolerancePercent = baseline.tolerance_percent ?? 5;
 
 function buildBundle(configPath) {
   // hyperfixi.js is copied from the engine's build (C-R4b): its row names the
@@ -63,7 +64,7 @@ function pctDelta(current, baseline) {
 const results = {};
 let regressions = 0;
 
-console.log(`Bundle-size snapshot — mode: ${mode}, tolerance: ±${baseline.tolerance_percent}%`);
+console.log(`Bundle-size snapshot — mode: ${mode}, tolerance: ±${tolerancePercent}%`);
 console.log('');
 
 for (const [name, entry] of Object.entries(baseline.bundles)) {
@@ -92,8 +93,8 @@ for (const [name, entry] of Object.entries(baseline.bundles)) {
     const rawDelta = pctDelta(m.raw_bytes, entry.raw_bytes);
     const gzDelta = pctDelta(m.gzip_bytes, entry.gzip_bytes);
     const flag =
-      Math.abs(rawDelta) > baseline.tolerance_percent ||
-      Math.abs(gzDelta) > baseline.tolerance_percent;
+      Math.abs(rawDelta) > tolerancePercent ||
+      Math.abs(gzDelta) > tolerancePercent;
     if (flag) regressions++;
 
     const marker = flag ? '✗ REGRESSION' : '✓';
@@ -123,7 +124,7 @@ if (mode === 'update') {
 
 console.log('');
 if (regressions > 0) {
-  console.log(`${regressions} bundle(s) exceed ±${baseline.tolerance_percent}% tolerance — investigate before continuing.`);
+  console.log(`${regressions} bundle(s) exceed ±${tolerancePercent}% tolerance — investigate before continuing.`);
   process.exit(1);
 }
 

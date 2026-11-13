@@ -7,14 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Deprecated
+
+- **102 root exports of `@lokascript/semantic` with no known consumer are marked `@deprecated`**
+  and will leave the root entry in 8.0. Nothing is removed and nothing behaves differently: the
+  tag is on the export in the root entry, so an editor strikes the name through where it is
+  imported from `@lokascript/semantic`. Ten of them stay exported from
+  `@lokascript/semantic/core`, and eight are `@lokascript/framework`'s own exports passed along;
+  each tag says which. The list is in
+  [`docs-internal/SEMANTIC_ROOT_EXPORTS.md`](docs-internal/SEMANTIC_ROOT_EXPORTS.md): who
+  imports every root export, and for each unconsumed one what it was for, whether it does that
+  (each was run from the built package), and what is proposed for 8.0. Among the marked: the
+  static-analysis functions (`analyze` and its dev mode, which `parse` never calls), the
+  `SemanticCache` family (connected to nothing since 3.0.0), and the parser, renderer and matcher
+  classes behind `parse` and `render` (`SemanticRendererImpl` skips the name-collision and
+  upstream-spelling steps `render` applies). The inventory was measured in this repository and
+  its sibling projects, which cannot show an npm user: if you import one of the marked names,
+  open an issue before 8.0.
+
 ### Fixed
 
 - **`@hyperfixi/mcp-server` ran shell commands and read files for a toolset that was off.**
   `LOKASCRIPT_MCP_TOOLSETS` decided what `tools/list` showed and nothing else, so `grail_run`
   ran the commands of a `grail.yaml` in the server's directory, and `scan_inventory` read any
-  directory named to it, on a server started with neither toolset. The tools of `grail` and
-  `project` are now refused unless their toolset is enabled; every other hidden tool still
-  answers a call by name.
+  directory named to it, on a server started with neither toolset. The `grail` tools are
+  removed (see Removed), and the tools of `project` are now refused unless the toolset is
+  enabled; every other hidden tool still answers a call by name.
 - **`get_bundle_config` quoted sizes the bundles outgrew, and file names that do not exist**
   (`@hyperfixi/mcp-server`). A per-language adapter bundle was "86 KB" and is 137 KB gzipped;
   semantic's English bundle was `browser-en.global.js (20 KB)` and is `browser-en.en.global.js`,
@@ -69,6 +87,18 @@ patient:.active]`, not `… destination:me`), its reader reads a bare `{…}` as
   this release.
 
 ### Changed
+
+- **Published tarballs no longer carry `src`.** Thirteen packages shipped their TypeScript
+  sources beside `dist`, whose sourcemaps already embed the same text (`sourcesContent`):
+  `@lokascript/semantic` (373 files, 3.8 MB of a 50.2 MB unpacked tarball), `framework`, `i18n`,
+  `intent`, `hyperscript-adapter`, `htmx-adapter`, `patterns-reference`, and `@hyperfixi/`
+  `behaviors`, `intent-element`, `planner`, `server-bridge`, `speech`, `types-browser`. The
+  declaration maps that pointed into `src` go with it; the JavaScript sourcemaps stay, so a
+  debugger still steps through the sources. `@lokascript/patterns-reference` had no sourcemaps
+  and builds them now. No entry point resolved into `src`; an import of a
+  `…/src/…` path from an installed package no longer resolves. `scripts/check-published-files.cjs`
+  (CI's lint job, the pre-commit hook) fails on a published package that lists `src`.
+  (Measured with `npm pack --dry-run` on a local build, 2026-11-13.)
 
 - **`@lokascript/framework/testing` uses your vitest.** It `import`s `expect` from `vitest`, which
   was a devDependency only, so the build inlined a second copy: the entry was 674 KB, and its
@@ -180,6 +210,13 @@ Value>`, `AnyNode`) and each kind's fields (`CommandFields`, `EventHandlerFields
 
 ### Removed
 
+- **The `grail` toolset** (`@hyperfixi/mcp-server`): `grail_check`, `grail_plan`, `grail_run`,
+  `grail_info` and `grail_list`, with `GRAIL.md`. **Breaking for a server started with
+  `LOKASCRIPT_MCP_TOOLSETS=grail`:** the name is now reported as unknown at startup, and a call
+  to one of the five tools answers `Unknown tool`. `grail_run` ran the shell commands a
+  `grail.yaml` in the server's directory named; `project` is the one toolset left whose tools
+  are refused unless it is enabled. The server no longer depends on `@lokascript/planner` or
+  `yaml`. 81 tools are defined, 76 listed with every toolset.
 - **`lse_pattern_stats`** (`@hyperfixi/mcp-server`). Nothing ever recorded an event for it to
   count: every call answered "No pattern events recorded yet". 86 tools are defined, 81 listed
   with every toolset.
