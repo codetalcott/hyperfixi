@@ -114,29 +114,6 @@ updates:
     labels:
       - 'dependencies'
 
-  # Go modules (the go-client currently carries the x/crypto critical alerts)
-  - package-ecosystem: 'gomod'
-    directories:
-      - '/clients/go-client'
-    schedule:
-      interval: 'weekly'
-      day: 'monday'
-    open-pull-requests-limit: 5
-    groups:
-      go-deps:
-        patterns:
-          - '*'
-        update-types:
-          - 'minor'
-          - 'patch'
-      go-majors:
-        patterns:
-          - '*'
-        update-types:
-          - 'major'
-    labels:
-      - 'dependencies'
-
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
