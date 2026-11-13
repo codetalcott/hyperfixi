@@ -31,7 +31,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parse, canParse, tokenize } from '../src';
+import { parse, tokenize } from '../src';
 import { TurkishMorphologicalNormalizer } from '../src/tokenizers/morphology/turkish-normalizer';
 
 /**
@@ -163,15 +163,9 @@ describe('Turkish Tokenizer - Native Idioms', () => {
 
 describe('Turkish Event Handler Patterns', () => {
   describe('Standard pattern: {event} olduğunda', () => {
-    it('should parse "tıklama olduğunda değiştir .active"', () => {
-      const result = canParse('tıklama olduğunda değiştir .active', 'tr');
-      if (result) {
-        const node = parse('tıklama olduğunda değiştir .active', 'tr');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('tıklama olduğunda değiştir .active', 'tr');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+    it.fails('should parse "tıklama olduğunda değiştir .active"', () => {
+      const node = parse('tıklama olduğunda değiştir .active', 'tr');
+      expect(node.action).toBe('on');
     });
   });
 
@@ -205,73 +199,37 @@ describe('Turkish Event Handler Patterns', () => {
 describe('Turkish Command Patterns', () => {
   describe('Toggle commands', () => {
     it('should parse "değiştir .active"', () => {
-      const result = canParse('değiştir .active', 'tr');
-      if (result) {
-        const node = parse('değiştir .active', 'tr');
-        expect(node.action).toBe('toggle');
-      } else {
-        const tokens = getTokens('değiştir .active', 'tr');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('değiştir .active', 'tr');
+      expect(node.action).toBe('toggle');
     });
 
-    it('should parse without diacritics "degistir .active"', () => {
-      const result = canParse('degistir .active', 'tr');
-      if (result) {
-        const node = parse('degistir .active', 'tr');
-        expect(node.action).toBe('toggle');
-      } else {
-        const tokens = getTokens('degistir .active', 'tr');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+    it.fails('should parse without diacritics "degistir .active"', () => {
+      const node = parse('degistir .active', 'tr');
+      expect(node.action).toBe('toggle');
     });
   });
 
   describe('Show/Hide commands', () => {
     it('should parse "göster #modal"', () => {
-      const result = canParse('göster #modal', 'tr');
-      if (result) {
-        const node = parse('göster #modal', 'tr');
-        expect(node.action).toBe('show');
-      } else {
-        const tokens = getTokens('göster #modal', 'tr');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('göster #modal', 'tr');
+      expect(node.action).toBe('show');
     });
 
     it('should parse "gizle #dropdown"', () => {
-      const result = canParse('gizle #dropdown', 'tr');
-      if (result) {
-        const node = parse('gizle #dropdown', 'tr');
-        expect(node.action).toBe('hide');
-      } else {
-        const tokens = getTokens('gizle #dropdown', 'tr');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('gizle #dropdown', 'tr');
+      expect(node.action).toBe('hide');
     });
   });
 
   describe('Add/Remove commands', () => {
     it('should parse "ekle .active"', () => {
-      const result = canParse('ekle .active', 'tr');
-      if (result) {
-        const node = parse('ekle .active', 'tr');
-        expect(node.action).toBe('add');
-      } else {
-        const tokens = getTokens('ekle .active', 'tr');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('ekle .active', 'tr');
+      expect(node.action).toBe('add');
     });
 
     it('should parse "kaldır .active"', () => {
-      const result = canParse('kaldır .active', 'tr');
-      if (result) {
-        const node = parse('kaldır .active', 'tr');
-        expect(node.action).toBe('remove');
-      } else {
-        const tokens = getTokens('kaldır .active', 'tr');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('kaldır .active', 'tr');
+      expect(node.action).toBe('remove');
     });
   });
 });

@@ -29,7 +29,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parse, canParse, tokenize } from '../src';
+import { parse, tokenize } from '../src';
 import { ArabicMorphologicalNormalizer } from '../src/tokenizers/morphology/arabic-normalizer';
 
 /**
@@ -226,98 +226,49 @@ describe('Arabic Tokenizer - Native Idioms', () => {
 describe('Arabic Event Handler Patterns', () => {
   describe('Standard pattern: عند {event}', () => {
     it('should parse "عند النقر بدّل .active"', () => {
-      const result = canParse('عند النقر بدّل .active', 'ar');
-      if (result) {
-        const node = parse('عند النقر بدّل .active', 'ar');
-        expect(node.action).toBe('on');
-      } else {
-        // Tokenization should still work
-        const tokens = getTokens('عند النقر بدّل .active', 'ar');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('عند النقر بدّل .active', 'ar');
+      expect(node.action).toBe('on');
     });
 
     it('should parse "على النقر بدّل .active"', () => {
-      const result = canParse('على النقر بدّل .active', 'ar');
-      if (result) {
-        const node = parse('على النقر بدّل .active', 'ar');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('على النقر بدّل .active', 'ar');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('على النقر بدّل .active', 'ar');
+      expect(node.action).toBe('on');
     });
   });
 
   describe('Native temporal: عندما {event} (when)', () => {
     it('should parse "عندما نقر بدّل .active"', () => {
-      const result = canParse('عندما نقر بدّل .active', 'ar');
-      if (result) {
-        const node = parse('عندما نقر بدّل .active', 'ar');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('عندما نقر بدّل .active', 'ar');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('عندما نقر بدّل .active', 'ar');
+      expect(node.action).toBe('on');
     });
 
     it('should parse "عندما النقر زِد #count"', () => {
-      const result = canParse('عندما النقر زِد #count', 'ar');
-      if (result) {
-        const node = parse('عندما النقر زِد #count', 'ar');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('عندما النقر زِد #count', 'ar');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('عندما النقر زِد #count', 'ar');
+      expect(node.action).toBe('on');
     });
   });
 
   describe('Native temporal: حين {event} (at the time of)', () => {
     it('should parse "حين النقر بدّل .active"', () => {
-      const result = canParse('حين النقر بدّل .active', 'ar');
-      if (result) {
-        const node = parse('حين النقر بدّل .active', 'ar');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('حين النقر بدّل .active', 'ar');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('حين النقر بدّل .active', 'ar');
+      expect(node.action).toBe('on');
     });
 
     it('should parse "حينما النقر أظهر #modal"', () => {
-      const result = canParse('حينما النقر أظهر #modal', 'ar');
-      if (result) {
-        const node = parse('حينما النقر أظهر #modal', 'ar');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('حينما النقر أظهر #modal', 'ar');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('حينما النقر أظهر #modal', 'ar');
+      expect(node.action).toBe('on');
     });
   });
 
   describe('Native temporal: لمّا {event} (when - past emphasis)', () => {
     it('should parse "لمّا نقر بدّل .active"', () => {
-      const result = canParse('لمّا نقر بدّل .active', 'ar');
-      if (result) {
-        const node = parse('لمّا نقر بدّل .active', 'ar');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('لمّا نقر بدّل .active', 'ar');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('لمّا نقر بدّل .active', 'ar');
+      expect(node.action).toBe('on');
     });
 
     it('should parse "لما نقر أخفِ #dropdown" (without shadda)', () => {
-      const result = canParse('لما نقر أخفِ #dropdown', 'ar');
-      if (result) {
-        const node = parse('لما نقر أخفِ #dropdown', 'ar');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('لما نقر أخفِ #dropdown', 'ar');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('لما نقر أخفِ #dropdown', 'ar');
+      expect(node.action).toBe('on');
     });
   });
 
@@ -326,49 +277,25 @@ describe('Arabic Event Handler Patterns', () => {
     // a handler, `إذا x … نهاية` (if x … end) became `on x`. As in English,
     // where the `if clicked` idiom went for the same reason.
     it('reads "إذا نقر بدّل .active" as a conditional', () => {
-      const result = canParse('إذا نقر بدّل .active', 'ar');
-      if (result) {
-        const node = parse('إذا نقر بدّل .active', 'ar');
-        expect(node.action).toBe('if');
-      } else {
-        const tokens = getTokens('إذا نقر بدّل .active', 'ar');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('إذا نقر بدّل .active', 'ar');
+      expect(node.action).toBe('if');
     });
 
-    it('should parse "اذا النقر زِد #count" (without hamza)', () => {
-      const result = canParse('اذا النقر زِد #count', 'ar');
-      if (result) {
-        const node = parse('اذا النقر زِد #count', 'ar');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('اذا النقر زِد #count', 'ar');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+    it.fails('should parse "اذا النقر زِد #count" (without hamza)', () => {
+      const node = parse('اذا النقر زِد #count', 'ar');
+      expect(node.action).toBe('on');
     });
   });
 
   describe('With source filter: من {source}', () => {
     it('should parse "عندما نقر من #button بدّل .active"', () => {
-      const result = canParse('عندما نقر من #button بدّل .active', 'ar');
-      if (result) {
-        const node = parse('عندما نقر من #button بدّل .active', 'ar');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('عندما نقر من #button بدّل .active', 'ar');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('عندما نقر من #button بدّل .active', 'ar');
+      expect(node.action).toBe('on');
     });
 
     it('should parse "عند النقر من #submit زِد #count"', () => {
-      const result = canParse('عند النقر من #submit زِد #count', 'ar');
-      if (result) {
-        const node = parse('عند النقر من #submit زِد #count', 'ar');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('عند النقر من #submit زِد #count', 'ar');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('عند النقر من #submit زِد #count', 'ar');
+      expect(node.action).toBe('on');
     });
   });
 });
@@ -397,72 +324,36 @@ describe('Arabic Semantic Equivalence', () => {
 
   describe('Toggle commands parse correctly', () => {
     it('should parse "بدّل .active"', () => {
-      const result = canParse('بدّل .active', 'ar');
-      if (result) {
-        const node = parse('بدّل .active', 'ar');
-        expect(node.action).toBe('toggle');
-      } else {
-        const tokens = getTokens('بدّل .active', 'ar');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('بدّل .active', 'ar');
+      expect(node.action).toBe('toggle');
     });
 
     it('should parse "بدل .active" (without shadda)', () => {
-      const result = canParse('بدل .active', 'ar');
-      if (result) {
-        const node = parse('بدل .active', 'ar');
-        expect(node.action).toBe('toggle');
-      } else {
-        const tokens = getTokens('بدل .active', 'ar');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('بدل .active', 'ar');
+      expect(node.action).toBe('toggle');
     });
 
     it('should parse "غيّر .active"', () => {
-      const result = canParse('غيّر .active', 'ar');
-      if (result) {
-        const node = parse('غيّر .active', 'ar');
-        expect(node.action).toBe('toggle');
-      } else {
-        const tokens = getTokens('غيّر .active', 'ar');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('غيّر .active', 'ar');
+      expect(node.action).toBe('toggle');
     });
   });
 
   describe('Commands with Arabic keywords', () => {
     it('should parse "أظهر #modal"', () => {
-      const result = canParse('أظهر #modal', 'ar');
-      if (result) {
-        const node = parse('أظهر #modal', 'ar');
-        expect(node.action).toBe('show');
-      } else {
-        const tokens = getTokens('أظهر #modal', 'ar');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('أظهر #modal', 'ar');
+      expect(node.action).toBe('show');
     });
 
     it('should parse "أخفِ #dropdown"', () => {
-      const result = canParse('أخفِ #dropdown', 'ar');
-      if (result) {
-        const node = parse('أخفِ #dropdown', 'ar');
-        expect(node.action).toBe('hide');
-      } else {
-        const tokens = getTokens('أخفِ #dropdown', 'ar');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('أخفِ #dropdown', 'ar');
+      expect(node.action).toBe('hide');
     });
 
     it('should parse "زِد #counter"', () => {
-      const result = canParse('زِد #counter', 'ar');
-      if (result) {
-        const node = parse('زِد #counter', 'ar');
-        // زِد is increment's primary keyword in Arabic
-        expect(node.action).toBe('increment');
-      } else {
-        const tokens = getTokens('زِد #counter', 'ar');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('زِد #counter', 'ar');
+      // زِد is increment's primary keyword in Arabic
+      expect(node.action).toBe('increment');
     });
   });
 });

@@ -17,7 +17,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { canParse, parse, tokenize } from '../src';
+import { parse, tokenize } from '../src';
 
 /**
  * Helper to get tokens array from TokenStream
@@ -187,14 +187,8 @@ describe('Tagalog Event Handler Patterns', () => {
 describe('Tagalog Command Patterns', () => {
   describe('Toggle commands', () => {
     it('should parse "palitan .active"', () => {
-      const result = canParse('palitan .active', 'tl');
-      if (result) {
-        const node = parse('palitan .active', 'tl');
-        expect(node.action).toBe('toggle');
-      } else {
-        const tokens = getTokens('palitan .active', 'tl');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('palitan .active', 'tl');
+      expect(node.action).toBe('toggle');
     });
 
     it('should parse "itoggle .visible"', () => {
@@ -205,14 +199,8 @@ describe('Tagalog Command Patterns', () => {
 
   describe('Add commands', () => {
     it('should parse "idagdag .highlight"', () => {
-      const result = canParse('idagdag .highlight', 'tl');
-      if (result) {
-        const node = parse('idagdag .highlight', 'tl');
-        expect(node.action).toBe('add');
-      } else {
-        const tokens = getTokens('idagdag .highlight', 'tl');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('idagdag .highlight', 'tl');
+      expect(node.action).toBe('add');
     });
 
     it('should parse "magdagdag .highlight"', () => {
@@ -223,14 +211,8 @@ describe('Tagalog Command Patterns', () => {
 
   describe('Remove commands', () => {
     it('should parse "alisin .highlight"', () => {
-      const result = canParse('alisin .highlight', 'tl');
-      if (result) {
-        const node = parse('alisin .highlight', 'tl');
-        expect(node.action).toBe('remove');
-      } else {
-        const tokens = getTokens('alisin .highlight', 'tl');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('alisin .highlight', 'tl');
+      expect(node.action).toBe('remove');
     });
 
     it('should parse "tanggalin .highlight"', () => {
@@ -241,84 +223,42 @@ describe('Tagalog Command Patterns', () => {
 
   describe('Show/Hide commands', () => {
     it('should parse "ipakita #modal"', () => {
-      const result = canParse('ipakita #modal', 'tl');
-      if (result) {
-        const node = parse('ipakita #modal', 'tl');
-        expect(node.action).toBe('show');
-      } else {
-        const tokens = getTokens('ipakita #modal', 'tl');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('ipakita #modal', 'tl');
+      expect(node.action).toBe('show');
     });
 
     it('should parse "itago #modal"', () => {
-      const result = canParse('itago #modal', 'tl');
-      if (result) {
-        const node = parse('itago #modal', 'tl');
-        expect(node.action).toBe('hide');
-      } else {
-        const tokens = getTokens('itago #modal', 'tl');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('itago #modal', 'tl');
+      expect(node.action).toBe('hide');
     });
   });
 
   describe('Put/Set/Get commands', () => {
     it('should parse "ilagay \\"hello\\" sa #output"', () => {
-      const result = canParse('ilagay "hello" sa #output', 'tl');
-      if (result) {
-        const node = parse('ilagay "hello" sa #output', 'tl');
-        expect(node.action).toBe('put');
-      } else {
-        const tokens = getTokens('ilagay "hello" sa #output', 'tl');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('ilagay "hello" sa #output', 'tl');
+      expect(node.action).toBe('put');
     });
 
     it('should parse "itakda x sa 10"', () => {
-      const result = canParse('itakda x sa 10', 'tl');
-      if (result) {
-        const node = parse('itakda x sa 10', 'tl');
-        expect(node.action).toBe('set');
-      } else {
-        const tokens = getTokens('itakda x sa 10', 'tl');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('itakda x sa 10', 'tl');
+      expect(node.action).toBe('set');
     });
 
     it('should parse "kunin #element"', () => {
-      const result = canParse('kunin #element', 'tl');
-      if (result) {
-        const node = parse('kunin #element', 'tl');
-        expect(node.action).toBe('get');
-      } else {
-        const tokens = getTokens('kunin #element', 'tl');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('kunin #element', 'tl');
+      expect(node.action).toBe('get');
     });
   });
 
   describe('Increment/Decrement commands', () => {
     it('should parse "dagdagan counter"', () => {
-      const result = canParse('dagdagan counter', 'tl');
-      if (result) {
-        const node = parse('dagdagan counter', 'tl');
-        expect(node.action).toBe('increment');
-      } else {
-        const tokens = getTokens('dagdagan counter', 'tl');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('dagdagan counter', 'tl');
+      expect(node.action).toBe('increment');
     });
 
     it('should parse "bawasan counter"', () => {
-      const result = canParse('bawasan counter', 'tl');
-      if (result) {
-        const node = parse('bawasan counter', 'tl');
-        expect(node.action).toBe('decrement');
-      } else {
-        const tokens = getTokens('bawasan counter', 'tl');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('bawasan counter', 'tl');
+      expect(node.action).toBe('decrement');
     });
   });
 });

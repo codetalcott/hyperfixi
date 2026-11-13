@@ -443,34 +443,18 @@ describe('Multilingual Equivalents of Official Examples', () => {
   describe('Wait Command', () => {
     it('Japanese: 1s 待つ', () => {
       // Note: May need to adjust syntax based on actual Japanese patterns
-      const canParseResult = canParse('1s 待つ', 'ja');
-      if (canParseResult) {
-        const node = parse('1s 待つ', 'ja');
-        expect(node.action).toBe('wait');
-      } else {
-        // Skip if not yet supported
-        expect(true).toBe(true);
-      }
+      const node = parse('1s 待つ', 'ja');
+      expect(node.action).toBe('wait');
     });
 
     it('Arabic: انتظر 1s', () => {
-      const canParseResult = canParse('انتظر 1s', 'ar');
-      if (canParseResult) {
-        const node = parse('انتظر 1s', 'ar');
-        expect(node.action).toBe('wait');
-      } else {
-        expect(true).toBe(true);
-      }
+      const node = parse('انتظر 1s', 'ar');
+      expect(node.action).toBe('wait');
     });
 
     it('Spanish: esperar 1s', () => {
-      const canParseResult = canParse('esperar 1s', 'es');
-      if (canParseResult) {
-        const node = parse('esperar 1s', 'es');
-        expect(node.action).toBe('wait');
-      } else {
-        expect(true).toBe(true);
-      }
+      const node = parse('esperar 1s', 'es');
+      expect(node.action).toBe('wait');
     });
   });
 });
@@ -816,25 +800,14 @@ describe('Newly Wired Commands', () => {
   describe('Prepend Command (Extended)', () => {
     it('Korean: #container 에 "text" 를 앞에추가', () => {
       // Note: May need to verify exact pattern syntax
-      const canParseResult = canParse('#container 에 "text" 를 앞에추가', 'ko');
-      if (canParseResult) {
-        const node = parse('#container 에 "text" 를 앞에추가', 'ko');
-        expect(node.action).toBe('prepend');
-      } else {
-        // Pattern may differ - try alternative
-        expect(true).toBe(true);
-      }
+      const node = parse('#container 에 "text" 를 앞에추가', 'ko');
+      expect(node.action).toBe('prepend');
     });
 
-    it('Turkish: #container e "text" i öneekle', () => {
+    it.fails('Turkish: #container e "text" i öneekle', () => {
       // Note: Turkish uses case suffixes
-      const canParseResult = canParse('#container e "text" i öneekle', 'tr');
-      if (canParseResult) {
-        const node = parse('#container e "text" i öneekle', 'tr');
-        expect(node.action).toBe('prepend');
-      } else {
-        expect(true).toBe(true);
-      }
+      const node = parse('#container e "text" i öneekle', 'tr');
+      expect(node.action).toBe('prepend');
     });
 
     it('Arabic: سبق "text" على #container', () => {
@@ -846,45 +819,25 @@ describe('Newly Wired Commands', () => {
 
     it('Chinese: 前置 把 "text" 在 #container', () => {
       // Note: Chinese word order may differ
-      const canParseResult = canParse('前置 把 "text" 在 #container', 'zh');
-      if (canParseResult) {
-        const node = parse('前置 把 "text" 在 #container', 'zh');
-        expect(node.action).toBe('prepend');
-      } else {
-        expect(true).toBe(true);
-      }
+      const node = parse('前置 把 "text" 在 #container', 'zh');
+      expect(node.action).toBe('prepend');
     });
   });
 
   describe('Trigger Command (Extended)', () => {
     it('Korean: #button 에 click 을 트리거', () => {
-      const canParseResult = canParse('#button 에 click 을 트리거', 'ko');
-      if (canParseResult) {
-        const node = parse('#button 에 click 을 트리거', 'ko');
-        expect(node.action).toBe('trigger');
-      } else {
-        expect(true).toBe(true);
-      }
+      const node = parse('#button 에 click 을 트리거', 'ko');
+      expect(node.action).toBe('trigger');
     });
 
     it('Turkish: #button e click i tetikle', () => {
-      const canParseResult = canParse('#button e click i tetikle', 'tr');
-      if (canParseResult) {
-        const node = parse('#button e click i tetikle', 'tr');
-        expect(node.action).toBe('trigger');
-      } else {
-        expect(true).toBe(true);
-      }
+      const node = parse('#button e click i tetikle', 'tr');
+      expect(node.action).toBe('trigger');
     });
 
     it('Chinese: 触发 把 click 在 #button', () => {
-      const canParseResult = canParse('触发 把 click 在 #button', 'zh');
-      if (canParseResult) {
-        const node = parse('触发 把 click 在 #button', 'zh');
-        expect(node.action).toBe('trigger');
-      } else {
-        expect(true).toBe(true);
-      }
+      const node = parse('触发 把 click 在 #button', 'zh');
+      expect(node.action).toBe('trigger');
     });
   });
 });
@@ -896,100 +849,60 @@ describe('Newly Wired Commands', () => {
 
 describe('Tier 2 Commands (Content & Variable Operations)', () => {
   describe('Take Command', () => {
-    it('take :x from #source', () => {
-      const canParseResult = canParse('take :x from #source', 'en');
-      if (canParseResult) {
-        const node = parse('take :x from #source', 'en');
-        expect(node.action).toBe('take');
-      } else {
-        expect(true).toBe(true);
-      }
+    it.fails('take :x from #source', () => {
+      const node = parse('take :x from #source', 'en');
+      expect(node.action).toBe('take');
     });
   });
 
   describe('Make Command', () => {
     it('make <div/>', () => {
-      const canParseResult = canParse('make <div/>', 'en');
-      if (canParseResult) {
-        const node = parse('make <div/>', 'en');
-        expect(node.action).toBe('make');
-      } else {
-        expect(true).toBe(true);
-      }
+      const node = parse('make <div/>', 'en');
+      expect(node.action).toBe('make');
     });
   });
 
   describe('Clone Command', () => {
     it('clone #template', () => {
-      const canParseResult = canParse('clone #template', 'en');
-      if (canParseResult) {
-        const node = parse('clone #template', 'en');
-        expect(node.action).toBe('clone');
-      } else {
-        expect(true).toBe(true);
-      }
+      const node = parse('clone #template', 'en');
+      expect(node.action).toBe('clone');
     });
   });
 
   describe('Get Command', () => {
     it('get :result', () => {
-      const canParseResult = canParse('get :result', 'en');
-      if (canParseResult) {
-        const node = parse('get :result', 'en');
-        expect(node.action).toBe('get');
-      } else {
-        expect(true).toBe(true);
-      }
+      const node = parse('get :result', 'en');
+      expect(node.action).toBe('get');
     });
   });
 
   describe('Focus Command', () => {
     it('focus #input', () => {
-      const canParseResult = canParse('focus #input', 'en');
-      if (canParseResult) {
-        const node = parse('focus #input', 'en');
-        expect(node.action).toBe('focus');
-        expect(node.roles.get('patient')?.value).toBe('#input');
-      } else {
-        expect(true).toBe(true);
-      }
+      const node = parse('focus #input', 'en');
+      expect(node.action).toBe('focus');
+      expect(node.roles.get('patient')?.value).toBe('#input');
     });
   });
 
   describe('Blur Command', () => {
     it('blur #input', () => {
-      const canParseResult = canParse('blur #input', 'en');
-      if (canParseResult) {
-        const node = parse('blur #input', 'en');
-        expect(node.action).toBe('blur');
-        expect(node.roles.get('patient')?.value).toBe('#input');
-      } else {
-        expect(true).toBe(true);
-      }
+      const node = parse('blur #input', 'en');
+      expect(node.action).toBe('blur');
+      expect(node.roles.get('patient')?.value).toBe('#input');
     });
   });
 
   describe('Call Command', () => {
     it('call myFunction()', () => {
-      const canParseResult = canParse('call myFunction()', 'en');
-      if (canParseResult) {
-        const node = parse('call myFunction()', 'en');
-        expect(node.action).toBe('call');
-      } else {
-        expect(true).toBe(true);
-      }
+      const node = parse('call myFunction()', 'en');
+      expect(node.action).toBe('call');
     });
   });
 
   describe('Return Command', () => {
     it('return :value', () => {
-      const canParseResult = canParse('return :value', 'en');
-      if (canParseResult) {
-        const node = parse('return :value', 'en');
-        expect(node.action).toBe('return');
-      } else {
-        expect(true).toBe(true);
-      }
+      const node = parse('return :value', 'en');
+      expect(node.action).toBe('return');
     });
   });
 });

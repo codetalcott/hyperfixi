@@ -25,7 +25,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { canParse, parse, tokenize } from '../src';
+import { parse, tokenize } from '../src';
 
 /**
  * Helper to get tokens array from TokenStream
@@ -198,84 +198,42 @@ describe('Bengali Event Handler Patterns', () => {
 
   describe('SOV event pattern: {event} তে {patient} কে {action}', () => {
     it('should parse "ক্লিক তে .active কে টগল"', () => {
-      const result = canParse('ক্লিক তে .active কে টগল', 'bn');
-      if (result.canParse) {
-        const node = parse('ক্লিক তে .active কে টগল', 'bn');
-        expect(node.action).toBe('on');
-        expect(node.roles.has('event')).toBe(true);
-      } else {
-        const tokens = getTokens('ক্লিক তে .active কে টগল', 'bn');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('ক্লিক তে .active কে টগল', 'bn');
+      expect(node.action).toBe('on');
+      expect(node.roles.has('event')).toBe(true);
     });
 
     it('should parse "সাবমিট তে .loading কে টগল"', () => {
-      const result = canParse('সাবমিট তে .loading কে টগল', 'bn');
-      if (result.canParse) {
-        const node = parse('সাবমিট তে .loading কে টগল', 'bn');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('সাবমিট তে .loading কে টগল', 'bn');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('সাবমিট তে .loading কে টগল', 'bn');
+      expect(node.action).toBe('on');
     });
 
     it('should parse "হোভার তে .highlight কে যোগ"', () => {
-      const result = canParse('হোভার তে .highlight কে যোগ', 'bn');
-      if (result.canParse) {
-        const node = parse('হোভার তে .highlight কে যোগ', 'bn');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('হোভার তে .highlight কে যোগ', 'bn');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('হোভার তে .highlight কে যোগ', 'bn');
+      expect(node.action).toBe('on');
     });
 
     it('should parse "ক্লিক তে .error কে সরান"', () => {
-      const result = canParse('ক্লিক তে .error কে সরান', 'bn');
-      if (result.canParse) {
-        const node = parse('ক্লিক তে .error কে সরান', 'bn');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('ক্লিক তে .error কে সরান', 'bn');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('ক্লিক তে .error কে সরান', 'bn');
+      expect(node.action).toBe('on');
     });
   });
 
   describe('Event with destination: {event} তে {dest} তে/র {patient} কে {action}', () => {
     it('should parse "ক্লিক তে #button র .active কে টগল"', () => {
-      const result = canParse('ক্লিক তে #button র .active কে টগল', 'bn');
-      if (result.canParse) {
-        const node = parse('ক্লিক তে #button র .active কে টগল', 'bn');
-        expect(node.action).toBe('on');
-        expect(node.roles.has('event')).toBe(true);
-      } else {
-        const tokens = getTokens('ক্লিক তে #button র .active কে টগল', 'bn');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('ক্লিক তে #button র .active কে টগল', 'bn');
+      expect(node.action).toBe('on');
+      expect(node.roles.has('event')).toBe(true);
     });
 
     it('should parse "ক্লিক তে #button তে .active কে টগল"', () => {
-      const result = canParse('ক্লিক তে #button তে .active কে টগল', 'bn');
-      if (result.canParse) {
-        const node = parse('ক্লিক তে #button তে .active কে টগল', 'bn');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('ক্লিক তে #button তে .active কে টগল', 'bn');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('ক্লিক তে #button তে .active কে টগল', 'bn');
+      expect(node.action).toBe('on');
     });
 
     it('should parse "হোভার তে #element তে .hover কে যোগ"', () => {
-      const result = canParse('হোভার তে #element তে .hover কে যোগ', 'bn');
-      if (result.canParse) {
-        const node = parse('হোভার তে #element তে .hover কে যোগ', 'bn');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('হোভার তে #element তে .hover কে যোগ', 'bn');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('হোভার তে #element তে .hover কে যোগ', 'bn');
+      expect(node.action).toBe('on');
     });
   });
 
@@ -295,73 +253,37 @@ describe('Bengali Event Handler Patterns', () => {
 
   describe('Event handler with visibility commands', () => {
     it('should parse "ফোকাস তে #tooltip কে দেখান"', () => {
-      const result = canParse('ফোকাস তে #tooltip কে দেখান', 'bn');
-      if (result.canParse) {
-        const node = parse('ফোকাস তে #tooltip কে দেখান', 'bn');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('ফোকাস তে #tooltip কে দেখান', 'bn');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('ফোকাস তে #tooltip কে দেখান', 'bn');
+      expect(node.action).toBe('on');
     });
 
     it('should parse "ঝাপসা তে #tooltip কে লুকান"', () => {
-      const result = canParse('ঝাপসা তে #tooltip কে লুকান', 'bn');
-      if (result.canParse) {
-        const node = parse('ঝাপসা তে #tooltip কে লুকান', 'bn');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('ঝাপসা তে #tooltip কে লুকান', 'bn');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('ঝাপসা তে #tooltip কে লুকান', 'bn');
+      expect(node.action).toBe('on');
     });
   });
 
   describe('Event handler with increment/decrement', () => {
     it('should parse "ক্লিক তে #counter কে বৃদ্ধি"', () => {
-      const result = canParse('ক্লিক তে #counter কে বৃদ্ধি', 'bn');
-      if (result.canParse) {
-        const node = parse('ক্লিক তে #counter কে বৃদ্ধি', 'bn');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('ক্লিক তে #counter কে বৃদ্ধি', 'bn');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('ক্লিক তে #counter কে বৃদ্ধি', 'bn');
+      expect(node.action).toBe('on');
     });
 
     it('should parse "ক্লিক তে #counter কে হ্রাস"', () => {
-      const result = canParse('ক্লিক তে #counter কে হ্রাস', 'bn');
-      if (result.canParse) {
-        const node = parse('ক্লিক তে #counter কে হ্রাস', 'bn');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('ক্লিক তে #counter কে হ্রাস', 'bn');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('ক্লিক তে #counter কে হ্রাস', 'bn');
+      expect(node.action).toBe('on');
     });
   });
 
   describe('Event handler with put/set', () => {
     it('should parse "ইনপুট তে "test" কে #output তে রাখুন"', () => {
-      const result = canParse('ইনপুট তে "test" কে #output তে রাখুন', 'bn');
-      if (result.canParse) {
-        const node = parse('ইনপুট তে "test" কে #output তে রাখুন', 'bn');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('ইনপুট তে "test" কে #output তে রাখুন', 'bn');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('ইনপুট তে "test" কে #output তে রাখুন', 'bn');
+      expect(node.action).toBe('on');
     });
 
     it('should parse "পরিবর্তন তে x কে 10 তে সেট"', () => {
-      const result = canParse('পরিবর্তন তে x কে 10 তে সেট', 'bn');
-      if (result.canParse) {
-        const node = parse('পরিবর্তন তে x কে 10 তে সেট', 'bn');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('পরিবর্তন তে x কে 10 তে সেট', 'bn');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('পরিবর্তন তে x কে 10 তে সেট', 'bn');
+      expect(node.action).toBe('on');
     });
   });
 });
@@ -373,73 +295,37 @@ describe('Bengali Event Handler Patterns', () => {
 describe('Bengali Command Patterns', () => {
   describe('Toggle commands', () => {
     it('should parse ".active কে টগল"', () => {
-      const result = canParse('.active কে টগল', 'bn');
-      if (result.canParse) {
-        const node = parse('.active কে টগল', 'bn');
-        expect(node.action).toBe('toggle');
-      } else {
-        const tokens = getTokens('.active কে টগল', 'bn');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('.active কে টগল', 'bn');
+      expect(node.action).toBe('toggle');
     });
 
     it('should parse "টগল .active" (SVO fallback)', () => {
-      const result = canParse('টগল .active', 'bn');
-      if (result.canParse) {
-        const node = parse('টগল .active', 'bn');
-        expect(node.action).toBe('toggle');
-      } else {
-        const tokens = getTokens('টগল .active', 'bn');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('টগল .active', 'bn');
+      expect(node.action).toBe('toggle');
     });
   });
 
   describe('Add/Remove commands', () => {
     it('should parse ".highlight কে যোগ"', () => {
-      const result = canParse('.highlight কে যোগ', 'bn');
-      if (result.canParse) {
-        const node = parse('.highlight কে যোগ', 'bn');
-        expect(node.action).toBe('add');
-      } else {
-        const tokens = getTokens('.highlight কে যোগ', 'bn');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('.highlight কে যোগ', 'bn');
+      expect(node.action).toBe('add');
     });
 
     it('should parse ".highlight কে সরান"', () => {
-      const result = canParse('.highlight কে সরান', 'bn');
-      if (result.canParse) {
-        const node = parse('.highlight কে সরান', 'bn');
-        expect(node.action).toBe('remove');
-      } else {
-        const tokens = getTokens('.highlight কে সরান', 'bn');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('.highlight কে সরান', 'bn');
+      expect(node.action).toBe('remove');
     });
   });
 
   describe('Show/Hide commands', () => {
     it('should parse "#modal কে দেখান"', () => {
-      const result = canParse('#modal কে দেখান', 'bn');
-      if (result.canParse) {
-        const node = parse('#modal কে দেখান', 'bn');
-        expect(node.action).toBe('show');
-      } else {
-        const tokens = getTokens('#modal কে দেখান', 'bn');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('#modal কে দেখান', 'bn');
+      expect(node.action).toBe('show');
     });
 
     it('should parse "#modal কে লুকান"', () => {
-      const result = canParse('#modal কে লুকান', 'bn');
-      if (result.canParse) {
-        const node = parse('#modal কে লুকান', 'bn');
-        expect(node.action).toBe('hide');
-      } else {
-        const tokens = getTokens('#modal কে লুকান', 'bn');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('#modal কে লুকান', 'bn');
+      expect(node.action).toBe('hide');
     });
 
     it('should parse alternative দেখাও for show', () => {
@@ -459,25 +345,13 @@ describe('Bengali Command Patterns', () => {
 
   describe('Increment/Decrement commands', () => {
     it('should parse "counter কে বৃদ্ধি"', () => {
-      const result = canParse('counter কে বৃদ্ধি', 'bn');
-      if (result.canParse) {
-        const node = parse('counter কে বৃদ্ধি', 'bn');
-        expect(node.action).toBe('increment');
-      } else {
-        const tokens = getTokens('counter কে বৃদ্ধি', 'bn');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('counter কে বৃদ্ধি', 'bn');
+      expect(node.action).toBe('increment');
     });
 
     it('should parse "counter কে হ্রাস"', () => {
-      const result = canParse('counter কে হ্রাস', 'bn');
-      if (result.canParse) {
-        const node = parse('counter কে হ্রাস', 'bn');
-        expect(node.action).toBe('decrement');
-      } else {
-        const tokens = getTokens('counter কে হ্রাস', 'bn');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('counter কে হ্রাস', 'bn');
+      expect(node.action).toBe('decrement');
     });
 
     it('should parse alternative বাড়ান for increment', () => {
@@ -497,14 +371,8 @@ describe('Bengali Command Patterns', () => {
 
   describe('Put command', () => {
     it('should parse ""হ্যালো" কে #output তে রাখুন"', () => {
-      const result = canParse('"হ্যালো" কে #output তে রাখুন', 'bn');
-      if (result.canParse) {
-        const node = parse('"হ্যালো" কে #output তে রাখুন', 'bn');
-        expect(node.action).toBe('put');
-      } else {
-        const tokens = getTokens('"হ্যালো" কে #output তে রাখুন', 'bn');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('"হ্যালো" কে #output তে রাখুন', 'bn');
+      expect(node.action).toBe('put');
     });
 
     it('should parse alternative রাখ for put', () => {
@@ -517,25 +385,13 @@ describe('Bengali Command Patterns', () => {
 
   describe('Set/Get commands', () => {
     it('should parse "x কে 10 তে সেট"', () => {
-      const result = canParse('x কে 10 তে সেট', 'bn');
-      if (result.canParse) {
-        const node = parse('x কে 10 তে সেট', 'bn');
-        expect(node.action).toBe('set');
-      } else {
-        const tokens = getTokens('x কে 10 তে সেট', 'bn');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('x কে 10 তে সেট', 'bn');
+      expect(node.action).toBe('set');
     });
 
     it('should parse "#element কে পান"', () => {
-      const result = canParse('#element কে পান', 'bn');
-      if (result.canParse) {
-        const node = parse('#element কে পান', 'bn');
-        expect(node.action).toBe('get');
-      } else {
-        const tokens = getTokens('#element কে পান', 'bn');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('#element কে পান', 'bn');
+      expect(node.action).toBe('get');
     });
   });
 });
@@ -796,10 +652,7 @@ describe('Bengali Integration Tests', () => {
     });
 
     it('should handle event handler with compound body', () => {
-      const tokens = getTokens(
-        'ক্লিক তে যোগ .loading তারপর সরান .loading',
-        'bn',
-      );
+      const tokens = getTokens('ক্লিক তে যোগ .loading তারপর সরান .loading', 'bn');
       expect(tokens.length).toBeGreaterThan(5);
     });
   });

@@ -15,7 +15,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { canParse, parse, tokenize } from '../src';
+import { parse, tokenize } from '../src';
 
 /**
  * Helper to get tokens array from TokenStream
@@ -150,14 +150,8 @@ describe('Vietnamese Event Handler Patterns', () => {
 describe('Vietnamese Command Patterns', () => {
   describe('Toggle commands', () => {
     it('should parse "chuyển đổi .active"', () => {
-      const result = canParse('chuyển đổi .active', 'vi');
-      if (result) {
-        const node = parse('chuyển đổi .active', 'vi');
-        expect(node.action).toBe('toggle');
-      } else {
-        const tokens = getTokens('chuyển đổi .active', 'vi');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('chuyển đổi .active', 'vi');
+      expect(node.action).toBe('toggle');
     });
 
     it('should parse "bật tắt .visible"', () => {
@@ -168,25 +162,13 @@ describe('Vietnamese Command Patterns', () => {
 
   describe('Show/Hide commands', () => {
     it('should parse "hiển thị #modal"', () => {
-      const result = canParse('hiển thị #modal', 'vi');
-      if (result) {
-        const node = parse('hiển thị #modal', 'vi');
-        expect(node.action).toBe('show');
-      } else {
-        const tokens = getTokens('hiển thị #modal', 'vi');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('hiển thị #modal', 'vi');
+      expect(node.action).toBe('show');
     });
 
     it('should parse "ẩn #dropdown"', () => {
-      const result = canParse('ẩn #dropdown', 'vi');
-      if (result) {
-        const node = parse('ẩn #dropdown', 'vi');
-        expect(node.action).toBe('hide');
-      } else {
-        const tokens = getTokens('ẩn #dropdown', 'vi');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('ẩn #dropdown', 'vi');
+      expect(node.action).toBe('hide');
     });
 
     it('should parse "hiện #menu"', () => {
@@ -197,25 +179,13 @@ describe('Vietnamese Command Patterns', () => {
 
   describe('Add/Remove commands', () => {
     it('should parse "thêm .active"', () => {
-      const result = canParse('thêm .active', 'vi');
-      if (result) {
-        const node = parse('thêm .active', 'vi');
-        expect(node.action).toBe('add');
-      } else {
-        const tokens = getTokens('thêm .active', 'vi');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('thêm .active', 'vi');
+      expect(node.action).toBe('add');
     });
 
     it('should parse "xóa .active"', () => {
-      const result = canParse('xóa .active', 'vi');
-      if (result) {
-        const node = parse('xóa .active', 'vi');
-        expect(node.action).toBe('remove');
-      } else {
-        const tokens = getTokens('xóa .active', 'vi');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('xóa .active', 'vi');
+      expect(node.action).toBe('remove');
     });
 
     it('should parse "gỡ bỏ .active"', () => {
@@ -226,25 +196,13 @@ describe('Vietnamese Command Patterns', () => {
 
   describe('Increment/Decrement commands', () => {
     it('should parse "tăng counter"', () => {
-      const result = canParse('tăng counter', 'vi');
-      if (result) {
-        const node = parse('tăng counter', 'vi');
-        expect(node.action).toBe('increment');
-      } else {
-        const tokens = getTokens('tăng counter', 'vi');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('tăng counter', 'vi');
+      expect(node.action).toBe('increment');
     });
 
     it('should parse "giảm counter"', () => {
-      const result = canParse('giảm counter', 'vi');
-      if (result) {
-        const node = parse('giảm counter', 'vi');
-        expect(node.action).toBe('decrement');
-      } else {
-        const tokens = getTokens('giảm counter', 'vi');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('giảm counter', 'vi');
+      expect(node.action).toBe('decrement');
     });
   });
 });

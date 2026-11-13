@@ -15,7 +15,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { canParse, parse, tokenize } from '../src';
+import { parse, tokenize } from '../src';
 
 /**
  * Helper to get tokens array from TokenStream
@@ -155,38 +155,20 @@ describe('Polish Event Handler Patterns', () => {
 describe('Polish Command Patterns', () => {
   describe('Toggle commands', () => {
     it('should parse "przełącz .active"', () => {
-      const result = canParse('przełącz .active', 'pl');
-      if (result) {
-        const node = parse('przełącz .active', 'pl');
-        expect(node.action).toBe('toggle');
-      } else {
-        const tokens = getTokens('przełącz .active', 'pl');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('przełącz .active', 'pl');
+      expect(node.action).toBe('toggle');
     });
   });
 
   describe('Show/Hide commands', () => {
     it('should parse "pokaż #modal"', () => {
-      const result = canParse('pokaż #modal', 'pl');
-      if (result) {
-        const node = parse('pokaż #modal', 'pl');
-        expect(node.action).toBe('show');
-      } else {
-        const tokens = getTokens('pokaż #modal', 'pl');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('pokaż #modal', 'pl');
+      expect(node.action).toBe('show');
     });
 
     it('should parse "ukryj #modal"', () => {
-      const result = canParse('ukryj #modal', 'pl');
-      if (result) {
-        const node = parse('ukryj #modal', 'pl');
-        expect(node.action).toBe('hide');
-      } else {
-        const tokens = getTokens('ukryj #modal', 'pl');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('ukryj #modal', 'pl');
+      expect(node.action).toBe('hide');
     });
 
     it('should parse "schowaj #menu" (alternate hide)', () => {
@@ -197,49 +179,25 @@ describe('Polish Command Patterns', () => {
 
   describe('Add/Remove commands', () => {
     it('should parse "dodaj .highlight"', () => {
-      const result = canParse('dodaj .highlight', 'pl');
-      if (result) {
-        const node = parse('dodaj .highlight', 'pl');
-        expect(node.action).toBe('add');
-      } else {
-        const tokens = getTokens('dodaj .highlight', 'pl');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('dodaj .highlight', 'pl');
+      expect(node.action).toBe('add');
     });
 
     it('should parse "usuń .highlight"', () => {
-      const result = canParse('usuń .highlight', 'pl');
-      if (result) {
-        const node = parse('usuń .highlight', 'pl');
-        expect(node.action).toBe('remove');
-      } else {
-        const tokens = getTokens('usuń .highlight', 'pl');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('usuń .highlight', 'pl');
+      expect(node.action).toBe('remove');
     });
   });
 
   describe('Increment/Decrement commands', () => {
     it('should parse "zwiększ counter"', () => {
-      const result = canParse('zwiększ counter', 'pl');
-      if (result) {
-        const node = parse('zwiększ counter', 'pl');
-        expect(node.action).toBe('increment');
-      } else {
-        const tokens = getTokens('zwiększ counter', 'pl');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('zwiększ counter', 'pl');
+      expect(node.action).toBe('increment');
     });
 
     it('should parse "zmniejsz counter"', () => {
-      const result = canParse('zmniejsz counter', 'pl');
-      if (result) {
-        const node = parse('zmniejsz counter', 'pl');
-        expect(node.action).toBe('decrement');
-      } else {
-        const tokens = getTokens('zmniejsz counter', 'pl');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('zmniejsz counter', 'pl');
+      expect(node.action).toBe('decrement');
     });
   });
 });
@@ -455,7 +413,7 @@ describe('Polish Integration Tests', () => {
     it('should handle event handler with compound body', () => {
       const tokens = getTokens(
         'przy kliknięciu dodaj .loading potem pobierz /api/data potem usuń .loading',
-        'pl',
+        'pl'
       );
       expect(tokens.length).toBeGreaterThan(5);
     });

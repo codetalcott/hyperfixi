@@ -30,7 +30,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parse, canParse, tokenize } from '../src';
+import { parse, tokenize } from '../src';
 import { PortugueseMorphologicalNormalizer } from '../src/tokenizers/morphology/portuguese-normalizer';
 
 /**
@@ -222,38 +222,20 @@ describe('Portuguese Tokenizer - Native Idioms', () => {
 describe('Portuguese Event Handler Patterns', () => {
   describe('Standard pattern: quando {event}', () => {
     it('should parse "quando clique alternar .active"', () => {
-      const result = canParse('quando clique alternar .active', 'pt');
-      if (result) {
-        const node = parse('quando clique alternar .active', 'pt');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('quando clique alternar .active', 'pt');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('quando clique alternar .active', 'pt');
+      expect(node.action).toBe('on');
     });
   });
 
   describe('Native idiom: ao + infinitive', () => {
     it('should parse "ao clicar alternar .active"', () => {
-      const result = canParse('ao clicar alternar .active', 'pt');
-      if (result) {
-        const node = parse('ao clicar alternar .active', 'pt');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('ao clicar alternar .active', 'pt');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('ao clicar alternar .active', 'pt');
+      expect(node.action).toBe('on');
     });
 
     it('should parse "ao alterar mostrar #result"', () => {
-      const result = canParse('ao alterar mostrar #result', 'pt');
-      if (result) {
-        const node = parse('ao alterar mostrar #result', 'pt');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('ao alterar mostrar #result', 'pt');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('ao alterar mostrar #result', 'pt');
+      expect(node.action).toBe('on');
     });
   });
 
@@ -286,87 +268,45 @@ describe('Portuguese Event Handler Patterns', () => {
 describe('Portuguese Command Patterns', () => {
   describe('Toggle commands', () => {
     it('should parse "alternar .active"', () => {
-      const result = canParse('alternar .active', 'pt');
-      if (result) {
-        const node = parse('alternar .active', 'pt');
-        expect(node.action).toBe('toggle');
-      } else {
-        const tokens = getTokens('alternar .active', 'pt');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('alternar .active', 'pt');
+      expect(node.action).toBe('toggle');
     });
 
     it('should parse "trocar .visible" as swap (trocar is the pt swap primary)', () => {
       // The pt profile and i18n dict both assign trocar = swap (toggle is
       // alternar, no alternatives). The old toggle expectation predated the
       // emission-shaped generated swap patterns, which now claim the verb.
-      const result = canParse('trocar .visible', 'pt');
-      if (result) {
-        const node = parse('trocar .visible', 'pt');
-        expect(node.action).toBe('swap');
-      } else {
-        const tokens = getTokens('trocar .visible', 'pt');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('trocar .visible', 'pt');
+      expect(node.action).toBe('swap');
     });
   });
 
   describe('Show/Hide commands', () => {
     it('should parse "mostrar #modal"', () => {
-      const result = canParse('mostrar #modal', 'pt');
-      if (result) {
-        const node = parse('mostrar #modal', 'pt');
-        expect(node.action).toBe('show');
-      } else {
-        const tokens = getTokens('mostrar #modal', 'pt');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('mostrar #modal', 'pt');
+      expect(node.action).toBe('show');
     });
 
     it('should parse "ocultar #dropdown"', () => {
-      const result = canParse('ocultar #dropdown', 'pt');
-      if (result) {
-        const node = parse('ocultar #dropdown', 'pt');
-        expect(node.action).toBe('hide');
-      } else {
-        const tokens = getTokens('ocultar #dropdown', 'pt');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('ocultar #dropdown', 'pt');
+      expect(node.action).toBe('hide');
     });
 
     it('should parse "esconder #menu"', () => {
-      const result = canParse('esconder #menu', 'pt');
-      if (result) {
-        const node = parse('esconder #menu', 'pt');
-        expect(node.action).toBe('hide');
-      } else {
-        const tokens = getTokens('esconder #menu', 'pt');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('esconder #menu', 'pt');
+      expect(node.action).toBe('hide');
     });
   });
 
   describe('Add/Remove commands', () => {
     it('should parse "adicionar .active"', () => {
-      const result = canParse('adicionar .active', 'pt');
-      if (result) {
-        const node = parse('adicionar .active', 'pt');
-        expect(node.action).toBe('add');
-      } else {
-        const tokens = getTokens('adicionar .active', 'pt');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('adicionar .active', 'pt');
+      expect(node.action).toBe('add');
     });
 
     it('should parse "remover .active"', () => {
-      const result = canParse('remover .active', 'pt');
-      if (result) {
-        const node = parse('remover .active', 'pt');
-        expect(node.action).toBe('remove');
-      } else {
-        const tokens = getTokens('remover .active', 'pt');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('remover .active', 'pt');
+      expect(node.action).toBe('remove');
     });
   });
 });

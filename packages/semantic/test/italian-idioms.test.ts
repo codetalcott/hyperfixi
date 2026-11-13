@@ -19,7 +19,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parse, canParse, tokenize } from '../src';
+import { parse, tokenize } from '../src';
 import { ItalianMorphologicalNormalizer } from '../src/tokenizers/morphology/italian-normalizer';
 
 /**
@@ -200,14 +200,8 @@ describe('Italian Tokenizer - Native Idioms', () => {
 describe('Italian Event Handler Patterns', () => {
   describe('Standard pattern: al {event}', () => {
     it('should parse "al clic commutare .active"', () => {
-      const result = canParse('al clic commutare .active', 'it');
-      if (result) {
-        const node = parse('al clic commutare .active', 'it');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('al clic commutare .active', 'it');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('al clic commutare .active', 'it');
+      expect(node.action).toBe('on');
     });
 
     it('should parse "al invio mostrare #result"', () => {
@@ -218,14 +212,8 @@ describe('Italian Event Handler Patterns', () => {
 
   describe('Temporal pattern: quando {event}', () => {
     it('should parse "quando clic commutare .active"', () => {
-      const result = canParse('quando clic commutare .active', 'it');
-      if (result) {
-        const node = parse('quando clic commutare .active', 'it');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('quando clic commutare .active', 'it');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('quando clic commutare .active', 'it');
+      expect(node.action).toBe('on');
     });
 
     it('should parse "quando cambiamento mostrare #result"', () => {
@@ -254,49 +242,25 @@ describe('Italian Event Handler Patterns', () => {
 describe('Italian Command Patterns', () => {
   describe('Toggle commands', () => {
     it('should parse "commutare .active"', () => {
-      const result = canParse('commutare .active', 'it');
-      if (result) {
-        const node = parse('commutare .active', 'it');
-        expect(node.action).toBe('toggle');
-      } else {
-        const tokens = getTokens('commutare .active', 'it');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('commutare .active', 'it');
+      expect(node.action).toBe('toggle');
     });
 
     it('should parse "alternare .visible"', () => {
-      const result = canParse('alternare .visible', 'it');
-      if (result) {
-        const node = parse('alternare .visible', 'it');
-        expect(node.action).toBe('toggle');
-      } else {
-        const tokens = getTokens('alternare .visible', 'it');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('alternare .visible', 'it');
+      expect(node.action).toBe('toggle');
     });
   });
 
   describe('Show/Hide commands', () => {
     it('should parse "mostrare #modal"', () => {
-      const result = canParse('mostrare #modal', 'it');
-      if (result) {
-        const node = parse('mostrare #modal', 'it');
-        expect(node.action).toBe('show');
-      } else {
-        const tokens = getTokens('mostrare #modal', 'it');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('mostrare #modal', 'it');
+      expect(node.action).toBe('show');
     });
 
     it('should parse "nascondere #dropdown"', () => {
-      const result = canParse('nascondere #dropdown', 'it');
-      if (result) {
-        const node = parse('nascondere #dropdown', 'it');
-        expect(node.action).toBe('hide');
-      } else {
-        const tokens = getTokens('nascondere #dropdown', 'it');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('nascondere #dropdown', 'it');
+      expect(node.action).toBe('hide');
     });
 
     it('should parse "visualizzare #menu"', () => {
@@ -307,25 +271,13 @@ describe('Italian Command Patterns', () => {
 
   describe('Add/Remove commands', () => {
     it('should parse "aggiungere .active"', () => {
-      const result = canParse('aggiungere .active', 'it');
-      if (result) {
-        const node = parse('aggiungere .active', 'it');
-        expect(node.action).toBe('add');
-      } else {
-        const tokens = getTokens('aggiungere .active', 'it');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('aggiungere .active', 'it');
+      expect(node.action).toBe('add');
     });
 
     it('should parse "rimuovere .active"', () => {
-      const result = canParse('rimuovere .active', 'it');
-      if (result) {
-        const node = parse('rimuovere .active', 'it');
-        expect(node.action).toBe('remove');
-      } else {
-        const tokens = getTokens('rimuovere .active', 'it');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('rimuovere .active', 'it');
+      expect(node.action).toBe('remove');
     });
 
     it('should parse "eliminare .active"', () => {

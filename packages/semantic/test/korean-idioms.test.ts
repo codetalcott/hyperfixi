@@ -181,12 +181,13 @@ describe('Korean Tokenizer - Native Idioms', () => {
       const tokens = getTokens('클릭하면 증가', 'ko');
       expect(tokens.length).toBeGreaterThan(0);
       // Check that we have relevant tokens (event or conditional marker)
-      const hasRelevantToken = tokens.some(t =>
-        t.value === 'click' ||
-        t.value === '클릭' ||
-        t.value === '클릭하면' ||
-        t.value === 'on' ||
-        t.value === '하면'
+      const hasRelevantToken = tokens.some(
+        t =>
+          t.value === 'click' ||
+          t.value === '클릭' ||
+          t.value === '클릭하면' ||
+          t.value === 'on' ||
+          t.value === '하면'
       );
       expect(hasRelevantToken).toBe(true);
     });
@@ -202,10 +203,8 @@ describe('Korean Tokenizer - Native Idioms', () => {
       const tokens = getTokens('.active를토글', 'ko');
       expect(tokens.length).toBeGreaterThan(0);
       // Check that we have a toggle-related token
-      const hasToggleToken = tokens.some(t =>
-        t.value === 'toggle' ||
-        t.value === '토글' ||
-        t.value === '를토글'
+      const hasToggleToken = tokens.some(
+        t => t.value === 'toggle' || t.value === '토글' || t.value === '를토글'
       );
       expect(hasToggleToken).toBe(true);
     });
@@ -214,10 +213,8 @@ describe('Korean Tokenizer - Native Idioms', () => {
       const tokens = getTokens('#count를증가', 'ko');
       expect(tokens.length).toBeGreaterThan(0);
       // Check for increment-related token
-      const hasIncrementToken = tokens.some(t =>
-        t.value === 'increment' ||
-        t.value === '증가' ||
-        t.value === '를증가'
+      const hasIncrementToken = tokens.some(
+        t => t.value === 'increment' || t.value === '증가' || t.value === '를증가'
       );
       expect(hasIncrementToken).toBe(true);
     });
@@ -244,8 +241,8 @@ describe('Korean Event Handler Patterns', () => {
       const tokens = getTokens('클릭하면 증가', 'ko');
       expect(tokens.length).toBeGreaterThan(0);
       // The conditional form should tokenize correctly
-      const hasConditionalMarker = tokens.some(t =>
-        t.value === 'on' || t.value === '하면' || t.value === '클릭하면'
+      const hasConditionalMarker = tokens.some(
+        t => t.value === 'on' || t.value === '하면' || t.value === '클릭하면'
       );
       expect(hasConditionalMarker).toBe(true);
     });
@@ -253,136 +250,81 @@ describe('Korean Event Handler Patterns', () => {
 
   describe('conditional -하면 patterns (native idiom)', () => {
     it('should parse "클릭하면 증가" as event handler', () => {
-      const result = canParse('클릭하면 증가', 'ko');
-      if (result.canParse) {
-        const node = parse('클릭하면 증가', 'ko');
-        // Conditional forms should parse as event handlers
-        expect(node.action).toBe('on');
-        expect(node.roles.has('event')).toBe(true);
-      } else {
-        // Pattern may need registration - check if tokenization works
-        const tokens = getTokens('클릭하면 증가', 'ko');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('클릭하면 증가', 'ko');
+      // Conditional forms should parse as event handlers
+      expect(node.action).toBe('on');
+      expect(node.roles.has('event')).toBe(true);
     });
 
     it('should parse "클릭하면 .active 를 토글" as event handler', () => {
-      const result = canParse('클릭하면 .active 를 토글', 'ko');
-      if (result.canParse) {
-        const node = parse('클릭하면 .active 를 토글', 'ko');
-        expect(node.action).toBe('on');
-        expect(node.roles.has('event')).toBe(true);
-      } else {
-        const tokens = getTokens('클릭하면 .active 를 토글', 'ko');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('클릭하면 .active 를 토글', 'ko');
+      expect(node.action).toBe('on');
+      expect(node.roles.has('event')).toBe(true);
     });
 
     it('should parse with -으면 alternative', () => {
-      const result = canParse('변경으면 증가', 'ko');
-      if (result.canParse) {
-        const node = parse('변경으면 증가', 'ko');
-        expect(node.action).toBe('on');
-      }
+      const node = parse('변경으면 증가', 'ko');
+      expect(node.action).toBe('on');
     });
   });
 
   describe('temporal -할때 patterns (native idiom)', () => {
     it('should parse "클릭할때 증가" as event handler', () => {
-      const result = canParse('클릭할때 증가', 'ko');
-      if (result.canParse) {
-        const node = parse('클릭할때 증가', 'ko');
-        expect(node.action).toBe('on');
-        expect(node.roles.has('event')).toBe(true);
-      } else {
-        const tokens = getTokens('클릭할때 증가', 'ko');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('클릭할때 증가', 'ko');
+      expect(node.action).toBe('on');
+      expect(node.roles.has('event')).toBe(true);
     });
 
     it('should parse "입력할때 .active 를 토글" as event handler', () => {
-      const result = canParse('입력할때 .active 를 토글', 'ko');
-      if (result.canParse) {
-        const node = parse('입력할때 .active 를 토글', 'ko');
-        expect(node.action).toBe('on');
-      }
+      const node = parse('입력할때 .active 를 토글', 'ko');
+      expect(node.action).toBe('on');
     });
   });
 
   describe('conditional with source filter', () => {
-    it('should parse "#button 에서 클릭하면 증가" with source', () => {
-      const result = canParse('#button 에서 클릭하면 증가', 'ko');
-      if (result.canParse) {
-        const node = parse('#button 에서 클릭하면 증가', 'ko');
-        expect(node.action).toBe('on');
-        expect(node.roles.get('source')?.value).toBe('#button');
-      }
+    it.fails('should parse "#button 에서 클릭하면 증가" with source', () => {
+      const node = parse('#button 에서 클릭하면 증가', 'ko');
+      expect(node.action).toBe('on');
+      expect(node.roles.get('source')?.value).toBe('#button');
     });
   });
 
   describe('honorific -하시면 patterns (polite native idiom)', () => {
     it('should parse "클릭하시면 증가" as event handler', () => {
-      const result = canParse('클릭하시면 증가', 'ko');
-      if (result.canParse) {
-        const node = parse('클릭하시면 증가', 'ko');
-        expect(node.action).toBe('on');
-        expect(node.roles.has('event')).toBe(true);
-      } else {
-        const tokens = getTokens('클릭하시면 증가', 'ko');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('클릭하시면 증가', 'ko');
+      expect(node.action).toBe('on');
+      expect(node.roles.has('event')).toBe(true);
     });
 
     it('should parse "입력하시면 .active 를 토글" as event handler', () => {
-      const result = canParse('입력하시면 .active 를 토글', 'ko');
-      if (result.canParse) {
-        const node = parse('입력하시면 .active 를 토글', 'ko');
-        expect(node.action).toBe('on');
-      }
+      const node = parse('입력하시면 .active 를 토글', 'ko');
+      expect(node.action).toBe('on');
     });
   });
 
   describe('immediate -하자마자 patterns (as soon as)', () => {
     it('should parse "클릭하자마자 증가" as event handler', () => {
-      const result = canParse('클릭하자마자 증가', 'ko');
-      if (result.canParse) {
-        const node = parse('클릭하자마자 증가', 'ko');
-        expect(node.action).toBe('on');
-        expect(node.roles.has('event')).toBe(true);
-      } else {
-        const tokens = getTokens('클릭하자마자 증가', 'ko');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('클릭하자마자 증가', 'ko');
+      expect(node.action).toBe('on');
+      expect(node.roles.has('event')).toBe(true);
     });
 
     it('should parse "입력하자마자 .active 를 토글" as event handler', () => {
-      const result = canParse('입력하자마자 .active 를 토글', 'ko');
-      if (result.canParse) {
-        const node = parse('입력하자마자 .active 를 토글', 'ko');
-        expect(node.action).toBe('on');
-      }
+      const node = parse('입력하자마자 .active 를 토글', 'ko');
+      expect(node.action).toBe('on');
     });
   });
 
   describe('sequential -하고 나서 patterns (after doing)', () => {
     it('should parse "클릭하고 나서 증가" as event handler', () => {
-      const result = canParse('클릭하고 나서 증가', 'ko');
-      if (result.canParse) {
-        const node = parse('클릭하고 나서 증가', 'ko');
-        expect(node.action).toBe('on');
-        expect(node.roles.has('event')).toBe(true);
-      } else {
-        const tokens = getTokens('클릭하고 나서 증가', 'ko');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('클릭하고 나서 증가', 'ko');
+      expect(node.action).toBe('on');
+      expect(node.roles.has('event')).toBe(true);
     });
 
     it('should parse "입력하고나서 .active 를 토글" (no space) as event handler', () => {
-      const result = canParse('입력하고나서 .active 를 토글', 'ko');
-      if (result.canParse) {
-        const node = parse('입력하고나서 .active 를 토글', 'ko');
-        expect(node.action).toBe('on');
-      }
+      const node = parse('입력하고나서 .active 를 토글', 'ko');
+      expect(node.action).toBe('on');
     });
   });
 });
@@ -416,51 +358,32 @@ describe('Korean Toggle Patterns', () => {
 
   describe('compact forms (native idiom)', () => {
     it('should parse ".active를토글"', () => {
-      const result = canParse('.active를토글', 'ko');
-      if (result.canParse) {
-        const node = parse('.active를토글', 'ko');
-        expect(node.action).toBe('toggle');
-        expect(node.roles.get('patient')?.value).toBe('.active');
-      } else {
-        // Verify tokenization at least recognizes the pattern
-        const tokens = getTokens('.active를토글', 'ko');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('.active를토글', 'ko');
+      expect(node.action).toBe('toggle');
+      expect(node.roles.get('patient')?.value).toBe('.active');
     });
 
     it('should parse ".active을토글" with consonant particle', () => {
-      const result = canParse('.active을토글', 'ko');
-      if (result.canParse) {
-        const node = parse('.active을토글', 'ko');
-        expect(node.action).toBe('toggle');
-      }
+      const node = parse('.active을토글', 'ko');
+      expect(node.action).toBe('toggle');
     });
   });
 
   describe('conjugated verb forms', () => {
     it('should parse ".active 를 토글하다"', () => {
-      const result = canParse('.active 를 토글하다', 'ko');
-      if (result.canParse) {
-        const node = parse('.active 를 토글하다', 'ko');
-        expect(node.action).toBe('toggle');
-        expect(node.roles.get('patient')?.value).toBe('.active');
-      }
+      const node = parse('.active 를 토글하다', 'ko');
+      expect(node.action).toBe('toggle');
+      expect(node.roles.get('patient')?.value).toBe('.active');
     });
 
     it('should parse ".active 를 토글해요"', () => {
-      const result = canParse('.active 를 토글해요', 'ko');
-      if (result.canParse) {
-        const node = parse('.active 를 토글해요', 'ko');
-        expect(node.action).toBe('toggle');
-      }
+      const node = parse('.active 를 토글해요', 'ko');
+      expect(node.action).toBe('toggle');
     });
 
     it('should parse ".active 를 토글합니다"', () => {
-      const result = canParse('.active 를 토글합니다', 'ko');
-      if (result.canParse) {
-        const node = parse('.active 를 토글합니다', 'ko');
-        expect(node.action).toBe('toggle');
-      }
+      const node = parse('.active 를 토글합니다', 'ko');
+      expect(node.action).toBe('toggle');
     });
   });
 });
@@ -486,14 +409,8 @@ describe('Korean Increment/Decrement Patterns', () => {
 
   describe('compact forms', () => {
     it('should parse "#count를증가"', () => {
-      const result = canParse('#count를증가', 'ko');
-      if (result.canParse) {
-        const node = parse('#count를증가', 'ko');
-        expect(node.action).toBe('increment');
-      } else {
-        const tokens = getTokens('#count를증가', 'ko');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('#count를증가', 'ko');
+      expect(node.action).toBe('increment');
     });
   });
 });
@@ -505,36 +422,27 @@ describe('Korean Increment/Decrement Patterns', () => {
 describe('Korean Semantic Equivalence', () => {
   describe('toggle patterns should be equivalent', () => {
     it('standard vs compact toggle should produce same result', () => {
-      const standardResult = canParse('.active 를 토글', 'ko');
-      const compactResult = canParse('.active를토글', 'ko');
+      const standardNode = parse('.active 를 토글', 'ko');
+      const compactNode = parse('.active를토글', 'ko');
 
-      if (standardResult.canParse && compactResult.canParse) {
-        const standardNode = parse('.active 를 토글', 'ko');
-        const compactNode = parse('.active를토글', 'ko');
-
-        // Both should produce toggle with same patient
-        expect(standardNode.action).toBe('toggle');
-        expect(compactNode.action).toBe('toggle');
-        expect(standardNode.action).toBe(compactNode.action);
-      }
+      // Both should produce toggle with same patient
+      expect(standardNode.action).toBe('toggle');
+      expect(compactNode.action).toBe('toggle');
+      expect(standardNode.action).toBe(compactNode.action);
     });
   });
 
   describe('event handler patterns should be equivalent', () => {
     it('-하면 vs -할때 event handlers should be equivalent', () => {
       // Note: 에 pattern is disabled due to ambiguity. Testing native forms instead.
-      const myeonResult = canParse('클릭하면 증가', 'ko');
-      const ttaeResult = canParse('클릭할때 증가', 'ko');
 
-      if (myeonResult.canParse && ttaeResult.canParse) {
-        const myeonNode = parse('클릭하면 증가', 'ko');
-        const ttaeNode = parse('클릭할때 증가', 'ko');
+      const myeonNode = parse('클릭하면 증가', 'ko');
+      const ttaeNode = parse('클릭할때 증가', 'ko');
 
-        // Both should produce event handler with action='on'
-        expect(myeonNode.action).toBe('on');
-        expect(ttaeNode.action).toBe('on');
-        expect(myeonNode.action).toBe(ttaeNode.action);
-      }
+      // Both should produce event handler with action='on'
+      expect(myeonNode.action).toBe('on');
+      expect(ttaeNode.action).toBe('on');
+      expect(myeonNode.action).toBe(ttaeNode.action);
     });
   });
 });
@@ -561,9 +469,7 @@ describe('Korean Edge Cases', () => {
       // The tokenizer may keep Korean event names or normalize to English
       const tokens = getTokens('클릭 에 증가', 'ko');
       // Check that we get some token for the click event (in either form)
-      const hasClickToken = tokens.some(t =>
-        t.value === 'click' || t.value === '클릭'
-      );
+      const hasClickToken = tokens.some(t => t.value === 'click' || t.value === '클릭');
       expect(hasClickToken).toBe(true);
     });
 
@@ -571,9 +477,7 @@ describe('Korean Edge Cases', () => {
       const tokens = getTokens('입력 에 표시', 'ko');
       expect(tokens.length).toBeGreaterThan(0);
       // Check for input-related token
-      const hasInputToken = tokens.some(t =>
-        t.value === 'input' || t.value === '입력'
-      );
+      const hasInputToken = tokens.some(t => t.value === 'input' || t.value === '입력');
       expect(hasInputToken).toBe(true);
     });
   });
@@ -599,11 +503,8 @@ describe('Korean Edge Cases', () => {
     });
 
     it('should handle 을 after consonant', () => {
-      const result = canParse('#count 을 증가', 'ko');
-      if (result.canParse) {
-        const node = parse('#count 을 증가', 'ko');
-        expect(node.action).toBe('increment');
-      }
+      const node = parse('#count 을 증가', 'ko');
+      expect(node.action).toBe('increment');
     });
   });
 });
