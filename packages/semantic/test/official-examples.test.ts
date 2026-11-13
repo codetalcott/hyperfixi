@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parse, canParse, tokenize } from '../src';
+import { parse, canParse } from '../src';
 
 // =============================================================================
 // Tier 1: Core Examples (Must Work)

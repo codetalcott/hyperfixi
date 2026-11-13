@@ -6,7 +6,6 @@
  */
 
 import { getMergedProfile } from './merge';
-import type { LanguageProfile } from './profile-loader';
 
 /**
  * Generate TypeScript source code for a profile with all edits applied.

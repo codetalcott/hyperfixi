@@ -1740,7 +1740,7 @@ function buildReverseKeywordCache(): Map<string, string> {
           }
         }
       }
-    } catch (e) {
+    } catch {
       connection.console.log(`[lokascript-ls] Reverse keyword cache: profile '${lang}' not found`);
     }
   }
@@ -2054,7 +2054,7 @@ function extractSymbols(code: string, language: string): DocumentSymbol[] {
         if (trans.primary) variants.push(trans.primary);
         if (trans.alternatives) variants.push(...trans.alternatives);
       }
-    } catch (e) {
+    } catch {
       connection.console.log(
         `[lokascript-ls] Symbol extraction: variant lookup failed for '${eng}'`
       );

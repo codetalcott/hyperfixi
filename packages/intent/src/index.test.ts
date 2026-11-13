@@ -12,9 +12,6 @@ import {
   // Types / factories
   createCommandNode,
   createEventHandlerNode,
-  createConditionalNode,
-  createCompoundNode,
-  createLoopNode,
   createLiteral,
   createSelector,
   createReference,

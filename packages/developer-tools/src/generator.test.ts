@@ -4,7 +4,6 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs-extra';
-import * as path from 'path';
 import { createProject, createComponent, createTemplate, generateCode } from './generator';
 
 // Mock fs-extra

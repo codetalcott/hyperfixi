@@ -146,7 +146,7 @@ export function quickStartAnalyzer(
         ignoreInitial: true,
       });
 
-      watcher.on('change', async (filePath: string) => {
+      watcher.on('change', async (_filePath: string) => {
         try {
           const results = await this.analyzeProject();
           callback(results);

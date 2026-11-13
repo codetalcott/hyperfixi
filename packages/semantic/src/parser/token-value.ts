@@ -43,7 +43,7 @@ export function tokenValue(token: LanguageToken): SemanticValue | null {
       return createConstant(lower) ?? createLiteral(token.normalized || token.value);
     }
 
-    case 'identifier':
+    case 'identifier': {
       // Canonical `@attr` typing: an attribute reference is a selector no
       // matter which slot captures it (mirrors semantic-parser's own
       // tokenToSemanticValue and the css-selector extractor). The former
@@ -71,6 +71,7 @@ export function tokenValue(token: LanguageToken): SemanticValue | null {
       // Regular identifiers are variable references - use 'expression' type
       // which gets converted to 'identifier' AST nodes by semantic-integration.ts
       return { type: 'expression', raw: token.value } as const;
+    }
 
     case 'url': {
       // URLs are treated as string literals (paths/URLs for navigation/fetch)

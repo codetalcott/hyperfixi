@@ -75,7 +75,7 @@
  *   --update-db   also UPDATE the engine column in data/patterns.db in place
  */
 
-import { JSDOM, VirtualConsole } from 'jsdom';
+import { JSDOM } from 'jsdom';
 import Database from 'better-sqlite3';
 import { extractHyperscriptFromMarkup, type MarkupSnippets } from '../src/html-snippets';
 import { SEED_EXAMPLES } from './init-db';

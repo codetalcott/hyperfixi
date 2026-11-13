@@ -285,7 +285,7 @@ export function tokenize(input: string): Token[] {
     }
 
     // Query selectors <tag/>
-    if (char === '<' && /[a-zA-Z.#\[]/.test(peek(1))) {
+    if (char === '<' && /[a-zA-Z.#[]/.test(peek(1))) {
       const value = readQuerySelector();
       tokens.push(makeToken(TokenType.QUERY_SELECTOR, value, start));
       continue;

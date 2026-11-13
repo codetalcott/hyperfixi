@@ -17,9 +17,7 @@ import {
   createLatinCharClassifiers,
   BaseTokenizer,
   TokenStreamImpl,
-  createPosition,
   type TimeUnitMapping,
-  type UnicodeRange,
 } from '../../src/tokenizers/base';
 import type { TokenStream, TokenKind } from '../../src/types';
 
@@ -289,7 +287,7 @@ describe('createLatinCharClassifiers', () => {
 
   describe('French characters', () => {
     it('should handle French accented letters', () => {
-      const { isLetter, isIdentifierChar } = createLatinCharClassifiers(
+      const { isLetter } = createLatinCharClassifiers(
         /[a-zA-ZàâæçéèêëïîôùûüÿœÀÂÆÇÉÈÊËÏÎÔÙÛÜŸŒ]/
       );
 

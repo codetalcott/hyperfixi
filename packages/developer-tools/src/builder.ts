@@ -15,7 +15,6 @@ import type {
   ComponentLibrary,
   ComponentDefinition,
   ComponentCategory,
-  BuilderTheme,
 } from './types';
 
 /**
@@ -552,7 +551,7 @@ export class VisualBuilderServer {
         try {
           const message = JSON.parse(data.toString());
           this.handleWebSocketMessage(ws, message);
-        } catch (error) {
+        } catch {
           ws.send(
             JSON.stringify({
               type: 'error',

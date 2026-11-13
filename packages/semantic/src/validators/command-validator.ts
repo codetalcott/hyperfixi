@@ -150,7 +150,7 @@ function valueMatchesType(value: SemanticValue, expectedTypes: Array<ExpectedTyp
   // Type-specific checks
   for (const expectedType of expectedTypes) {
     switch (expectedType) {
-      case 'selector':
+      case 'selector': {
         // Selectors are strings starting with ., #, or [
         if (value.type === 'selector') {
           return true;
@@ -166,6 +166,7 @@ function valueMatchesType(value: SemanticValue, expectedTypes: Array<ExpectedTyp
           return true;
         }
         break;
+      }
 
       case 'literal':
         // Literals include strings, numbers, booleans
@@ -178,7 +179,7 @@ function valueMatchesType(value: SemanticValue, expectedTypes: Array<ExpectedTyp
         }
         break;
 
-      case 'reference':
+      case 'reference': {
         // References are special keywords (me, you, it, etc.)
         if (value.type === 'reference') {
           return true;
@@ -198,6 +199,7 @@ function valueMatchesType(value: SemanticValue, expectedTypes: Array<ExpectedTyp
           return true;
         }
         break;
+      }
 
       case 'expression':
         // Expressions are complex computed values

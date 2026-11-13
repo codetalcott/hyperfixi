@@ -60,7 +60,7 @@ export class BundleAnalyzer {
     let totalSize = 0;
 
     // Process outputs
-    for (const [outputPath, output] of Object.entries(metafile.outputs)) {
+    for (const [_outputPath, output] of Object.entries(metafile.outputs)) {
       totalSize += output.bytes;
 
       // Process inputs (modules) for this output
@@ -109,7 +109,7 @@ export class BundleAnalyzer {
 
     // Calculate gzipped sizes
     let gzippedSize = 0;
-    let minifiedSize = totalSize;
+    const minifiedSize = totalSize;
 
     if (this.options.includeGzipped) {
       for (const outputPath of Object.keys(metafile.outputs)) {
@@ -179,7 +179,7 @@ export class BundleAnalyzer {
           exports: [],
           used: true,
         });
-      } catch (error) {
+      } catch {
         // Skip files that can't be read
       }
     }

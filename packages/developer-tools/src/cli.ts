@@ -13,11 +13,11 @@ import inquirer from 'inquirer';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { createProject, createComponent, createTemplate } from './generator';
-import { analyzeProject, analyzeFile } from './analyzer';
+import { analyzeProject } from './analyzer';
 import { startDevServer } from './dev-server';
 import { buildProject } from './builder';
 import { InventoryServer, extractSnippetsFromProject } from './inventory';
-import type { ScaffoldOptions, ProjectConfig } from './types';
+import type { ScaffoldOptions } from './types';
 import { VERSION } from './version';
 
 const program = new Command();

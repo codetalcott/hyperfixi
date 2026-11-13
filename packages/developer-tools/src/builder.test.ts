@@ -4,8 +4,6 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs-extra';
-import * as path from 'path';
-import { WebSocketServer, WebSocket } from 'ws';
 import { VisualBuilderServer, buildProject } from './builder';
 
 // Mock fs-extra
@@ -497,7 +495,7 @@ describe('Builder', () => {
     });
 
     it('should not set up file watcher when livereload disabled', async () => {
-      const chokidar = await import('chokidar');
+      await import('chokidar');
       vi.clearAllMocks();
 
       const server = new VisualBuilderServer({

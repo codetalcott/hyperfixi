@@ -10,7 +10,6 @@ import {
   createEnhancedI18n,
   enhancedI18nImplementation,
   type EnhancedI18nInput,
-  type EnhancedI18nOutput,
 } from './enhanced-i18n.js';
 
 describe('Enhanced I18n Implementation', () => {

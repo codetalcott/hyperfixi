@@ -7,7 +7,7 @@
 
 import fs from 'fs-extra';
 import path from 'path';
-import type { ComponentDefinition, BuilderConfig } from './types';
+import type { ComponentDefinition } from './types';
 
 /**
  * Builder project structure
@@ -208,7 +208,7 @@ export class BuilderStorage {
     // Generate component HTML
     const componentHtml = components
       .map(comp => {
-        const hyperscriptAttr = comp.hyperscript ? ` _="${comp.hyperscript}"` : '';
+        const _hyperscriptAttr = comp.hyperscript ? ` _="${comp.hyperscript}"` : '';
         return `<!-- Component: ${comp.name} -->
 <template id="${comp.id}">
   ${comp.template}

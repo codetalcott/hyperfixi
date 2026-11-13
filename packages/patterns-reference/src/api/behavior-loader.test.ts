@@ -105,7 +105,7 @@ describe('loadBehaviors', () => {
 
   it('reports execute errors without crashing', async () => {
     const throwingRuntime: BehaviorRuntime = {
-      compileSync(code: string) {
+      compileSync(_code: string) {
         return { ok: true, ast: { type: 'behavior', name: 'X' } };
       },
       async execute() {

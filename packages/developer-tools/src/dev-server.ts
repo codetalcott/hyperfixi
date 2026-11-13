@@ -191,7 +191,7 @@ export class DevServer {
     });
 
     // Default route - serve index.html if it exists
-    this.app.get('/', async (req, res, next) => {
+    this.app.get('/', async (req, res, _next) => {
       const indexPath = path.join(process.cwd(), 'index.html');
 
       if (await fs.pathExists(indexPath)) {

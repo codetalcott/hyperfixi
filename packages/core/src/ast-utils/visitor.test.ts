@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { ASTVisitor, visit, findNodes, findFirst, getAncestors } from './visitor.js';
-import type { ASTNode, VisitorContext } from './types.js';
+import type { ASTNode } from './types.js';
 
 // Mock AST nodes for testing
 const createMockAST = (): ASTNode =>
@@ -253,7 +253,7 @@ describe('ASTVisitor - Advanced Features', () => {
       },
     });
 
-    const result = visit(ast, visitor);
+    visit(ast, visitor);
     expect(replacedNodes).toHaveLength(1);
     expect(replacedNodes[0].value).toBe('.inactive');
   });
@@ -333,7 +333,7 @@ describe('Visitor Error Handling', () => {
     } as ASTNode;
 
     const visitor = new ASTVisitor({
-      enter(node) {
+      enter(_node) {
         // Should still work
       },
     });
@@ -345,7 +345,7 @@ describe('Visitor Error Handling', () => {
 describe('Visitor Performance', () => {
   it('should handle large ASTs efficiently', () => {
     // Create a large nested AST
-    let ast: any = {
+    const ast: any = {
       type: 'root',
       start: 0,
       end: 1000,

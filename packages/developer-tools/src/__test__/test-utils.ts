@@ -27,8 +27,8 @@ export function createMockRequest(overrides: Partial<Request> = {}): Request {
     path: '/',
     method: 'GET',
     headers: {},
-    get: vi.fn((name: string) => ''),
-    header: vi.fn((name: string) => ''),
+    get: vi.fn((_name: string) => ''),
+    header: vi.fn((_name: string) => ''),
     ...overrides,
   } as unknown as Request;
 }
@@ -169,7 +169,7 @@ export function createMockFsExtra(): MockFsExtra {
     _files: files,
     _directories: directories,
 
-    readFile: vi.fn(async (path: string, encoding?: string) => {
+    readFile: vi.fn(async (path: string, _encoding?: string) => {
       if (!files.has(path)) throw new Error(`ENOENT: no such file or directory, open '${path}'`);
       return files.get(path)!;
     }),
@@ -386,7 +386,7 @@ export interface MockChildProcess {
 
 export function createMockChildProcess(exitCode = 0): MockChildProcess {
   return {
-    spawn: vi.fn((cmd: string, args: string[], options?: any) => {
+    spawn: vi.fn((_cmd: string, _args: string[], _options?: any) => {
       const eventHandlers: Record<string, EventHandler[]> = {};
       return {
         on: vi.fn((event: string, handler: EventHandler) => {
@@ -397,10 +397,10 @@ export function createMockChildProcess(exitCode = 0): MockChildProcess {
           }
         }),
         stdout: {
-          on: vi.fn((event: string, _handler: EventHandler) => {}),
+          on: vi.fn((_event: string, _handler: EventHandler) => {}),
         },
         stderr: {
-          on: vi.fn((event: string, _handler: EventHandler) => {}),
+          on: vi.fn((_event: string, _handler: EventHandler) => {}),
         },
         kill: vi.fn(),
       };
@@ -414,7 +414,7 @@ export function createMockChildProcess(exitCode = 0): MockChildProcess {
 // ========== Glob Mocks ==========
 
 export function createMockGlob(files: string[] = []): Mock {
-  return vi.fn(async (pattern: string) => files);
+  return vi.fn(async (_pattern: string) => files);
 }
 
 // ========== Sample Test Data ==========

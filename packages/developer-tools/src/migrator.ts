@@ -331,7 +331,7 @@ export class LokaScriptMigrator {
     };
 
     try {
-      let content = await fs.readFile(filePath, 'utf-8');
+      const content = await fs.readFile(filePath, 'utf-8');
       const lines = content.split('\n');
       let modified = false;
 

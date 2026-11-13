@@ -580,7 +580,7 @@ describe('Korean Edge Cases', () => {
 
   describe('whitespace handling', () => {
     it('should handle no spaces between tokens', () => {
-      const result = canParse('.active를토글', 'ko');
+      canParse('.active를토글', 'ko');
       // Should at least tokenize correctly
       const tokens = getTokens('.active를토글', 'ko');
       expect(tokens.length).toBeGreaterThan(0);

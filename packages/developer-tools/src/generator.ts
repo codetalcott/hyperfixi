@@ -8,8 +8,6 @@ import * as path from 'path';
 import type {
   ScaffoldOptions,
   ProjectTemplate,
-  TemplateFile,
-  ProjectConfig,
   GeneratedCode,
   GeneratorConfig,
   CodeGenerationSchema,

@@ -418,9 +418,8 @@ test.describe('Landing Page @gallery @interaction', () => {
   test('js-interop: date/time button populates result', async ({ page }) => {
     const collector = await setup(page, '/examples/js-interop/js-interop.html');
 
-    // Click the date/time button (second button in Demo 1)
-    const buttons = page.locator('button');
-    // Find the button that puts date into #js-result
+    // Click the date/time button (second button in Demo 1):
+    // find the button that puts date into #js-result
     await page.locator('button:has-text("Date")').click();
     await expect(page.locator('#js-result')).not.toHaveText('');
 

@@ -7,7 +7,7 @@
 
 import type { LanguageProfile } from './profile-loader';
 import { getBaseProfile, getEnglishKeywords, getEnglishReferences, getEnglishRoleMarkers } from './profile-loader';
-import { getEditsForLanguage, getEditsForSection, type Edit } from './db';
+import { getEditsForLanguage, type Edit } from './db';
 
 /**
  * Get a profile with all pending edits applied.

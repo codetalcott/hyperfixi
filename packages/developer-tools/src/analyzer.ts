@@ -87,7 +87,7 @@ export async function analyzeProject(
   } = {}
 ): Promise<AnalysisResult[]> {
   const {
-    recursive = true,
+    recursive: _recursive = true,
     include = ['**/*.html', '**/*.htm'],
     exclude = ['node_modules/**', 'dist/**'],
   } = options;
@@ -187,14 +187,13 @@ export async function analyzeFile(filePath: string): Promise<AnalysisResult> {
  */
 function parseElements(html: string): ElementAnalysis[] {
   const elements: ElementAnalysis[] = [];
-  const lines = html.split('\n');
 
   // Simple HTML parser - in production, would use a proper HTML parser
   const elementRegex = /<(\w+)([^>]*)>/g;
   let match;
 
   while ((match = elementRegex.exec(html)) !== null) {
-    const [fullMatch, tag, attributes] = match;
+    const [, tag, attributes] = match;
     const lineNumber = html.substring(0, match.index).split('\n').length;
     const columnNumber = match.index - html.lastIndexOf('\n', match.index);
 
@@ -242,7 +241,7 @@ function parseElements(html: string): ElementAnalysis[] {
  */
 function extractHyperScripts(
   elements: ElementAnalysis[],
-  lines: string[]
+  _lines: string[]
 ): Array<{
   content: string;
   line: number;
@@ -268,7 +267,7 @@ function extractHyperScripts(
  */
 function analyzeScript(
   script: { content: string; line: number; column: number },
-  lines: string[]
+  _lines: string[]
 ): ScriptAnalysis {
   const { content, line, column } = script;
 

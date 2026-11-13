@@ -3,8 +3,8 @@
  * Simplified API for code generation and scaffolding
  */
 
-import { createProject, createComponent, createTemplate, generateCode } from '../generator';
-import type { ScaffoldOptions, ComponentDefinition, GeneratorConfig } from '../types';
+import { createProject, createComponent, generateCode } from '../generator';
+import type { ScaffoldOptions, GeneratorConfig } from '../types';
 
 /**
  * Quick start generator with sensible defaults
@@ -125,7 +125,12 @@ export function quickStartGenerator(
       event?: string;
       action?: string;
     }): Promise<void> {
-      const { name, description, event = 'click', action = 'log "Component clicked!"' } = options;
+      const {
+        name,
+        description,
+        event: _event = 'click',
+        action: _action = 'log "Component clicked!"',
+      } = options;
 
       await createComponent({
         name,
@@ -143,7 +148,7 @@ export function quickStartGenerator(
       description?: string;
       fields?: Array<{ name: string; type: string; required?: boolean }>;
     }): Promise<void> {
-      const { name, description, fields = [] } = options;
+      const { name, description, fields: _fields = [] } = options;
 
       await createComponent({
         name,
@@ -194,7 +199,7 @@ export function quickStartGenerator(
       const { title, components, styles = '', scripts = '' } = options;
 
       const componentHTML = components
-        .map(({ id, props = {} }) => {
+        .map(({ id, props: _props = {} }) => {
           // This would use actual component templates
           return `<div class="component component-${id}" data-component="${id}">
   <!-- ${id} component -->
