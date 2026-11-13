@@ -42,6 +42,8 @@ scripts), `scripts/analysis/`, `scripts/testing/` and nine other scripts nothing
 
 The developer-tools prune of 2026-11-13 (tag `archived/developer-tools-2026-11-13`): the private package's CLI (`hyperfixi`/`hfx`/`lks`), visual builder, project generator, analyzer, dev server, profiler, migrator, bundle analyzer and quick-start helpers, about 11,000 lines with their tests. Nothing imported them; the scaffolder could not complete and the profiler measured nothing. The template inventory and the Prism highlighter stay.
 
+`packages/lokascript-python` (tag `archived/lokascript-python-2026-11-13`): Django template tags, a Jinja extension, a template scanner and two management commands, 0.1.0, never on PyPI. An audit on 2026-11-13 found the built wheel held no code (pyproject named the package `hyperfixi`, the code was in `lokascript/`), both management commands failed at startup (`-v` collides with Django's `--verbosity`), its bundle config fed a generator that left with core's engine in 4.0, and its keyword table was a hand copy of the Vite plugin's, 22 of 24 languages and drifted in each. No importer in any project, no CI. Removed on the owner's decision. A Django template writes `_="…"` as it would any attribute and loads `hyperfixi-hs.js`.
+
 ```bash
 git show archived/cleanup-2026-11-12:<path>
 ```
