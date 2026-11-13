@@ -80,17 +80,17 @@ Pick the bundle that matches your use case. All bundles auto-register with `_hyp
 
 Each bundle includes the adapter + semantic parser for the specified languages.
 
-Sizes are gzipped (bytes / 1024), measured on a 7.4.0 build (2026-10-22); a page adds \_hyperscript itself.
+Sizes are gzipped (bytes / 1024), measured on a 7.6.0 build (2026-11-13); a page adds \_hyperscript itself.
 
 | Bundle                                         | Languages                           | Gzipped     |
 | ---------------------------------------------- | ----------------------------------- | ----------- |
-| `hyperscript-i18n.global.js`                   | All 24                              | ~282 KB     |
-| `hyperscript-i18n-western.global.js`           | es, pt, fr, de                      | ~144 KB     |
-| `hyperscript-i18n-east-asian.global.js`        | ja, ko, zh                          | ~144 KB     |
-| `hyperscript-i18n-slavic.global.js`            | pl, ru, uk                          | ~146 KB     |
-| `hyperscript-i18n-southeast-asian.global.js`   | id, ms, tl, th, vi                  | ~144 KB     |
-| `hyperscript-i18n-south-asian.global.js`       | hi, bn                              | ~140 KB     |
-| `hyperscript-i18n-<lang>.global.js` (one each) | one of the 23 non-English languages | ~131–136 KB |
+| `hyperscript-i18n.global.js`                   | All 24                              | ~280 KB     |
+| `hyperscript-i18n-western.global.js`           | es, pt, fr, de                      | ~146 KB     |
+| `hyperscript-i18n-east-asian.global.js`        | ja, ko, zh                          | ~145 KB     |
+| `hyperscript-i18n-slavic.global.js`            | pl, ru, uk                          | ~148 KB     |
+| `hyperscript-i18n-southeast-asian.global.js`   | id, ms, tl, th, vi                  | ~146 KB     |
+| `hyperscript-i18n-south-asian.global.js`       | hi, bn                              | ~142 KB     |
+| `hyperscript-i18n-<lang>.global.js` (one each) | one of the 23 non-English languages | ~131–138 KB |
 
 ```html
 <!-- Django / Flask / FastAPI: just pick your language -->

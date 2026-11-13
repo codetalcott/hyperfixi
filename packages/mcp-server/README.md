@@ -132,7 +132,7 @@ bdd's tools left with domains 4.2.0 and bdd itself with domains 5.0.0: behaviors
 | `flow`         | Bridge (11) | Reactive data flow JS       |
 | `voice`        | Bridge (11) | DOM interaction command     |
 
-### `lse` (11)
+### `lse` (13)
 
 | Tool                           | Description                                                       |
 | ------------------------------ | ----------------------------------------------------------------- |

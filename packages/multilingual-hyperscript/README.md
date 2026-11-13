@@ -40,17 +40,17 @@ language (`on click alternar .active`) read too.
 
 ## Bundle size table
 
-Sizes are gzipped (bytes / 1024), measured on a 7.4.0 build (2026-10-22) of `@lokascript/hyperscript-adapter`, whose bundles this package copies; a page adds \_hyperscript itself.
+Sizes are gzipped (bytes / 1024), measured on a 7.6.0 build (2026-11-13) of `@lokascript/hyperscript-adapter`, whose bundles this package copies; a page adds \_hyperscript itself.
 
 | Bundle              | URL suffix                                        | Gzipped     | Languages          |
 | ------------------- | ------------------------------------------------- | ----------- | ------------------ |
-| All 24              | `dist/hyperscript-i18n.global.js`                 | ~282 KB     | All                |
-| Western             | `dist/hyperscript-i18n-western.global.js`         | ~144 KB     | es, pt, fr, de     |
-| East Asian          | `dist/hyperscript-i18n-east-asian.global.js`      | ~144 KB     | ja, ko, zh         |
-| South Asian         | `dist/hyperscript-i18n-south-asian.global.js`     | ~140 KB     | hi, bn             |
-| Southeast Asian     | `dist/hyperscript-i18n-southeast-asian.global.js` | ~144 KB     | id, ms, th, tl, vi |
-| Slavic              | `dist/hyperscript-i18n-slavic.global.js`          | ~146 KB     | pl, ru, uk         |
-| Single language     | `dist/hyperscript-i18n-es.global.js` (etc.)       | ~131–136 KB | one                |
+| All 24              | `dist/hyperscript-i18n.global.js`                 | ~280 KB     | All                |
+| Western             | `dist/hyperscript-i18n-western.global.js`         | ~146 KB     | es, pt, fr, de     |
+| East Asian          | `dist/hyperscript-i18n-east-asian.global.js`      | ~145 KB     | ja, ko, zh         |
+| South Asian         | `dist/hyperscript-i18n-south-asian.global.js`     | ~142 KB     | hi, bn             |
+| Southeast Asian     | `dist/hyperscript-i18n-southeast-asian.global.js` | ~146 KB     | id, ms, th, tl, vi |
+| Slavic              | `dist/hyperscript-i18n-slavic.global.js`          | ~148 KB     | pl, ru, uk         |
+| Single language     | `dist/hyperscript-i18n-es.global.js` (etc.)       | ~131–138 KB | one                |
 | Lite (BYO semantic) | `dist/hyperscript-i18n-lite.global.js`            | ~2.3 KB     | (external bundle)  |
 
 ## npm / bundler usage
