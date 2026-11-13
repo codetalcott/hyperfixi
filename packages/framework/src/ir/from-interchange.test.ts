@@ -12,11 +12,6 @@ import type { SemanticNode, SemanticValue } from '../core/types';
 // Helpers
 // =============================================================================
 
-/** Type-assert helper for SemanticValue */
-function val(v: SemanticValue) {
-  return v;
-}
-
 // =============================================================================
 // 1. Direct Value Mappings
 // =============================================================================

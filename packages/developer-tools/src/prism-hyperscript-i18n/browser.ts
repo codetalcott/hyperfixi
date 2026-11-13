@@ -22,7 +22,7 @@
  */
 
 import { registerPrismHyperfixi } from './index';
-import type { PrismLike, PrismHyperfixiOptions } from './types';
+import type { PrismLike } from './types';
 
 // Extend Window interface for TypeScript
 declare global {

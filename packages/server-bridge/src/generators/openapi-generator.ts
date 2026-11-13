@@ -4,7 +4,7 @@ import type { RouteGenerator } from './types.js';
 export class OpenAPIGenerator implements RouteGenerator {
   readonly framework = 'openapi';
 
-  generate(routes: RouteDescriptor[], options: GeneratorOptions): GenerateResult {
+  generate(routes: RouteDescriptor[], _options: GeneratorOptions): GenerateResult {
     const files: GeneratedFile[] = [];
     const warnings: string[] = [];
 

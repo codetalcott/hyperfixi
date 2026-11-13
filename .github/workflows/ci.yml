@@ -661,6 +661,11 @@ jobs:
       - name: Validate package versions
         run: node scripts/validate-versions.cjs
 
+      # Cheap guard: a published package lists `files`, without `src` (the
+      # sourcemaps in dist embed the sources).
+      - name: Verify published file lists
+        run: node scripts/check-published-files.cjs
+
       # Cheap guard: the @lokascript/domains version the lockfile pins must
       # peer (not depend) on the contract packages this repo publishes, at a
       # range the repo's own version satisfies. Reads only manifests + the

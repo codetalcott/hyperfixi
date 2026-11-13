@@ -191,6 +191,7 @@ describe('expression connectives and locatives render English (Phase 3)', () => 
     );
     expect(zh).toContain('the value of #price as Number');
     expect(zh).toContain('my value as Number');
+    // oxlint-disable-next-line no-control-regex -- deliberate: the class is "any non-ASCII character"
     expect(zh).not.toMatch(/[^\x00-\x7F]/); // no leaked foreign surface
   });
 
@@ -204,6 +205,7 @@ describe('expression connectives and locatives render English (Phase 3)', () => 
     );
     expect(hi).toContain('the value of #price as Number');
     expect(hi).toContain('my value as Number');
+    // oxlint-disable-next-line no-control-regex -- deliberate: the class is "any non-ASCII character"
     expect(hi).not.toMatch(/[^\x00-\x7F]/); // no leaked foreign surface
   });
 

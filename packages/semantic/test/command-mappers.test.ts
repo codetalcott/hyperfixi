@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { buildAST, ASTBuilder } from '../src/ast-builder';
+import { ASTBuilder } from '../src/ast-builder';
 import { resolveCommandMapper } from '../src/ast-builder/command-mappers';
 import type { CommandSemanticNode, SemanticValue, ActionType } from '../src/types';
 

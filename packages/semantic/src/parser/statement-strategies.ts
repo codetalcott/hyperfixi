@@ -35,7 +35,7 @@ export function isNestedBlock(node: SemanticNode | undefined): boolean {
  * A custom event's name: a word (any script), then word characters and the
  * separators event names use (`draggable:start`, `my-event`, `a.b`).
  */
-export const CUSTOM_EVENT_NAME = /^[\p{L}_$][\p{L}\p{N}_$:.\-]*$/u;
+export const CUSTOM_EVENT_NAME = /^[\p{L}_$][\p{L}\p{N}_$:.-]*$/u;
 
 /**
  * How many tokens a loop's head (`for`, `repeat`) takes at the start of

@@ -56,7 +56,7 @@ import { turkishProfile } from '../src/generators/profiles/turkish';
 import { ukrainianProfile } from '../src/generators/profiles/ukrainian';
 import { vietnameseProfile } from '../src/generators/profiles/vietnamese';
 
-import type { LanguageProfile, KeywordTranslation } from '../src/generators/profiles/types';
+import type { LanguageProfile } from '../src/generators/profiles/types';
 
 // Import the English i18n dictionary for canonical category mapping
 import { en as englishDictionary } from '../../i18n/src/dictionaries/en';
@@ -168,24 +168,6 @@ const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 const languageArg = args.find(a => a.startsWith('--language='));
 const targetLanguage = languageArg ? languageArg.split('=')[1] : undefined;
-
-// ---------------------------------------------------------------------------
-// Utility: read existing dictionary file and parse out category data
-// ---------------------------------------------------------------------------
-
-function readExistingDictionary(code: string): Dictionary | null {
-  const filePath = path.join(I18N_DICT_DIR, `${code}.ts`);
-  if (!fs.existsSync(filePath)) {
-    return null;
-  }
-
-  // We can't dynamically import .ts files easily in all environments,
-  // so we parse the TypeScript source to extract the dictionary object.
-  // However, since we're running under tsx, we can use dynamic import.
-  // But dynamic import in a sync context is tricky. Instead, let's use
-  // a simpler approach: import all dictionaries statically below.
-  return null; // Placeholder - we use the EXISTING_DICTS map instead
-}
 
 // Import existing dictionaries for preserving non-derivable categories
 import { ar } from '../../i18n/src/dictionaries/ar';

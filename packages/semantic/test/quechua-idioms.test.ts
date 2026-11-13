@@ -287,7 +287,7 @@ describe('Quechua Command Patterns', () => {
   });
 
   describe('Put/Get/Set commands', () => {
-    it('should parse "\"text\" ta #output man churay"', () => {
+    it('should parse ""text" ta #output man churay"', () => {
       const tokens = getTokens('"text" ta #output man churay', 'qu');
       expect(tokens.length).toBeGreaterThan(0);
     });

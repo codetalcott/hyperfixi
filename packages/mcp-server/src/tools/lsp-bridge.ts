@@ -612,7 +612,7 @@ function getValidCommandsForLanguage(language: string): string[] {
     const profile = semanticPackage.tryGetProfile(language);
     if (profile && profile.keywords) {
       const commands: string[] = [...englishCommands]; // Always include English for compatibility
-      for (const [engCommand, translation] of Object.entries(profile.keywords)) {
+      for (const [_engCommand, translation] of Object.entries(profile.keywords)) {
         const trans = translation as { primary?: string; alternatives?: string[] };
         if (trans.primary) {
           commands.push(trans.primary.toLowerCase());

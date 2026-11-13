@@ -42,6 +42,8 @@ scripts), `scripts/analysis/`, `scripts/testing/` and nine other scripts nothing
 
 The developer-tools prune of 2026-11-13 (tag `archived/developer-tools-2026-11-13`): the private package's CLI (`hyperfixi`/`hfx`/`lks`), visual builder, project generator, analyzer, dev server, profiler, migrator, bundle analyzer and quick-start helpers, about 11,000 lines with their tests. Nothing imported them; the scaffolder could not complete and the profiler measured nothing. The template inventory and the Prism highlighter stay.
 
+`experiments/dixi` (tag `archived/dixi-2026-11-13`): a script that rewrites localized fixi-family attribute names (`fx-acción`) to their English names before fixi reads them, with 24 locale files generated from semantic's profiles, a demo and its acceptance checks. It worked and stood alone; it was the last experiment in the tree and nothing here imported it. Removed 2026-11-13 on the owner's decision. `@lokascript/htmx-adapter` is the maintained package for localized htmx attribute names.
+
 ```bash
 git show archived/cleanup-2026-11-12:<path>
 ```

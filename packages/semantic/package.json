@@ -368,7 +368,7 @@
   },
   "files": [
     "dist",
-    "src",
+    "!dist/**/*.d.ts.map",
     "LICENSE",
     "CHANGELOG.md"
   ],

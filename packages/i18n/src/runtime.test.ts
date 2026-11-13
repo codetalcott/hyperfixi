@@ -1,11 +1,5 @@
 import { describe, it, expect, beforeEach, vi as vitest } from 'vitest';
-import { RuntimeI18nManager, initializeI18n, getI18n, runtimeI18n } from './runtime';
-
-// Reset the global runtimeI18n between tests
-function resetGlobalI18n() {
-  // Directly reset the module-level variable via re-import side effects
-  // We'll test initializeI18n/getI18n via the exported functions
-}
+import { RuntimeI18nManager, initializeI18n, getI18n } from './runtime';
 
 describe('RuntimeI18nManager', () => {
   let manager: RuntimeI18nManager;

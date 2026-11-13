@@ -8,7 +8,6 @@ import { loadPatterns } from './pattern-loader';
 import { selectBundle, getBundleInfo } from './bundle-builder';
 import { ParseValidator } from './validators/parse-validator';
 import { ExecutionValidator, loadExecutionSubset } from './validators/execution-validator';
-import { SizeValidator } from './validators/size-validator';
 import { ConsoleReporter } from './reporters/console-reporter';
 import { JSONReporter } from './reporters/json-reporter';
 import { RegressionReporter } from './reporters/regression-reporter';

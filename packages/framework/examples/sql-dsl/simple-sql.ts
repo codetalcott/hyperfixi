@@ -15,12 +15,8 @@ import {
   defineRole,
   BaseTokenizer,
   getDefaultExtractors,
-  type LanguageTokenizer,
-  type TokenStream,
   type SemanticNode,
-  InMemoryDictionary,
 } from '../../src';
-import { TokenStreamImpl, createToken, createPosition } from '../../src/core/tokenization';
 
 // =============================================================================
 // 1. Define SQL Commands (Domain-Specific)

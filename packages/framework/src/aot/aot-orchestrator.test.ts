@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { DomainAwareScanner } from './domain-scanner';
 import { AOTOrchestrator } from './aot-orchestrator';
-import type { DomainScanConfig, ExtractedSnippet } from './types';
+import type { ExtractedSnippet } from './types';
 import type { DomainCompilationBackend } from './aot-orchestrator';
 import type { MultilingualDSL, CodeGenerator } from '../api/create-dsl';
 import type { SemanticNode } from '../core/types';

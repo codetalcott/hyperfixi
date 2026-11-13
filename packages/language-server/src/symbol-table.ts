@@ -8,7 +8,7 @@
  * in every mode, including a build that shims out the semantic package.
  */
 
-import type { HyperscriptRegion, RegionPosition } from './types.js';
+import type { HyperscriptRegion } from './types.js';
 import { escapeRegExp } from './utils.js';
 
 // =============================================================================
@@ -95,7 +95,7 @@ export function buildSymbolTable(
   // Variable references: :x or $x at a token start. The lookbehind keeps
   // colon-qualified event names (`draggable:start`), CSS pseudo-selectors
   // (`.item:first-child`) and time literals (`12:30`) from becoming variables.
-  const varRefPat = /(?<![\p{L}\p{N}_)\]\-])[:$]\w+/gu;
+  const varRefPat = /(?<![\p{L}\p{N}_)\]-])[:$]\w+/gu;
   // Function calls: word followed by (
   const funcCallPat = /\b(\w+)\s*\(/g;
 

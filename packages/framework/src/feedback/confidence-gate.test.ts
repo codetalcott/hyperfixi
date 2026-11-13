@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { needsDisambiguation, buildDisambiguation } from './confidence-gate';
-import { createCommandNode, createSelector, createLiteral } from '../core/types';
+import { createCommandNode, createSelector } from '../core/types';
 
 // =============================================================================
 // needsDisambiguation()

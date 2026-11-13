@@ -1,6 +1,6 @@
 # @hyperfixi/mcp-server
 
-MCP (Model Context Protocol) server for hyperscript and multilingual DSL development. A connection lists **14 tools** by default (**86** defined): the agent loop below, translation, and proof that a change kept its meaning. The rest come in eight [toolsets](#toolsets), listed when `LOKASCRIPT_MCP_TOOLSETS` names them: **81** with every toolset (the 5 MCP-sampling tools also need `LOKASCRIPT_MCP_LLM_TOOLS=1`). Plus **9 resources** and **9 prompts**.
+MCP (Model Context Protocol) server for hyperscript and multilingual DSL development. A connection lists **14 tools** by default (**81** defined): the agent loop below, translation, and proof that a change kept its meaning. The rest come in seven [toolsets](#toolsets), listed when `LOKASCRIPT_MCP_TOOLSETS` names them: **76** with every toolset (the 5 MCP-sampling tools also need `LOKASCRIPT_MCP_LLM_TOOLS=1`). Plus **9 resources** and **9 prompts**.
 
 ## The agent loop
 
@@ -94,13 +94,12 @@ What a default connection lists: the deterministic checks an agent cannot do for
 
 ## Toolsets
 
-Every other tool belongs to a toolset. `LOKASCRIPT_MCP_TOOLSETS` names the toolsets to list, comma-separated (`domains,lse`), or `all`; the server's startup line on stderr says which are on and warns about a name it does not know. Only the LIST changes: a tool answers a call by name whether or not it is listed. Two toolsets are the exception, because their tools act on the machine the server runs on: `grail` runs the shell commands a `grail.yaml` names and `project` reads the files under a directory the caller names, so their tools are refused unless the toolset is enabled. **81** with every toolset; the 5 MCP-sampling tools below also need `LOKASCRIPT_MCP_LLM_TOOLS=1`.
+Every other tool belongs to a toolset. `LOKASCRIPT_MCP_TOOLSETS` names the toolsets to list, comma-separated (`domains,lse`), or `all`; the server's startup line on stderr says which are on and warns about a name it does not know. Only the LIST changes: a tool answers a call by name whether or not it is listed. One toolset is the exception, because its tools act on the machine the server runs on: `project` reads the files under a directory the caller names, so its tools are refused unless the toolset is enabled. **76** with every toolset; the 5 MCP-sampling tools below also need `LOKASCRIPT_MCP_LLM_TOOLS=1`.
 
 | Toolset    | Tools | What it holds                                                                 |
 | ---------- | ----- | ----------------------------------------------------------------------------- |
 | `domains`  | 26    | `parse_`/`compile_`/`validate_`/`translate_` for each domain DSL, composites  |
 | `lse`      | 10    | LSE bracket syntax and protocol JSON: conversion, feedback, training data     |
-| `grail`    | 5     | GRAIL condition/affordance workflows (reads `grail.yaml` in the server's dir) |
 | `debug`    | 4     | Explain a handler; reason over debug snapshots you assemble                   |
 | `editor`   | 3     | Completions, hover and document symbols (what the language server does)       |
 | `analysis` | 9     | Complexity, metrics, intent, explanations, examples, suggestions              |
@@ -146,18 +145,6 @@ bdd's tools left with domains 4.2.0 and bdd itself with domains 5.0.0: behaviors
 | `lse_validate_and_feedback`    | Validate LSE and return machine-actionable correction hints     |
 | `lse_generate_with_correction` | Stateless LSE generation + self-correction loop (prompt/schema) |
 | `generate_training_data`       | Synthesize (natural language, LSE) pairs from schemas as JSONL  |
-
-### `grail` (5)
-
-Workflow orchestration over a `grail.yaml` in the server's working directory: evaluate conditions, plan dependency-ordered steps, and execute actions with precondition checks, cost-aware planning, and drift detection. See **[GRAIL.md](GRAIL.md)** for the schema and examples.
-
-| Tool          | Description                                                    |
-| ------------- | -------------------------------------------------------------- |
-| `grail_check` | Evaluate conditions, show available/blocked affordances        |
-| `grail_plan`  | Compute dependency-ordered plan for a goal affordance          |
-| `grail_run`   | Execute an affordance with precondition and confirmation gates |
-| `grail_info`  | Return full workflow graph (conditions, affordances, enables)  |
-| `grail_list`  | List all condition and affordance names                        |
 
 ### `debug` (4)
 

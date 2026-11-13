@@ -34,7 +34,7 @@ test.describe('HyperFixi Command Compatibility Tests @comprehensive', () => {
           loaded = true;
           break;
         }
-      } catch (e) {
+      } catch {
         // Try next URL
       }
     }

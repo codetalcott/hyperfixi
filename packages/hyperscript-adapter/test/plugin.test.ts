@@ -169,6 +169,7 @@ describe('hyperscriptI18n plugin', () => {
     // would): the WeakSet no longer knows the new element. Re-processing it
     // feeds already-English text back through translation under lang="es" —
     // which must be an identity no-op, not a mangle.
+    // oxlint-disable-next-line no-self-assign -- deliberate: the innerHTML setter re-parses and replaces the subtree
     container.innerHTML = container.innerHTML;
     hs.process(container);
     expect(container.querySelector('button')!.getAttribute('_')).toBe('toggle .active');

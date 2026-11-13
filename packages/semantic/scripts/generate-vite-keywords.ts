@@ -28,7 +28,7 @@ try {
     stdio: 'inherit',
     cwd: path.resolve(__dirname, '../../..'),
   });
-} catch (error) {
+} catch {
   console.error('Failed to sync vite-plugin keywords');
   process.exit(1);
 }
