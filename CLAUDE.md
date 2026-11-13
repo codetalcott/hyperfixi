@@ -400,7 +400,7 @@ As of 2026-01-23, all CI testing has been consolidated into a single `.github/wo
 | 7   | `unit-tests-packages`     | ✓   | —                 | —       | Vitest on Node 24: every other package; split off #6 by #833         |
 | 8   | `coverage`                | —   | —                 | ✓       | Codecov upload; nightly since 2026-07-29 (was push+main)             |
 | 9   | `browser-tests`           | ✓   | —                 | —       | Playwright `quick` + `comprehensive`; PR-only                        |
-| 10  | `multilingual-validation` | ✓   | —                 | —       | 21-language full sweep + regression gate; PR-only                    |
+| 10  | `multilingual-validation` | ✓   | —                 | —       | 24-language full sweep + regression gate; PR-only                    |
 | 11  | `bundle-size`             | ✓   | —                 | —       | Size report; PR-only (slim post-merge)                               |
 | 14  | `domain-gate`             | ✓   | —                 | —       | round trip + old-input read-back; gated on intent/framework          |
 | 15  | `ci-gate`                 | ✓   | ✓                 | ✓       | `always()` aggregate; fails if any job failed/cancelled (skip is OK) |
