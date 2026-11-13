@@ -18,7 +18,6 @@ import { describe, it, expect } from 'vitest';
 import {
   getProfile,
   getSupportedLocales,
-  profiles,
   englishProfile,
   japaneseProfile,
   chineseProfile,

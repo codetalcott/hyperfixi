@@ -1,15 +1,9 @@
 import { resolve, join } from 'node:path';
-import { mkdir, writeFile, readFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { scanDirectory } from '../scanner/route-scanner.js';
 import { formatConflicts } from '../scanner/conflict-detector.js';
 import { selectGenerator } from '../generators/index.js';
-import {
-  loadManifest,
-  saveManifest,
-  createManifest,
-  diffRoutes,
-  extractUserCode,
-} from '../generators/manifest.js';
+import { loadManifest, saveManifest, createManifest, diffRoutes } from '../generators/manifest.js';
 import { loadConfig } from './config.js';
 interface GenerateOptions {
   dir: string;

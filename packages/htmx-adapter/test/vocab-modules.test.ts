@@ -20,6 +20,7 @@ function loadVocabModule(lang: string): void {
   const source = readFileSync(resolve(VOCAB_DIR, `${lang}.js`), 'utf8');
   // The modules are classic IIFEs targeting window — evaluate in this
   // jsdom context. indirect eval keeps them in global scope.
+  // oxlint-disable-next-line no-eval -- deliberate: loads the repo's own built IIFE module into jsdom's global scope
   (0, eval)(source);
 }
 

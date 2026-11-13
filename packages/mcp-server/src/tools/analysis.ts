@@ -280,7 +280,7 @@ function complexityOf(
 
 function simpleAnalysis(
   code: string,
-  type: 'complexity' | 'metrics'
+  _type: 'complexity' | 'metrics'
 ): { content: Array<{ type: string; text: string }> } {
   // Simple regex-based analysis when core/ast-utils isn't available
   const lines = code.split('\n').length;

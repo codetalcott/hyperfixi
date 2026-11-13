@@ -5,7 +5,6 @@
 import { Elysia } from 'elysia';
 import { BaseLayout } from '../layouts/base';
 import { getAllLanguageCodes, getBaseProfile } from '../profile-loader';
-import { getMergedProfile } from '../merge';
 import { getEditCounts, getEditsForLanguage, logExport } from '../db';
 import { generateProfileSource } from '../export';
 

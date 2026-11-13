@@ -208,6 +208,7 @@ export function readsAsOneExpression(raw: string): boolean {
   }
   const code = body.replace(/"[^"]*"|'[^']*'/g, '');
   if (/["']/.test(code.replace(/'s\b/g, ''))) return false;
+  // oxlint-disable-next-line no-control-regex -- deliberate: the class is "any non-ASCII character"
   if (/[^\x00-\x7F]/.test(code)) return false;
   body = styleRefsAsNames(body);
   const result = parseExpression(body);

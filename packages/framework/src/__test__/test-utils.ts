@@ -14,7 +14,7 @@ import type {
   SemanticValue,
   PatternMatchResult,
 } from '../core/types';
-import type { CommandSchema, RoleSpec } from '../schema';
+import type { CommandSchema } from '../schema';
 import type { PatternGenLanguageProfile } from '../generation/profile';
 import type { LanguageConfig, MultilingualDSL } from '../api';
 import { TokenStreamImpl, createToken, createPosition } from '../core/tokenization';
@@ -45,7 +45,7 @@ export function createMockTokenizer(overrides?: Partial<LanguageTokenizer>): Lan
         );
       return new TokenStreamImpl(tokens);
     },
-    classifyToken(token: string): 'keyword' | 'identifier' | 'literal' | 'operator' {
+    classifyToken(_token: string): 'keyword' | 'identifier' | 'literal' | 'operator' {
       return 'identifier';
     },
     ...overrides,

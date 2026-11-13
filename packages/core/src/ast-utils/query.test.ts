@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { query, queryAll, parseSelector } from './query.js';
-import type { ASTNode, QueryMatch } from './types.js';
+import type { ASTNode } from './types.js';
 
 // Create complex test AST
 const createTestAST = (): ASTNode =>

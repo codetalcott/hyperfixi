@@ -15,7 +15,7 @@ import open from 'open';
 
 import { extractSnippetsFromFile, extractSnippetsFromProject } from './extractor';
 import { updateSnippetInFile, StaleFileError, ContentMismatchError } from './editor';
-import type { Snippet, InventorySummary, InventoryConfig, SnippetCategory } from './types';
+import type { Snippet, InventorySummary, InventoryConfig } from './types';
 
 /**
  * Inventory Server — scans templates and serves an interactive dashboard.
@@ -948,7 +948,7 @@ function generateInventoryHTML(projectDir: string): string {
             '" data-id="' + s.id + '">';
 
           // Header (always visible)
-          html += '<div class="snippet-header" onclick="toggleSnippet(\\''+s.id+'\\')\">';
+          html += '<div class="snippet-header" onclick="toggleSnippet(\\''+s.id+'\\')">';
           html += '<span class="snippet-location">' + escapeHTML(s.relativePath) + ':' + s.line + '</span>';
           html += '<span class="snippet-attr ' + s.category + '">' + escapeHTML(s.attributeName) + '</span>';
           html += '<span class="snippet-preview">' + escapeHTML(preview) + '</span>';

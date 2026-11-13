@@ -100,8 +100,6 @@ function getBundlePath(bundleName: string): string {
 export async function findBundleForLanguages(
   languages: LanguageCode[]
 ): Promise<BundleInfo | null> {
-  const langSet = new Set(languages);
-
   // Find the smallest predefined bundle that contains all required languages
   let bestBundle: { name: string; langs: LanguageCode[] } | null = null;
   let minSize = Infinity;
@@ -260,8 +258,6 @@ export async function selectBundle(
  * Find predefined group name for languages
  */
 function findGroupForLanguages(languages: LanguageCode[]): string | null {
-  const langSet = new Set(languages);
-
   for (const [bundleName, bundleLangs] of PREDEFINED_BUNDLES.entries()) {
     const bundleSet = new Set(bundleLangs);
 

@@ -21,7 +21,6 @@ import {
   toggleSchema,
   putSchema,
   onSchema,
-  commandSchemas,
   getSchema,
   getSchemasByCategory,
   getDefinedSchemas,

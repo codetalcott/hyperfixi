@@ -2,15 +2,13 @@
  * Tests for Testing Framework Core Functions
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
   describe as describeTest,
   it as itTest,
   test,
   describe_skip,
   it_skip,
-  describe_only,
-  it_only,
   beforeAll,
   afterAll,
   beforeEach as beforeEachTest,

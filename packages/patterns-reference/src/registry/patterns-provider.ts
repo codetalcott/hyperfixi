@@ -8,9 +8,9 @@
  */
 
 import { getDatabase } from '../database/connection';
-import type { Pattern, Translation, ConnectionOptions } from '../types';
-import { getPatternsByCommand, getAllPatterns } from '../api/patterns';
-import { getTranslationsByLanguage, getVerifiedTranslations } from '../api/translations';
+import type { ConnectionOptions } from '../types';
+import { getPatternsByCommand } from '../api/patterns';
+import { getVerifiedTranslations } from '../api/translations';
 
 // =============================================================================
 // Types

@@ -48,6 +48,7 @@ function shippedFiles(): string[] {
   return out;
 }
 
+// oxlint-disable-next-line no-control-regex -- deliberate: the class is "any non-ASCII character"
 const nonAsciiCount = (source: string): number => (source.match(/[^\x00-\x7F]/g) ?? []).length;
 
 describe('shipped dist artifacts are charset-independent', () => {

@@ -9,7 +9,7 @@
  * Run: npx tsx scripts/benchmark-ast-builder.ts
  */
 
-import { parse, render, buildAST, type SemanticNode } from '../src';
+import { parse, render, buildAST } from '../src';
 
 // =============================================================================
 // Test Data
@@ -153,7 +153,7 @@ async function main() {
   console.log('3. Multilingual Direct AST Path');
   console.log('-'.repeat(50));
 
-  for (const { lang, input, expected } of MULTILINGUAL_INPUTS.slice(0, 5)) {
+  for (const { lang, input } of MULTILINGUAL_INPUTS.slice(0, 5)) {
     const result = benchmark(`  ${lang.toUpperCase()}: "${input.slice(0, 25)}..."`, () => {
       const node = parse(input, lang);
       if (node) {

@@ -135,7 +135,13 @@ describe('implicit schema defaults', () => {
       // That difference is the feature, not a leak — see the companion
       // assertion below — but it is orthogonal to what this test is about.
       const withoutSpan = (node: unknown) => {
-        const { start, end, line, column, ...rest } = (node ?? {}) as Record<string, unknown>;
+        const {
+          start: _start,
+          end: _end,
+          line: _line,
+          column: _column,
+          ...rest
+        } = (node ?? {}) as Record<string, unknown>;
         return rest;
       };
       expect(withoutSpan(astFor('focus').semanticRoles?.patient)).toEqual(

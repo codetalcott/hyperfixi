@@ -623,7 +623,7 @@ function inferSelectorKind(
   if (value.startsWith('[')) return 'attribute';
   if (value.startsWith('<') || value.startsWith('*')) return 'element';
   // Check for combinators indicating complex selectors
-  if (/[>\+~ ]/.test(value) && value.length > 1) return 'complex';
+  if (/[>+~ ]/.test(value) && value.length > 1) return 'complex';
   return undefined;
 }
 

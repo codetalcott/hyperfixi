@@ -3,7 +3,7 @@
  * Tests for CoreTestRunner, ParallelTestRunner, createTestRunner, and measurePerformance
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { CoreTestRunner, ParallelTestRunner, createTestRunner, measurePerformance } from './runner';
 import type { TestSuite, TestCase, TestConfig, TestContext } from './types';
 

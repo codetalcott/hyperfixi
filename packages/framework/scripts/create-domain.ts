@@ -731,11 +731,9 @@ See the Domain Author Guide for detailed instructions:
 `);
 
   // Post-scaffold validation (Phase 7.4)
-  const relPath = path.relative(process.cwd(), args.output);
   console.log('  Running post-scaffold validation...');
 
   try {
-    const { execSync } = await import('node:child_process');
     // Count generated files
     const files = countFiles(args.output);
     console.log(`  Generated ${files} files`);

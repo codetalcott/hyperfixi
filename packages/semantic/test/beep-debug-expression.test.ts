@@ -28,6 +28,7 @@ const CORPUS: Array<[string, string]> = [
   ['hi', '$x को beep! मेरा मान में सेट क्लिक पर'],
 ];
 
+// oxlint-disable-next-line no-control-regex -- deliberate: the class is "any non-ASCII character"
 const hasNonAscii = (s: string): boolean => /[^\x00-\x7F]/.test(s);
 
 describe('beep! debug-expression renders canonical English (no glue, no leak)', () => {
