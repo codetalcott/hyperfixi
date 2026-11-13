@@ -206,12 +206,13 @@ cd packages/testing-framework && npx tsx src/vocab/cli.ts validate
 npm run test:check --prefix packages/testing-framework
 
 # 3. Everything the `lint-typecheck` JOB runs that no test suite does.
-#    Eight guard scripts + their two self-tests, then oxlint, then the
+#    Nine guard scripts + their two self-tests, then oxlint, then the
 #    per-package typechecks and core's scripts/ tsconfig. `bash -e`, so in CI
 #    the FIRST failure hides the rest.
 for s in check-ci-build-order check-bundle-shards check-test-check-list \
          check-ci-test-list check-ci-job-lists validate-versions \
-         check-domains-peer-major check-semantic-boundary; do
+         check-domains-peer-major check-semantic-boundary \
+         check-published-files; do
   node scripts/$s.cjs || echo "FAILED: $s"
 done
 for t in check-semantic-boundary check-domains-peer-major; do

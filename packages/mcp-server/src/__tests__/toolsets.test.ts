@@ -25,8 +25,8 @@ describe('parseToolsets', () => {
   });
 
   it('reads a comma or space list, in any case', () => {
-    const { enabled, unknown } = parseToolsets(' Domains, lse grail ');
-    expect([...enabled].sort()).toEqual(['core', 'domains', 'grail', 'lse']);
+    const { enabled, unknown } = parseToolsets(' Domains, lse debug ');
+    expect([...enabled].sort()).toEqual(['core', 'debug', 'domains', 'lse']);
     expect(unknown).toEqual([]);
   });
 
@@ -44,7 +44,7 @@ describe('parseToolsets', () => {
 describe('listedTools', () => {
   const tools = [
     { name: 'validate_and_compile' },
-    { name: 'grail_check' },
+    { name: 'debug_explain_handler' },
     { name: 'parse_sql' },
     { name: 'not_assigned' },
   ];
@@ -57,10 +57,10 @@ describe('listedTools', () => {
   });
 
   it("adds a toolset's tools, and a registry tool to domains", () => {
-    const names = listedTools(tools, parseToolsets('grail,domains').enabled, isDomainTool).map(
+    const names = listedTools(tools, parseToolsets('debug,domains').enabled, isDomainTool).map(
       t => t.name
     );
-    expect(names).toEqual(['validate_and_compile', 'grail_check', 'parse_sql']);
+    expect(names).toEqual(['validate_and_compile', 'debug_explain_handler', 'parse_sql']);
   });
 
   it('never lists a tool with no toolset', () => {
@@ -96,20 +96,21 @@ describe('refusedCall', () => {
   const off = parseToolsets(undefined).enabled;
 
   it('names the tools that act on the machine', () => {
-    expect([...MACHINE_TOOLSETS].sort()).toEqual(['grail', 'project']);
+    expect([...MACHINE_TOOLSETS].sort()).toEqual(['project']);
   });
 
-  it('refuses a shell-running or file-reading tool whose toolset is off', () => {
-    for (const name of ['grail_run', 'grail_check', 'scan_inventory', 'query_inventory']) {
+  it('refuses a file-reading tool whose toolset is off', () => {
+    for (const name of ['scan_inventory', 'query_inventory', 'extract_routes']) {
       expect(refusedCall(name, off, isDomainTool), name).toMatch(/LOKASCRIPT_MCP_TOOLSETS=/);
     }
   });
 
   it('lets it run once the toolset is on', () => {
-    const on = parseToolsets('grail,project').enabled;
-    expect(refusedCall('grail_run', on, isDomainTool)).toBeUndefined();
+    const on = parseToolsets('project').enabled;
     expect(refusedCall('scan_inventory', on, isDomainTool)).toBeUndefined();
-    expect(refusedCall('grail_run', parseToolsets('project').enabled, isDomainTool)).toBeDefined();
+    expect(
+      refusedCall('scan_inventory', parseToolsets('debug').enabled, isDomainTool)
+    ).toBeDefined();
   });
 
   it('answers every other hidden tool, and leaves unknown names to the dispatcher', () => {

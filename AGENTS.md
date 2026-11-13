@@ -65,7 +65,7 @@ It installs the engine with it (`@hyperfixi/engine`; before 7.5.0 an optional
 peer `npx` left out, and every error only the engine catches came back `ok`). A
 result whose engine check could not run says so: `ENGINE_CHECK_SKIPPED`
 (`info`). It lists 14 core tools, every one this loop names; the rest are in toolsets
-(`domains`, `lse`, `grail`, `debug`, `editor`, `analysis`, `profiles`,
+(`domains`, `lse`, `debug`, `editor`, `analysis`, `profiles`,
 `project`) that `LOKASCRIPT_MCP_TOOLSETS` lists, comma-separated or `all`. The
 server also advertises this loop via MCP `instructions`, so a connected agent
 needs none of this file to find it:

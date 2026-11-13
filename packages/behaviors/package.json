@@ -98,7 +98,6 @@
   },
   "files": [
     "dist",
-    "src",
     "CHANGELOG.md"
   ],
   "scripts": {

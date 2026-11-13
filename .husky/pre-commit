@@ -36,6 +36,11 @@ if git diff --cached --name-only | grep -qE '^(packages/[^/]+/package\.json|pack
   node scripts/check-ci-job-lists.cjs || exit 1
 fi
 
+# A published package's `files` has no `src` (the sourcemaps embed the sources).
+if git diff --cached --name-only | grep -qE '^packages/[^/]+/package\.json$'; then
+  node scripts/check-published-files.cjs || exit 1
+fi
+
 # Verify the @lokascript/domains the lockfile pins still peers on THIS repo's
 # contract line. Fires when a workspace package.json (a range bump), the
 # lockfile (a relock), or core's manifest (a version bump) is staged.

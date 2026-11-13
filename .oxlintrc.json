@@ -30,7 +30,6 @@
     "**/coverage/**",
     "**/playwright-report/**",
     "**/test-results/**",
-    "experiments/**",
     "packages/*/src/parser/generated/**",
     "**/*.js",
     "**/*.cjs",
