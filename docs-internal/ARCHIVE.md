@@ -27,6 +27,23 @@ around the fixtures. Retired 2026-11-12 after a review: no importer anywhere, ne
 their conformance suite ran in full only on them, not on `@lokascript/intent`. The fixtures live on in
 `packages/intent/fixtures`; `protocol/README.md` has what LSE can and cannot carry.
 
+**The cleanup of 2026-11-12** (`archived/cleanup-2026-11-12`): everything a repo-wide review found that
+no working code reads. From `docs-internal/`: the three design records of core's deleted engine
+(`ENGINE_MIGRATION_PLAN.md`, `PARSER_NEXT_STEPS.md`, `COMMAND_ARCHITECTURE_NEXT_STEPS.md`; comments in
+`scripts/check-semantic-boundary.cjs`, `ci.yml` and `multilingual/OPEN_ITEMS.md` still cite them) and
+`hyperscript-org-offer/` (never sent; OPEN_ITEMS PR8). From the rest of the tree:
+`experiments/{analytics,multi-tenant,ssr-support,siren,grail-demo,fixi-spike}` (written against core's
+retired runtime or packages that no longer exist), `clients/` (Go and Python clients for the
+compilation service's HTTP server, removed in 7.0) with its CI job, `packages/core/docs/archive/`
+(84 phase and summary files of the deleted engine), `packages/testing-framework/scratch/` (148 probe
+scripts), `scripts/analysis/`, `scripts/testing/` and nine other scripts nothing ran,
+`.github/workflows/archive/`, the semantic package's three finished plans, and the root's
+`PROGRESS.md`, `publish-all.sh` and `playground.html`.
+
+```bash
+git show archived/cleanup-2026-11-12:<path>
+```
+
 ## Briefs whose arc shipped
 
 Each at its own tag, deleted when its arc was done.

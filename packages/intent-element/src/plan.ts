@@ -165,7 +165,11 @@ function restrictedValue(value: SemanticValue): string | undefined {
       if (!PROPERTY.test(value.property)) return `property "${value.property}" is not a name`;
       return restrictedValue(value.object);
     case 'literal': {
-      if (typeof value.value !== 'string') return undefined;
+      // A number or boolean is written as it is. Anything else that is not a
+      // string (an array, an object) would be written by its `String()`, as code.
+      if (typeof value.value === 'number' || typeof value.value === 'boolean') return undefined;
+      if (typeof value.value !== 'string')
+        return 'a literal that is not a string, number or boolean';
       if (value.interpolates) return 'an interpolated literal is code';
       if (value.dataType === 'string') {
         // A string is written in quotes. With a backslash in it, what closes

@@ -1,7 +1,17 @@
 // Smoke tests for the CLI: argv parsing, exit codes, file output shape.
 import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
-import { mkdirSync, mkdtempSync, writeFileSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import {
+  mkdirSync,
+  mkdtempSync,
+  writeFileSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  symlinkSync,
+} from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { run } from '../dist/cli.js';
@@ -161,4 +171,37 @@ test('--check processes all files before failing', async () => {
     assert.equal(code, 3);
     assert.deepEqual(readdirSync(out).sort(), ['a.es.html', 'b.es.html']);
   });
+});
+
+// The bin as npm installs it: a symlink in node_modules/.bin. The tests above
+// call run() and never start the program, which is how a CLI that did nothing
+// when started through its link (no output, exit 0) passed all of them.
+const CLI = fileURLToPath(new URL('../dist/cli.js', import.meta.url));
+
+test('the bin runs when started through a symlink, as npx starts it', async () => {
+  await withTempDir(async dir => {
+    const link = join(dir, 'hyperscript-i18n');
+    symlinkSync(CLI, link);
+    const help = spawnSync(process.execPath, [link, '--help'], { encoding: 'utf8' });
+    assert.equal(help.status, 0);
+    assert.match(help.stdout, /hyperscript-i18n/);
+    assert.match(help.stdout, /Usage:/);
+
+    const input = join(dir, 'sample.html');
+    const out = join(dir, 'out');
+    writeFileSync(input, SAMPLE_HTML);
+    const run = spawnSync(
+      process.execPath,
+      [link, 'translate', input, '--langs', 'es', '--out', out],
+      { encoding: 'utf8' }
+    );
+    assert.equal(run.status, 0, run.stderr);
+    assert.deepEqual(readdirSync(out), ['sample.es.html']);
+  });
+});
+
+test('the bin runs when started by its own path', () => {
+  const help = spawnSync(process.execPath, [CLI, '--help'], { encoding: 'utf8' });
+  assert.equal(help.status, 0);
+  assert.match(help.stdout, /Usage:/);
 });

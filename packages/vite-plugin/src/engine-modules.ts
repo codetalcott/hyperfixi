@@ -85,9 +85,11 @@ const BLOCK_MODULES: Readonly<Record<string, readonly string[]>> = {
 /**
  * Modules every generated bundle registers. `on` is the handler feature; the
  * conversions (`as Number`, `as JSON`, …) cost 0.5 KB and no scan can tell an
- * `as` conversion from the word.
+ * `as` conversion from the word. `pseudoCommand` reads a call used as a
+ * statement (`alert('hi')`, `me.focus()`): it adds no keyword a scan could
+ * find, and without it such a statement is a parse error in the built bundle.
  */
-const ALWAYS: readonly string[] = ['on', 'conversions'];
+const ALWAYS: readonly string[] = ['on', 'conversions', 'pseudoCommand'];
 
 /** What a scan reports, reduced to what module selection needs. */
 export interface ModuleUsage {
@@ -118,9 +120,14 @@ export function resolveModules(usage: ModuleUsage): ResolvedModules {
   const unknown: string[] = [];
 
   for (const name of usage.commands) {
-    const mod = COMMAND_KEYWORDS.get(name) ?? FEATURE_KEYWORDS.get(name);
-    if (mod) wanted.add(mod);
-    else if (!(name in BLOCK_MODULES)) unknown.push(name);
+    // A keyword can be a command and a feature in two modules: `set` in a
+    // handler is `set`, at the top of a script it is `setFeature`. A scan
+    // cannot tell which it saw, so the word brings both.
+    const mods = [COMMAND_KEYWORDS.get(name), FEATURE_KEYWORDS.get(name)].filter(
+      (mod): mod is string => mod !== undefined
+    );
+    for (const mod of mods) wanted.add(mod);
+    if (mods.length === 0 && !(name in BLOCK_MODULES)) unknown.push(name);
   }
   for (const block of usage.blocks) {
     for (const mod of BLOCK_MODULES[block] ?? []) wanted.add(mod);

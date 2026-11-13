@@ -359,9 +359,18 @@ export function fromProtocolJSON(json: ProtocolNodeJSON): SemanticNode {
   if (json.trigger) {
     const eventName = json.trigger.event;
     roles.set('event' as SemanticRole, createLiteral(eventName, 'string'));
-    const bodyRoles = new Map(roles);
-    bodyRoles.delete('event' as SemanticRole);
-    const bodyNode = createCommandNode(json.action, bodyRoles);
+    // The rest of the node is the handler's one command, read as any other node
+    // is: with its `body`, branches or loop. (Built from `action` and `roles`
+    // alone, a `tell … end` or an `if` under a trigger lost its children.)
+    const {
+      trigger: _trigger,
+      annotations: _annotations,
+      diagnostics: _diagnostics,
+      ...rest
+    } = json;
+    const bodyRoles = { ...(json.roles ?? {}) };
+    delete bodyRoles.event;
+    const bodyNode = fromProtocolJSON({ ...rest, roles: bodyRoles } as ProtocolNodeJSON);
     const node = createEventHandlerNode(
       'on',
       roles,
@@ -594,14 +603,73 @@ function validateValue(
   }
 }
 
-export function validateProtocolJSON(json: unknown): IRDiagnostic[] {
-  const diagnostics: IRDiagnostic[] = [];
+/** The fields that hold child nodes. A reader maps `fromProtocolJSON` over each. */
+const CHILD_LISTS = ['body', 'statements', 'thenBranch', 'elseBranch', 'loopBody'] as const;
 
+/** Deeper than any script nests; a bound, so a cyclic object cannot recurse for ever. */
+const MAX_NODE_DEPTH = 64;
+
+/**
+ * Validate a node and every node inside it. A diagnostic on an inner node
+ * names where it is (`body[0].thenBranch[1]: …`).
+ */
+export function validateProtocolJSON(json: unknown): IRDiagnostic[] {
   if (typeof json !== 'object' || json === null) {
     return [{ severity: 'error', code: 'INVALID_ROOT', message: 'Root must be a JSON object' }];
   }
+  const diagnostics: IRDiagnostic[] = [];
+  validateTree(json as Record<string, unknown>, '', 0, diagnostics);
+  return diagnostics;
+}
 
-  const node = json as Record<string, unknown>;
+function validateTree(
+  node: Record<string, unknown>,
+  path: string,
+  depth: number,
+  out: IRDiagnostic[]
+): void {
+  const own = validateNode(node);
+  for (const d of own) out.push(path ? { ...d, message: `${path}: ${d.message}` } : d);
+
+  for (const list of CHILD_LISTS) {
+    const children = node[list];
+    if (children === undefined || children === null) continue;
+    const at = path ? `${path}.${list}` : list;
+    if (!Array.isArray(children)) {
+      // `body` and `statements` already have their own diagnostic where they are required.
+      const reported = own.some(d => d.code === 'MISSING_BODY' || d.code === 'MISSING_STATEMENTS');
+      if (!reported) {
+        out.push({
+          severity: 'error',
+          code: 'INVALID_CHILDREN',
+          message: `${at} must be an array`,
+        });
+      }
+      continue;
+    }
+    children.forEach((child: unknown, i: number) => {
+      if (typeof child !== 'object' || child === null || Array.isArray(child)) {
+        out.push({
+          severity: 'error',
+          code: 'INVALID_CHILD',
+          message: `${at}[${i}] must be a JSON object`,
+        });
+      } else if (depth >= MAX_NODE_DEPTH) {
+        out.push({
+          severity: 'error',
+          code: 'TOO_DEEP',
+          message: `${at}[${i}] is nested more than ${MAX_NODE_DEPTH} nodes deep`,
+        });
+      } else {
+        validateTree(child as Record<string, unknown>, `${at}[${i}]`, depth + 1, out);
+      }
+    });
+  }
+}
+
+/** One node's own fields; its children are `validateTree`'s. */
+function validateNode(node: Record<string, unknown>): IRDiagnostic[] {
+  const diagnostics: IRDiagnostic[] = [];
   const kind = 'kind' in node ? String(node.kind) : 'command';
 
   if ('kind' in node && !VALID_KINDS.has(kind)) {

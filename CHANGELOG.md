@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`<lse-intent>`'s allow list could be passed with a value nested in a handler**
+  (`@lokascript/intent`, `@hyperfixi/intent-element`; not in a release). `validateProtocolJSON`
+  checked the root node's roles and stopped, and the allow check let any literal that was not a
+  string through: with `allow="toggle"`, a body command whose literal was the array
+  `[".a then call alert(1)"]` was planned and rendered to `toggle .a then call alert(1)`. The
+  validator now reads every node (`body`, `statements`, `thenBranch`, `elseBranch`, `loopBody`),
+  naming the path of an inner diagnostic, and refuses a child that is not a node
+  (`INVALID_CHILD`, `INVALID_CHILDREN`: `fromProtocolJSON` threw a `TypeError` on both after a
+  clean validation). The `trigger` shorthand keeps a block command's body and a conditional's
+  branches, which it dropped.
+- **A bundle from `@hyperfixi/vite-plugin` rejected a call used as a statement and a top-level
+  `set`.** `on click alert('hi')`, `on click me.focus()` and `set $count to 0` were parse errors
+  in a production build and ran with `devFallback: 'everything'`. The pseudo-command module adds
+  no keyword a scan can find, and `set` is a command and a feature in two modules, of which the
+  lookup took one. The first is registered always (with `on` and the conversions); a keyword in
+  both maps brings both. A test requires that some usage selects every engine module.
+- **`npx @hyperscript-tools/i18n` did nothing.** Started through its `node_modules/.bin`
+  symlink, as npm and npx start it, the CLI matched its own entry check against the link's path,
+  ran nothing and exited 0. It compares real paths now, and a test starts the bin through a
+  symlink.
 - **Protocol JSON read back as another script in 94 of the 781 corpus cases it wrote**, with no
   error and with the round-trip gate green. It dropped the `implicit` mark, so a value the parser
   had supplied from a command's default was written back as if the author wrote it (`remove #x`
@@ -37,6 +57,18 @@ patient:.active]`, not `… destination:me`), its reader reads a bare `{…}` as
   this release.
 
 ### Changed
+
+- **`@lokascript/framework/testing` uses your vitest.** It `import`s `expect` from `vitest`, which
+  was a devDependency only, so the build inlined a second copy: the entry was 674 KB, and its
+  `expect` was not the one a caller's test ran under. vitest is an optional peer now and the entry
+  is 2 KB.
+- **`@hyperfixi/testing-framework` is private** and leaves the publish list. What it published
+  was a test runner whose hooks, fixtures and timeouts were never implemented; what the package
+  is, this repo's gates, imports devDependencies and was never usable from npm. 7.6.0 is its last
+  version there.
+- **A `LICENSE` file in every published package.** Eleven declared MIT in `package.json` and
+  shipped no licence text (behaviors, compilation-service, htmx-adapter, i18n, intent-element,
+  language-server, mcp-server, patterns-reference, planner, types-browser, vite-plugin).
 
 - **`<lse-intent>` runs an intent as written or refuses it** (`@hyperfixi/intent-element`,
   breaking). Tested on the real engine with the real renderer, which its unit tests had stubbed,
@@ -136,6 +168,22 @@ Value>`, `AnyNode`) and each kind's fields (`CommandFields`, `EventHandlerFields
 
 ### Removed
 
+- **Dead material a repo-wide review found, 423 files, none of it read by working code.** Kept at
+  the tag `archived/cleanup-2026-11-12` and indexed in `docs-internal/ARCHIVE.md`. Six
+  `experiments/` written against core's retired runtime or packages that no longer exist;
+  `clients/` (Go and Python clients for the compilation service's HTTP server, which left in
+  7.0) and its CI job; the 84 phase and summary files under `packages/core/docs/archive/`; 148
+  probe scripts in `packages/testing-framework/scratch/`; `scripts/analysis/`, `scripts/testing/`
+  and nine other scripts nothing ran, with the root `patterns:*`, `compatibility:*` and
+  `rebuild:*` npm scripts that pointed at them; the design records of core's deleted engine and
+  the unsent hyperscript.org offer in `docs-internal/`; archived workflows; and
+  `@lokascript/semantic`'s `src/public-api.ts`, a second "public API" file nothing imported or
+  built. Root `npm test`, `test:watch`, `test:coverage` and `clean` pass `--if-present`: each
+  failed on the first workspace without that script.
+- **`packages/smart-bundling`** (private, never published): nothing imported it, its
+  "tree-shaking" and gzip figures were constants (`size * 0.8`, `size * 0.7`), and its tests
+  mocked esbuild, rollup and the file system.
+
 - **`SemanticJSON`, the older "LLM JSON" shape**, and its functions. `SemanticJSON` /
   `SemanticJSONValue` (`@lokascript/intent`, framework, compilation-service) and
   `validateSemanticJSON` / `jsonToSemanticNode` / `semanticNodeToJSON` (framework,
@@ -184,26 +232,6 @@ Value>`, `AnyNode`) and each kind's fields (`CommandFields`, `EventHandlerFields
   after a statement's closing bracket is now an error.
 - **`@lokascript/intent`'s README examples did not match the API** (`result.ok`, `defineCommand`'s
   arguments, the envelope call). They are rewritten and each was run.
-
-### Changed
-
-- **`@lokascript/framework/testing` uses your vitest.** It `import`s `expect` from `vitest`, which
-  was a devDependency only, so the build inlined a second copy: the entry was 674 KB, and its
-  `expect` was not the one a caller's test ran under. vitest is an optional peer now and the entry
-  is 2 KB.
-- **`@hyperfixi/testing-framework` is private** and leaves the publish list. What it published
-  was a test runner whose hooks, fixtures and timeouts were never implemented; what the package
-  is, this repo's gates, imports devDependencies and was never usable from npm. 7.6.0 is its last
-  version there.
-- **A `LICENSE` file in every published package.** Eleven declared MIT in `package.json` and
-  shipped no licence text (behaviors, compilation-service, htmx-adapter, i18n, intent-element,
-  language-server, mcp-server, patterns-reference, planner, types-browser, vite-plugin).
-
-### Removed
-
-- **`packages/smart-bundling`** (private, never published): nothing imported it, its
-  "tree-shaking" and gzip figures were constants (`size * 0.8`, `size * 0.7`), and its tests
-  mocked esbuild, rollup and the file system.
 
 ## [7.6.0] - 2026-11-10
 
