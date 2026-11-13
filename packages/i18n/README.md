@@ -21,7 +21,6 @@ npm install @lokascript/i18n
 - **🔍 Language Detection**: Automatically detect the language of hyperscript code from content
 - **✅ Validation**: Comprehensive dictionary validation with coverage reports and warnings
 - **🎯 Type Safety**: Full TypeScript support with comprehensive type definitions
-- **⚡ Performance**: Caching, lazy loading, and optimized translation algorithms
 - **📱 Browser Support**: Modern APIs with graceful fallbacks for legacy environments
 
 ## When to Use i18n vs Semantic
@@ -33,7 +32,7 @@ LokaScript has two packages for multilingual support with different purposes:
 | **@lokascript/semantic** | Parse code written in any language → execute; translate it         | Users **write** hyperscript in their native language; **translate** code |
 | **@lokascript/i18n**     | Per-language vocabulary: dictionaries, keyword providers, profiles | Tools and runtimes that need the **words** of each language              |
 
-**Use @lokascript/semantic** when your users will write hyperscript in their native language. It parses multilingual input directly into executable AST nodes with native idiom support (e.g., Japanese conditionals like `クリックしたら`).
+**Use @lokascript/semantic** when your users will write hyperscript in their native language. It parses multilingual input directly into executable AST nodes with native idiom support (e.g., Korean conditionals like `클릭하면`).
 
 **Use @lokascript/semantic** too when you need to translate code examples between languages for documentation, tutorials, or teaching materials. It parses the code and renders it in the target language's own word order.
 
@@ -47,7 +46,7 @@ const english = 'toggle .active';
 
 // Translate to show Japanese readers the equivalent
 const japanese = translate(english, 'en', 'ja');
-// → ".active を 切り替え"
+// → ".activeを 切り替え"
 ```
 
 **Use @lokascript/i18n** (this package) for the vocabulary itself: keyword dictionaries, keyword providers for parsers and editors, locale detection and formatting, and the word-order profiles.
@@ -119,7 +118,7 @@ module.exports = {
 | English    | `en` | ✅ Complete | SVO        | Base language                              |
 | Spanish    | `es` | ✅ Complete | SVO        | Pluralization, morphological normalization |
 | French     | `fr` | ✅ Complete | SVO        | Pluralization                              |
-| German     | `de` | ✅ Complete | V2         | Pluralization                              |
+| German     | `de` | ✅ Complete | SVO        | Pluralization                              |
 | Japanese   | `ja` | ✅ Complete | SOV        | Native idioms, morphological normalization |
 | Korean     | `ko` | ✅ Complete | SOV        | Native idioms, morphological normalization |
 | Chinese    | `zh` | ✅ Complete | SVO        | Particle handling                          |

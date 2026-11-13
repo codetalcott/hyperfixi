@@ -11,7 +11,7 @@ core's `dist/hyperfixi.js` is this package's `hyperfixi-hs.js`. It is also publi
 
 ## Install
 
-The script-tag bundle, hyperscript and nothing else (34.9 KB gzipped). It installs as
+The script-tag bundle, hyperscript and nothing else (35.3 KB gzipped). It installs as
 `window._hyperscript` and `window.hyperfixi`, and reads the document when it is ready:
 
 ```html
@@ -138,7 +138,7 @@ whenever htmx loads.
 | `src/runtime.ts`, `src/engine.ts`                                | Contexts, scopes, collections, block execution; DOM init, cleanup, public API                                                                                |
 | `src/on.ts`, `src/features.ts`                                   | Features: `on`; `def`, `init`, `behavior`, `install`, top-level `set`                                                                                        |
 | `src/reactivity.ts`, `src/templates.ts`, `src/live-templates.ts` | Optional: `when` / `live` / `bind`; `render` and template text; live templates                                                                               |
-| `src/commands/*`                                                 | 52 command keywords, one module export each                                                                                                                  |
+| `src/commands/*`                                                 | The command modules, one export each (53 keywords in all)                                                                                                    |
 | `src/additions.ts`                                               | The two forms upstream does not have: `new X()` and `toggle <element>`                                                                                       |
 | `src/kit.ts`, `src/ext/*`                                        | What an extension module may call; the extensions, each built to `dist/ext/<name>.js` (script tag) and `.esm.js`                                             |
 | `src/bundles/*`                                                  | Browser bundle entries. `hyperfixi-hs` is the script-tag bundle; `full` is the same modules, for the gate; `core`, `minimal`, `common` exist to measure size |
@@ -225,24 +225,23 @@ what each reader did with it.
   128 handlers, none different, 44 with no effect on either. (`packages/core`'s lane, which
   differed on 31 at first, left with its engine in Phase C4.)
 
-## Measured (2026-10-01, upstream 0.9.93)
+## Measured (upstream 0.9.93)
 
-|                        | this engine (`full` bundle) | `hyperfixi.js`          | upstream |
-| ---------------------- | --------------------------- | ----------------------- | -------- |
-| Whole suite (1,467)    | 1,401                       | 826                     | 1,466    |
-| Command tests (516)    | 516                         | 306                     | 516      |
-| Expression tests (459) | 457                         | 371                     | 459      |
-| Feature tests (254)    | 237                         | 100                     | 253      |
-| Core tests (190)       | 143                         | 49                      | 190      |
-| Template tests (48)    | 48                          | 0                       | 48       |
-| Size, gzipped          | 34.1 KB with every module   | 92 KB engine-only build | 45.8 KB  |
+The suite figures are `upstream-suite/known-failures.json`'s; the sizes are this package's
+`dist/` at 7.6.0 and `hyperscript.org` 0.9.93's `dist/_hyperscript.min.js` (2026-11-13).
 
-Bundle sizes, gzipped: `minimal` (`on` + add / remove / toggle) 16.3 KB, `common` (15 everyday
-commands) 18.4 KB, `full` 34.1 KB, `core` (no commands) 13.8 KB.
+|                     | this engine (`full` bundle)                     | upstream |
+| ------------------- | ----------------------------------------------- | -------- |
+| Whole suite (1,498) | 1,450                                           | —        |
+| Known failures      | 48: `core/` 45, `expressions/` 2, `features/` 1 | —        |
+| Size, gzipped       | 35.3 KB with every module                       | 45.8 KB  |
+
+Bundle sizes, gzipped: `minimal` (`on` + add / remove / toggle) 17.3 KB, `common` (15 everyday
+commands) 19.4 KB, `full` 35.3 KB, `core` (no commands) 14.8 KB.
 
 ## The script-tag bundle: `hyperfixi-hs.js`
 
-`dist/hyperfixi-hs.js` (minified, 34.9 KB gzipped; `hyperfixi-hs.dev.js` is the readable build) is the first product on this engine:
+`dist/hyperfixi-hs.js` (minified, 35.3 KB gzipped; `hyperfixi-hs.dev.js` is the readable build) is the first product on this engine:
 hyperscript and nothing else, every module, no htmx attributes, English only. It installs
 `window._hyperscript`, as upstream does, and the same object as `window.hyperfixi`. The name
 paired with core's `hyperfixi-hx.js` (hyperscript plus htmx, retired in Phase C3). Since C-R4b
@@ -289,13 +288,14 @@ extension. Upstream's one failure is a test that expects its worker extension to
 As a host for the multilingual text path (semantic renders a translation, the adapter's
 `preprocess` turns it back into English, the engine runs the English):
 
-- **Value matrix.** 4,205 cells. English on this engine gives the oracle's value in every cell.
-  Through the adapter in 23 languages, 96,640 of 96,643 (cell, language) pairs do, and the two
-  hosts agree on every pair: the three that miss are the accepted Italian `di` ambiguity, and
-  they miss on upstream too. (`packages/core` missed 8 cells in English; its lanes retired in
-  Phases C2 and C4.)
-- **Parser parity.** Of the 273 distinct English strings the canonical-validity gates put to
-  upstream's parser, the two parsers disagree on none.
+- **Value matrix.** 5,396 cells, 258,864 (cell, lane) pairs (`baselines/value-matrix.json` in
+  `packages/testing-framework`). English on this engine gives the oracle's value in every cell.
+  Through the adapter in 23 languages the baseline lists 432 failing pairs (6 of them accepted),
+  and the two hosts agree on every pair: a language that misses a cell on this engine misses it
+  on upstream too. (`packages/core` missed 8 cells in English; its lanes retired in Phases C2
+  and C4.)
+- **Parser parity.** Of the distinct English strings the canonical-validity gates put to
+  upstream's parser, the two parsers disagree on none (`engine-parser-parity.test.ts`).
 - Of the 164 corpus rows, 153 parse on both engines and 11 on neither, measured on each
   row's raw source (2026-10-04, and swap-view-transition 2026-10-05); none parses on one
   engine only. Ten of the 11 are markup or extension rows (five components;
@@ -369,7 +369,8 @@ Considered and not added: core's `swap` strategies (upstream's `swap` means some
 ## Where the bytes are
 
 `npm run cost` rebuilds the full bundle without each registered module and prints the
-difference. Of the 34.1 KB: the fixed core (tokenizer, parser, the core expression kinds,
+difference. Measured 2026-10-01, when the full bundle was 34.1 KB (it is 35.3 KB now). Of the
+34.1 KB: the fixed core (tokenizer, parser, the core expression kinds,
 runtime, engine) is 12.2 KB; `on` is 1.6; the optional modules add up to 15.1; code that
 several modules share is 5.2. The largest modules: `expressionsExtra` 1.5, `reactivity` 1.3,
 `render` 1.0, `repeat` 0.8, `toggle` 0.8, `fetch` 0.7, `pick` 0.7. A simple command costs 20 to
@@ -393,4 +394,4 @@ The fixed core is three quarters of a small bundle. The comparison operators (`i
 by stubbing them out. They stay in the core by decision (2026-10-01): a bundle without them
 would reject `when it matches .x`, and simpler bundles were preferred to smaller ones.
 
-Source: 8,100 lines, one documented type assertion (`num` in `src/util.ts`).
+Source: 8,800 lines, one documented type assertion (`num` in `src/util.ts`).

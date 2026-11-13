@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`@hyperfixi/mcp-server` ran shell commands and read files for a toolset that was off.**
+  `LOKASCRIPT_MCP_TOOLSETS` decided what `tools/list` showed and nothing else, so `grail_run`
+  ran the commands of a `grail.yaml` in the server's directory, and `scan_inventory` read any
+  directory named to it, on a server started with neither toolset. The tools of `grail` and
+  `project` are now refused unless their toolset is enabled; every other hidden tool still
+  answers a call by name.
+- **`get_bundle_config` quoted sizes the bundles outgrew, and file names that do not exist**
+  (`@hyperfixi/mcp-server`). A per-language adapter bundle was "86 KB" and is 137 KB gzipped;
+  semantic's English bundle was `browser-en.global.js (20 KB)` and is `browser-en.en.global.js`,
+  133 KB. A test holds each quoted size to the built file. `scan_inventory` scanned with a
+  different extractor in this repository than in an install (it imported a private package when
+  one was present); it has one now.
 - **`<lse-intent>`'s allow list could be passed with a value nested in a handler**
   (`@lokascript/intent`, `@hyperfixi/intent-element`; not in a release). `validateProtocolJSON`
   checked the root node's roles and stopped, and the allow check let any literal that was not a
@@ -168,6 +180,9 @@ Value>`, `AnyNode`) and each kind's fields (`CommandFields`, `EventHandlerFields
 
 ### Removed
 
+- **`lse_pattern_stats`** (`@hyperfixi/mcp-server`). Nothing ever recorded an event for it to
+  count: every call answered "No pattern events recorded yet". 86 tools are defined, 81 listed
+  with every toolset.
 - **Dead material a repo-wide review found, 423 files, none of it read by working code.** Kept at
   the tag `archived/cleanup-2026-11-12` and indexed in `docs-internal/ARCHIVE.md`. Six
   `experiments/` written against core's retired runtime or packages that no longer exist;
