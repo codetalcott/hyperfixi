@@ -26,7 +26,7 @@ export function listResources(): Resource[] {
     {
       uri: 'hyperscript://docs/commands',
       name: 'Hyperscript Commands Reference',
-      description: 'Complete reference for all hyperscript commands',
+      description: 'Reference for the common hyperscript commands',
       mimeType: 'text/markdown',
     },
     {
@@ -51,28 +51,28 @@ export function listResources(): Resource[] {
       uri: 'hyperscript://languages',
       name: 'Supported Languages',
       description:
-        'List of supported languages with examples, LokaScript semantic bundles, and adapter bundles for original _hyperscript',
+        'The 24 supported languages with an example in each, the @lokascript/semantic browser bundles, and the @lokascript/hyperscript-adapter bundles',
       mimeType: 'application/json',
     },
     {
       uri: 'hyperscript://adapter',
       name: 'Hyperscript Adapter Guide',
       description:
-        'Guide for @lokascript/hyperscript-adapter — multilingual plugin for original _hyperscript. Includes setup, bundle selection, and limitations.',
+        'Guide for @lokascript/hyperscript-adapter — multilingual plugin for original _hyperscript and @hyperfixi/engine. Includes setup, bundle selection, and limitations.',
       mimeType: 'text/markdown',
     },
     {
       uri: 'hyperscript://adapter/compatibility',
       name: 'Adapter Language Compatibility Matrix',
       description:
-        'Structured JSON showing per-language confidence levels, command coverage, bundle availability, and known limitations for the adapter.',
+        'Structured JSON listing each language the adapter translates (name, word order, direction) and the bundles that hold it.',
       mimeType: 'application/json',
     },
     {
       uri: 'hyperscript://setup/guide',
       name: 'Setup Decision Guide',
       description:
-        'Structured decision tree for choosing between LokaScript and original _hyperscript adapter, and selecting the right bundle.',
+        'Structured decision tree for original _hyperscript or @hyperfixi/engine, English or multilingual, and selecting the right bundle.',
       mimeType: 'application/json',
     },
     {

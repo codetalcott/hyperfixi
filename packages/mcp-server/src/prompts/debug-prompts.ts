@@ -3,7 +3,10 @@
  *
  * Exposes debugging workflows as MCP Prompts that Claude can use to
  * help developers understand execution state, diagnose issues, and
- * suggest appropriate breakpoint placements.
+ * suggest where to put `breakpoint` commands. There is no interactive
+ * debugger: the snapshots are JSON the developer assembles (the engine's
+ * `breakpoint` command pauses in the browser's DevTools; `log` and `beep!`
+ * print values).
  */
 
 import type { Prompt, GetPromptResult } from '@modelcontextprotocol/server';
@@ -16,12 +19,12 @@ const DEBUG_PROMPTS: Prompt[] = [
   {
     name: 'debug_explain_state',
     description:
-      'Explain the current debug state when paused in the HyperFixi debugger. Provide a snapshot of the execution state and get a human-friendly explanation.',
+      'Explain the state of a hyperscript handler at one command (as noted at a `breakpoint` command, or from `log` / `beep!` output). Provide a snapshot of the state and get a human-friendly explanation.',
     arguments: [
       {
         name: 'snapshot',
         description:
-          'JSON-serialized DebugSnapshot: { commandName, element, variables, depth, index }',
+          'JSON snapshot you assemble: { commandName, element, variables, depth, index } (the shape debug_analyze_snapshot takes)',
         required: true,
       },
       {
@@ -53,7 +56,7 @@ const DEBUG_PROMPTS: Prompt[] = [
       },
       {
         name: 'history',
-        description: 'JSON-serialized array of DebugSnapshot objects showing execution history',
+        description: 'JSON array of such snapshots, in execution order',
         required: false,
       },
     ],
@@ -61,7 +64,7 @@ const DEBUG_PROMPTS: Prompt[] = [
   {
     name: 'debug_suggest_breakpoints',
     description:
-      'Given hyperscript code and a description of the issue, suggest where to place breakpoints for effective debugging.',
+      'Given hyperscript code and a description of the issue, suggest where to put `breakpoint` commands (and `log` / `beep!`) for effective debugging.',
     arguments: [
       {
         name: 'code',
@@ -109,7 +112,7 @@ export function isDebugPrompt(name: string): boolean {
 function renderExplainState(args: Record<string, string>): GetPromptResult {
   const { snapshot, handler_code } = args;
 
-  let text = `I'm paused in the HyperFixi interactive debugger. Here is my current execution state:\n\n`;
+  let text = `I'm debugging a hyperscript handler (run by @hyperfixi/engine). Here is the state I recorded at one command:\n\n`;
   text += `**Debug Snapshot:**\n\`\`\`json\n${snapshot}\n\`\`\`\n\n`;
 
   if (handler_code) {
@@ -137,7 +140,7 @@ function renderWhyWrong(args: Record<string, string>): GetPromptResult {
   text += `**Actual:** ${actual}\n\n`;
 
   if (history) {
-    text += `**Execution history (DebugSnapshots):**\n\`\`\`json\n${history}\n\`\`\`\n\n`;
+    text += `**Execution history (snapshots):**\n\`\`\`json\n${history}\n\`\`\`\n\n`;
   }
 
   text += `Please analyze:\n`;
@@ -158,8 +161,8 @@ function renderSuggestBreakpoints(args: Record<string, string>): GetPromptResult
   text += `\`\`\`hyperscript\n${code}\n\`\`\`\n\n`;
   text += `**Issue:** ${issue}\n\n`;
   text += `Please suggest:\n`;
-  text += `1. Where to place breakpoints (by command name or element selector)\n`;
-  text += `2. What variables to watch at each breakpoint\n`;
+  text += `1. Where in the code to add a \`breakpoint\` command (it pauses in the browser's DevTools) or a \`log\` / \`beep!\`\n`;
+  text += `2. What values to inspect at each point\n`;
   text += `3. A step-by-step debugging strategy to isolate the issue`;
 
   return {
