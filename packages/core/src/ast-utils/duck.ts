@@ -5,7 +5,7 @@
  * to stay that way rather than adopt `ast/nodes.ts`'s union outright:
  *
  *   - it is PUBLIC — `@hyperfixi/core/ast-utils` is a package export, and
- *     `mcp-server`, `language-server` and `developer-tools` all `await import`
+ *     `mcp-server` and `language-server` both `await import`
  *     it and feed it whatever AST they hold;
  *   - its modules discriminate on kinds NO core parser emits (`conditional`,
  *     `logicalExpression`, `returnStatement`, `program`, `function`) and read
