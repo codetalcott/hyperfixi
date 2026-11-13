@@ -1,37 +1,41 @@
 # @lokascript/language-server
 
-Language Server Protocol (LSP) implementation supporting both **original \_hyperscript** and **LokaScript** (a 100% compatible superset with extensions).
+Language Server Protocol (LSP) implementation supporting both **original \_hyperscript** and **LokaScript** (the same grammar, run by `@hyperfixi/engine`, in 24 languages).
 
 ## Multi-Mode Support
 
 The language server supports four operating modes:
 
-| Mode                 | Commands           | Multilingual | Use Case                                   |
-| -------------------- | ------------------ | ------------ | ------------------------------------------ |
-| **hyperscript**      | \_hyperscript only | English only | Original \_hyperscript users               |
-| **hyperscript-i18n** | \_hyperscript only | 24 languages | Users of `@lokascript/hyperscript-adapter` |
-| **lokascript**       | All (extended)     | 24 languages | Full LokaScript development                |
-| **auto**             | (detected)         | (detected)   | Most users - just works                    |
+| Mode                 | Engine additions | Multilingual | Use Case                                   |
+| -------------------- | ---------------- | ------------ | ------------------------------------------ |
+| **hyperscript**      | Flagged          | English only | Original \_hyperscript users               |
+| **hyperscript-i18n** | Flagged          | 24 languages | Users of `@lokascript/hyperscript-adapter` |
+| **lokascript**       | Accepted         | 24 languages | Full LokaScript development                |
+| **auto**             | (detected)       | (detected)   | Most users                                 |
 
 ### Mode Selection
 
 - **auto** (default): `lokascript` mode when the semantic package exposes its API; `hyperscript` mode in builds that replace it with a shim
 - **hyperscript**: Enforces \_hyperscript-compatible syntax, English keywords only
 - **hyperscript-i18n**: Enforces \_hyperscript-compatible syntax with multilingual keyword support. Use this if you have original \_hyperscript with `@lokascript/hyperscript-adapter` for writing in non-English languages
-- **lokascript**: Enables all features including LokaScript extensions and multilingual support
+- **lokascript**: Accepts the engine's additions, with multilingual support
 
 ### LokaScript Extensions (flagged in hyperscript mode)
 
-When in `hyperscript` mode, the following LokaScript-only features are flagged as errors:
+Since 4.0 the LokaScript runtime is `@hyperfixi/engine`, which follows upstream \_hyperscript's
+grammar: the modes share their command keywords, event modifiers and `as` conversions
+(`LOKASCRIPT_ONLY_COMMANDS` in `src/command-tiers.ts` is empty). What the engine has that
+upstream does not is two forms of existing keywords. In the `hyperscript` and `hyperscript-i18n`
+modes, when `@hyperfixi/engine` is installed, each is reported as an error (code
+`lokascript-only`):
 
-| Feature                   | Example                            | Alternative for \_hyperscript |
-| ------------------------- | ---------------------------------- | ----------------------------- |
-| Dot notation              | `my.textContent`                   | `my textContent`              |
-| Extended commands         | `morph`, `settle`, `persist`       | N/A                           |
-| Extended `as` conversions | `as Int`, `as JSON`                | N/A                           |
-| Temporal modifiers        | `.debounce(300)`, `.throttle(100)` | N/A                           |
+| Feature            | Example          | Alternative for \_hyperscript |
+| ------------------ | ---------------- | ----------------------------- |
+| `new` expression   | `new Date()`     | `make a Date`                 |
+| `toggle <element>` | `toggle #dialog` | N/A                           |
 
-This allows LokaScript users to maintain \_hyperscript compatibility by using `hyperscript` mode as a lint.
+Code neither engine parses (core's 3.x extensions such as `prepend` or `.debounce(300)`) gets
+the engine's parse error in every mode.
 
 ## Features
 

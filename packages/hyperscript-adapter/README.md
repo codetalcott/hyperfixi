@@ -16,7 +16,7 @@ Or use a CDN — see [Browser](#browser) below.
 
 ```html
 <script src="https://unpkg.com/hyperscript.org"></script>
-<script src="https://unpkg.com/@lokascript/hyperscript-adapter@3/dist/hyperscript-i18n-es.global.js"></script>
+<script src="https://unpkg.com/@lokascript/hyperscript-adapter@7/dist/hyperscript-i18n-es.global.js"></script>
 
 <!-- Spanish -->
 <button _="al clic alternar .active" data-lang="es">Alternar</button>
@@ -29,7 +29,7 @@ or a regional one (see [Bundle Options](#bundle-options)):
 
 ```html
 <script src="https://unpkg.com/hyperscript.org"></script>
-<script src="https://unpkg.com/@lokascript/hyperscript-adapter@3/dist/hyperscript-i18n.global.js"></script>
+<script src="https://unpkg.com/@lokascript/hyperscript-adapter@7/dist/hyperscript-i18n.global.js"></script>
 
 <!-- Japanese -->
 <button _="クリック で .active を 切り替え" data-lang="ja">切り替え</button>
@@ -80,17 +80,17 @@ Pick the bundle that matches your use case. All bundles auto-register with `_hyp
 
 Each bundle includes the adapter + semantic parser for the specified languages.
 
-Sizes are gzipped, measured on the 3.2.0 build; a page adds \_hyperscript itself (~45 KB).
+Sizes are gzipped (bytes / 1024), measured on a 7.4.0 build (2026-10-22); a page adds \_hyperscript itself.
 
-| Bundle                                         | Languages                           | Gzipped   |
-| ---------------------------------------------- | ----------------------------------- | --------- |
-| `hyperscript-i18n.global.js`                   | All 24                              | ~232 KB   |
-| `hyperscript-i18n-western.global.js`           | es, pt, fr, de                      | ~88 KB    |
-| `hyperscript-i18n-east-asian.global.js`        | ja, ko, zh                          | ~89 KB    |
-| `hyperscript-i18n-slavic.global.js`            | pl, ru, uk                          | ~89 KB    |
-| `hyperscript-i18n-southeast-asian.global.js`   | id, ms, tl, th, vi                  | ~88 KB    |
-| `hyperscript-i18n-south-asian.global.js`       | hi, bn                              | ~83 KB    |
-| `hyperscript-i18n-<lang>.global.js` (one each) | one of the 23 non-English languages | ~79–82 KB |
+| Bundle                                         | Languages                           | Gzipped     |
+| ---------------------------------------------- | ----------------------------------- | ----------- |
+| `hyperscript-i18n.global.js`                   | All 24                              | ~282 KB     |
+| `hyperscript-i18n-western.global.js`           | es, pt, fr, de                      | ~144 KB     |
+| `hyperscript-i18n-east-asian.global.js`        | ja, ko, zh                          | ~144 KB     |
+| `hyperscript-i18n-slavic.global.js`            | pl, ru, uk                          | ~146 KB     |
+| `hyperscript-i18n-southeast-asian.global.js`   | id, ms, tl, th, vi                  | ~144 KB     |
+| `hyperscript-i18n-south-asian.global.js`       | hi, bn                              | ~140 KB     |
+| `hyperscript-i18n-<lang>.global.js` (one each) | one of the 23 non-English languages | ~131–136 KB |
 
 ```html
 <!-- Django / Flask / FastAPI: just pick your language -->
@@ -100,7 +100,7 @@ Sizes are gzipped, measured on the 3.2.0 build; a page adds \_hyperscript itself
 
 ### Lite adapter (two `<script>` tags, smallest total)
 
-A ~1.8 KB (gzipped) adapter that expects a `@lokascript/semantic` browser bundle loaded separately:
+A ~2.3 KB (gzipped) adapter that expects a `@lokascript/semantic` browser bundle loaded separately:
 the full one, a regional one or a single language. It finds whichever `LokaScriptSemantic*`
 global the bundle defines. Each of those bundles registers English too, which is what this
 adapter renders to.
@@ -108,7 +108,7 @@ adapter renders to.
 ```html
 <script src="_hyperscript.js"></script>
 <!-- from @lokascript/semantic: dist/browser-<lang>.<lang>.global.js, or a regional one -->
-<script src="https://unpkg.com/@lokascript/semantic@3/dist/browser-es.es.global.js"></script>
+<script src="https://unpkg.com/@lokascript/semantic@7/dist/browser-es.es.global.js"></script>
 <script src="hyperscript-i18n-lite.global.js"></script>
 ```
 

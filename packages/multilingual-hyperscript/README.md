@@ -15,10 +15,13 @@ input to English via semantic analysis, and hands the result to the standard
 <script src="https://unpkg.com/hyperscript.org"></script>
 <script src="https://unpkg.com/@hyperscript-tools/multilingual/dist/hyperscript-i18n-es.global.js"></script>
 
-<button _="al clic alternar .active">Alternar</button>
+<button _="al clic alternar .active" lang="es">Alternar</button>
 ```
 
-That's it. The script auto-registers as a \_hyperscript plugin on load.
+The script auto-registers as a \_hyperscript plugin on load. The plugin picks each script's
+language from the page (see [Per-element language](#per-element-language)): without a `lang`,
+`data-lang` or `data-hyperscript-lang` on the element or an ancestor (`<html lang="es">` counts),
+the script is read as English.
 
 ## Quick start (CDN, all languages)
 
@@ -37,18 +40,18 @@ language (`on click alternar .active`) read too.
 
 ## Bundle size table
 
-Sizes are gzipped, measured on the 3.2.0 build; a page adds \_hyperscript itself (~45 KB).
+Sizes are gzipped (bytes / 1024), measured on a 7.4.0 build (2026-10-22) of `@lokascript/hyperscript-adapter`, whose bundles this package copies; a page adds \_hyperscript itself.
 
-| Bundle              | URL suffix                                        | Gzipped   | Languages          |
-| ------------------- | ------------------------------------------------- | --------- | ------------------ |
-| All 24              | `dist/hyperscript-i18n.global.js`                 | ~232 KB   | All                |
-| Western             | `dist/hyperscript-i18n-western.global.js`         | ~88 KB    | es, pt, fr, de     |
-| East Asian          | `dist/hyperscript-i18n-east-asian.global.js`      | ~89 KB    | ja, ko, zh         |
-| South Asian         | `dist/hyperscript-i18n-south-asian.global.js`     | ~83 KB    | hi, bn             |
-| Southeast Asian     | `dist/hyperscript-i18n-southeast-asian.global.js` | ~88 KB    | id, ms, th, tl, vi |
-| Slavic              | `dist/hyperscript-i18n-slavic.global.js`          | ~89 KB    | pl, ru, uk         |
-| Single language     | `dist/hyperscript-i18n-es.global.js` (etc.)       | ~79–82 KB | one                |
-| Lite (BYO semantic) | `dist/hyperscript-i18n-lite.global.js`            | ~1 KB     | (external bundle)  |
+| Bundle              | URL suffix                                        | Gzipped     | Languages          |
+| ------------------- | ------------------------------------------------- | ----------- | ------------------ |
+| All 24              | `dist/hyperscript-i18n.global.js`                 | ~282 KB     | All                |
+| Western             | `dist/hyperscript-i18n-western.global.js`         | ~144 KB     | es, pt, fr, de     |
+| East Asian          | `dist/hyperscript-i18n-east-asian.global.js`      | ~144 KB     | ja, ko, zh         |
+| South Asian         | `dist/hyperscript-i18n-south-asian.global.js`     | ~140 KB     | hi, bn             |
+| Southeast Asian     | `dist/hyperscript-i18n-southeast-asian.global.js` | ~144 KB     | id, ms, th, tl, vi |
+| Slavic              | `dist/hyperscript-i18n-slavic.global.js`          | ~146 KB     | pl, ru, uk         |
+| Single language     | `dist/hyperscript-i18n-es.global.js` (etc.)       | ~131–136 KB | one                |
+| Lite (BYO semantic) | `dist/hyperscript-i18n-lite.global.js`            | ~2.3 KB     | (external bundle)  |
 
 ## npm / bundler usage
 
@@ -87,8 +90,9 @@ Each `_=` attribute can declare its own language:
 </body>
 ```
 
-Resolution order: element → ancestor `data-hyperscript-lang` → `<html lang>` →
-plugin's `defaultLanguage`.
+Resolution order: the element's `data-lang` → `data-hyperscript-lang` on the element or an
+ancestor → `lang` on the element or an ancestor (up to `<html lang>`) → the plugin's
+`defaultLanguage`.
 
 ## How it works
 

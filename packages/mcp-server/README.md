@@ -132,7 +132,7 @@ bdd's tools left with domains 4.2.0 and bdd itself with domains 5.0.0: behaviors
 | `flow`         | Bridge (11) | Reactive data flow JS       |
 | `voice`        | Bridge (11) | DOM interaction command     |
 
-### `lse` (13)
+### `lse` (11)
 
 | Tool                           | Description                                                       |
 | ------------------------------ | ----------------------------------------------------------------- |
@@ -223,17 +223,21 @@ Not a toolset: hidden from the list AND refused when called unless the flag is s
 | `summarize_content` | Summarize text content                                 |
 | `analyze_content`   | Analyze sentiment, entities, themes, tone, or keywords |
 | `translate_content` | Translate text between natural languages               |
-| `execute_llm`       | Execute LLM command in natural language (8 languages)  |
+| `execute_llm`       | Execute LLM command in natural language                |
 
-## Available Resources (5)
+## Available Resources (9)
 
-| URI                              | Description                  |
-| -------------------------------- | ---------------------------- |
-| `hyperscript://docs/commands`    | Command reference (markdown) |
-| `hyperscript://docs/expressions` | Expression syntax guide      |
-| `hyperscript://docs/events`      | Event handling reference     |
-| `hyperscript://examples/common`  | Common patterns              |
-| `hyperscript://languages`        | Supported languages (JSON)   |
+| URI                                   | Description                                        |
+| ------------------------------------- | -------------------------------------------------- |
+| `hyperscript://docs/commands`         | Command reference (markdown)                       |
+| `hyperscript://docs/expressions`      | Expression syntax guide                            |
+| `hyperscript://docs/events`           | Event handling reference                           |
+| `hyperscript://examples/common`       | Common patterns                                    |
+| `hyperscript://languages`             | Supported languages (JSON)                         |
+| `hyperscript://adapter`               | `@lokascript/hyperscript-adapter` guide (markdown) |
+| `hyperscript://adapter/compatibility` | Adapter language compatibility matrix (JSON)       |
+| `hyperscript://setup/guide`           | Setup decision guide (JSON)                        |
+| `lse://protocol/spec`                 | LSE protocol quick reference (markdown)            |
 
 ## Supported Languages (24)
 
@@ -243,7 +247,7 @@ Not a toolset: hidden from the list AND refused when called unless the flag is s
 | Japanese       | `ja` | SOV        | `.active を 切り替え` |
 | Korean         | `ko` | SOV        | `.active 를 토글`     |
 | Spanish        | `es` | SVO        | `alternar .active`    |
-| Arabic         | `ar` | VSO        | `تبديل .active`       |
+| Arabic         | `ar` | VSO        | `بدّل .active`        |
 | Chinese        | `zh` | SVO        | `切换 .active`        |
 | Turkish        | `tr` | SOV        | `.active değiştir`    |
 | French         | `fr` | SVO        | `basculer .active`    |
@@ -255,7 +259,7 @@ Not a toolset: hidden from the list AND refused when called unless the flag is s
 
 ```bash
 npm run dev        # Development mode
-npm test           # Run tests (420 tests)
+npm test           # Run tests
 npm run typecheck  # TypeScript validation
 npm run build      # Build
 ```
