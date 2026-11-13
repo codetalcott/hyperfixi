@@ -16,7 +16,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { canParse, parse, tokenize } from '../src';
+import { parse, tokenize } from '../src';
 
 /**
  * Helper to get tokens array from TokenStream
@@ -199,14 +199,8 @@ describe('Malay Event Handler Patterns', () => {
 describe('Malay Command Patterns', () => {
   describe('Toggle commands', () => {
     it('should parse "togol .active"', () => {
-      const result = canParse('togol .active', 'ms');
-      if (result) {
-        const node = parse('togol .active', 'ms');
-        expect(node.action).toBe('toggle');
-      } else {
-        const tokens = getTokens('togol .active', 'ms');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('togol .active', 'ms');
+      expect(node.action).toBe('toggle');
     });
 
     it('should parse "tukar .visible"', () => {
@@ -217,25 +211,13 @@ describe('Malay Command Patterns', () => {
 
   describe('Show/Hide commands', () => {
     it('should parse "tunjuk #modal"', () => {
-      const result = canParse('tunjuk #modal', 'ms');
-      if (result) {
-        const node = parse('tunjuk #modal', 'ms');
-        expect(node.action).toBe('show');
-      } else {
-        const tokens = getTokens('tunjuk #modal', 'ms');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('tunjuk #modal', 'ms');
+      expect(node.action).toBe('show');
     });
 
     it('should parse "sembunyi #dropdown"', () => {
-      const result = canParse('sembunyi #dropdown', 'ms');
-      if (result) {
-        const node = parse('sembunyi #dropdown', 'ms');
-        expect(node.action).toBe('hide');
-      } else {
-        const tokens = getTokens('sembunyi #dropdown', 'ms');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('sembunyi #dropdown', 'ms');
+      expect(node.action).toBe('hide');
     });
 
     it('should parse "sorok #menu"', () => {
@@ -246,25 +228,13 @@ describe('Malay Command Patterns', () => {
 
   describe('Add/Remove commands', () => {
     it('should parse "tambah .active"', () => {
-      const result = canParse('tambah .active', 'ms');
-      if (result) {
-        const node = parse('tambah .active', 'ms');
-        expect(node.action).toBe('add');
-      } else {
-        const tokens = getTokens('tambah .active', 'ms');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('tambah .active', 'ms');
+      expect(node.action).toBe('add');
     });
 
     it('should parse "buang .active"', () => {
-      const result = canParse('buang .active', 'ms');
-      if (result) {
-        const node = parse('buang .active', 'ms');
-        expect(node.action).toBe('remove');
-      } else {
-        const tokens = getTokens('buang .active', 'ms');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('buang .active', 'ms');
+      expect(node.action).toBe('remove');
     });
 
     it('should parse "padam .active"', () => {
@@ -275,38 +245,20 @@ describe('Malay Command Patterns', () => {
 
   describe('Increment/Decrement commands', () => {
     it('should parse "tambah_satu counter"', () => {
-      const result = canParse('tambah_satu counter', 'ms');
-      if (result) {
-        const node = parse('tambah_satu counter', 'ms');
-        expect(node.action).toBe('increment');
-      } else {
-        const tokens = getTokens('tambah_satu counter', 'ms');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('tambah_satu counter', 'ms');
+      expect(node.action).toBe('increment');
     });
 
     it('should parse "kurang_satu counter"', () => {
-      const result = canParse('kurang_satu counter', 'ms');
-      if (result) {
-        const node = parse('kurang_satu counter', 'ms');
-        expect(node.action).toBe('decrement');
-      } else {
-        const tokens = getTokens('kurang_satu counter', 'ms');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('kurang_satu counter', 'ms');
+      expect(node.action).toBe('decrement');
     });
   });
 
   describe('Put/Set commands', () => {
     it('should parse "letak "text" ke #output"', () => {
-      const result = canParse('letak "text" ke #output', 'ms');
-      if (result) {
-        const node = parse('letak "text" ke #output', 'ms');
-        expect(node.action).toBe('put');
-      } else {
-        const tokens = getTokens('letak "text" ke #output', 'ms');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('letak "text" ke #output', 'ms');
+      expect(node.action).toBe('put');
     });
 
     it('should parse "letakkan "hello" ke #result"', () => {
@@ -315,14 +267,8 @@ describe('Malay Command Patterns', () => {
     });
 
     it('should parse "tetapkan x ke 10"', () => {
-      const result = canParse('tetapkan x ke 10', 'ms');
-      if (result) {
-        const node = parse('tetapkan x ke 10', 'ms');
-        expect(node.action).toBe('set');
-      } else {
-        const tokens = getTokens('tetapkan x ke 10', 'ms');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('tetapkan x ke 10', 'ms');
+      expect(node.action).toBe('set');
     });
   });
 });
@@ -622,7 +568,10 @@ describe('Malay Integration Tests', () => {
     });
 
     it('should parse show/hide pattern', () => {
-      const tokens = getTokens('apabila hover tunjuk #dropdown kemudian apabila keluar sembunyi #dropdown', 'ms');
+      const tokens = getTokens(
+        'apabila hover tunjuk #dropdown kemudian apabila keluar sembunyi #dropdown',
+        'ms'
+      );
       expect(tokens.length).toBeGreaterThan(0);
     });
   });

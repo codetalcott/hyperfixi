@@ -18,7 +18,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { canParse, parse, tokenize } from '../src';
+import { parse, tokenize } from '../src';
 
 /**
  * Helper to get tokens array from TokenStream
@@ -165,14 +165,8 @@ describe('Thai Tokenizer - Keyword Detection', () => {
 describe('Thai Event Handler Patterns', () => {
   describe('Standard pattern: เมื่อ {event}', () => {
     it('should parse "เมื่อ คลิก สลับ .active"', () => {
-      const result = canParse('เมื่อ คลิก สลับ .active', 'th');
-      if (result) {
-        const node = parse('เมื่อ คลิก สลับ .active', 'th');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('เมื่อ คลิก สลับ .active', 'th');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('เมื่อ คลิก สลับ .active', 'th');
+      expect(node.action).toBe('on');
     });
 
     it('should tokenize "เมื่อ คลิก สลับ .active ใน #button"', () => {
@@ -193,14 +187,8 @@ describe('Thai Event Handler Patterns', () => {
 
   describe('Alternate pattern: ตอน {event}', () => {
     it('should parse "ตอน คลิก สลับ .active"', () => {
-      const result = canParse('ตอน คลิก สลับ .active', 'th');
-      if (result) {
-        const node = parse('ตอน คลิก สลับ .active', 'th');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('ตอน คลิก สลับ .active', 'th');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('ตอน คลิก สลับ .active', 'th');
+      expect(node.action).toBe('on');
     });
 
     it('should tokenize "ตอน เปลี่ยน แสดง #result"', () => {
@@ -224,9 +212,7 @@ describe('Thai Event Handler Patterns', () => {
   describe('Event name recognition', () => {
     it('should handle คลิก (click)', () => {
       const tokens = getTokens('เมื่อ คลิก สลับ .active', 'th');
-      const clickToken = tokens.find(t =>
-        t.value === 'คลิก' || t.normalized === 'click'
-      );
+      const clickToken = tokens.find(t => t.value === 'คลิก' || t.normalized === 'click');
       expect(clickToken).toBeDefined();
     });
 
@@ -254,86 +240,44 @@ describe('Thai Event Handler Patterns', () => {
 describe('Thai Command Patterns', () => {
   describe('Toggle commands', () => {
     it('should parse "สลับ .active"', () => {
-      const result = canParse('สลับ .active', 'th');
-      if (result) {
-        const node = parse('สลับ .active', 'th');
-        expect(node.action).toBe('toggle');
-      } else {
-        const tokens = getTokens('สลับ .active', 'th');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('สลับ .active', 'th');
+      expect(node.action).toBe('toggle');
     });
   });
 
   describe('Show/Hide commands', () => {
     it('should parse "แสดง #modal"', () => {
-      const result = canParse('แสดง #modal', 'th');
-      if (result) {
-        const node = parse('แสดง #modal', 'th');
-        expect(node.action).toBe('show');
-      } else {
-        const tokens = getTokens('แสดง #modal', 'th');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('แสดง #modal', 'th');
+      expect(node.action).toBe('show');
     });
 
     it('should parse "ซ่อน #modal"', () => {
-      const result = canParse('ซ่อน #modal', 'th');
-      if (result) {
-        const node = parse('ซ่อน #modal', 'th');
-        expect(node.action).toBe('hide');
-      } else {
-        const tokens = getTokens('ซ่อน #modal', 'th');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('ซ่อน #modal', 'th');
+      expect(node.action).toBe('hide');
     });
   });
 
   describe('Add/Remove commands', () => {
     it('should parse "เพิ่ม .highlight"', () => {
-      const result = canParse('เพิ่ม .highlight', 'th');
-      if (result) {
-        const node = parse('เพิ่ม .highlight', 'th');
-        expect(node.action).toBe('add');
-      } else {
-        const tokens = getTokens('เพิ่ม .highlight', 'th');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('เพิ่ม .highlight', 'th');
+      expect(node.action).toBe('add');
     });
 
     it('should parse "ลบ .highlight"', () => {
-      const result = canParse('ลบ .highlight', 'th');
-      if (result) {
-        const node = parse('ลบ .highlight', 'th');
-        expect(node.action).toBe('remove');
-      } else {
-        const tokens = getTokens('ลบ .highlight', 'th');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('ลบ .highlight', 'th');
+      expect(node.action).toBe('remove');
     });
 
     it('should parse "ลบออก .old" (alternative remove)', () => {
-      const result = canParse('ลบออก .old', 'th');
-      if (result) {
-        const node = parse('ลบออก .old', 'th');
-        expect(node.action).toBe('remove');
-      } else {
-        const tokens = getTokens('ลบออก .old', 'th');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('ลบออก .old', 'th');
+      expect(node.action).toBe('remove');
     });
   });
 
   describe('Put/Set/Get commands', () => {
     it('should parse "ใส่ "สวัสดี" ใน #output"', () => {
-      const result = canParse('ใส่ "สวัสดี" ใน #output', 'th');
-      if (result) {
-        const node = parse('ใส่ "สวัสดี" ใน #output', 'th');
-        expect(node.action).toBe('put');
-      } else {
-        const tokens = getTokens('ใส่ "สวัสดี" ใน #output', 'th');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('ใส่ "สวัสดี" ใน #output', 'th');
+      expect(node.action).toBe('put');
     });
 
     it('should parse "ตั้ง x ใน 10"', () => {
@@ -344,38 +288,20 @@ describe('Thai Command Patterns', () => {
     });
 
     it('should parse "รับค่า #element"', () => {
-      const result = canParse('รับค่า #element', 'th');
-      if (result) {
-        const node = parse('รับค่า #element', 'th');
-        expect(node.action).toBe('get');
-      } else {
-        const tokens = getTokens('รับค่า #element', 'th');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('รับค่า #element', 'th');
+      expect(node.action).toBe('get');
     });
   });
 
   describe('Increment/Decrement commands', () => {
     it('should parse "เพิ่มค่า counter"', () => {
-      const result = canParse('เพิ่มค่า counter', 'th');
-      if (result) {
-        const node = parse('เพิ่มค่า counter', 'th');
-        expect(node.action).toBe('increment');
-      } else {
-        const tokens = getTokens('เพิ่มค่า counter', 'th');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('เพิ่มค่า counter', 'th');
+      expect(node.action).toBe('increment');
     });
 
     it('should parse "ลดค่า counter"', () => {
-      const result = canParse('ลดค่า counter', 'th');
-      if (result) {
-        const node = parse('ลดค่า counter', 'th');
-        expect(node.action).toBe('decrement');
-      } else {
-        const tokens = getTokens('ลดค่า counter', 'th');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('ลดค่า counter', 'th');
+      expect(node.action).toBe('decrement');
     });
   });
 });
@@ -477,9 +403,7 @@ describe('Thai Script Features', () => {
 
     it('should handle leading cluster คล in คลิก (click)', () => {
       const tokens = getTokens('เมื่อ คลิก', 'th');
-      const clickToken = tokens.find(t =>
-        t.value === 'คลิก' || t.normalized === 'click'
-      );
+      const clickToken = tokens.find(t => t.value === 'คลิก' || t.normalized === 'click');
       expect(clickToken).toBeDefined();
     });
   });

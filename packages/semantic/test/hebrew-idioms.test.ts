@@ -22,7 +22,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { canParse, parse, tokenize } from '../src';
+import { parse, tokenize } from '../src';
 
 /**
  * Helper to get tokens array from TokenStream
@@ -154,7 +154,7 @@ describe('Hebrew Tokenizer - Keyword Detection', () => {
 // =============================================================================
 
 describe('Hebrew Event Handler Patterns', () => {
-  describe('Prefix event marker: ב (b\' - on/at) attached to event', () => {
+  describe("Prefix event marker: ב (b' - on/at) attached to event", () => {
     it('should tokenize "בלחיצה מתג .active"', () => {
       const tokens = getTokens('בלחיצה מתג .active', 'he');
       expect(tokens.length).toBeGreaterThanOrEqual(3);
@@ -249,133 +249,67 @@ describe('Hebrew Event Handler Patterns', () => {
 
 describe('Hebrew Command Patterns', () => {
   describe('Toggle commands', () => {
-    it('should parse "מתג .active"', () => {
-      const result = canParse('מתג .active', 'he');
-      if (result) {
-        const node = parse('מתג .active', 'he');
-        expect(node.action).toBe('toggle');
-      } else {
-        const tokens = getTokens('מתג .active', 'he');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+    it.fails('should parse "מתג .active"', () => {
+      const node = parse('מתג .active', 'he');
+      expect(node.action).toBe('toggle');
     });
 
-    it('should parse "החלף .active" (alternative toggle from test-cases)', () => {
-      const result = canParse('החלף .active', 'he');
-      if (result) {
-        const node = parse('החלף .active', 'he');
-        expect(node.action).toBe('toggle');
-      } else {
-        const tokens = getTokens('החלף .active', 'he');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+    it.fails('should parse "החלף .active" (alternative toggle from test-cases)', () => {
+      const node = parse('החלף .active', 'he');
+      expect(node.action).toBe('toggle');
     });
   });
 
   describe('Add/Remove commands', () => {
-    it('should parse "הוסף .highlight"', () => {
-      const result = canParse('הוסף .highlight', 'he');
-      if (result) {
-        const node = parse('הוסף .highlight', 'he');
-        expect(node.action).toBe('add');
-      } else {
-        const tokens = getTokens('הוסף .highlight', 'he');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+    it.fails('should parse "הוסף .highlight"', () => {
+      const node = parse('הוסף .highlight', 'he');
+      expect(node.action).toBe('add');
     });
 
-    it('should parse "הסר .highlight"', () => {
-      const result = canParse('הסר .highlight', 'he');
-      if (result) {
-        const node = parse('הסר .highlight', 'he');
-        expect(node.action).toBe('remove');
-      } else {
-        const tokens = getTokens('הסר .highlight', 'he');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+    it.fails('should parse "הסר .highlight"', () => {
+      const node = parse('הסר .highlight', 'he');
+      expect(node.action).toBe('remove');
     });
   });
 
   describe('Put/Set/Get commands', () => {
-    it('should parse "שים "שלום" לתוך #output"', () => {
-      const result = canParse('שים "שלום" לתוך #output', 'he');
-      if (result) {
-        const node = parse('שים "שלום" לתוך #output', 'he');
-        expect(node.action).toBe('put');
-      } else {
-        const tokens = getTokens('שים "שלום" לתוך #output', 'he');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+    it.fails('should parse "שים "שלום" לתוך #output"', () => {
+      const node = parse('שים "שלום" לתוך #output', 'he');
+      expect(node.action).toBe('put');
     });
 
-    it('should parse "קבע x ל 10"', () => {
-      const result = canParse('קבע x ל 10', 'he');
-      if (result) {
-        const node = parse('קבע x ל 10', 'he');
-        expect(node.action).toBe('set');
-      } else {
-        const tokens = getTokens('קבע x ל 10', 'he');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+    it.fails('should parse "קבע x ל 10"', () => {
+      const node = parse('קבע x ל 10', 'he');
+      expect(node.action).toBe('set');
     });
 
-    it('should parse "קבל #element"', () => {
-      const result = canParse('קבל #element', 'he');
-      if (result) {
-        const node = parse('קבל #element', 'he');
-        expect(node.action).toBe('get');
-      } else {
-        const tokens = getTokens('קבל #element', 'he');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+    it.fails('should parse "קבל #element"', () => {
+      const node = parse('קבל #element', 'he');
+      expect(node.action).toBe('get');
     });
   });
 
   describe('Show/Hide commands', () => {
     it('should parse "הראה #modal"', () => {
-      const result = canParse('הראה #modal', 'he');
-      if (result) {
-        const node = parse('הראה #modal', 'he');
-        expect(node.action).toBe('show');
-      } else {
-        const tokens = getTokens('הראה #modal', 'he');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('הראה #modal', 'he');
+      expect(node.action).toBe('show');
     });
 
     it('should parse "הסתר #modal"', () => {
-      const result = canParse('הסתר #modal', 'he');
-      if (result) {
-        const node = parse('הסתר #modal', 'he');
-        expect(node.action).toBe('hide');
-      } else {
-        const tokens = getTokens('הסתר #modal', 'he');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('הסתר #modal', 'he');
+      expect(node.action).toBe('hide');
     });
   });
 
   describe('Increment/Decrement commands', () => {
-    it('should parse "הגדל counter"', () => {
-      const result = canParse('הגדל counter', 'he');
-      if (result) {
-        const node = parse('הגדל counter', 'he');
-        expect(node.action).toBe('increment');
-      } else {
-        const tokens = getTokens('הגדל counter', 'he');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+    it.fails('should parse "הגדל counter"', () => {
+      const node = parse('הגדל counter', 'he');
+      expect(node.action).toBe('increment');
     });
 
-    it('should parse "הקטן counter"', () => {
-      const result = canParse('הקטן counter', 'he');
-      if (result) {
-        const node = parse('הקטן counter', 'he');
-        expect(node.action).toBe('decrement');
-      } else {
-        const tokens = getTokens('הקטן counter', 'he');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+    it.fails('should parse "הקטן counter"', () => {
+      const node = parse('הקטן counter', 'he');
+      expect(node.action).toBe('decrement');
     });
   });
 });
@@ -473,7 +407,7 @@ describe('Hebrew Script-Specific Features', () => {
 
 describe('Hebrew Prepositions and Modifiers', () => {
   describe('Prefix prepositions (ב, ל, מ)', () => {
-    it('should handle ב (b\') - standalone resolves to style (use prefix form for on)', () => {
+    it("should handle ב (b') - standalone resolves to style (use prefix form for on)", () => {
       // Standalone ב (with space) resolves to "style" from roleMarkers.
       // The "on" meaning only applies when ב is attached to an event name (e.g., בלחיצה).
       const tokens = getTokens('ב לחיצה', 'he');
@@ -481,13 +415,13 @@ describe('Hebrew Prepositions and Modifiers', () => {
       expect(tokens[0].normalized).toBe('style');
     });
 
-    it('should handle ל (l\' - to/for) as preposition', () => {
+    it("should handle ל (l' - to/for) as preposition", () => {
       const tokens = getTokens('קבע x ל 10', 'he');
       const lToken = tokens.find(t => t.value === 'ל');
       expect(lToken).toBeDefined();
     });
 
-    it('should handle מ (m\' - from) as preposition', () => {
+    it("should handle מ (m' - from) as preposition", () => {
       const tokens = getTokens('מ #source', 'he');
       expect(tokens.length).toBeGreaterThanOrEqual(2);
     });
@@ -663,28 +597,20 @@ describe('Hebrew Integration Tests', () => {
     });
 
     it('should handle event handler with compound body', () => {
-      const tokens = getTokens(
-        'בלחיצה הוסף .loading אז הבא /api/data אז הסר .loading',
-        'he',
-      );
+      const tokens = getTokens('בלחיצה הוסף .loading אז הבא /api/data אז הסר .loading', 'he');
       expect(tokens.length).toBeGreaterThan(5);
     });
   });
 
   describe('Conjunction prefix ו splitting', () => {
-    it('should split ו prefix from known keyword: והראה', () => {
+    it.fails('should split ו prefix from known keyword: והראה', () => {
       const tokens = getTokens('והראה #modal', 'he');
       // Should split into ו (conjunction) + הראה (show)
       const conjToken = tokens.find(t => t.kind === 'conjunction');
-      if (conjToken) {
-        expect(conjToken.value).toBe('ו');
-        expect(conjToken.normalized).toBe('and');
-        const showToken = tokens.find(t => t.normalized === 'show');
-        expect(showToken).toBeDefined();
-      } else {
-        // If not split, the tokenizer should still produce tokens
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      expect(conjToken?.value).toBe('ו');
+      expect(conjToken?.normalized).toBe('and');
+      const showToken = tokens.find(t => t.normalized === 'show');
+      expect(showToken).toBeDefined();
     });
 
     it('should not split ו from non-keyword words', () => {

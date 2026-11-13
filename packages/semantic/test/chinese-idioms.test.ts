@@ -32,7 +32,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parse, canParse, tokenize } from '../src';
+import { parse, tokenize } from '../src';
 
 /**
  * Helper to get tokens array from TokenStream
@@ -154,14 +154,8 @@ describe('Chinese Tokenizer - Native Idioms', () => {
 describe('Chinese Event Handler Patterns', () => {
   describe('Standard pattern: 当 {event}', () => {
     it('should parse "当 点击 切换 .active"', () => {
-      const result = canParse('当 点击 切换 .active', 'zh');
-      if (result) {
-        const node = parse('当 点击 切换 .active', 'zh');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('当 点击 切换 .active', 'zh');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('当 点击 切换 .active', 'zh');
+      expect(node.action).toBe('on');
     });
 
     it('should parse "当 提交 显示 #result"', () => {
@@ -171,15 +165,9 @@ describe('Chinese Event Handler Patterns', () => {
   });
 
   describe('Native temporal: {event} 的时候', () => {
-    it('should parse "点击 的时候 切换 .active"', () => {
-      const result = canParse('点击 的时候 切换 .active', 'zh');
-      if (result) {
-        const node = parse('点击 的时候 切换 .active', 'zh');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('点击 的时候 切换 .active', 'zh');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+    it.fails('should parse "点击 的时候 切换 .active"', () => {
+      const node = parse('点击 的时候 切换 .active', 'zh');
+      expect(node.action).toBe('on');
     });
 
     it('should parse "改变 的时候 显示 #message"', () => {
@@ -190,14 +178,8 @@ describe('Chinese Event Handler Patterns', () => {
 
   describe('Immediate pattern: 一 {event} 就', () => {
     it('should parse "一 点击 就 切换 .active"', () => {
-      const result = canParse('一 点击 就 切换 .active', 'zh');
-      if (result) {
-        const node = parse('一 点击 就 切换 .active', 'zh');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('一 点击 就 切换 .active', 'zh');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('一 点击 就 切换 .active', 'zh');
+      expect(node.action).toBe('on');
     });
 
     it('should parse "一 提交 就 隐藏 #form"', () => {
@@ -207,15 +189,9 @@ describe('Chinese Event Handler Patterns', () => {
   });
 
   describe('Frequency pattern: 每当 {event}', () => {
-    it('should parse "每当 点击 切换 .active"', () => {
-      const result = canParse('每当 点击 切换 .active', 'zh');
-      if (result) {
-        const node = parse('每当 点击 切换 .active', 'zh');
-        expect(node.action).toBe('on');
-      } else {
-        const tokens = getTokens('每当 点击 切换 .active', 'zh');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+    it.fails('should parse "每当 点击 切换 .active"', () => {
+      const node = parse('每当 点击 切换 .active', 'zh');
+      expect(node.action).toBe('on');
     });
   });
 
@@ -258,84 +234,42 @@ describe('Chinese Event Handler Patterns', () => {
 describe('Chinese Command Patterns', () => {
   describe('Toggle commands', () => {
     it('should parse "切换 .active"', () => {
-      const result = canParse('切换 .active', 'zh');
-      if (result) {
-        const node = parse('切换 .active', 'zh');
-        expect(node.action).toBe('toggle');
-      } else {
-        const tokens = getTokens('切换 .active', 'zh');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('切换 .active', 'zh');
+      expect(node.action).toBe('toggle');
     });
 
     it('should parse BA construction "把 .active 切换"', () => {
-      const result = canParse('把 .active 切换', 'zh');
-      if (result) {
-        const node = parse('把 .active 切换', 'zh');
-        expect(node.action).toBe('toggle');
-      } else {
-        const tokens = getTokens('把 .active 切换', 'zh');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('把 .active 切换', 'zh');
+      expect(node.action).toBe('toggle');
     });
   });
 
   describe('Show/Hide commands', () => {
     it('should parse "显示 #modal"', () => {
-      const result = canParse('显示 #modal', 'zh');
-      if (result) {
-        const node = parse('显示 #modal', 'zh');
-        expect(node.action).toBe('show');
-      } else {
-        const tokens = getTokens('显示 #modal', 'zh');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('显示 #modal', 'zh');
+      expect(node.action).toBe('show');
     });
 
     it('should parse "隐藏 #dropdown"', () => {
-      const result = canParse('隐藏 #dropdown', 'zh');
-      if (result) {
-        const node = parse('隐藏 #dropdown', 'zh');
-        expect(node.action).toBe('hide');
-      } else {
-        const tokens = getTokens('隐藏 #dropdown', 'zh');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('隐藏 #dropdown', 'zh');
+      expect(node.action).toBe('hide');
     });
   });
 
   describe('Add/Remove commands', () => {
     it('should parse "添加 .active"', () => {
-      const result = canParse('添加 .active', 'zh');
-      if (result) {
-        const node = parse('添加 .active', 'zh');
-        expect(node.action).toBe('add');
-      } else {
-        const tokens = getTokens('添加 .active', 'zh');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('添加 .active', 'zh');
+      expect(node.action).toBe('add');
     });
 
     it('should parse "删除 .active"', () => {
-      const result = canParse('删除 .active', 'zh');
-      if (result) {
-        const node = parse('删除 .active', 'zh');
-        expect(node.action).toBe('remove');
-      } else {
-        const tokens = getTokens('删除 .active', 'zh');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('删除 .active', 'zh');
+      expect(node.action).toBe('remove');
     });
 
     it('should parse "移除 .active"', () => {
-      const result = canParse('移除 .active', 'zh');
-      if (result) {
-        const node = parse('移除 .active', 'zh');
-        expect(node.action).toBe('remove');
-      } else {
-        const tokens = getTokens('移除 .active', 'zh');
-        expect(tokens.length).toBeGreaterThan(0);
-      }
+      const node = parse('移除 .active', 'zh');
+      expect(node.action).toBe('remove');
     });
   });
 
