@@ -46,6 +46,8 @@ The developer-tools prune of 2026-11-13 (tag `archived/developer-tools-2026-11-1
 
 `experiments/dixi` (tag `archived/dixi-2026-11-13`): a script that rewrites localized fixi-family attribute names (`fx-acción`) to their English names before fixi reads them, with 24 locale files generated from semantic's profiles, a demo and its acceptance checks. It worked and stood alone; it was the last experiment in the tree and nothing here imported it. Removed 2026-11-13 on the owner's decision. `@lokascript/htmx-adapter` is the maintained package for localized htmx attribute names.
 
+`packages/lokascript-python` (tag `archived/lokascript-python-2026-11-13`): Django template tags, a Jinja extension, a template scanner and two management commands, 0.1.0, never on PyPI. An audit on 2026-11-13 found the built wheel held no code (pyproject named the package `hyperfixi`, the code was in `lokascript/`), both management commands failed at startup (`-v` collides with Django's `--verbosity`), its bundle config fed a generator that left with core's engine in 4.0, and its keyword table was a hand copy of the Vite plugin's, 22 of 24 languages and drifted in each. No importer in any project, no CI. Removed on the owner's decision. A Django template writes `_="…"` as it would any attribute and loads `hyperfixi-hs.js`.
+
 ```bash
 git show archived/cleanup-2026-11-12:<path>
 ```
