@@ -22,7 +22,6 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
   "$REPO_ROOT/packages/hyperscript-adapter" \
   "$REPO_ROOT/packages/core" \
   "$REPO_ROOT/packages/compilation-service" \
-  "$REPO_ROOT/packages/planner" \
   "$REPO_ROOT/packages/mcp-server" \
   "$REPO_ROOT/packages/intent-element" \
   "$REPO_ROOT/packages/hyperscript-tools-i18n" \
@@ -61,7 +60,6 @@ PACKAGES=(
   "behaviors:Behaviors"
   "patterns-reference:Patterns Reference"
   "testing-framework:Testing Framework"
-  "planner:Planner"
   "hyperscript-tools-i18n:Hyperscript Tools i18n"
 )
 

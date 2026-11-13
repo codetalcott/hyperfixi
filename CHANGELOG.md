@@ -210,6 +210,11 @@ Value>`, `AnyNode`) and each kind's fields (`CommandFields`, `EventHandlerFields
 
 ### Removed
 
+- **`@lokascript/planner` is no longer part of the project**; 7.6.0 is its last release. Its
+  one consumer was the `grail` toolset of `@hyperfixi/mcp-server`, removed below. It returned
+  wrong plans in two cases a check reproduced: of two routes of equal length it kept the one
+  listed first, not the cheaper, and without `x-conditions` it took an unmet precondition as
+  met. The planner it was ported from is siren-grail's `siren-agent/planner.js`.
 - **The `grail` toolset** (`@hyperfixi/mcp-server`): `grail_check`, `grail_plan`, `grail_run`,
   `grail_info` and `grail_list`, with `GRAIL.md`. **Breaking for a server started with
   `LOKASCRIPT_MCP_TOOLSETS=grail`:** the name is now reported as unknown at startup, and a call

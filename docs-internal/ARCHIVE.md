@@ -42,6 +42,8 @@ scripts), `scripts/analysis/`, `scripts/testing/` and nine other scripts nothing
 
 The developer-tools prune of 2026-11-13 (tag `archived/developer-tools-2026-11-13`): the private package's CLI (`hyperfixi`/`hfx`/`lks`), visual builder, project generator, analyzer, dev server, profiler, migrator, bundle analyzer and quick-start helpers, about 11,000 lines with their tests. Nothing imported them; the scaffolder could not complete and the profiler measured nothing. The template inventory and the Prism highlighter stay.
 
+`packages/planner` (`@lokascript/planner`, tag `archived/planner-2026-11-13`): a breadth-first planner over Siren/GRAIL affordances, a port of siren-grail's `siren-agent/planner.js`, published with every release since 2026-05. Its one consumer was mcp-server's `grail` tools, removed the same day; no other project imported it. A check on 2026-11-13 reproduced two wrong plans: of two equal-length routes it kept the first listed, not the cheaper (cost 6 where 2 was available), and without `x-conditions` it took an unmet precondition as met (a draft order planned straight to `ship`). The versions on npm stay; siren-grail's planner is the maintained one.
+
 `experiments/dixi` (tag `archived/dixi-2026-11-13`): a script that rewrites localized fixi-family attribute names (`fx-acción`) to their English names before fixi reads them, with 24 locale files generated from semantic's profiles, a demo and its acceptance checks. It worked and stood alone; it was the last experiment in the tree and nothing here imported it. Removed 2026-11-13 on the owner's decision. `@lokascript/htmx-adapter` is the maintained package for localized htmx attribute names.
 
 ```bash

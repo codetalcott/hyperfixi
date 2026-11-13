@@ -238,9 +238,6 @@ jobs:
       - name: Build compilation-service package
         run: npm run build --prefix packages/compilation-service
 
-      - name: Build planner package
-        run: npm run build --prefix packages/planner
-
       # Before mcp-server, which depends on it (a dependency since 7.5.0: an optional peer, the
       # npx install had none).
       - name: Build server-bridge package
@@ -302,7 +299,6 @@ jobs:
             packages/engine/dist/
             packages/htmx-adapter/dist/
             packages/compilation-service/dist/
-            packages/planner/dist/
             packages/mcp-server/dist/
             packages/developer-tools/dist/
             packages/server-bridge/dist/
@@ -568,7 +564,7 @@ jobs:
           if ! node scripts/validate-exports.mjs \
             behaviors compilation-service core engine \
             framework htmx-adapter hyperscript-adapter i18n intent intent-element \
-            language-server mcp-server patterns-reference planner \
+            language-server mcp-server patterns-reference \
             semantic server-bridge speech vite-plugin \
             --strict 2>&1 | tee /tmp/export-validation.log; then
             status=1
@@ -770,7 +766,6 @@ jobs:
           npm run typecheck --prefix packages/intent-element
           npm run typecheck --prefix packages/language-server-hyperscript
           npm run typecheck --prefix packages/multilingual-hyperscript
-          npm run typecheck --prefix packages/planner
           npm run typecheck --prefix packages/playground
           npm run typecheck --prefix packages/server-bridge
           npm run typecheck --prefix packages/speech
@@ -1020,9 +1015,6 @@ jobs:
 
       - name: Test intent-element
         run: npm test --prefix packages/intent-element
-
-      - name: Test planner
-        run: npm test --prefix packages/planner
 
       # Ten of testing-framework's files ran in NO job. The ones that did are
       # invoked by id elsewhere — the shipped-sources gates in the
