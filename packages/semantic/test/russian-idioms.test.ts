@@ -631,7 +631,7 @@ describe('Russian Integration Tests', () => {
     it('should handle event handler with compound body', () => {
       const tokens = getTokens(
         'при клике добавить .loading затем загрузить /api/data затем удалить .loading',
-        'ru',
+        'ru'
       );
       expect(tokens.length).toBeGreaterThan(5);
     });

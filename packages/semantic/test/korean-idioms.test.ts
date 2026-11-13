@@ -181,12 +181,13 @@ describe('Korean Tokenizer - Native Idioms', () => {
       const tokens = getTokens('클릭하면 증가', 'ko');
       expect(tokens.length).toBeGreaterThan(0);
       // Check that we have relevant tokens (event or conditional marker)
-      const hasRelevantToken = tokens.some(t =>
-        t.value === 'click' ||
-        t.value === '클릭' ||
-        t.value === '클릭하면' ||
-        t.value === 'on' ||
-        t.value === '하면'
+      const hasRelevantToken = tokens.some(
+        t =>
+          t.value === 'click' ||
+          t.value === '클릭' ||
+          t.value === '클릭하면' ||
+          t.value === 'on' ||
+          t.value === '하면'
       );
       expect(hasRelevantToken).toBe(true);
     });
@@ -202,10 +203,8 @@ describe('Korean Tokenizer - Native Idioms', () => {
       const tokens = getTokens('.active를토글', 'ko');
       expect(tokens.length).toBeGreaterThan(0);
       // Check that we have a toggle-related token
-      const hasToggleToken = tokens.some(t =>
-        t.value === 'toggle' ||
-        t.value === '토글' ||
-        t.value === '를토글'
+      const hasToggleToken = tokens.some(
+        t => t.value === 'toggle' || t.value === '토글' || t.value === '를토글'
       );
       expect(hasToggleToken).toBe(true);
     });
@@ -214,10 +213,8 @@ describe('Korean Tokenizer - Native Idioms', () => {
       const tokens = getTokens('#count를증가', 'ko');
       expect(tokens.length).toBeGreaterThan(0);
       // Check for increment-related token
-      const hasIncrementToken = tokens.some(t =>
-        t.value === 'increment' ||
-        t.value === '증가' ||
-        t.value === '를증가'
+      const hasIncrementToken = tokens.some(
+        t => t.value === 'increment' || t.value === '증가' || t.value === '를증가'
       );
       expect(hasIncrementToken).toBe(true);
     });
@@ -244,8 +241,8 @@ describe('Korean Event Handler Patterns', () => {
       const tokens = getTokens('클릭하면 증가', 'ko');
       expect(tokens.length).toBeGreaterThan(0);
       // The conditional form should tokenize correctly
-      const hasConditionalMarker = tokens.some(t =>
-        t.value === 'on' || t.value === '하면' || t.value === '클릭하면'
+      const hasConditionalMarker = tokens.some(
+        t => t.value === 'on' || t.value === '하면' || t.value === '클릭하면'
       );
       expect(hasConditionalMarker).toBe(true);
     });
@@ -561,9 +558,7 @@ describe('Korean Edge Cases', () => {
       // The tokenizer may keep Korean event names or normalize to English
       const tokens = getTokens('클릭 에 증가', 'ko');
       // Check that we get some token for the click event (in either form)
-      const hasClickToken = tokens.some(t =>
-        t.value === 'click' || t.value === '클릭'
-      );
+      const hasClickToken = tokens.some(t => t.value === 'click' || t.value === '클릭');
       expect(hasClickToken).toBe(true);
     });
 
@@ -571,9 +566,7 @@ describe('Korean Edge Cases', () => {
       const tokens = getTokens('입력 에 표시', 'ko');
       expect(tokens.length).toBeGreaterThan(0);
       // Check for input-related token
-      const hasInputToken = tokens.some(t =>
-        t.value === 'input' || t.value === '입력'
-      );
+      const hasInputToken = tokens.some(t => t.value === 'input' || t.value === '입력');
       expect(hasInputToken).toBe(true);
     });
   });

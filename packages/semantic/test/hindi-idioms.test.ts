@@ -796,7 +796,7 @@ describe('Hindi Integration Tests', () => {
     it('should handle event handler with compound body', () => {
       const tokens = getTokens(
         'क्लिक पर जोड़ें .loading फिर लाएं /api/data फिर हटाएं .loading',
-        'hi',
+        'hi'
       );
       expect(tokens.length).toBeGreaterThan(5);
     });

@@ -557,7 +557,10 @@ describe('Swahili Integration Tests', () => {
     });
 
     it('should handle event + source + command + destination', () => {
-      const tokens = getTokens('wakati bonyeza kwenye #button badilisha .active kwenye #target', 'sw');
+      const tokens = getTokens(
+        'wakati bonyeza kwenye #button badilisha .active kwenye #target',
+        'sw'
+      );
       expect(tokens.length).toBeGreaterThan(5);
     });
 

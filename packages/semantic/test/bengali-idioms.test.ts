@@ -796,10 +796,7 @@ describe('Bengali Integration Tests', () => {
     });
 
     it('should handle event handler with compound body', () => {
-      const tokens = getTokens(
-        'ক্লিক তে যোগ .loading তারপর সরান .loading',
-        'bn',
-      );
+      const tokens = getTokens('ক্লিক তে যোগ .loading তারপর সরান .loading', 'bn');
       expect(tokens.length).toBeGreaterThan(5);
     });
   });

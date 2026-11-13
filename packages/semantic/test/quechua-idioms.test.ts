@@ -32,26 +32,26 @@ function getTokens(input: string, language: string) {
 describe('Quechua Tokenizer - Native Idioms', () => {
   describe('Event markers', () => {
     it('should tokenize pi as event marker', () => {
-      const tokens = getTokens('pi ñit\'iy', 'qu');
+      const tokens = getTokens("pi ñit'iy", 'qu');
       expect(tokens.length).toBeGreaterThanOrEqual(2);
       const piToken = tokens.find(t => t.value === 'pi');
       expect(piToken).toBeDefined();
     });
 
     it('should tokenize kaqtin as event marker alternative', () => {
-      const tokens = getTokens('kaqtin ñit\'iy', 'qu');
+      const tokens = getTokens("kaqtin ñit'iy", 'qu');
       expect(tokens.length).toBeGreaterThanOrEqual(2);
     });
 
     it('should tokenize kaqpi as event marker alternative', () => {
-      const tokens = getTokens('kaqpi ñit\'iy', 'qu');
+      const tokens = getTokens("kaqpi ñit'iy", 'qu');
       expect(tokens.length).toBeGreaterThanOrEqual(2);
     });
   });
 
   describe('Command keywords', () => {
-    it('should tokenize t\'ikray as toggle', () => {
-      const tokens = getTokens('.active ta t\'ikray', 'qu');
+    it("should tokenize t'ikray as toggle", () => {
+      const tokens = getTokens(".active ta t'ikray", 'qu');
       const toggleToken = tokens.find(t => t.normalized === 'toggle');
       expect(toggleToken).toBeDefined();
     });
@@ -113,7 +113,7 @@ describe('Quechua Tokenizer - Native Idioms', () => {
 
   describe('Role markers (postpositions)', () => {
     it('should tokenize ta as patient marker', () => {
-      const tokens = getTokens('.active ta t\'ikray', 'qu');
+      const tokens = getTokens(".active ta t'ikray", 'qu');
       const taToken = tokens.find(t => t.value === 'ta');
       expect(taToken).toBeDefined();
     });
@@ -138,7 +138,7 @@ describe('Quechua Tokenizer - Native Idioms', () => {
 
   describe('Selectors', () => {
     it('should correctly tokenize CSS class selectors', () => {
-      const tokens = getTokens('.active ta t\'ikray', 'qu');
+      const tokens = getTokens(".active ta t'ikray", 'qu');
       const selectorToken = tokens.find(t => t.kind === 'selector');
       expect(selectorToken).toBeDefined();
       expect(selectorToken?.value).toBe('.active');
@@ -160,12 +160,12 @@ describe('Quechua Tokenizer - Native Idioms', () => {
 describe('Quechua Event Handler Patterns', () => {
   describe('Standard pattern: event pi', () => {
     it('should tokenize "ñit\'iy pi .active ta t\'ikray"', () => {
-      const tokens = getTokens('ñit\'iy pi .active ta t\'ikray', 'qu');
+      const tokens = getTokens("ñit'iy pi .active ta t'ikray", 'qu');
       expect(tokens.length).toBeGreaterThan(0);
     });
 
     it('should tokenize "kachay pi .loading ta t\'ikray"', () => {
-      const tokens = getTokens('kachay pi .loading ta t\'ikray', 'qu');
+      const tokens = getTokens("kachay pi .loading ta t'ikray", 'qu');
       expect(tokens.length).toBeGreaterThan(0);
     });
 
@@ -177,7 +177,7 @@ describe('Quechua Event Handler Patterns', () => {
 
   describe('Alternate pattern: event kaqtin', () => {
     it('should tokenize "ñit\'iy kaqtin .active ta t\'ikray"', () => {
-      const tokens = getTokens('ñit\'iy kaqtin .active ta t\'ikray', 'qu');
+      const tokens = getTokens("ñit'iy kaqtin .active ta t'ikray", 'qu');
       expect(tokens.length).toBeGreaterThan(0);
     });
 
@@ -189,12 +189,15 @@ describe('Quechua Event Handler Patterns', () => {
 
   describe('With source filter: event pi source manta', () => {
     it('should tokenize "ñit\'iy pi #button manta .active ta t\'ikray"', () => {
-      const tokens = getTokens('ñit\'iy pi #button manta .active ta t\'ikray', 'qu');
+      const tokens = getTokens("ñit'iy pi #button manta .active ta t'ikray", 'qu');
       expect(tokens.length).toBeGreaterThan(0);
     });
 
     it('should tokenize complex event handler chain', () => {
-      const tokens = getTokens('ñit\'iy pi #button manta .active ta t\'ikray chaymantataq .loading ta yapay', 'qu');
+      const tokens = getTokens(
+        "ñit'iy pi #button manta .active ta t'ikray chaymantataq .loading ta yapay",
+        'qu'
+      );
       expect(tokens.length).toBeGreaterThan(5);
     });
   });
@@ -207,12 +210,12 @@ describe('Quechua Event Handler Patterns', () => {
 describe('Quechua Command Patterns', () => {
   describe('Toggle commands', () => {
     it('should parse ".active ta t\'ikray"', () => {
-      const result = canParse('.active ta t\'ikray', 'qu');
+      const result = canParse(".active ta t'ikray", 'qu');
       if (result) {
-        const node = parse('.active ta t\'ikray', 'qu');
+        const node = parse(".active ta t'ikray", 'qu');
         expect(node.action).toBe('toggle');
       } else {
-        const tokens = getTokens('.active ta t\'ikray', 'qu');
+        const tokens = getTokens(".active ta t'ikray", 'qu');
         expect(tokens.length).toBeGreaterThan(0);
       }
     });
@@ -223,7 +226,7 @@ describe('Quechua Command Patterns', () => {
     });
 
     it('should parse ".visible ta t\'ikray" with different class', () => {
-      const tokens = getTokens('.visible ta t\'ikray', 'qu');
+      const tokens = getTokens(".visible ta t'ikray", 'qu');
       expect(tokens.length).toBeGreaterThan(0);
     });
   });
@@ -391,17 +394,17 @@ describe('Quechua Morphology - Suffix Combinations', () => {
 
   describe('Pronoun references', () => {
     it('should tokenize ñuqa (I/me)', () => {
-      const tokens = getTokens('ñuqa .active ta t\'ikray', 'qu');
+      const tokens = getTokens("ñuqa .active ta t'ikray", 'qu');
       expect(tokens.length).toBeGreaterThan(0);
     });
 
     it('should tokenize qam (you)', () => {
-      const tokens = getTokens('qam .active ta t\'ikray', 'qu');
+      const tokens = getTokens("qam .active ta t'ikray", 'qu');
       expect(tokens.length).toBeGreaterThan(0);
     });
 
     it('should tokenize pay (it/he/she)', () => {
-      const tokens = getTokens('pay .active ta t\'ikray', 'qu');
+      const tokens = getTokens("pay .active ta t'ikray", 'qu');
       expect(tokens.length).toBeGreaterThan(0);
     });
   });
@@ -452,7 +455,7 @@ describe('Quechua Event and Command References', () => {
 
   describe('Control flow keywords', () => {
     it('should tokenize sichus as if', () => {
-      const tokens = getTokens('sichus ñit\'iy', 'qu');
+      const tokens = getTokens("sichus ñit'iy", 'qu');
       const ifToken = tokens.find(t => t.normalized === 'if');
       expect(ifToken).toBeDefined();
     });
@@ -513,17 +516,20 @@ describe('Quechua Event and Command References', () => {
 describe('Quechua Integration Tests', () => {
   describe('Full event handler chains', () => {
     it('should handle "ñit\'iy pi #button manta .active ta t\'ikray"', () => {
-      const tokens = getTokens('ñit\'iy pi #button manta .active ta t\'ikray', 'qu');
+      const tokens = getTokens("ñit'iy pi #button manta .active ta t'ikray", 'qu');
       expect(tokens.length).toBeGreaterThan(4);
     });
 
     it('should handle "kachay pi .loading ta t\'ikray"', () => {
-      const tokens = getTokens('kachay pi .loading ta t\'ikray', 'qu');
+      const tokens = getTokens("kachay pi .loading ta t'ikray", 'qu');
       expect(tokens.length).toBeGreaterThan(0);
     });
 
     it('should handle compound commands with chaymantataq (then)', () => {
-      const tokens = getTokens('.loading ta yapay chaymantataq suyay 1s chaymantataq .loading ta qichuy', 'qu');
+      const tokens = getTokens(
+        '.loading ta yapay chaymantataq suyay 1s chaymantataq .loading ta qichuy',
+        'qu'
+      );
       expect(tokens.length).toBeGreaterThan(0);
     });
 
@@ -540,7 +546,7 @@ describe('Quechua Integration Tests', () => {
 
   describe('Multi-word commands and agglutination', () => {
     it('should handle "t\'ikray" as single command', () => {
-      const tokens = getTokens('.active ta t\'ikray', 'qu');
+      const tokens = getTokens(".active ta t'ikray", 'qu');
       const toggleToken = tokens.find(t => t.normalized === 'toggle');
       expect(toggleToken).toBeDefined();
     });
@@ -558,7 +564,7 @@ describe('Quechua Integration Tests', () => {
     });
 
     it('should preserve SOV word order in tokenization', () => {
-      const tokens = getTokens('.active ta #button pi t\'ikray', 'qu');
+      const tokens = getTokens(".active ta #button pi t'ikray", 'qu');
       // Patient (.active) comes before verb (t\'ikray) in SOV
       const classIndex = tokens.findIndex(t => t.value === '.active');
       const verbIndex = tokens.findIndex(t => t.normalized === 'toggle');
@@ -568,12 +574,12 @@ describe('Quechua Integration Tests', () => {
 
   describe('Real-world Quechua hyperscript examples', () => {
     it('should handle modal toggle on click from test cases', () => {
-      const tokens = getTokens('ñit\'iy pi #button pa .active ta t\'ikray', 'qu');
+      const tokens = getTokens("ñit'iy pi #button pa .active ta t'ikray", 'qu');
       expect(tokens.length).toBeGreaterThan(0);
     });
 
     it('should handle send event toggle from test cases', () => {
-      const tokens = getTokens('kachay pi .loading ta t\'ikray', 'qu');
+      const tokens = getTokens("kachay pi .loading ta t'ikray", 'qu');
       expect(tokens.length).toBeGreaterThan(0);
     });
 
@@ -583,7 +589,7 @@ describe('Quechua Integration Tests', () => {
     });
 
     it('should handle click remove class from test cases', () => {
-      const tokens = getTokens('ñit\'iy pi .error ta qichuy', 'qu');
+      const tokens = getTokens("ñit'iy pi .error ta qichuy", 'qu');
       expect(tokens.length).toBeGreaterThan(0);
     });
 
@@ -614,7 +620,7 @@ describe('Quechua Integration Tests', () => {
     });
 
     it('should handle both manta and man together', () => {
-      const tokens = getTokens('ñit\'iy pi #button manta .active ta t\'ikray', 'qu');
+      const tokens = getTokens("ñit'iy pi #button manta .active ta t'ikray", 'qu');
       expect(tokens.length).toBeGreaterThan(0);
     });
   });

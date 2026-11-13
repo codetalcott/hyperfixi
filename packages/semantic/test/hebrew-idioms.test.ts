@@ -154,7 +154,7 @@ describe('Hebrew Tokenizer - Keyword Detection', () => {
 // =============================================================================
 
 describe('Hebrew Event Handler Patterns', () => {
-  describe('Prefix event marker: ב (b\' - on/at) attached to event', () => {
+  describe("Prefix event marker: ב (b' - on/at) attached to event", () => {
     it('should tokenize "בלחיצה מתג .active"', () => {
       const tokens = getTokens('בלחיצה מתג .active', 'he');
       expect(tokens.length).toBeGreaterThanOrEqual(3);
@@ -473,7 +473,7 @@ describe('Hebrew Script-Specific Features', () => {
 
 describe('Hebrew Prepositions and Modifiers', () => {
   describe('Prefix prepositions (ב, ל, מ)', () => {
-    it('should handle ב (b\') - standalone resolves to style (use prefix form for on)', () => {
+    it("should handle ב (b') - standalone resolves to style (use prefix form for on)", () => {
       // Standalone ב (with space) resolves to "style" from roleMarkers.
       // The "on" meaning only applies when ב is attached to an event name (e.g., בלחיצה).
       const tokens = getTokens('ב לחיצה', 'he');
@@ -481,13 +481,13 @@ describe('Hebrew Prepositions and Modifiers', () => {
       expect(tokens[0].normalized).toBe('style');
     });
 
-    it('should handle ל (l\' - to/for) as preposition', () => {
+    it("should handle ל (l' - to/for) as preposition", () => {
       const tokens = getTokens('קבע x ל 10', 'he');
       const lToken = tokens.find(t => t.value === 'ל');
       expect(lToken).toBeDefined();
     });
 
-    it('should handle מ (m\' - from) as preposition', () => {
+    it("should handle מ (m' - from) as preposition", () => {
       const tokens = getTokens('מ #source', 'he');
       expect(tokens.length).toBeGreaterThanOrEqual(2);
     });
@@ -663,10 +663,7 @@ describe('Hebrew Integration Tests', () => {
     });
 
     it('should handle event handler with compound body', () => {
-      const tokens = getTokens(
-        'בלחיצה הוסף .loading אז הבא /api/data אז הסר .loading',
-        'he',
-      );
+      const tokens = getTokens('בלחיצה הוסף .loading אז הבא /api/data אז הסר .loading', 'he');
       expect(tokens.length).toBeGreaterThan(5);
     });
   });

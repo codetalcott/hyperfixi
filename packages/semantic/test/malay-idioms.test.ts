@@ -622,7 +622,10 @@ describe('Malay Integration Tests', () => {
     });
 
     it('should parse show/hide pattern', () => {
-      const tokens = getTokens('apabila hover tunjuk #dropdown kemudian apabila keluar sembunyi #dropdown', 'ms');
+      const tokens = getTokens(
+        'apabila hover tunjuk #dropdown kemudian apabila keluar sembunyi #dropdown',
+        'ms'
+      );
       expect(tokens.length).toBeGreaterThan(0);
     });
   });

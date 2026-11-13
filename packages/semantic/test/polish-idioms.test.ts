@@ -455,7 +455,7 @@ describe('Polish Integration Tests', () => {
     it('should handle event handler with compound body', () => {
       const tokens = getTokens(
         'przy kliknięciu dodaj .loading potem pobierz /api/data potem usuń .loading',
-        'pl',
+        'pl'
       );
       expect(tokens.length).toBeGreaterThan(5);
     });

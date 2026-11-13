@@ -571,7 +571,10 @@ describe('Indonesian Integration Tests', () => {
     });
 
     it('should handle form submission pattern', () => {
-      const tokens = getTokens('saat kirim dari #form-data tampilkan #pesan-sukses kemudian hapus #form-data', 'id');
+      const tokens = getTokens(
+        'saat kirim dari #form-data tampilkan #pesan-sukses kemudian hapus #form-data',
+        'id'
+      );
       expect(tokens.length).toBeGreaterThan(0);
     });
 
@@ -581,7 +584,10 @@ describe('Indonesian Integration Tests', () => {
     });
 
     it('should handle complex conditional pattern', () => {
-      const tokens = getTokens('jika x sama dengan 10 lalu alihkan .active pada #status kemudian catat "Selesai"', 'id');
+      const tokens = getTokens(
+        'jika x sama dengan 10 lalu alihkan .active pada #status kemudian catat "Selesai"',
+        'id'
+      );
       expect(tokens.length).toBeGreaterThan(0);
     });
 

@@ -224,9 +224,7 @@ describe('Thai Event Handler Patterns', () => {
   describe('Event name recognition', () => {
     it('should handle คลิก (click)', () => {
       const tokens = getTokens('เมื่อ คลิก สลับ .active', 'th');
-      const clickToken = tokens.find(t =>
-        t.value === 'คลิก' || t.normalized === 'click'
-      );
+      const clickToken = tokens.find(t => t.value === 'คลิก' || t.normalized === 'click');
       expect(clickToken).toBeDefined();
     });
 
@@ -477,9 +475,7 @@ describe('Thai Script Features', () => {
 
     it('should handle leading cluster คล in คลิก (click)', () => {
       const tokens = getTokens('เมื่อ คลิก', 'th');
-      const clickToken = tokens.find(t =>
-        t.value === 'คลิก' || t.normalized === 'click'
-      );
+      const clickToken = tokens.find(t => t.value === 'คลิก' || t.normalized === 'click');
       expect(clickToken).toBeDefined();
     });
   });

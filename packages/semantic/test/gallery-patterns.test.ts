@@ -84,7 +84,7 @@ const GALLERY_PATTERNS_TO_INVESTIGATE = [
 
 describe('Gallery Patterns - Semantic Parsing', () => {
   describe('Simple command patterns', () => {
-    it.each(SIMPLE_PATTERNS)('canParse: %s', (pattern) => {
+    it.each(SIMPLE_PATTERNS)('canParse: %s', pattern => {
       const result = canParse(pattern, 'en');
       // Log result for visibility
       if (!result) {
@@ -93,24 +93,24 @@ describe('Gallery Patterns - Semantic Parsing', () => {
     });
 
     it('reports simple pattern support rate', () => {
-      const results = SIMPLE_PATTERNS.map((p) => ({
+      const results = SIMPLE_PATTERNS.map(p => ({
         pattern: p,
         supported: canParse(p, 'en'),
       }));
 
-      const supported = results.filter((r) => r.supported);
-      const unsupported = results.filter((r) => !r.supported);
+      const supported = results.filter(r => r.supported);
+      const unsupported = results.filter(r => !r.supported);
 
       console.log(`\nSimple patterns: ${supported.length}/${results.length} supported`);
       if (unsupported.length > 0) {
         console.log('Unsupported:');
-        unsupported.forEach((r) => console.log(`  - ${r.pattern}`));
+        unsupported.forEach(r => console.log(`  - ${r.pattern}`));
       }
     });
   });
 
   describe('Event handler patterns', () => {
-    it.each(EVENT_HANDLER_PATTERNS)('parses with body: %s', (pattern) => {
+    it.each(EVENT_HANDLER_PATTERNS)('parses with body: %s', pattern => {
       const result = canParse(pattern, 'en');
       if (!result) {
         console.log(`[NOT SUPPORTED] ${pattern}`);
@@ -124,7 +124,7 @@ describe('Gallery Patterns - Semantic Parsing', () => {
     });
 
     it('reports event handler body parsing rate', () => {
-      const results = EVENT_HANDLER_PATTERNS.map((p) => {
+      const results = EVENT_HANDLER_PATTERNS.map(p => {
         const supported = canParse(p, 'en');
         let bodyParsed = false;
 
@@ -140,19 +140,19 @@ describe('Gallery Patterns - Semantic Parsing', () => {
         return { pattern: p, supported, bodyParsed };
       });
 
-      const withBody = results.filter((r) => r.bodyParsed);
-      const noBody = results.filter((r) => r.supported && !r.bodyParsed);
+      const withBody = results.filter(r => r.bodyParsed);
+      const noBody = results.filter(r => r.supported && !r.bodyParsed);
 
       console.log(`\nEvent handlers: ${withBody.length}/${results.length} with parsed body`);
       if (noBody.length > 0) {
         console.log('Body NOT parsed (false positive):');
-        noBody.forEach((r) => console.log(`  - ${r.pattern}`));
+        noBody.forEach(r => console.log(`  - ${r.pattern}`));
       }
     });
   });
 
   describe('Gallery patterns investigation', () => {
-    it.each(GALLERY_PATTERNS_TO_INVESTIGATE)('checks body parsing: %s', (pattern) => {
+    it.each(GALLERY_PATTERNS_TO_INVESTIGATE)('checks body parsing: %s', pattern => {
       const supported = canParse(pattern, 'en');
 
       if (!supported) {
@@ -168,11 +168,17 @@ describe('Gallery Patterns - Semantic Parsing', () => {
 
         // Only expect body for patterns that should have one
         // Exclude possessive property access with asterisk - not yet fully supported
-        const isPossessiveWithAsterisk = pattern.includes("*opacity") || pattern.includes("*");
+        const isPossessiveWithAsterisk = pattern.includes('*opacity') || pattern.includes('*');
 
-        if (!isPossessiveWithAsterisk &&
-            (pattern.includes('toggle') || pattern.includes('put') || pattern.includes('set') ||
-             pattern.includes('swap') || pattern.includes('call') || pattern.includes('hide'))) {
+        if (
+          !isPossessiveWithAsterisk &&
+          (pattern.includes('toggle') ||
+            pattern.includes('put') ||
+            pattern.includes('set') ||
+            pattern.includes('swap') ||
+            pattern.includes('call') ||
+            pattern.includes('hide'))
+        ) {
           expect(node.body.length).toBeGreaterThan(0);
         }
       } else {
@@ -181,9 +187,13 @@ describe('Gallery Patterns - Semantic Parsing', () => {
     });
 
     it('reports true coverage (with body parsing check)', () => {
-      const allPatterns = [...SIMPLE_PATTERNS, ...EVENT_HANDLER_PATTERNS, ...GALLERY_PATTERNS_TO_INVESTIGATE];
+      const allPatterns = [
+        ...SIMPLE_PATTERNS,
+        ...EVENT_HANDLER_PATTERNS,
+        ...GALLERY_PATTERNS_TO_INVESTIGATE,
+      ];
 
-      const results = allPatterns.map((p) => {
+      const results = allPatterns.map(p => {
         const supported = canParse(p, 'en');
         let fullyParsed = false;
 
@@ -205,19 +215,21 @@ describe('Gallery Patterns - Semantic Parsing', () => {
         return { pattern: p, supported, fullyParsed };
       });
 
-      const fullySupported = results.filter((r) => r.fullyParsed);
-      const partialOnly = results.filter((r) => r.supported && !r.fullyParsed);
-      const notSupported = results.filter((r) => !r.supported);
+      const fullySupported = results.filter(r => r.fullyParsed);
+      const partialOnly = results.filter(r => r.supported && !r.fullyParsed);
+      const notSupported = results.filter(r => !r.supported);
 
       console.log('\n=== True Gallery Pattern Coverage ===');
       console.log(`Total patterns: ${results.length}`);
-      console.log(`Fully parsed: ${fullySupported.length} (${((fullySupported.length / results.length) * 100).toFixed(1)}%)`);
+      console.log(
+        `Fully parsed: ${fullySupported.length} (${((fullySupported.length / results.length) * 100).toFixed(1)}%)`
+      );
       console.log(`Partial (body missing): ${partialOnly.length}`);
       console.log(`Not supported: ${notSupported.length}`);
 
       if (partialOnly.length > 0) {
         console.log('\nPartial (event handler but body not parsed):');
-        partialOnly.forEach((r) => console.log(`  - ${r.pattern}`));
+        partialOnly.forEach(r => console.log(`  - ${r.pattern}`));
       }
     });
   });

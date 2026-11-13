@@ -110,10 +110,8 @@ describe('Japanese Tokenizer - Native Idioms', () => {
       // Tokenizer should produce tokens for this input
       expect(tokens.length).toBeGreaterThan(0);
       // Check that we have a toggle-related token (either 'toggle' keyword or '切り替え' identifier)
-      const hasToggleToken = tokens.some(t =>
-        t.value === 'toggle' ||
-        t.value === '切り替え' ||
-        t.value === 'を切り替え'
+      const hasToggleToken = tokens.some(
+        t => t.value === 'toggle' || t.value === '切り替え' || t.value === 'を切り替え'
       );
       expect(hasToggleToken).toBe(true);
     });
@@ -122,10 +120,8 @@ describe('Japanese Tokenizer - Native Idioms', () => {
       const tokens = getTokens('#countを増加', 'ja');
       expect(tokens.length).toBeGreaterThan(0);
       // Check for increment-related token
-      const hasIncrementToken = tokens.some(t =>
-        t.value === 'increment' ||
-        t.value === '増加' ||
-        t.value === 'を増加'
+      const hasIncrementToken = tokens.some(
+        t => t.value === 'increment' || t.value === '増加' || t.value === 'を増加'
       );
       expect(hasIncrementToken).toBe(true);
     });
@@ -136,12 +132,13 @@ describe('Japanese Tokenizer - Native Idioms', () => {
       const tokens = getTokens('クリックしたら 増加', 'ja');
       expect(tokens.length).toBeGreaterThan(0);
       // Check for click event or conditional marker
-      const hasEventToken = tokens.some(t =>
-        t.value === 'click' ||
-        t.value === 'クリック' ||
-        t.value === 'クリックしたら' ||
-        t.value === 'on' ||
-        t.value === 'したら'
+      const hasEventToken = tokens.some(
+        t =>
+          t.value === 'click' ||
+          t.value === 'クリック' ||
+          t.value === 'クリックしたら' ||
+          t.value === 'on' ||
+          t.value === 'したら'
       );
       expect(hasEventToken).toBe(true);
     });
@@ -445,9 +442,7 @@ describe('Semantic Equivalence', () => {
         const verbNode = parse('.active を 切り替える', 'ja');
 
         expect(stemNode.action).toBe(verbNode.action);
-        expect(stemNode.roles.get('patient')?.value).toBe(
-          verbNode.roles.get('patient')?.value
-        );
+        expect(stemNode.roles.get('patient')?.value).toBe(verbNode.roles.get('patient')?.value);
       }
     });
   });
@@ -492,9 +487,7 @@ describe('Edge Cases', () => {
       // The tokenizer may keep Japanese event names or normalize to English
       const tokens = getTokens('クリック で 増加', 'ja');
       // Check that we get some token for the click event (in either form)
-      const hasClickToken = tokens.some(t =>
-        t.value === 'click' || t.value === 'クリック'
-      );
+      const hasClickToken = tokens.some(t => t.value === 'click' || t.value === 'クリック');
       expect(hasClickToken).toBe(true);
     });
 
@@ -502,9 +495,7 @@ describe('Edge Cases', () => {
       const tokens = getTokens('入力 で 表示', 'ja');
       expect(tokens.length).toBeGreaterThan(0);
       // Check for input-related token
-      const hasInputToken = tokens.some(t =>
-        t.value === 'input' || t.value === '入力'
-      );
+      const hasInputToken = tokens.some(t => t.value === 'input' || t.value === '入力');
       expect(hasInputToken).toBe(true);
     });
   });

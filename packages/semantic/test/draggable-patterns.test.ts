@@ -226,18 +226,15 @@ describe('Phase 3: Behavior System Patterns', () => {
       { lang: 'sw', input: 'tabia Draggable' },
     ];
 
-    it.each(behaviorTestCases)(
-      'parses behavior in $lang: "$input"',
-      ({ lang, input }) => {
-        const canParseResult = canParse(input, lang);
-        if (canParseResult) {
-          const node = parse(input, lang) as CommandSemanticNode;
-          expect(node.action).toBe('behavior');
-        } else {
-          console.log(`  [SKIP] ${lang}: "${input}" - not yet supported`);
-        }
+    it.each(behaviorTestCases)('parses behavior in $lang: "$input"', ({ lang, input }) => {
+      const canParseResult = canParse(input, lang);
+      if (canParseResult) {
+        const node = parse(input, lang) as CommandSemanticNode;
+        expect(node.action).toBe('behavior');
+      } else {
+        console.log(`  [SKIP] ${lang}: "${input}" - not yet supported`);
       }
-    );
+    });
   });
 });
 
@@ -334,11 +331,23 @@ describe('Phase 5: Full Draggable Usage Patterns', () => {
         { name: 'trigger', tests: ['trigger click', 'trigger draggable:start'] },
         { name: 'halt', tests: ['halt', 'halt the event'] },
         { name: 'measure', tests: ['measure x', 'measure width of #element'] },
-        { name: 'install', tests: ['install Draggable', 'install Draggable(dragHandle: .titlebar)'] },
+        {
+          name: 'install',
+          tests: ['install Draggable', 'install Draggable(dragHandle: .titlebar)'],
+        },
         { name: 'behavior', tests: ['behavior Draggable', 'behavior Draggable(dragHandle)'] },
-        { name: 'wait-for', tests: ['wait for click', 'wait for pointermove or pointerup from document'] },
-        { name: 'repeat-until', tests: ['repeat until event pointerup', 'repeat until event pointerup from document'] },
-        { name: 'event-handlers', tests: ['on draggable:start add .dragging', 'on draggable:end remove .dragging'] },
+        {
+          name: 'wait-for',
+          tests: ['wait for click', 'wait for pointermove or pointerup from document'],
+        },
+        {
+          name: 'repeat-until',
+          tests: ['repeat until event pointerup', 'repeat until event pointerup from document'],
+        },
+        {
+          name: 'event-handlers',
+          tests: ['on draggable:start add .dragging', 'on draggable:end remove .dragging'],
+        },
       ];
 
       console.log('\n=== Draggable Pattern Coverage ===\n');
@@ -356,7 +365,9 @@ describe('Phase 5: Full Draggable Usage Patterns', () => {
         console.log(`${status} ${phase.name}: ${supported}/${total}`);
       }
 
-      console.log(`\nTotal: ${totalSupported}/${totalTests} (${Math.round(totalSupported/totalTests*100)}%)\n`);
+      console.log(
+        `\nTotal: ${totalSupported}/${totalTests} (${Math.round((totalSupported / totalTests) * 100)}%)\n`
+      );
 
       // This test always passes - it's just for reporting
       expect(true).toBe(true);

@@ -627,7 +627,7 @@ describe('Ukrainian Integration Tests', () => {
     it('should handle event handler with compound body', () => {
       const tokens = getTokens(
         'при кліку додати .loading потім завантажити /api/data потім видалити .loading',
-        'uk',
+        'uk'
       );
       expect(tokens.length).toBeGreaterThan(5);
     });
