@@ -40,11 +40,9 @@ Most questions about this project's security come down to one fact: **hyperscrip
   actions run and every value must be a plain token; that mode is for JSON from outside, such as
   a model's output. Its [README](./packages/intent-element/README.md) states the limits.
 - **`@hyperfixi/mcp-server`** runs on your machine over stdio and is as trusted as the agent
-  calling it. Its validation and translation tools parse text and run nothing. Two opt-in
-  toolsets go further, and their tools are refused unless `LOKASCRIPT_MCP_TOOLSETS` names the
-  toolset: `project` (`scan_inventory` reads files under a directory the caller names) and
-  `grail` (the `grail_*` tools run the shell commands written in a `grail.yaml` in the server's
-  working directory). Do not enable `grail` inside a repository you do not trust.
+  calling it. Its validation and translation tools parse text and run nothing. One opt-in
+  toolset goes further, and its tools are refused unless `LOKASCRIPT_MCP_TOOLSETS` names it:
+  `project` (`scan_inventory` reads files under a directory the caller names).
 - **`@hyperfixi/server-bridge`** generates server code from the routes it finds in HTML. Review
   what it writes, and run it only on HTML you trust.
 

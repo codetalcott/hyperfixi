@@ -12,9 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`@hyperfixi/mcp-server` ran shell commands and read files for a toolset that was off.**
   `LOKASCRIPT_MCP_TOOLSETS` decided what `tools/list` showed and nothing else, so `grail_run`
   ran the commands of a `grail.yaml` in the server's directory, and `scan_inventory` read any
-  directory named to it, on a server started with neither toolset. The tools of `grail` and
-  `project` are now refused unless their toolset is enabled; every other hidden tool still
-  answers a call by name.
+  directory named to it, on a server started with neither toolset. The `grail` tools are
+  removed (see Removed), and the tools of `project` are now refused unless the toolset is
+  enabled; every other hidden tool still answers a call by name.
 - **`get_bundle_config` quoted sizes the bundles outgrew, and file names that do not exist**
   (`@hyperfixi/mcp-server`). A per-language adapter bundle was "86 KB" and is 137 KB gzipped;
   semantic's English bundle was `browser-en.global.js (20 KB)` and is `browser-en.en.global.js`,
@@ -192,6 +192,13 @@ Value>`, `AnyNode`) and each kind's fields (`CommandFields`, `EventHandlerFields
 
 ### Removed
 
+- **The `grail` toolset** (`@hyperfixi/mcp-server`): `grail_check`, `grail_plan`, `grail_run`,
+  `grail_info` and `grail_list`, with `GRAIL.md`. **Breaking for a server started with
+  `LOKASCRIPT_MCP_TOOLSETS=grail`:** the name is now reported as unknown at startup, and a call
+  to one of the five tools answers `Unknown tool`. `grail_run` ran the shell commands a
+  `grail.yaml` in the server's directory named; `project` is the one toolset left whose tools
+  are refused unless it is enabled. The server no longer depends on `@lokascript/planner` or
+  `yaml`. 81 tools are defined, 76 listed with every toolset.
 - **`lse_pattern_stats`** (`@hyperfixi/mcp-server`). Nothing ever recorded an event for it to
   count: every call answered "No pattern events recorded yet". 86 tools are defined, 81 listed
   with every toolset.

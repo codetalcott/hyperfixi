@@ -2,7 +2,7 @@
  * Toolsets: which tools `tools/list` shows.
  *
  * A default connection lists the 14 CORE tools: the deterministic checks an agent cannot do for
- * itself (validate, repair, look up, translate, prove a change preserved meaning). The other 70
+ * itself (validate, repair, look up, translate, prove a change preserved meaning). The other 62
  * belong to named toolsets, listed when LOKASCRIPT_MCP_TOOLSETS names them (comma-separated, or
  * `all`). Every tool still answers a call by name whether or not it is listed, so a client that
  * calls one directly keeps working.
@@ -15,7 +15,6 @@
 export const TOOLSET_NAMES = [
   'domains',
   'lse',
-  'grail',
   'debug',
   'editor',
   'analysis',
@@ -30,7 +29,6 @@ export const TOOLSET_DESCRIPTIONS: Record<ToolsetName, string> = {
   core: 'validate, repair, look up, translate, and prove meaning preserved',
   domains: 'parse/compile/validate/translate for each domain DSL, and composite inputs',
   lse: 'LSE bracket syntax and protocol JSON: conversion, feedback, training data',
-  grail: "GRAIL condition/affordance workflows (reads grail.yaml in the server's directory)",
   debug: 'explain a handler, and reason over debug snapshots you assemble',
   editor: 'completions, hover and document symbols (what the language server does)',
   analysis: 'complexity, metrics, intent, explanations, examples and suggestions',
@@ -69,12 +67,6 @@ export const STATIC_TOOLSETS: Readonly<Record<string, ToolsetName>> = {
   lse_validate_and_feedback: 'lse',
   lse_generate_with_correction: 'lse',
   generate_training_data: 'lse',
-  // grail
-  grail_check: 'grail',
-  grail_plan: 'grail',
-  grail_run: 'grail',
-  grail_info: 'grail',
-  grail_list: 'grail',
   // debug
   debug_analyze_snapshot: 'debug',
   debug_explain_handler: 'debug',
@@ -146,15 +138,11 @@ export function listedTools<T extends { name: string }>(
 }
 
 /**
- * Toolsets whose tools act on the machine the server runs on: `grail` runs the shell commands a
- * grail.yaml names, `project` reads the files under a directory the caller names. Their tools are
- * refused unless the toolset is enabled; every other tool computes on its arguments alone and
- * answers a call whether or not it is listed.
+ * Toolsets whose tools act on the machine the server runs on: `project` reads the files under a
+ * directory the caller names. Their tools are refused unless the toolset is enabled; every other
+ * tool computes on its arguments alone and answers a call whether or not it is listed.
  */
-export const MACHINE_TOOLSETS: ReadonlySet<ToolsetName> = new Set<ToolsetName>([
-  'grail',
-  'project',
-]);
+export const MACHINE_TOOLSETS: ReadonlySet<ToolsetName> = new Set<ToolsetName>(['project']);
 
 /** Why a call to `name` is refused, or undefined when it may run. */
 export function refusedCall(
