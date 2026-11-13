@@ -10,25 +10,7 @@ import { jsonResponse, errorResponse, getString, getNumber } from './utils.js';
 
 type ToolResponse = { content: Array<{ type: string; text: string }>; isError?: boolean };
 
-// Lazy-loaded extractor
-let extractSnippetsFromProjectImpl: ((dir: string, options?: any) => Promise<any[]>) | null = null;
-
-async function getExtractor() {
-  if (extractSnippetsFromProjectImpl) return extractSnippetsFromProjectImpl;
-  try {
-    const mod: any = await import('@hyperfixi/developer-tools');
-    if (mod?.extractSnippetsFromProject) {
-      extractSnippetsFromProjectImpl = mod.extractSnippetsFromProject;
-    } else {
-      // Fallback: inline implementation for when developer-tools isn't built
-      extractSnippetsFromProjectImpl = createInlineExtractor();
-    }
-    return extractSnippetsFromProjectImpl!;
-  } catch {
-    extractSnippetsFromProjectImpl = createInlineExtractor();
-    return extractSnippetsFromProjectImpl;
-  }
-}
+const extractSnippets = createExtractor();
 
 // Cached scan results for query_inventory
 let cachedSnippets: any[] = [];
@@ -148,8 +130,7 @@ async function scanInventory(args: Record<string, unknown>): Promise<ToolRespons
   const category = getString(args, 'category') || undefined;
   const limit = getNumber(args, 'limit', 50);
 
-  const extract = await getExtractor();
-  const allSnippets = await extract(directory);
+  const allSnippets = await extractSnippets(directory);
 
   // Cache for subsequent query_inventory calls
   cachedSnippets = allSnippets;
@@ -274,11 +255,10 @@ function formatSnippet(s: any) {
 }
 
 // =============================================================================
-// Inline Extractor (when developer-tools isn't available as a built package)
+// Extractor
 // =============================================================================
 
-function createInlineExtractor() {
-  // Inline the core extraction logic so the MCP tool works independently
+function createExtractor() {
   return async function extractSnippets(dir: string, _options?: any): Promise<any[]> {
     const fs = await import('fs');
     const path = await import('path');
