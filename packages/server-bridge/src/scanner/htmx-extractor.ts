@@ -16,9 +16,6 @@ const HTMX_REQUEST_PATTERN =
 const FIXI_ACTION_PATTERN = /\bfx-action\s*=\s*["']([^"']+)["']/gi;
 const FIXI_METHOD_PATTERN = /\bfx-method\s*=\s*["'](GET|POST|PUT|PATCH|DELETE)["']/gi;
 
-const HTMX_TARGET_PATTERN = /\b(?:hx-target|fx-target)\s*=\s*["']([^"']+)["']/gi;
-const HTMX_SWAP_PATTERN = /\b(?:hx-swap|fx-swap)\s*=\s*["']([^"']+)["']/gi;
-
 /** Map hx-{method} attribute names to HTTP methods */
 const HTMX_METHOD_MAP: Record<string, HttpMethod> = {
   'hx-get': 'GET',

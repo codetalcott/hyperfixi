@@ -30,9 +30,9 @@ import type {
   PrismEnv,
   LanguagePatterns,
 } from './types';
-import { generatePatterns, getSupportedLanguages } from './pattern-generator';
-import { detectLanguage, getHighlightLanguage } from './language-detector';
-import { UNIVERSAL_PATTERNS, TOKEN_CLASSES } from './token-definitions';
+import { generatePatterns } from './pattern-generator';
+import { getHighlightLanguage } from './language-detector';
+import { UNIVERSAL_PATTERNS } from './token-definitions';
 
 /**
  * Create a Prism grammar definition for a specific language.

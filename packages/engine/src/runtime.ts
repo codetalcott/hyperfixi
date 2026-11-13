@@ -373,7 +373,9 @@ export const ambient: Record<string, unknown> = Object.create(null, {
   selection: { get: () => getSelection()?.toString(), enumerable: true },
   clipboard: {
     get: () => navigator.clipboard.readText(),
-    set: (value: unknown) => void navigator.clipboard.writeText(String(value)),
+    set: (value: unknown) => {
+      void navigator.clipboard.writeText(String(value));
+    },
   },
 });
 

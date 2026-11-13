@@ -73,7 +73,7 @@ try {
   execSync(`node ${path.join(__dirname, 'set-version.cjs')} ${newVersion}`, {
     stdio: 'inherit',
   });
-} catch (err) {
+} catch {
   console.error('Failed to update versions');
   process.exit(1);
 }
@@ -139,7 +139,7 @@ try {
   execSync('git add .', { stdio: 'inherit' });
   execSync(`git commit -m "chore(release): v${newVersion}"`, { stdio: 'inherit' });
   console.log(`   ✅ Created commit`);
-} catch (err) {
+} catch {
   console.error('   ⚠️  Git commit failed (may already be committed)');
 }
 
@@ -149,7 +149,7 @@ try {
     stdio: 'inherit',
   });
   console.log(`   ✅ Created tag v${newVersion}`);
-} catch (err) {
+} catch {
   console.error('   ⚠️  Git tag failed (may already exist)');
 }
 

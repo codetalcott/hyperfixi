@@ -31,7 +31,7 @@ let lspMetadata: {
 beforeAll(async () => {
   try {
     lspMetadata = await import('@hyperfixi/core/lsp-metadata');
-  } catch (e) {
+  } catch {
     console.warn(
       '[sync-validation] @hyperfixi/core/lsp-metadata not available - tests will be skipped'
     );
@@ -209,7 +209,7 @@ describe('Language Server Sync Validation', () => {
     it('canonical hover docs have required fields', () => {
       if (skipIfNoMetadata()) return;
 
-      for (const [keyword, doc] of Object.entries(lspMetadata!.HOVER_DOCS)) {
+      for (const [_keyword, doc] of Object.entries(lspMetadata!.HOVER_DOCS)) {
         expect(doc).toHaveProperty('title');
         expect(doc).toHaveProperty('description');
         expect(doc).toHaveProperty('example');

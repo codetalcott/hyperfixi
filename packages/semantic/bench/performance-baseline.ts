@@ -11,7 +11,6 @@
  */
 
 import { parse, buildAST, canParse, translate, getSupportedLanguages } from '../src';
-import { createSemanticAnalyzer } from '../src';
 
 // =============================================================================
 // Configuration

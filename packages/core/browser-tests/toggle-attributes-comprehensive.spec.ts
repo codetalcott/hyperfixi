@@ -227,7 +227,6 @@ test.describe('Toggle Attributes - Comprehensive Test Suite', () => {
 
       // Test with disabled = false
       btn.disabled = false;
-      // @ts-ignore
       await window.hyperfixi.evaluate(
         "if #target-btn's @disabled then put 'DISABLED' into #test-status else put 'ENABLED' into #test-status end",
         {}
@@ -236,7 +235,6 @@ test.describe('Toggle Attributes - Comprehensive Test Suite', () => {
 
       // Test with disabled = true
       btn.disabled = true;
-      // @ts-ignore
       await window.hyperfixi.evaluate(
         "if #target-btn's @disabled then put 'DISABLED' into #test-status else put 'ENABLED' into #test-status end",
         {}

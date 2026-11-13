@@ -12,8 +12,8 @@ Please do not open a public issue. Use GitHub's private vulnerability reporting:
 [github.com/codetalcott/hyperfixi/security/advisories/new](https://github.com/codetalcott/hyperfixi/security/advisories/new).
 
 Say what you found, how to reproduce it, and which package and version. This is a small project
-with one maintainer: expect an acknowledgement within a week, and a fix or a plan as fast as the
-problem warrants.
+with one maintainer: reports are answered on a best-effort basis, with no promised response
+time, and fixed as fast as the problem warrants.
 
 ## What to treat as code
 

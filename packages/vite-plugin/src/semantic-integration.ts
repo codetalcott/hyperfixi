@@ -304,7 +304,7 @@ export function resolveSemanticConfig(
   }
 
   // Determine bundle type
-  let bundleType = selectBundleType(options, languages);
+  const bundleType = selectBundleType(options, languages);
 
   return {
     enabled: true,

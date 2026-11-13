@@ -135,7 +135,7 @@ class ExpectMatcherImpl implements ExpectMatcher {
     // Return a new matcher that expects the promise to reject
     return new ExpectMatcherImpl(
       this.actual.then(
-        (value: any) => {
+        (_value: any) => {
           throw new Error('Promise did not reject');
         },
         (error: any) => error
@@ -180,7 +180,7 @@ class ExpectMatcherImpl implements ExpectMatcher {
   }
 
   toBeFalsy(): void {
-    const passed = !Boolean(this.actual);
+    const passed = !this.actual;
     this.assert(passed, 'toBeFalsy', false, `Expected ${this.format(this.actual)} to be falsy`);
   }
 

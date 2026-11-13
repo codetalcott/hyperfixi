@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { resolveLanguage } from '../src/language-resolver';
 
 // Minimal DOM mock for testing

@@ -81,11 +81,9 @@
   },
   "files": [
     "dist",
+    "!dist/**/*.d.ts.map",
     "data",
-    "src",
-    "CHANGELOG.md",
-    "!src/**/*.test.ts",
-    "!src/**/*.spec.ts"
+    "CHANGELOG.md"
   ],
   "sideEffects": false,
   "publishConfig": {

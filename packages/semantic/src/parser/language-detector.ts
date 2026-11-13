@@ -373,6 +373,7 @@ export function needsLanguageDetection(input: string): boolean {
   if (input.startsWith('[') && input.endsWith(']')) return false;
 
   // Check for non-ASCII characters (likely non-English)
+  // oxlint-disable-next-line no-control-regex -- deliberate: the class is "any non-ASCII character"
   if (/[^\x00-\x7F]/.test(input)) return true;
 
   // Check if input contains non-English keywords

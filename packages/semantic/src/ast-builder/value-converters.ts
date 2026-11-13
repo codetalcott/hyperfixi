@@ -96,10 +96,11 @@ function convertValueShape(value: SemanticValue, warnings?: string[]): Expressio
     case 'flag':
       // Flags are boolean attributes — convert to a boolean literal
       return { type: 'literal', value: value.enabled } as LiteralNode;
-    default:
+    default: {
       // Exhaustive check
       const _exhaustive: never = value;
       throw new Error(`Unknown semantic value type: ${(_exhaustive as SemanticValue).type}`);
+    }
   }
 }
 

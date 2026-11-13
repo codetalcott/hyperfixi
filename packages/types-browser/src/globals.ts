@@ -73,6 +73,3 @@ declare global {
   var LokaScriptSemantic: LokaScriptSemanticAPI;
   var LokaScriptI18n: LokaScriptI18nAPI;
 }
-
-// This export ensures the file is treated as a module
-export {};

@@ -15,7 +15,7 @@ import { fileURLToPath } from 'url';
 import '../src/languages/_all';
 import '../src/patterns/index';
 
-import { canParse, parse, getSupportedLanguages } from '../src/parser/semantic-parser';
+import { parse, getSupportedLanguages } from '../src/parser/semantic-parser';
 import { calculateTranslationConfidence } from '../src/utils/confidence-calculator';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -154,7 +154,7 @@ async function main() {
   console.log(`Total: ${passCount}/${passCount + failCount} (${((passCount / (passCount + failCount)) * 100).toFixed(1)}%)`);
 
   // Query latest test summary
-  const testSummary = db.prepare(`
+  db.prepare(`
     SELECT
       language,
       SUM(parse_success) as passed,

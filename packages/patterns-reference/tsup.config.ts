@@ -8,6 +8,8 @@ export default defineConfig({
   },
   format: ['esm', 'cjs'],
   dts: true,
+  // The tarball ships no `src`: the maps carry the sources.
+  sourcemap: true,
   clean: true,
   treeshake: true,
   external: ['better-sqlite3'],

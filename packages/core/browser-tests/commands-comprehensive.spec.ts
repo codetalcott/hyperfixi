@@ -214,7 +214,7 @@ test.describe('Command Compatibility Tests', () => {
         try {
           await (window as any).evalHyperScript('log "test message"');
           return true;
-        } catch (e) {
+        } catch {
           return false;
         }
       });

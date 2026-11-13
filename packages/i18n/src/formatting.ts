@@ -73,7 +73,7 @@ export class NumberFormatter {
         }
       }
       return result;
-    } catch (error) {
+    } catch {
       // Fallback for unsupported locales
       return this.fallbackFormat(value, mergedOptions);
     }
@@ -186,7 +186,7 @@ export class DateFormatter {
         return this.fallbackFormat(dateObj, mergedOptions);
       }
       return result;
-    } catch (error) {
+    } catch {
       return this.fallbackFormat(dateObj, mergedOptions);
     }
   }
@@ -215,7 +215,7 @@ export class DateFormatter {
       } else {
         return this.format(dateObj);
       }
-    } catch (error) {
+    } catch {
       return this.fallbackRelativeFormat(dateObj, now);
     }
   }
@@ -336,7 +336,7 @@ export class LocaleFormatter {
         return listFormat.format(items);
       }
       throw new Error('ListFormat not available');
-    } catch (_error) {
+    } catch {
       // Fallback for unsupported locales
       const { type = 'conjunction' } = options;
       const connector = type === 'disjunction' ? 'or' : 'and';
@@ -385,7 +385,7 @@ export class LocaleFormatter {
 
         return testFormatter.format(value);
       }
-    } catch (error) {
+    } catch {
       // Fallback formatting
     }
 

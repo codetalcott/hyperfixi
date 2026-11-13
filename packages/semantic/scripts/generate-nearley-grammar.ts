@@ -76,11 +76,6 @@ const ALL_PROFILES: LanguageProfile[] = [
 // Build keyword → language(s) map
 // =============================================================================
 
-interface KeywordEntry {
-  keyword: string;
-  languages: string[];
-}
-
 function buildKeywordMap(): Map<string, string[]> {
   const map = new Map<string, string[]>();
 

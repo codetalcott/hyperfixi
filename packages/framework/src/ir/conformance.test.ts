@@ -8,7 +8,7 @@
 import { describe, it, expect } from 'vitest';
 import { parseCompound } from './explicit-parser';
 import { renderExplicit } from './explicit-renderer';
-import { fromProtocolJSON, toProtocolJSON } from './protocol-json';
+import { fromProtocolJSON } from './protocol-json';
 import type { CompoundSemanticNode } from '../core/types';
 
 import compoundFixtures from '../../../intent/fixtures/compound.json';

@@ -31,10 +31,8 @@
   },
   "files": [
     "dist",
+    "!dist/**/*.d.ts.map",
     "!dist/**/*.test.d.ts",
-    "!dist/**/*.test.d.ts.map",
-    "src",
-    "!src/**/*.test.ts",
     "LICENSE",
     "README.md",
     "CHANGELOG.md"

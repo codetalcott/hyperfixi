@@ -2,7 +2,7 @@
  * Semantic Analysis Tests
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import {
   analyze,
   analyzeAll,
@@ -10,7 +10,6 @@ import {
   enableDevMode,
   disableDevMode,
   isDevModeEnabled,
-  type AnalysisWarning,
 } from '../../src/analysis';
 import { parse } from '../../src/parser';
 
@@ -111,7 +110,8 @@ describe('Semantic Analysis', () => {
     it('should not error for valid toggle command', () => {
       const result = analyze('toggle .active on #button', 'en');
 
-      const schemaError = result.warnings.find(
+      // Computed but never asserted.
+      const _schemaError = result.warnings.find(
         w => w.code === 'MISSING_REQUIRED_ROLE' || w.code === 'INVALID_ROLE_FOR_COMMAND'
       );
       // toggle has flexible schema, should be valid

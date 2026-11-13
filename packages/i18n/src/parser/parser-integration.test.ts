@@ -16,7 +16,6 @@ import { zhKeywords } from './zh';
 import { trKeywords } from './tr';
 import { createKeywordProvider, createEnglishProvider } from './create-provider';
 import { es } from '../dictionaries/es';
-import { ja } from '../dictionaries/ja';
 
 describe('KeywordProvider Integration', () => {
   describe('Spanish Provider (esKeywords)', () => {
