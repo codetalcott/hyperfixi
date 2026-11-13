@@ -175,7 +175,6 @@ jobs:
           npm run build --prefix packages/i18n
           npm run build --prefix packages/hyperscript-adapter
           npm run build --prefix packages/compilation-service
-          npm run build --prefix packages/planner
           npm run build --prefix packages/server-bridge
           npm run build --prefix packages/mcp-server
           npm run build --prefix packages/developer-tools
@@ -283,7 +282,7 @@ jobs:
           # (The domain-* family moved to lokascript-domains in #909.)
           ALL_PACKAGES="intent engine semantic core i18n hyperscript-adapter patterns-reference \
                         framework server-bridge types-browser \
-                        compilation-service planner mcp-server vite-plugin \
+                        compilation-service mcp-server vite-plugin \
                         behaviors speech intent-element language-server \
                         language-server-hyperscript multilingual-hyperscript \
                         hyperscript-tools-i18n htmx-adapter"

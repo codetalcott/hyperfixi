@@ -37,7 +37,7 @@
     "clean:test": "rm -rf packages/*/coverage packages/*/html packages/*/playwright-report packages/*/test-results packages/*/.vitest",
     "bootstrap": "npm install",
     "dev": "npx http-server . -p 3000 -c-1",
-    "check:fresh": "./scripts/ensure-fresh.sh packages/intent packages/framework packages/semantic packages/i18n packages/engine packages/patterns-reference packages/hyperscript-adapter packages/core packages/compilation-service packages/planner packages/mcp-server",
+    "check:fresh": "./scripts/ensure-fresh.sh packages/intent packages/framework packages/semantic packages/i18n packages/engine packages/patterns-reference packages/hyperscript-adapter packages/core packages/compilation-service packages/mcp-server",
     "check:ci-order": "node scripts/check-ci-build-order.cjs",
     "check:bundle-shards": "node scripts/check-bundle-shards.cjs",
     "check:ci-order:test": "node --test scripts/check-ci-build-order.test.cjs",
