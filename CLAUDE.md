@@ -90,9 +90,7 @@ npm install          # alias: npm run bootstrap — links workspaces + installs 
 > order, not topological order. So building a single deep package on a cold tree
 > (e.g. `npm run build --prefix packages/core`) fails with
 > `Cannot find module .../framework/dist/index.js` until its upstream deps are
-> built first. (`npm run rebuild:full` uses the same unordered command and only
-> _looks_ like it succeeds — it pipes through `grep … || true` and swallows the
-> errors.)
+> built first.
 >
 > The authoritative topological build order lives in the **`build` job of
 > `.github/workflows/ci.yml`** (guarded against drift by
@@ -384,7 +382,7 @@ As of 2026-01-23, all CI testing has been consolidated into a single `.github/wo
 - **Shared build artifacts**: Packages are built once and shared across all jobs (40% faster)
 - **Parallel execution**: jobs run in parallel after build completes
 - **Three-tier job set**: full matrix on `pull_request`; `changes` + `build` + `bundles` (+ the `always()` `ci-gate`) on `push` to main/develop (tree-skew detector); `coverage` on a nightly `schedule` (also `workflow_dispatch`)
-- **Path-gated npm fan-out**: the `changes` job classifies the diff (`code` / `goclient` / `docsources` / `domaingate`); `build` gates on `code` **or** `docsources` and every npm job inherits the gate through `needs: build`. (`docsources` is exactly `examples/**`, `docs/**`, `packages/core/docs/**` — the trees `shipped-sources` walks. All three are excluded from `code`, so without their own filter the one gate that reads them would never run on a diff that only touches them. Note it is **those trees, not markdown generally**: a root-level `*.md` edit — this file included — matches neither filter, so the entire workflow skips and `ci-gate` passes on skips alone.) Doc-only, `protocol/**`-only (the LSE spec: documents since 2026-11-12, when its four reference parsers and their `protocol-conformance` job retired and the fixtures moved to `packages/intent/fixtures`), and `clients/**`-only diffs skip the whole npm stack (~15–20 runner-min each — Dependabot gomod PRs were the motivating case). Skipped required checks report "skipped" and satisfy branch protection (the required `multilingual-validation` check has always relied on this for doc-only PRs). **As of 2026-07-29 `export-validation`, `lint-typecheck`, and `unit-tests` gate on `code` too** — they previously gated on `pull_request` alone, so a docs/examples-only PR ran the entire 27-package unit suite despite the claim above. `shipped-sources` stays ungated by design (it is the gate that walks `examples/` and `docs/`). `domaingate` is `packages/{intent,framework}/**` plus `scripts/domain-gate.sh`: the packages lokascript-domains reads on (semantic left the list with learn, domains 7.1.0), which only `domain-gate` exercises against the domains.
+- **Path-gated npm fan-out**: the `changes` job classifies the diff (`code` / `docsources` / `domaingate`); `build` gates on `code` **or** `docsources` and every npm job inherits the gate through `needs: build`. (`docsources` is exactly `examples/**`, `docs/**`, `packages/core/docs/**` — the trees `shipped-sources` walks. All three are excluded from `code`, so without their own filter the one gate that reads them would never run on a diff that only touches them. Note it is **those trees, not markdown generally**: a root-level `*.md` edit — this file included — matches neither filter, so the entire workflow skips and `ci-gate` passes on skips alone.) Doc-only, `protocol/**`-only (the LSE spec: documents since 2026-11-12, when its four reference parsers and their `protocol-conformance` job retired and the fixtures moved to `packages/intent/fixtures`) diffs skip the whole npm stack (~15–20 runner-min each). Skipped required checks report "skipped" and satisfy branch protection (the required `multilingual-validation` check has always relied on this for doc-only PRs). **As of 2026-07-29 `export-validation`, `lint-typecheck`, and `unit-tests` gate on `code` too** — they previously gated on `pull_request` alone, so a docs/examples-only PR ran the entire 27-package unit suite despite the claim above. `shipped-sources` stays ungated by design (it is the gate that walks `examples/` and `docs/`). `domaingate` is `packages/{intent,framework}/**` plus `scripts/domain-gate.sh`: the packages lokascript-domains reads on (semantic left the list with learn, domains 7.1.0), which only `domain-gate` exercises against the domains.
 - **Node 24 LTS**: Active LTS release (EOL April 2028)
 - **Smart failure handling**: the multilingual job is a real fidelity-ratchet gate (no `continue-on-error`). (The perf `benchmarks` job, the one `continue-on-error` trend job, timed core's runtime and left with it in 4.0.)
 
@@ -392,7 +390,7 @@ As of 2026-01-23, all CI testing has been consolidated into a single `.github/wo
 
 | #   | Job                       | PR  | push main/develop | nightly | Notes                                                                |
 | --- | ------------------------- | --- | ----------------- | ------- | -------------------------------------------------------------------- |
-| 0   | `changes`                 | ✓   | ✓                 | —       | Path classifier (code, goclient, docsources, domaingate)             |
+| 0   | `changes`                 | ✓   | ✓                 | —       | Path classifier (code, docsources, domaingate)                       |
 | 1   | `build`                   | ✓   | ✓                 | ✓       | Build all packages once; gated on `code` **or** `docsources` paths   |
 | 2   | `bundles`                 | ✓   | ✓                 | ✓       | Browser bundles, 3 shards; gated on `code`                           |
 | 3   | `shipped-sources`         | ✓   | —                 | —       | Shipped sources: engine list, localized, execution; ungated          |
@@ -404,7 +402,6 @@ As of 2026-01-23, all CI testing has been consolidated into a single `.github/wo
 | 9   | `browser-tests`           | ✓   | —                 | —       | Playwright `quick` + `comprehensive`; PR-only                        |
 | 10  | `multilingual-validation` | ✓   | —                 | —       | 21-language full sweep + regression gate; PR-only                    |
 | 11  | `bundle-size`             | ✓   | —                 | —       | Size report; PR-only (slim post-merge)                               |
-| 13  | `go-client`               | ✓   | —                 | —       | `go build` + `go test`; gated on go-client paths                     |
 | 14  | `domain-gate`             | ✓   | —                 | —       | round trip + old-input read-back; gated on intent/framework          |
 | 15  | `ci-gate`                 | ✓   | ✓                 | ✓       | `always()` aggregate; fails if any job failed/cancelled (skip is OK) |
 
@@ -818,10 +815,6 @@ committed copy — re-run `npm run populate` before any local gate/probe work.)
 > release — that step is a no-op push of `main` onto itself, so it exercises the exact path
 > that has broken twice. After any real release, confirm `main`'s version matches npm.
 
-**Archived Workflows:**
-
-- See `.github/workflows/archive/README.md` for previously consolidated workflows
-
 ## Architecture
 
 > **`packages/engine` is THE engine** (owner decision 2026-10-01; `@hyperfixi/core`'s root
@@ -846,11 +839,11 @@ packages/engine` fails on a new failing test AND on a listed one that now passes
 > `packages/engine/dist/hyperfixi-hs.js` (hyperscript only, 34 KB), which core ships as
 > `hyperfixi.js`.
 >
-> **Historical design records** (core's engine, before 4.0): `docs-internal/PARSER_NEXT_STEPS.md`
-> (core's parser track), `docs-internal/COMMAND_ARCHITECTURE_NEXT_STEPS.md` (core's command
-> layer) and `docs-internal/ENGINE_MIGRATION_PLAN.md` (one typed AST, the engine/front-end
-> boundary, which `scripts/check-semantic-boundary.cjs` still guards). Docs for finished arcs
-> are deleted under a tag and indexed in `docs-internal/ARCHIVE.md` (2026-09-30).
+> **Historical design records** (core's engine, before 4.0) were deleted under the tag
+> `archived/cleanup-2026-11-12`: `PARSER_NEXT_STEPS.md`, `COMMAND_ARCHITECTURE_NEXT_STEPS.md` and
+> `ENGINE_MIGRATION_PLAN.md` (one typed AST, the engine/front-end boundary, which
+> `scripts/check-semantic-boundary.cjs` still guards). Docs for finished arcs are deleted under
+> a tag and indexed in `docs-internal/ARCHIVE.md`.
 
 ### Engine Modules
 
