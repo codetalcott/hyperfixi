@@ -67,7 +67,7 @@ packages/
 ├── language-server-hyperscript/ # LSP for original _hyperscript
 ├── multilingual-hyperscript/    # Multilingual plugin for original _hyperscript (24 languages)
 │
-└── [other packages: smart-bundling, developer-tools, testing-framework, ast-toolkit, etc.]
+└── [other packages: developer-tools, testing-framework (private: the repo's gates), etc.]
 
 examples/
 ├── multilingual/   # Live grammar transformation demo

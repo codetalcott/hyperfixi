@@ -768,7 +768,6 @@ jobs:
           npm run typecheck --prefix packages/planner
           npm run typecheck --prefix packages/playground
           npm run typecheck --prefix packages/server-bridge
-          npm run typecheck --prefix packages/smart-bundling
           npm run typecheck --prefix packages/speech
           npm run typecheck --prefix packages/testing-framework
           npm run typecheck --prefix packages/types-browser
@@ -1010,9 +1009,6 @@ jobs:
 
       - name: Test behaviors
         run: npm test --prefix packages/behaviors
-
-      - name: Test smart-bundling
-        run: npm test --prefix packages/smart-bundling -- --run
 
       - name: Test intent
         run: npm test --prefix packages/intent

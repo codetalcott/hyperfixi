@@ -10,6 +10,12 @@ const path = require('path');
 const packagesDir = path.join(__dirname, '../packages');
 const packages = fs.readdirSync(packagesDir);
 
+// Packages that were published and are private now. Their releases are part of
+// the public history, so the changelog keeps naming them.
+const FORMERLY_PUBLISHED = new Set([
+  '@hyperfixi/testing-framework', // on npm through 7.6.0
+]);
+
 // Get private packages
 const privatePackages = [];
 packages.forEach(dir => {
@@ -17,7 +23,7 @@ packages.forEach(dir => {
   if (!fs.existsSync(pkgPath)) return;
 
   const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-  if (pkg.private === true) {
+  if (pkg.private === true && !FORMERLY_PUBLISHED.has(pkg.name)) {
     privatePackages.push(pkg.name);
   }
 });

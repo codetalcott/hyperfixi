@@ -58,6 +58,18 @@ patient:.active]`, not `… destination:me`), its reader reads a bare `{…}` as
 
 ### Changed
 
+- **`@lokascript/framework/testing` uses your vitest.** It `import`s `expect` from `vitest`, which
+  was a devDependency only, so the build inlined a second copy: the entry was 674 KB, and its
+  `expect` was not the one a caller's test ran under. vitest is an optional peer now and the entry
+  is 2 KB.
+- **`@hyperfixi/testing-framework` is private** and leaves the publish list. What it published
+  was a test runner whose hooks, fixtures and timeouts were never implemented; what the package
+  is, this repo's gates, imports devDependencies and was never usable from npm. 7.6.0 is its last
+  version there.
+- **A `LICENSE` file in every published package.** Eleven declared MIT in `package.json` and
+  shipped no licence text (behaviors, compilation-service, htmx-adapter, i18n, intent-element,
+  language-server, mcp-server, patterns-reference, planner, types-browser, vite-plugin).
+
 - **`<lse-intent>` runs an intent as written or refuses it** (`@hyperfixi/intent-element`,
   breaking). Tested on the real engine with the real renderer, which its unit tests had stubbed,
   the element was running things the JSON did not say:
@@ -156,6 +168,22 @@ Value>`, `AnyNode`) and each kind's fields (`CommandFields`, `EventHandlerFields
 
 ### Removed
 
+- **Dead material a repo-wide review found, 423 files, none of it read by working code.** Kept at
+  the tag `archived/cleanup-2026-11-12` and indexed in `docs-internal/ARCHIVE.md`. Six
+  `experiments/` written against core's retired runtime or packages that no longer exist;
+  `clients/` (Go and Python clients for the compilation service's HTTP server, which left in
+  7.0) and its CI job; the 84 phase and summary files under `packages/core/docs/archive/`; 148
+  probe scripts in `packages/testing-framework/scratch/`; `scripts/analysis/`, `scripts/testing/`
+  and nine other scripts nothing ran, with the root `patterns:*`, `compatibility:*` and
+  `rebuild:*` npm scripts that pointed at them; the design records of core's deleted engine and
+  the unsent hyperscript.org offer in `docs-internal/`; archived workflows; and
+  `@lokascript/semantic`'s `src/public-api.ts`, a second "public API" file nothing imported or
+  built. Root `npm test`, `test:watch`, `test:coverage` and `clean` pass `--if-present`: each
+  failed on the first workspace without that script.
+- **`packages/smart-bundling`** (private, never published): nothing imported it, its
+  "tree-shaking" and gzip figures were constants (`size * 0.8`, `size * 0.7`), and its tests
+  mocked esbuild, rollup and the file system.
+
 - **`SemanticJSON`, the older "LLM JSON" shape**, and its functions. `SemanticJSON` /
   `SemanticJSONValue` (`@lokascript/intent`, framework, compilation-service) and
   `validateSemanticJSON` / `jsonToSemanticNode` / `semanticNodeToJSON` (framework,
@@ -204,21 +232,6 @@ Value>`, `AnyNode`) and each kind's fields (`CommandFields`, `EventHandlerFields
   after a statement's closing bracket is now an error.
 - **`@lokascript/intent`'s README examples did not match the API** (`result.ok`, `defineCommand`'s
   arguments, the envelope call). They are rewritten and each was run.
-
-### Removed
-
-- **Dead material a repo-wide review found, 423 files, none of it read by working code.** Kept at
-  the tag `archived/cleanup-2026-11-12` and indexed in `docs-internal/ARCHIVE.md`. Six
-  `experiments/` written against core's retired runtime or packages that no longer exist;
-  `clients/` (Go and Python clients for the compilation service's HTTP server, which left in
-  7.0) and its CI job; the 84 phase and summary files under `packages/core/docs/archive/`; 148
-  probe scripts in `packages/testing-framework/scratch/`; `scripts/analysis/`, `scripts/testing/`
-  and nine other scripts nothing ran, with the root `patterns:*`, `compatibility:*` and
-  `rebuild:*` npm scripts that pointed at them; the design records of core's deleted engine and
-  the unsent hyperscript.org offer in `docs-internal/`; archived workflows; and
-  `@lokascript/semantic`'s `src/public-api.ts`, a second "public API" file nothing imported or
-  built. Root `npm test`, `test:watch`, `test:coverage` and `clean` pass `--if-present`: each
-  failed on the first workspace without that script.
 
 ## [7.6.0] - 2026-11-10
 

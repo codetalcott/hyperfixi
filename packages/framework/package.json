@@ -222,6 +222,14 @@
   "dependencies": {
     "@lokascript/intent": "^7.6.0"
   },
+  "peerDependencies": {
+    "vitest": ">=3"
+  },
+  "peerDependenciesMeta": {
+    "vitest": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@lokascript/domains": "^7.1.0",
     "@types/node": "^26.6.6",
