@@ -138,15 +138,15 @@ Files live in `@lokascript/semantic/dist/`; each is also exported as `@lokascrip
 
 | Bundle                                    | Global                        | Size (gzip) | Languages                                      |
 | ----------------------------------------- | ----------------------------- | ----------- | ---------------------------------------------- |
-| `browser.global.js`                       | `LokaScriptSemantic`          | ~260 KB     | All 24                                         |
-| `browser-priority.priority.global.js`     | `LokaScriptSemanticPriority`  | ~151 KB     | 11: en, es, pt, fr, de, ja, zh, ko, ar, tr, id |
-| `browser-western.western.global.js`       | `LokaScriptSemanticWestern`   | ~128 KB     | en, es, pt, fr, de, it                         |
-| `browser-east-asian.east-asian.global.js` | `LokaScriptSemanticEastAsian` | ~108 KB     | ja, zh, ko (+ en)                              |
-| `browser-es-en.es-en.global.js`           | `LokaScriptSemanticEsEn`      | ~116 KB     | en, es                                         |
-| `browser-en.en.global.js`                 | `LokaScriptSemanticEn`        | ~111 KB     | en only                                        |
-| `browser-es.es.global.js`                 | `LokaScriptSemanticEs`        | ~98 KB      | es (+ en)                                      |
+| `browser.global.js`                       | `LokaScriptSemantic`          | ~297 KB     | All 24                                         |
+| `browser-priority.priority.global.js`     | `LokaScriptSemanticPriority`  | ~180 KB     | 11: en, es, pt, fr, de, ja, zh, ko, ar, tr, id |
+| `browser-western.western.global.js`       | `LokaScriptSemanticWestern`   | ~151 KB     | en, es, pt, fr, de, it                         |
+| `browser-east-asian.east-asian.global.js` | `LokaScriptSemanticEastAsian` | ~147 KB     | ja, zh, ko (+ en)                              |
+| `browser-es-en.es-en.global.js`           | `LokaScriptSemanticEsEn`      | ~136 KB     | en, es                                         |
+| `browser-en.en.global.js`                 | `LokaScriptSemanticEn`        | ~129 KB     | en only                                        |
+| `browser-es.es.global.js`                 | `LokaScriptSemanticEs`        | ~136 KB     | es (+ en)                                      |
 
-Every other language except Hebrew has its own `browser-<code>.<code>.global.js` (~96–100 KB). Every bundle but `core` and `lazy` (which register no language) registers English as well (about 2 KB, since 2026-10-04): English is what the adapters render a parse to, for `hyperfixi-hs.js` or `_hyperscript` to read. Each also exports `translate`. Most of each bundle is the shared parser (`browser-core.core.global.js`, which registers no language, is ~90 KB), so a language costs only a few KB on top.
+Every other language except Hebrew has its own `browser-<code>.<code>.global.js` (~132–138 KB). Every bundle but `core` and `lazy` (which register no language) registers English as well (about 2 KB, since 2026-10-04): English is what the adapters render a parse to, for `hyperfixi-hs.js` or `_hyperscript` to read. Each also exports `translate`. Most of each bundle is the shared parser (`browser-core.core.global.js`, which registers no language, is ~90 KB), so a language costs only a few KB on top.
 
 Choose the smallest bundle that covers your target languages. See `packages/semantic/README.md` for details.
 
@@ -158,17 +158,17 @@ ancestor, then the page's `<html lang>`. The `_` attribute keeps the text its au
 
 ```html
 <script src="hyperfixi-hs.js"></script>
-<script src="https://unpkg.com/@lokascript/hyperscript-adapter@3/dist/hyperscript-i18n-ja.global.js"></script>
+<script src="https://unpkg.com/@lokascript/hyperscript-adapter@7/dist/hyperscript-i18n-ja.global.js"></script>
 
 <button lang="ja" _="クリック で .active を トグル">切り替え</button>
 ```
 
-Two ways to load the adapter (gzipped, measured 2026-10-04 with `gzip -c`, macOS):
+Two ways to load the adapter (gzipped, measured 2026-11-13 on 7.6.0 with `gzip -9`, macOS):
 
 | Adapter                                                 | Size    | With                                                                               |
 | ------------------------------------------------------- | ------- | ---------------------------------------------------------------------------------- |
-| `hyperscript-i18n-<lang>.global.js` (or a regional one) | ~115 KB | Nothing else: it carries the semantic parser for its languages (all 24: ~247 KB)   |
-| `hyperscript-i18n-lite.global.js`                       | 1.7 KB  | A `@lokascript/semantic` bundle loaded before it (below: ~126 KB for one language) |
+| `hyperscript-i18n-<lang>.global.js` (or a regional one) | ~135 KB | Nothing else: it carries the semantic parser for its languages (all 24: ~280 KB)   |
+| `hyperscript-i18n-lite.global.js`                       | 2.3 KB  | A `@lokascript/semantic` bundle loaded before it (above: ~135 KB for one language) |
 
 The lite adapter takes whichever `LokaScriptSemantic*` global is on the page; every semantic
 bundle registers English, which is what the adapter renders to. Translation between languages
