@@ -182,11 +182,12 @@ describe('readResource - languages', () => {
     expect(hasWordOrder).toBe(true);
   });
 
-  it('lists multiple languages', () => {
+  it('lists the 24 languages semantic registers, each with an example', () => {
     const result = readResource('hyperscript://languages');
     const data = JSON.parse(result.contents[0].text);
-    const languages = data.supported || data;
-    expect(languages.length).toBeGreaterThan(5);
+    expect(data.supported).toHaveLength(24);
+    expect(Object.keys(data.examples)).toHaveLength(24);
+    expect(data.examples.en).toBe('on click toggle .active');
   });
 });
 
@@ -216,22 +217,22 @@ describe('readResource - adapter compatibility', () => {
     expect(() => JSON.parse(result.contents[0].text)).not.toThrow();
   });
 
-  it('includes language tiers', () => {
+  it('claims no support tiers or confidence figures (the code defines none)', () => {
     const data = JSON.parse(readResource('hyperscript://adapter/compatibility').contents[0].text);
-    expect(data.tiers).toBeDefined();
-    expect(data.tiers['full-support']).toBeDefined();
-    expect(data.tiers['experimental']).toBeDefined();
+    expect(data.tiers).toBeUndefined();
+    for (const entry of Object.values<Record<string, unknown>>(data.languages)) {
+      expect(entry.tier).toBeUndefined();
+      expect(entry.confidenceRange).toBeUndefined();
+    }
   });
 
-  it('includes Spanish as full-support', () => {
+  it('lists a dedicated bundle for each of the 23 non-English languages', () => {
     const data = JSON.parse(readResource('hyperscript://adapter/compatibility').contents[0].text);
-    expect(data.languages.es.tier).toBe('full-support');
+    expect(Object.keys(data.languages)).toHaveLength(23);
     expect(data.languages.es.hasDedicatedBundle).toBe(true);
-  });
-
-  it('includes Japanese as experimental', () => {
-    const data = JSON.parse(readResource('hyperscript://adapter/compatibility').contents[0].text);
-    expect(data.languages.ja.tier).toBe('experimental');
+    expect(data.languages.es.bundleName).toBe('hyperscript-i18n-es.global.js');
+    expect(data.languages.ja.wordOrder).toBe('SOV');
+    expect(data.languages.ar.direction).toBe('rtl');
   });
 });
 

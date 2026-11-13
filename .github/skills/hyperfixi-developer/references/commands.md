@@ -46,7 +46,7 @@
 | -------------- | ------------ | ---------------------------------------- |
 | `if/else`      | Conditional  | `if me matches .active ... else ... end` |
 | `repeat`       | Loop N times | `repeat 5 times ...`                     |
-| `for each`     | Iterate      | `for item in items ...`                  |
+| `for`          | Iterate      | `for item in items ...`                  |
 | `repeat while` | While loop   | `repeat while :loading wait 100ms end`   |
 
 ## Navigation
