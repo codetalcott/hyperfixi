@@ -15,17 +15,6 @@ package's README. Finished work is not kept here: its docs are deleted under a t
 The engine's own queue is executable: `packages/engine/upstream-suite/known-failures.json` (see
 `packages/engine/README.md`).
 
-## Design records of core's engine (historical since 4.0)
-
-Core's own engine was deleted in 4.0 (#1368, 2026-10-04). These stay as records of its design; none is a
-queue.
-
-| Doc                                                                        | Why it stays                                                                               |
-| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| [`ENGINE_MIGRATION_PLAN.md`](ENGINE_MIGRATION_PLAN.md)                     | The engine/front-end boundary that `scripts/check-semantic-boundary.cjs` and `ci.yml` cite |
-| [`PARSER_NEXT_STEPS.md`](PARSER_NEXT_STEPS.md)                             | Core's parser track; OPEN_ITEMS and a semantic test cite its line numbers                  |
-| [`COMMAND_ARCHITECTURE_NEXT_STEPS.md`](COMMAND_ARCHITECTURE_NEXT_STEPS.md) | Core's command layer; OPEN_ITEMS cites its line numbers                                    |
-
 ## Process
 
 - [`build/CHANGELOG_GUIDELINES.md`](build/CHANGELOG_GUIDELINES.md): `scripts/bump-version.cjs` and
@@ -34,8 +23,6 @@ queue.
 
 ## Open briefs (work not started)
 
-- [`hyperscript-org-offer/`](hyperscript-org-offer/): the offer to hyperscript.org, not sent (refreshed
-  against 4.1.0 on 2026-10-06, #1400; OPEN_ITEMS PR8).
 - [`proposals/community-review-system.md`](proposals/community-review-system.md): the community review
   design (OPEN_ITEMS PR1).
 - [`proposals/lse-syntax-new-directions.md`](proposals/lse-syntax-new-directions.md): partly shipped,

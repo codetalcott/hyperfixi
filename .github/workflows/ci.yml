@@ -59,10 +59,10 @@ env:
 
 jobs:
   # ============================================
-  # Job 0: Detect which surface changed: npm stack ("code") or the Go client. EVERY npm-stack job gates on `code` — `build` carries the
-  # gate and the rest inherit it through `needs: build` (a skipped need skips
-  # the dependent). Doc-only and go-client-only diffs therefore
-  # skip the whole npm fan-out; clients/go-client/** has its own job below.
+  # Job 0: Detect whether the npm stack ("code") changed. EVERY npm-stack job
+  # gates on `code` — `build` carries the gate and the rest inherit it through
+  # `needs: build` (a skipped need skips the dependent). Doc-only diffs
+  # therefore skip the whole npm fan-out.
   # (protocol/ is the LSE spec, documents only since 2026-11-12: its reference
   # parsers retired, and the fixtures moved to packages/intent/fixtures, where
   # the unit tests read them.) Skipped REQUIRED checks (Build, Unit Tests, …)
@@ -80,7 +80,6 @@ jobs:
     if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
     outputs:
       code: ${{ steps.filter.outputs.code }}
-      goclient: ${{ steps.filter.outputs.goclient }}
       docsources: ${{ steps.docsources.outputs.docsources }}
       domaingate: ${{ steps.domaingate.outputs.domaingate }}
     steps:
@@ -94,13 +93,11 @@ jobs:
           # `code` evaluated true on EVERY diff (observed live: go.mod-only
           # #664 ran the full npm stack). 'every' = a file counts only when it
           # matches ALL patterns (inside '**' AND outside each excluded set).
-          # A single-positive-pattern filter (goclient) is unaffected;
-          # a filter with SEVERAL positive patterns is not (see `docsources`).
+          # A filter with SEVERAL positive patterns needs the default
+          # quantifier instead (see `docsources`).
           predicate-quantifier: 'every'
           # `code` is true when any changed file is OUTSIDE the doc set and
-          # outside clients/ (the Go client has its own job) and protocol/ (the
-          # LSE spec: documents). `goclient` is true when the Go client changed:
-          # it lives outside the npm workspaces and no other job exercises it.
+          # outside protocol/ (the LSE spec: documents).
           filters: |
             code:
               - '**'
@@ -113,15 +110,12 @@ jobs:
               - '!.gitignore'
               - '!LICENSE'
               - '!protocol/**'
-              - '!clients/**'
-            goclient:
-              - 'clients/go-client/**'
       # The trees the shipped-sources validity gate walks (its DEFAULT_ROOTS).
       # These are all EXCLUDED from `code` above, so without their own filter
       # the one gate that reads them would never run on a diff that only
       # touches them — i.e. never on the PRs most likely to introduce a
       # malformed example. Deliberately narrow: a README typo elsewhere still
-      # skips the npm stack, and protocol/ and clients/ diffs are unaffected.
+      # skips the npm stack, and protocol/ diffs are unaffected.
       #
       # Its own step, with the default quantifier ('some': a file counts when
       # it matches ANY pattern). Under the 'every' above, a file had to match
@@ -1607,39 +1601,6 @@ jobs:
           exit $failed
 
   # ============================================
-  # Job 10.5: Go client build + test
-  #
-  # clients/go-client lives outside the npm workspaces, so no other job
-  # compiles it — its weekly gomod Dependabot PRs were "green" without a line
-  # of Go ever building. Gated on clients/go-client/**, so it costs ~0 on an
-  # ordinary PR and ~40s on the PRs it exists for.
-  # ============================================
-  go-client:
-    name: Go Client
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    needs: changes
-    if: github.event_name == 'pull_request' && needs.changes.outputs.goclient == 'true'
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Setup Go
-        uses: actions/setup-go@v7
-        with:
-          go-version-file: clients/go-client/go.mod
-          cache-dependency-path: clients/go-client/go.sum
-
-      - name: Build
-        working-directory: clients/go-client
-        run: go build ./...
-
-      - name: Test
-        working-directory: clients/go-client
-        run: go test ./...
-
-  # ============================================
   # Job 14: Domain gate
   #
   # lokascript-domains' six DSLs read on framework's matcher skeleton and take
@@ -1722,7 +1683,6 @@ jobs:
       - browser-tests
       - multilingual-validation
       - bundle-size
-      - go-client
       - domain-gate
 
     steps:
