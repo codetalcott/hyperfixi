@@ -36,6 +36,9 @@ export default defineConfig([
     format: ['esm'],
     splitting: false,
     sourcemap: true,
+    // `/testing` uses the caller's vitest (an optional peer). Inlined, it shipped a
+    // second copy (674 KB) whose `expect` was not the one the caller's test ran under.
+    external: ['vitest'],
   },
   // Language grammars: data modules, one per language. Splitting keeps one copy
   // of each object between `languages/<code>` and the `languages` barrel. CJS too:

@@ -50,7 +50,6 @@ PACKAGES=(
 
   # Plugin & bundling
   "vite-plugin:Vite Plugin"
-  "smart-bundling:Smart Bundling"
   "htmx-adapter:htmx Adapter"
 
   # An engine module (`speak`)

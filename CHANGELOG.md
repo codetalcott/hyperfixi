@@ -185,6 +185,26 @@ Value>`, `AnyNode`) and each kind's fields (`CommandFields`, `EventHandlerFields
 - **`@lokascript/intent`'s README examples did not match the API** (`result.ok`, `defineCommand`'s
   arguments, the envelope call). They are rewritten and each was run.
 
+### Changed
+
+- **`@lokascript/framework/testing` uses your vitest.** It `import`s `expect` from `vitest`, which
+  was a devDependency only, so the build inlined a second copy: the entry was 674 KB, and its
+  `expect` was not the one a caller's test ran under. vitest is an optional peer now and the entry
+  is 2 KB.
+- **`@hyperfixi/testing-framework` is private** and leaves the publish list. What it published
+  was a test runner whose hooks, fixtures and timeouts were never implemented; what the package
+  is, this repo's gates, imports devDependencies and was never usable from npm. 7.6.0 is its last
+  version there.
+- **A `LICENSE` file in every published package.** Eleven declared MIT in `package.json` and
+  shipped no licence text (behaviors, compilation-service, htmx-adapter, i18n, intent-element,
+  language-server, mcp-server, patterns-reference, planner, types-browser, vite-plugin).
+
+### Removed
+
+- **`packages/smart-bundling`** (private, never published): nothing imported it, its
+  "tree-shaking" and gzip figures were constants (`size * 0.8`, `size * 0.7`), and its tests
+  mocked esbuild, rollup and the file system.
+
 ## [7.6.0] - 2026-11-10
 
 The engine takes extensions: upstream's `tailwind` and `socket` load from a script tag or

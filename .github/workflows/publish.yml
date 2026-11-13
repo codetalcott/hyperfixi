@@ -178,7 +178,6 @@ jobs:
           # intent-element depends on @lokascript/intent + @hyperfixi/core (both built above)
           npm run build --prefix packages/intent-element
           npm run build --prefix packages/types-browser
-          npm run build --prefix packages/testing-framework
           npm run build --prefix packages/language-server-hyperscript
           npm run build --prefix packages/multilingual-hyperscript
           npm run build --prefix packages/hyperscript-tools-i18n
@@ -276,7 +275,7 @@ jobs:
           ALL_PACKAGES="intent engine semantic core i18n hyperscript-adapter patterns-reference \
                         framework server-bridge types-browser \
                         compilation-service planner mcp-server vite-plugin \
-                        behaviors speech intent-element testing-framework language-server \
+                        behaviors speech intent-element language-server \
                         language-server-hyperscript multilingual-hyperscript \
                         hyperscript-tools-i18n htmx-adapter"
 
