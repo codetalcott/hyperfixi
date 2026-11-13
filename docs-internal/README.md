@@ -12,6 +12,10 @@ package's README. Finished work is not kept here: its docs are deleted under a t
 | [`multilingual/OPEN_ITEMS.md`](multilingual/OPEN_ITEMS.md)       | Every open multilingual item, one line each, with the IDs the roadmap uses (also the product and agent-surface deferrals)    |
 | [`multilingual/VALUE_READING.md`](multilingual/VALUE_READING.md) | The rules that tell a variable from a structure word, and the name-collision policy (a PR that moves a rule updates its row) |
 
+[`SEMANTIC_ROOT_EXPORTS.md`](SEMANTIC_ROOT_EXPORTS.md) is the inventory for 8.0's cut of `@lokascript/semantic`'s root
+entry: every root export with its importers and a proposal (measured 2026-11-13). Delete it when 8.0
+has made the cut.
+
 The engine's own queue is executable: `packages/engine/upstream-suite/known-failures.json` (see
 `packages/engine/README.md`).
 

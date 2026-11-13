@@ -38,7 +38,12 @@ import './languages/_all';
 // Render-vocabulary registry. The lexicons themselves live in separate
 // `lexicons/{code}` modules so parse-only consumers can drop them; this entry
 // pulls them in via `languages/_all` above (see ./lexicon-registry.ts).
-export { registerLexicon, getLexicon, getRegisteredLexicons } from './lexicon-registry';
+export {
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. `@lokascript/semantic/core` still exports it. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
+  registerLexicon,
+  getLexicon,
+  getRegisteredLexicons,
+} from './lexicon-registry';
 export type { LanguageLexicon } from './generators/profiles/types';
 
 // Canonical list of supported languages, derived from the language-loader's
@@ -84,7 +89,9 @@ export type {
   ExtractionRules,
   ExtractionRule,
   PatternConstraints,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. `@lokascript/semantic/core` still exports it. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   PatternMatchResult,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   PatternMatchError,
 
   // Token types
@@ -95,7 +102,9 @@ export type {
   LanguageTokenizer,
 
   // Parser/Renderer interfaces
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   SemanticParser,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   SemanticRenderer,
 } from './types';
 
@@ -110,10 +119,15 @@ export {
   createPropertyPath,
   createCommandNode,
   createEventHandler,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   createCompoundNode,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   createConditionalNode,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   createLoopNode,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   isBlockCommand,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   isViewTransitionBlock,
 } from './types';
 
@@ -123,15 +137,24 @@ export {
 
 export {
   getPatternsForLanguage,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   getPatternsForLanguageAndCommand,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   getSupportedLanguages as getSupportedPatternLanguages,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   getSupportedCommands,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   getPatternById,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   getPatternStats,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   getTogglePatternsForLanguage,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   getPutPatternsForLanguage,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   getEventHandlerPatternsForLanguage,
   eventNameTranslations,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   normalizeEventName,
   localizeEventName,
   getEventLocalizationDenylist,
@@ -146,6 +169,7 @@ export {
   tokenize,
   getSupportedLanguages as getSupportedTokenizerLanguages,
   isLanguageSupported,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   registerTokenizer,
   englishTokenizer,
   japaneseTokenizer,
@@ -154,6 +178,7 @@ export {
   spanishTokenizer,
   turkishTokenizer,
   chineseTokenizer,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. Import it from `@lokascript/framework`. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   TokenStreamImpl,
 } from './tokenizers';
 
@@ -168,22 +193,38 @@ export {
   UrlExtractor,
   VariableRefExtractor,
 } from './tokenizers/extractors/index';
-export { getHyperscriptExtractors } from './tokenizers/extractor-helpers';
+export {
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
+  getHyperscriptExtractors,
+} from './tokenizers/extractor-helpers';
 
 // Generic extractors (re-exported from @lokascript/framework)
 export {
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. Import it from `@lokascript/framework`. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   StringLiteralExtractor,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. Import it from `@lokascript/framework`. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   NumberExtractor,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. Import it from `@lokascript/framework`. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   IdentifierExtractor,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   OperatorExtractor,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   PunctuationExtractor,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   getDefaultExtractors,
 } from './tokenizers/generic-extractors';
 
 // Context-aware extractor system (re-exported from @lokascript/framework)
-export type { TokenizerContext, ContextAwareExtractor } from './tokenizers/context-aware-extractor';
+export type {
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. Import it from `@lokascript/framework`. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
+  TokenizerContext,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. Import it from `@lokascript/framework`. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
+  ContextAwareExtractor,
+} from './tokenizers/context-aware-extractor';
 export {
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. Import it from `@lokascript/framework`. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   isContextAwareExtractor,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. Import it from `@lokascript/framework`. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   createTokenizerContext,
 } from './tokenizers/context-aware-extractor';
 
@@ -195,16 +236,23 @@ export type { ValueExtractor, ExtractionResult } from './tokenizers/value-extrac
 // =============================================================================
 
 export {
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   SemanticParserImpl,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   semanticParser,
   parse,
   canParse,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   getCommandType,
   fillSchemaDefaults,
   getSOVEventMarkers,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   PatternMatcher,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   patternMatcher,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   matchPattern,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   matchBest,
 } from './parser';
 
@@ -215,6 +263,7 @@ export {
 export {
   parseExplicit,
   isExplicitSyntax,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   SemanticRendererImpl,
   semanticRenderer,
   render,
@@ -321,6 +370,7 @@ export {
 
   // Query helpers over the manifest (for mcp-server/LSP/domain bridges)
   getKeywordTranslations,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   getRoleMarkers,
 
   // Command schemas
@@ -345,24 +395,36 @@ export {
   prependSchema,
   commandSchemas,
   getSchema,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   getSchemasByCategory,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   getDefinedSchemas,
 
   // Pattern generator
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   type GeneratorConfig,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   generatePattern,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   generateSimplePattern,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   generatePatternVariants,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. `@lokascript/semantic/core` still exports it. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   generatePatternsForLanguage,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   generatePatternsForCommand,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   generateAllPatterns,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   getGeneratorSummary,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   validateLanguageKeywords,
 
   // Schema validator
   type SchemaValidationItem,
   type SchemaValidationSeverity,
   type SchemaValidation,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   type SchemaValidationResult,
   SchemaErrorCodes,
   validateCommandSchema,
@@ -377,9 +439,12 @@ export {
 
 export {
   validateSemanticResult,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   validateAndAdjustConfidence,
   getSchema as getValidatorSchema,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   registerSchema,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   schemaRegistry,
   type ValidationError,
   type ValidationResult,
@@ -390,11 +455,17 @@ export {
 // =============================================================================
 
 export {
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   SemanticCache,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   semanticCache,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   createSemanticCache,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   withCache,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   type SemanticCacheConfig,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   type CacheStats,
 } from './cache';
 
@@ -404,15 +475,24 @@ export {
 
 export {
   // Types (using aliases to avoid conflicts with existing exports)
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   type UnifiedLanguageProfile,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   type UnifiedRoleMarker,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   type GrammarRule as UnifiedGrammarRule,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   type PatternMatcher as UnifiedPatternMatcher,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   type PatternTransform as UnifiedPatternTransform,
   // Utilities
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   markingStrategyToAdpositionType,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   toGrammaticalMarker,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   toI18nProfile,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   isUnifiedProfile,
 } from './types/unified-profile';
 
@@ -422,24 +502,40 @@ export {
 
 export {
   // Main functions
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   analyze,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   analyzeAll,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   analyzeMultiple,
   // Individual checks
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   checkAccessibility,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   checkPerformance,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   checkSchema,
   // Dev mode
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   enableDevMode,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   disableDevMode,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   isDevModeEnabled,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   getDevModeConfig,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   devModeAnalyze,
   // Types
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   type AnalysisResult,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   type AnalysisWarning,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   type AnalysisConfig,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   type WarningSeverity,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   type WarningCode,
 } from './analysis';
 
@@ -452,18 +548,27 @@ export {
   ASTBuilder,
   buildAST,
   // Value converters
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. `@lokascript/semantic/core` still exports it. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   convertValue,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. `@lokascript/semantic/core` still exports it. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   convertLiteral,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. `@lokascript/semantic/core` still exports it. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   convertSelector,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. `@lokascript/semantic/core` still exports it. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   convertReference,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. `@lokascript/semantic/core` still exports it. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   convertPropertyPath,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. `@lokascript/semantic/core` still exports it. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   convertExpression,
   // Command mappers
   getCommandMapper,
   resolveCommandMapper,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   getSchemaMapper,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   buildFromAstShape,
   registerCommandMapper,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. `@lokascript/semantic/core` still exports it. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   getRegisteredMappers,
   // Types
   type ASTNode,
@@ -485,14 +590,20 @@ export {
 export {
   // Core functions
   loadLanguage,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   loadLanguages,
   // Helpers
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   canLoadLanguage,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   getLoadedLanguages,
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   getUnloadedLanguages,
   // Canonical supported-language list (single source of truth)
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   SUPPORTED_LANGUAGES,
   // Backward-compatible alias
+  /** @deprecated No known consumer; will be removed from the root export in 8.0. See docs-internal/SEMANTIC_ROOT_EXPORTS.md. */
   SUPPORTED_LANGUAGES as LAZY_LOAD_LANGUAGES,
   // Types
   type LoadLanguageOptions,
