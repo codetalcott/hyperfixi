@@ -185,6 +185,21 @@ Value>`, `AnyNode`) and each kind's fields (`CommandFields`, `EventHandlerFields
 - **`@lokascript/intent`'s README examples did not match the API** (`result.ok`, `defineCommand`'s
   arguments, the envelope call). They are rewritten and each was run.
 
+### Removed
+
+- **Dead material a repo-wide review found, 423 files, none of it read by working code.** Kept at
+  the tag `archived/cleanup-2026-11-12` and indexed in `docs-internal/ARCHIVE.md`. Six
+  `experiments/` written against core's retired runtime or packages that no longer exist;
+  `clients/` (Go and Python clients for the compilation service's HTTP server, which left in
+  7.0) and its CI job; the 84 phase and summary files under `packages/core/docs/archive/`; 148
+  probe scripts in `packages/testing-framework/scratch/`; `scripts/analysis/`, `scripts/testing/`
+  and nine other scripts nothing ran, with the root `patterns:*`, `compatibility:*` and
+  `rebuild:*` npm scripts that pointed at them; the design records of core's deleted engine and
+  the unsent hyperscript.org offer in `docs-internal/`; archived workflows; and
+  `@lokascript/semantic`'s `src/public-api.ts`, a second "public API" file nothing imported or
+  built. Root `npm test`, `test:watch`, `test:coverage` and `clean` pass `--if-present`: each
+  failed on the first workspace without that script.
+
 ## [7.6.0] - 2026-11-10
 
 The engine takes extensions: upstream's `tailwind` and `socket` load from a script tag or
