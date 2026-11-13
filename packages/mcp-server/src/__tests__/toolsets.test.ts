@@ -7,7 +7,14 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
-import { TOOLSET_NAMES, listedTools, parseToolsets, toolsetOf } from '../toolsets.js';
+import {
+  MACHINE_TOOLSETS,
+  TOOLSET_NAMES,
+  listedTools,
+  parseToolsets,
+  refusedCall,
+  toolsetOf,
+} from '../toolsets.js';
 
 const noDomainTools = () => false;
 
@@ -75,8 +82,44 @@ describe('index.ts filters the list, not the calls', () => {
     expect(src).toMatch(/parseToolsets\(process\.env\.LOKASCRIPT_MCP_TOOLSETS\)/);
   });
 
-  it('dispatches a hidden tool like a listed one', () => {
-    expect(callHandler.length).toBeGreaterThan(1000);
-    expect(callHandler).not.toMatch(/TOOLSETS|listedTools|toolsetOf/);
+  it('refuses a machine toolset that is off, before any dispatch', () => {
+    const guard = callHandler.indexOf('refusedCall(name, TOOLSETS.enabled, isDomainTool)');
+    expect(guard).toBeGreaterThan(0);
+    expect(guard).toBeLessThan(callHandler.indexOf('handle'));
+    // The guard is the only place the call path reads the toolsets.
+    expect(callHandler.match(/TOOLSETS|listedTools|toolsetOf/g)).toEqual(['TOOLSETS']);
+  });
+});
+
+describe('refusedCall', () => {
+  const isDomainTool = (name: string) => name === 'parse_sql';
+  const off = parseToolsets(undefined).enabled;
+
+  it('names the tools that act on the machine', () => {
+    expect([...MACHINE_TOOLSETS].sort()).toEqual(['grail', 'project']);
+  });
+
+  it('refuses a shell-running or file-reading tool whose toolset is off', () => {
+    for (const name of ['grail_run', 'grail_check', 'scan_inventory', 'query_inventory']) {
+      expect(refusedCall(name, off, isDomainTool), name).toMatch(/LOKASCRIPT_MCP_TOOLSETS=/);
+    }
+  });
+
+  it('lets it run once the toolset is on', () => {
+    const on = parseToolsets('grail,project').enabled;
+    expect(refusedCall('grail_run', on, isDomainTool)).toBeUndefined();
+    expect(refusedCall('scan_inventory', on, isDomainTool)).toBeUndefined();
+    expect(refusedCall('grail_run', parseToolsets('project').enabled, isDomainTool)).toBeDefined();
+  });
+
+  it('answers every other hidden tool, and leaves unknown names to the dispatcher', () => {
+    for (const name of [
+      'validate_and_compile',
+      'lse_to_hyperscript',
+      'parse_sql',
+      'no_such_tool',
+    ]) {
+      expect(refusedCall(name, off, isDomainTool), name).toBeUndefined();
+    }
   });
 });

@@ -28,7 +28,6 @@ without it.
 | --------------------------- | ------------------------------------------------------------------------------ |
 | `generate_training_data`    | Synthesize (natural_language, LSE) pairs from domain schemas as JSONL          |
 | `lse_validate_and_feedback` | Validate LSE input, return structured feedback with hints + corrected examples |
-| `lse_pattern_stats`         | Hit-rate statistics: success rates by command/language, top failures           |
 
 ## Registry Convenience Methods
 
