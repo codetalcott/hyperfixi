@@ -456,6 +456,19 @@ export interface RegressionResult {
    * no `roleLossyPatterns` data yet (never retro-flags).
    */
   newRoleLossyPatterns: string[];
+  /**
+   * Coverage — pattern ids the baseline records for this language that the run
+   * did not produce. Every per-pattern ratchet iterates the RUN's patterns, so
+   * an id that left the run is compared by none of them. Empty when the
+   * baseline has no per-pattern data.
+   */
+  missingFromRun: string[];
+  /**
+   * Coverage — pattern ids the run produced that the baseline has no entry for:
+   * no per-pattern ratchet holds them. Empty when the baseline has no
+   * per-pattern data.
+   */
+  notInBaseline: string[];
   status: 'improved' | 'regressed' | 'unchanged';
 }
 

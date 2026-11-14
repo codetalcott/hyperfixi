@@ -27,6 +27,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`@lokascript/semantic` read a bare English `wait X` as an event wait when X was spelled like
+  an event.** `set input to 500 then wait input` came back as `wait for input`: a half-second
+  wait became a wait for the `input` event. The engine reads the X of `wait X` as a time
+  expression whatever it is named, and English spells an event wait `wait for X`, so English is
+  now read that way. Other languages keep their marker-less event wait (es `esperar entrada`);
+  translating the variable wait into one of them is refused, since it would read back as the
+  event.
+- **A handler with a leading modifier word and a source could not be translated out of
+  English.** `on first click from #b add .x` and `on every click from #b …` were written with
+  the source before the event (es `al de #b clic`), which no reader takes, so `translate`
+  refused all of them. They now translate and read back in the languages that write the source
+  after the event (measured in es, fr, de, ar, zh, he, sw). The five that write it before the
+  head (ja, ko, tr, hi, qu) still refuse these: their readers do not take a modifier word and a
+  fronted source together.
+- **`@lokascript/intent` read a compact flag as a flag named "true".** The protocol's short form
+  `"primary-key": { "type": "flag", "value": true }` names the flag by its role key;
+  `fromProtocolJSON` named it after the boolean instead, and `"value": false` gave a flag named
+  "false". It now takes the role key.
 - **`@hyperfixi/mcp-server` ran shell commands and read files for a toolset that was off.**
   `LOKASCRIPT_MCP_TOOLSETS` decided what `tools/list` showed and nothing else, so `grail_run`
   ran the commands of a `grail.yaml` in the server's directory, and `scan_inventory` read any
