@@ -8,6 +8,7 @@ import { runChecks } from './checks';
 import { buildLedger } from './report';
 import type { Finding, LangVocab, VocabModel } from './types';
 import { findingKey } from './types';
+import { nth } from '../test-support';
 
 function lang(partial: Partial<LangVocab>): LangVocab {
   return {
@@ -35,8 +36,8 @@ describe('V1 — profile keywords vs i18n dictionary', () => {
     );
     const errors = of(findings, 'V1', 'error');
     expect(errors).toHaveLength(1);
-    expect(errors[0].key).toBe('toggle');
-    expect(errors[0].message).toContain('cambiar');
+    expect(nth(errors, 0).key).toBe('toggle');
+    expect(nth(errors, 0).message).toContain('cambiar');
   });
 
   it('accepts a dictionary value matching an alternative form (set containment, not 1:1)', () => {
@@ -78,7 +79,7 @@ describe('V2 — role markers three-way', () => {
     );
     const errors = of(findings, 'V2', 'error');
     expect(errors).toHaveLength(1);
-    expect(errors[0].key).toBe('destination:ya');
+    expect(nth(errors, 0).key).toBe('destination:ya');
   });
 
   it('accepts a grammar form known via a schema variant (union across S1+S2)', () => {
@@ -129,7 +130,7 @@ describe('V2 — role markers three-way', () => {
     );
     const warns = of(findings, 'V2', 'warn');
     expect(warns).toHaveLength(1);
-    expect(warns[0].key).toBe('destination:primary');
+    expect(nth(warns, 0).key).toBe('destination:primary');
   });
 });
 
@@ -143,7 +144,7 @@ describe('V3 — event names', () => {
     );
     const errors = of(findings, 'V3', 'error');
     expect(errors).toHaveLength(1);
-    expect(errors[0].key).toBe('click');
+    expect(nth(errors, 0).key).toBe('click');
   });
 
   it('accepts agreement (any native form recognized for the event)', () => {
@@ -175,8 +176,8 @@ describe('V3c — dictionary events NOT covered by eventNameTranslations', () =>
     );
     const warns = of(findings, 'V3c', 'warn');
     expect(warns).toHaveLength(1);
-    expect(warns[0].key).toBe('mousedown');
-    expect(warns[0].message).toContain('broken-listener');
+    expect(nth(warns, 0).key).toBe('mousedown');
+    expect(nth(warns, 0).message).toContain('broken-listener');
   });
 
   it('warns (wrong-event) when S5b maps the form to a DIFFERENT event', () => {
@@ -188,9 +189,9 @@ describe('V3c — dictionary events NOT covered by eventNameTranslations', () =>
     );
     const warns = of(findings, 'V3c', 'warn');
     expect(warns).toHaveLength(1);
-    expect(warns[0].key).toBe('mouseenter');
-    expect(warns[0].message).toContain('"mouseover"');
-    expect(warns[0].message).toContain('wrong-event');
+    expect(nth(warns, 0).key).toBe('mouseenter');
+    expect(nth(warns, 0).message).toContain('"mouseover"');
+    expect(nth(warns, 0).message).toContain('wrong-event');
   });
 
   it('stays silent when the tokenizer keyword table resolves the form (parse authority)', () => {
@@ -250,8 +251,8 @@ describe('V4 — tokenizer classification', () => {
     );
     const errors = of(findings, 'V4', 'error');
     expect(errors).toHaveLength(1);
-    expect(errors[0].key).toBe('kaydır');
-    expect(errors[0].message).toContain("'identifier'");
+    expect(nth(errors, 0).key).toBe('kaydır');
+    expect(nth(errors, 0).message).toContain("'identifier'");
   });
 
   it('collects from all four sources and dedupes the word into one finding', () => {
@@ -266,7 +267,7 @@ describe('V4 — tokenizer classification', () => {
     );
     const errors = of(findings, 'V4', 'error');
     expect(errors).toHaveLength(1);
-    expect(errors[0].source).toContain('profile.keywords.scroll');
+    expect(nth(errors, 0).source).toContain('profile.keywords.scroll');
   });
 
   it('accepts particles and skips multi-word forms', () => {
@@ -299,7 +300,7 @@ describe('check filter + ledger/waivers', () => {
 
   it('waivers suppress exactly the keyed error and flag stale keys', () => {
     const findings = runChecks(disagreeing());
-    const key = findingKey(of(findings, 'V1', 'error')[0]);
+    const key = findingKey(nth(of(findings, 'V1', 'error'), 0));
     const ledger = buildLedger(findings, [
       { key, reason: 'legit morphology divergence' },
       { key: 'V1|zz|ghost', reason: 'stale' },
@@ -352,7 +353,7 @@ describe('check filter + ledger/waivers', () => {
     const findings = runChecks(
       model({ keywords: { toggle: { primary: 'a' } }, dictionary: { commands: {} } })
     );
-    const warn = of(findings, 'V1b', 'warn')[0];
+    const warn = nth(of(findings, 'V1b', 'warn'), 0);
     const ledger = buildLedger(findings, [{ key: findingKey(warn), reason: 'nope' }]);
     expect(
       ledger.findings.find(f => f.check === 'V1b' && f.tier === 'warn')?.waived

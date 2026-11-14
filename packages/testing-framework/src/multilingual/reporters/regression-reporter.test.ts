@@ -14,7 +14,7 @@ function pass(id: string): ParseResult {
       hyperscript: '',
       wordOrder: 'SOV',
       confidence: 1,
-      verifiedParses: 0,
+      verifiedParses: false,
       roleAlignmentScore: 0,
     },
     success: true,
