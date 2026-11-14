@@ -287,7 +287,10 @@ function normalizeCommandRoles(
     // `ratónmover`, ko `마우스무브`) is one too, under its English name: its
     // tokenizer does not know it, so it reached here as a duration, and the
     // wait rendered `wait ratónmover`.
-    if (node.action === 'wait') {
+    // Not for English: it spells an event wait `wait for X`, and the engine
+    // reads the X of `wait X` as a time expression whatever it is named
+    // (`set input to 500 then wait input` waits half a second).
+    if (node.action === 'wait' && language !== 'en') {
       const roles = node.roles as Map<SemanticRole, SemanticValue>;
       if (!roles.has('event')) {
         const dur = roles.get('duration') as

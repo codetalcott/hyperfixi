@@ -358,6 +358,12 @@ The signals with tolerance 0 are binary flips. The remaining tolerances are cros
 headroom (a baseline generated on macOS, CI on Linux), not run-to-run noise: `populate` is
 deterministic, so do not read a green gate as "within noise".
 
+Before the signals it checks **coverage**: in an unrestricted full run the baseline and the run
+must name the same pattern ids per language, and every language run must have a baseline entry
+(the per-pattern ratchets walk the run's patterns, so an id missing from either side was compared
+by nothing). A pattern added to or removed from the corpus therefore needs `--save-baseline` in
+the same PR.
+
 ### Running the multilingual `--regression` gate locally
 
 ```bash
