@@ -1055,7 +1055,9 @@ function translateToEnglish(
                 original: code,
                 sourceLanguage,
                 translations,
-                languageCount: Object.keys(translations).length,
+                // `translations` also carries the bracket form under `explicit`,
+                // which is not a language (it was counted: 25 for 24 languages).
+                languageCount: Object.keys(translations).filter(k => k !== 'explicit').length,
               },
               null,
               2

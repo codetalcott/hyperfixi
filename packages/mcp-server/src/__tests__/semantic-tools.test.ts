@@ -45,10 +45,9 @@ describe('translate_to_english', () => {
     });
 
     const parsed = JSON.parse(getTextContent(result));
+    expect(result.isError).toBeUndefined();
     expect(parsed.sourceLanguage).toBe('en');
-    if (parsed.english) {
-      expect(parsed.english).toContain('toggle');
-    }
+    expect(parsed.english).toBe('toggle .active');
   });
 
   it('includes explicit syntax when available', async () => {
@@ -58,8 +57,7 @@ describe('translate_to_english', () => {
     });
 
     const parsed = JSON.parse(getTextContent(result));
-    // explicit may be null if toExplicit is unavailable
-    expect(parsed).toHaveProperty('explicit');
+    expect(parsed.explicit).toBe('[toggle patient:.active]');
   });
 
   it('returns all translations when requested', async () => {
@@ -70,10 +68,14 @@ describe('translate_to_english', () => {
     });
 
     const parsed = JSON.parse(getTextContent(result));
-    if (parsed.translations) {
-      expect(typeof parsed.translations).toBe('object');
-      expect(parsed.languageCount).toBeGreaterThan(0);
-    }
+    expect(result.isError).toBeUndefined();
+    expect(parsed.translations.en).toBe('toggle .active');
+    expect(parsed.translations.es).toBe('alternar .active');
+    // The bracket form rides along under `explicit`; it is not a language (it was counted).
+    expect(parsed.translations.explicit).toBe('[toggle patient:.active]');
+    const languages = Object.keys(parsed.translations).filter(k => k !== 'explicit');
+    expect(languages).toHaveLength(24);
+    expect(parsed.languageCount).toBe(24);
   });
 
   it('handles translation errors gracefully', async () => {
@@ -82,9 +84,10 @@ describe('translate_to_english', () => {
       sourceLanguage: 'en',
     });
 
-    // Should not throw, should return error info
     const parsed = JSON.parse(getTextContent(result));
-    expect(parsed).toBeDefined();
+    expect(result.isError).toBe(true);
+    expect(parsed.error).toBe('Could not parse input in en: invalid syntax here');
+    expect(parsed).not.toHaveProperty('english');
   });
 });
 
@@ -101,10 +104,9 @@ describe('get_diagnostics semantic enhancement', () => {
 
     const parsed = JSON.parse(getTextContent(result));
     expect(parsed.language).toBe('en');
-    // semanticConfidence may be undefined if package unavailable
-    if (parsed.semanticConfidence !== undefined) {
-      expect(typeof parsed.semanticConfidence).toBe('number');
-    }
+    expect(parsed.diagnostics).toEqual([]);
+    expect(parsed.semanticConfidence).toBeGreaterThan(0.5);
+    expect(parsed.semanticConfidence).toBeLessThanOrEqual(1);
   });
 
   it('validates Korean code semantically', async () => {
@@ -115,7 +117,9 @@ describe('get_diagnostics semantic enhancement', () => {
 
     const parsed = JSON.parse(getTextContent(result));
     expect(parsed.language).toBe('ko');
-    expect(parsed).toHaveProperty('diagnostics');
+    expect(parsed.diagnostics).toEqual([]);
+    expect(parsed.hasErrors).toBe(false);
+    expect(parsed.semanticConfidence).toBeGreaterThan(0.5);
   });
 
   it('detects semantic errors', async () => {
@@ -125,8 +129,12 @@ describe('get_diagnostics semantic enhancement', () => {
     });
 
     const parsed = JSON.parse(getTextContent(result));
-    expect(parsed).toHaveProperty('diagnostics');
-    // May have diagnostics for unknown syntax
+    expect(parsed.hasErrors).toBe(true);
+    expect(parsed.diagnostics).toHaveLength(1);
+    expect(parsed.diagnostics[0]).toMatchObject({
+      code: 'parse-error',
+      message: 'Unexpected Token : frobulate',
+    });
   });
 });
 
@@ -142,6 +150,7 @@ describe('Semantic tools error handling', () => {
     });
 
     const parsed = JSON.parse(getTextContent(result));
-    expect(parsed).toBeDefined();
+    expect(result.isError).toBe(true);
+    expect(parsed.error).toContain('Could not parse input in en');
   });
 });

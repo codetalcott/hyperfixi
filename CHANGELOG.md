@@ -27,6 +27,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`search_patterns` answered a broken pattern database from a built-in list, as if it were a
+  result** (`@hyperfixi/mcp-server`; `get_examples` and `get_pattern_stats` did the same). Any
+  error from `@hyperfixi/patterns-reference` (no database file, a missing table) was caught and
+  answered from 22 examples in the tool's source, under a note that told the caller to install a
+  package it had. A query that throws is now an error: `ok: false`, the code
+  `PATTERN_DATABASE_ERROR`, and the database's message. Every answer carries `source`:
+  `"database"`, or `"built-in"` with `fallback: { code, reason }`, where the code is
+  `PATTERNS_REFERENCE_UNAVAILABLE` (the package could not be loaded, with the import's message)
+  or, for `get_examples`, `NO_DATABASE_MATCH` (the database has no example for the prompt in that
+  language; the built-in examples are English). The built-in answers' `count` is the number
+  returned (`get_examples` reported the limit, `search_patterns` the number before the limit).
+  `get_pattern_stats` listed 13 `supportedLanguages` from a hand-written list; it lists the 24
+  the database has translations in. `translate_to_english` with `getAllLanguages` counted the
+  bracket form under `explicit` as a language (`languageCount: 25`); it reports 24.
 - **`@hyperfixi/mcp-server` ran shell commands and read files for a toolset that was off.**
   `LOKASCRIPT_MCP_TOOLSETS` decided what `tools/list` showed and nothing else, so `grail_run`
   ran the commands of a `grail.yaml` in the server's directory, and `scan_inventory` read any
