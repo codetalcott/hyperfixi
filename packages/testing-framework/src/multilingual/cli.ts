@@ -609,6 +609,54 @@ async function main(): Promise<void> {
 
         let failed = false;
 
+        // Coverage — the baseline and the run must name the same patterns.
+        // Every per-pattern ratchet below walks the RUN's patterns and looks
+        // each up in the baseline: a pattern that left the run is compared by
+        // nothing, and one the baseline never recorded is held by nothing. The
+        // committed baseline had drifted both ways before this check (4 ids
+        // gone from the corpus, 11 added, measured 2026-11-13) with the gate
+        // green. Only an unrestricted full run can be asked this: quick mode,
+        // --categories and --verified-only run a subset on purpose. A language
+        // the baseline has no entry for fails in any mode.
+        const unrestricted =
+          config.mode === 'full' && !config.categories?.length && !config.verifiedOnly;
+        const missingFromRun = unrestricted
+          ? allResults.flatMap(r => r.missingFromRun.map(id => `${r.language}/${id}`))
+          : [];
+        const notInBaseline = unrestricted
+          ? allResults.flatMap(r => r.notInBaseline.map(id => `${r.language}/${id}`))
+          : [];
+        const languagesWithoutBaseline = reporter.getLanguagesWithoutBaseline();
+
+        if (languagesWithoutBaseline.length > 0) {
+          console.error(
+            `\n✗ No baseline entry for ${languagesWithoutBaseline.length} language(s) ` +
+              `this run covered: ${languagesWithoutBaseline.join(', ')}`
+          );
+          console.error(`   (nothing was compared for them; regenerate with --save-baseline)`);
+          failed = true;
+        }
+
+        for (const [list, what, why] of [
+          [
+            missingFromRun,
+            `in the baseline, absent from this run`,
+            `no ratchet compared them: a pattern removed from the corpus, or one the run lost`,
+          ],
+          [
+            notInBaseline,
+            `in this run, absent from the baseline`,
+            `no per-pattern ratchet holds them`,
+          ],
+        ] as const) {
+          if (list.length === 0) continue;
+          console.error(`\n✗ Baseline coverage: ${list.length} pattern(s) ${what}:`);
+          for (const p of list.slice(0, 20)) console.error(`   ${p}`);
+          if (list.length > 20) console.error(`   … and ${list.length - 20} more`);
+          console.error(`   (${why}; regenerate the baseline with --save-baseline)`);
+          failed = true;
+        }
+
         if (regressed.length > 0) {
           console.error(
             `\n✗ Regression vs baseline in ${regressed.length} language(s) ` +

@@ -27,6 +27,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`@lokascript/semantic` read a bare English `wait X` as an event wait when X was spelled like
+  an event.** `set input to 500 then wait input` came back as `wait for input`: a half-second
+  wait became a wait for the `input` event. The engine reads the X of `wait X` as a time
+  expression whatever it is named, and English spells an event wait `wait for X`, so English is
+  now read that way. Other languages keep their marker-less event wait (es `esperar entrada`);
+  translating the variable wait into one of them is refused, since it would read back as the
+  event.
+- **A handler with a leading modifier word and a source could not be translated out of
+  English.** `on first click from #b add .x` and `on every click from #b …` were written with
+  the source before the event (es `al de #b clic`), which no reader takes, so `translate`
+  refused all of them. They now translate and read back in the languages that write the source
+  after the event (measured in es, fr, de, ar, zh, he, sw). The five that write it before the
+  head (ja, ko, tr, hi, qu) still refuse these: their readers do not take a modifier word and a
+  fronted source together.
 - **`search_patterns` answered a broken pattern database from a built-in list, as if it were a
   result** (`@hyperfixi/mcp-server`; `get_examples` and `get_pattern_stats` did the same). Any
   error from `@hyperfixi/patterns-reference` (no database file, a missing table) was caught and
@@ -38,8 +52,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   or, for `get_examples`, `NO_DATABASE_MATCH` (the database has no example for the prompt in that
   language; the built-in examples are English). The built-in answers' `count` is the number
   returned (`get_examples` reported the limit, `search_patterns` the number before the limit).
-  `get_pattern_stats` listed 13 `supportedLanguages` from a hand-written list; it lists the 24
-  the database has translations in. `translate_to_english` with `getAllLanguages` counted the
+  `get_pattern_stats` listed 13 `supportedLanguages` from a hand-written list; it lists the
+  languages the database has translations in (24 in a populated one). `translate_to_english` with `getAllLanguages` counted the
   bracket form under `explicit` as a language (`languageCount: 25`); it reports 24.
 - **`@hyperfixi/mcp-server` ran shell commands and read files for a toolset that was off.**
   `LOKASCRIPT_MCP_TOOLSETS` decided what `tools/list` showed and nothing else, so `grail_run`
