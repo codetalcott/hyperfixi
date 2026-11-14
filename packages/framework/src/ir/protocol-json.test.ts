@@ -378,7 +378,12 @@ describe('fromProtocolJSON', () => {
       roles: { 'primary-key': { type: 'flag' as const, value: true } },
     };
     const node = fromProtocolJSON(json as any);
-    expect(node.roles.get('primary-key')).toEqual({ type: 'flag', name: 'true', enabled: true });
+    // Named by its role key (it was read as a flag named "true").
+    expect(node.roles.get('primary-key')).toEqual({
+      type: 'flag',
+      name: 'primary-key',
+      enabled: true,
+    });
   });
 });
 
