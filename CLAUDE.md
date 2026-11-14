@@ -473,6 +473,12 @@ The `--regression` gate ratchets on **eleven** signals (each fails CI; each guar
 an un-regenerated baseline never retro-flags — a baseline lacking a signal's field
 yields a 0 delta):
 
+Before the signals it checks **coverage** (2026-11-13): in an unrestricted full run the
+baseline and the run must name the same pattern ids per language, and every language run
+must have a baseline entry. The per-pattern ratchets walk the run's patterns, so an id
+missing from either side was compared by nothing. A corpus change (a pattern added or
+removed) therefore needs `--save-baseline` in the same PR.
+
 1. **parse-rate** drop > 2pts. Deliberately coarse — signal 10 is what catches a
    small number of patterns breaking.
 2. **degenerate ratchet** — a faithful baseline pass that became _degenerate_

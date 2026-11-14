@@ -483,6 +483,88 @@ describe('RegressionReporter per-pattern parse ratchet — R5', () => {
   });
 });
 
+describe('RegressionReporter baseline coverage', () => {
+  let dir: string;
+  afterEach(() => {
+    if (dir) rmSync(dir, { recursive: true, force: true });
+  });
+
+  function reporterWith(baseline: Baseline): RegressionReporter {
+    dir = mkdtempSync(join(tmpdir(), 'coverage-'));
+    const path = join(dir, 'baseline.json');
+    writeFileSync(path, JSON.stringify(baseline));
+    return new RegressionReporter(path);
+  }
+
+  function baselineOf(ids: string[]): Baseline {
+    const patterns: Record<string, { success: boolean; confidence: number | undefined }> = {};
+    for (const id of ids) patterns[id] = { success: true, confidence: 1 };
+    return {
+      timestamp: '',
+      commit: 'base',
+      languages: {
+        ja: {
+          parseSuccess: ids.length,
+          parseFailure: 0,
+          parseRate: 1,
+          avgConfidence: 1,
+          avgFidelity: 1,
+          degeneratePasses: [],
+          lossyPasses: [],
+          bundleSize: undefined,
+          patterns,
+        },
+      },
+      bundles: {},
+    };
+  }
+
+  it('lists a baseline pattern the run did not produce', () => {
+    const reporter = reporterWith(baselineOf(['a', 'b', 'c']));
+    reporter.reportComplete(results(lang([pass('a'), pass('c')], [])));
+    const r = reporter.getRegressionResults().find(x => x.language === 'ja')!;
+    expect(r.missingFromRun).toEqual(['b']);
+    expect(r.notInBaseline).toEqual([]);
+    // No ratchet sees it: this list is the only place it shows.
+    expect(r.newFailures).toEqual([]);
+  });
+
+  it('lists a run pattern the baseline has no entry for', () => {
+    const reporter = reporterWith(baselineOf(['a']));
+    reporter.reportComplete(results(lang([pass('a'), { ...pass('z'), success: false }], [])));
+    const r = reporter.getRegressionResults().find(x => x.language === 'ja')!;
+    expect(r.notInBaseline).toEqual(['z']);
+    expect(r.missingFromRun).toEqual([]);
+    expect(r.newFailures).toEqual([]);
+  });
+
+  it('lists nothing when the id sets agree', () => {
+    const reporter = reporterWith(baselineOf(['a', 'b']));
+    reporter.reportComplete(results(lang([pass('a'), pass('b')], [])));
+    const r = reporter.getRegressionResults().find(x => x.language === 'ja')!;
+    expect(r.missingFromRun).toEqual([]);
+    expect(r.notInBaseline).toEqual([]);
+  });
+
+  it('lists nothing when the baseline has no per-pattern data', () => {
+    const noPatterns = baselineOf(['a', 'b']);
+    delete (noPatterns.languages.ja as { patterns?: unknown }).patterns;
+    const reporter = reporterWith(noPatterns);
+    reporter.reportComplete(results(lang([pass('z')], [])));
+    const r = reporter.getRegressionResults().find(x => x.language === 'ja')!;
+    expect(r.missingFromRun).toEqual([]);
+    expect(r.notInBaseline).toEqual([]);
+  });
+
+  it('names a language the run covered and the baseline does not', () => {
+    const reporter = reporterWith(baselineOf(['a']));
+    const ko = { ...lang([pass('a')], []), language: 'ko' as const };
+    reporter.reportComplete(results(ko));
+    expect(reporter.getRegressionResults()).toEqual([]);
+    expect(reporter.getLanguagesWithoutBaseline()).toEqual(['ko']);
+  });
+});
+
 describe('RegressionReporter role-set flip ratchet — R1 per-pattern', () => {
   // LOCK: the avgRoleFidelity delta cannot see a single pattern losing a role —
   // ~0.0013 in a ~154-pattern language, 15× under its 0.02 tolerance. That is
