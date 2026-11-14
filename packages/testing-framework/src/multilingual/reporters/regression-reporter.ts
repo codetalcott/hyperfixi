@@ -23,6 +23,7 @@ export class RegressionReporter implements Reporter {
   private baseline: Baseline | null = null;
   private currentResults: TestResults | null = null;
   private regressionResults: RegressionResult[] = [];
+  private languagesWithoutBaseline: LanguageCode[] = [];
 
   constructor(baselinePath: string = './test-results/baseline.json') {
     this.baselinePath = baselinePath;
@@ -91,6 +92,14 @@ export class RegressionReporter implements Reporter {
   }
 
   /**
+   * Languages the run covered that the baseline has no entry for. They get no
+   * RegressionResult (there is nothing to compare), so a gate has to ask.
+   */
+  getLanguagesWithoutBaseline(): LanguageCode[] {
+    return this.languagesWithoutBaseline;
+  }
+
+  /**
    * Report error
    */
   reportError(_error: Error): void {
@@ -104,10 +113,14 @@ export class RegressionReporter implements Reporter {
     if (!this.baseline) return [];
 
     const regressions: RegressionResult[] = [];
+    this.languagesWithoutBaseline = [];
 
     for (const langResult of results.languageResults) {
       const baselineLang = this.baseline.languages[langResult.language];
-      if (!baselineLang) continue;
+      if (!baselineLang) {
+        this.languagesWithoutBaseline.push(langResult.language);
+        continue;
+      }
 
       const parseRateDelta = (langResult.parseRate - baselineLang.parseRate) * 100;
       const avgConfidenceDelta = langResult.avgConfidence - baselineLang.avgConfidence;
@@ -157,6 +170,14 @@ export class RegressionReporter implements Reporter {
       const newRoleLossyPatterns = this.findNewRoleLossyPatterns(langResult, baselineLang);
       // Execution ratchet (R2): faithful execution in baseline → divergent now.
       const newExecutionFailures = this.findNewExecutionFailures(langResult, baselineLang);
+      // Coverage: the id sets themselves. The finders above walk the run's
+      // patterns and look each one up, so neither direction shows in them.
+      const runIds = new Set(langResult.parseResults.map(r => r.pattern.codeExampleId));
+      const baselineIds = baselineLang.patterns ? Object.keys(baselineLang.patterns) : [];
+      const missingFromRun = baselineIds.filter(id => !runIds.has(id)).sort();
+      const notInBaseline = baselineLang.patterns
+        ? [...runIds].filter(id => !(id in baselineLang.patterns!)).sort()
+        : [];
 
       // Determine status
       let status: 'improved' | 'regressed' | 'unchanged' = 'unchanged';
@@ -190,6 +211,8 @@ export class RegressionReporter implements Reporter {
         newLossyPasses,
         newRoleLossyPatterns,
         newExecutionFailures,
+        missingFromRun,
+        notInBaseline,
         status,
       });
     }
