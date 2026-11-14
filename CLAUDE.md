@@ -1,1216 +1,591 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for coding agents working in this repository. It holds what an agent would get wrong
+without it. Package-specific detail lives in `packages/<name>/CLAUDE.md` (core, htmx-adapter,
+hyperscript-adapter, i18n, patterns-reference, semantic, testing-framework, vite-plugin), in
+`packages/engine/README.md` and in `docs-internal/CLAUDE.md`: read the one for the place you are
+changing.
 
 ## Project Overview
 
-**HyperFixi** is a complete \_hyperscript ecosystem with server-side compilation, multi-language i18n (24 languages including SOV/VSO grammar transformation), semantic-first multilingual parsing, and comprehensive developer tooling. Engine packages are published under `@hyperfixi/*`, multilingual packages under `@lokascript/*`.
+**HyperFixi** is a \_hyperscript ecosystem: an engine that follows upstream `_hyperscript`,
+multilingual parsing and rendering in 24 languages (SVO, SOV and VSO word order), and developer
+tooling. Engine packages are published under `@hyperfixi/*`, multilingual packages under
+`@lokascript/*`.
 
-- **Tests** across all suites (semantic ~6500, i18n ~900, testing-framework's gates, plus per-package suites; core's own ~7000 left with its engine in 4.0), and the engine's acceptance oracle: upstream `_hyperscript`'s own test suite
-- **34.9 KB** browser bundle (gzipped): the engine's `hyperfixi-hs.js`, which `@hyperfixi/core` also ships as `hyperfixi.js` since Phase C3 (C-R4b, 2026-10-04: the same file under two names for one major, `hyperfixi-hs.js` canonical). Core's own bundles have all retired: lite/lite-plus/minimal/standard in the 4.0 cycle; in Phase C3 `hyperfixi-hx.js`/-hybrid-complete/-hx-v4, `hyperfixi-multilingual.js`/classic-i18n/modular, and core's full `hyperfixi.js` (~352 KB: core's parser and runtime, the reactivity/realtime plugins, 24 languages; CI's bundle-size job, 2026-09-29). **Gzip sizes are platform-dependent** — `metadata.ts` carries the values CI measures (Linux zlib); a local macOS `update:sizes` read ~2 KB lower on core's 352 KB bundle (on the engine's file the two agree: 34,068 B gz in CI's log, the same locally, 2026-10-04). `update:sizes` tolerates ±2% drift and fails only when metadata is stale enough to mislead; the size-**regression** gate is `scripts/bundle-size-snapshot.mjs --check` (±5% vs `baseline.json`), and CI also enforces absolute ceilings. Never run `update:sizes:auto` locally and commit the result — `dist/` is untracked, so your tree may hold another branch's build; take the numbers from the CI job log.
-- **\_hyperscript compatible** — tested via gallery examples, bundle compatibility matrix, and command/expression browser tests (Playwright)
+- The engine's acceptance oracle is upstream `_hyperscript`'s own test suite, vendored in
+  `packages/engine/upstream-suite/`.
+- The browser bundle is the engine's `hyperfixi-hs.js` (about 34 KB gzipped), which
+  `@hyperfixi/core` also ships under the name `hyperfixi.js`.
 
 ## Monorepo Structure
 
-```
-packages/
-├── core/           # @hyperfixi/core: @hyperfixi/engine re-exported + tooling (4.0; its own engine retired)
-│   ├── src/
-│   │   ├── multilingual/     # /multilingual: parse, render, translate over semantic
-│   │   ├── ast-utils/        # /ast-utils: analysis, interchange AST, engine positions, LSP helpers
-│   │   └── reference/, lsp-metadata.ts, metadata.ts  # data checked against the engine (verify:reference)
-│   ├── browser-tests/        # the Playwright suite (the engine's bundle, the gallery, other pages)
-│   └── dist/                 # hyperfixi.js = the engine's hyperfixi-hs.js
-│
-├── engine/         # THE engine (primary development): typed, modular, upstream-faithful (published 2026-10-02)
-│   ├── src/                  # Grammar modules: a bundle is the list passed to register()
-│   └── upstream-suite/       # The gate: upstream _hyperscript's own tests (vendored 0.9.93) + known-failures.json
-│
-├── i18n/           # Per-language VOCABULARY (24 languages) — no longer translates
-│   ├── src/
-│   │   ├── grammar/          # SOV/VSO word-order PROFILES (transformer retired 2026-08-28)
-│   │   ├── dictionaries/     # Per-language keyword dictionaries
-│   │   └── parser/           # Multilingual keyword providers
-│   └── dist/                 # Built bundles (lokascript-i18n.min.js)
-│
-├── semantic/       # Semantic-first multilingual parsing (24 languages)
-│   ├── src/
-│   │   ├── tokenizers/       # Language-specific tokenizers (ar, bn, de, en, es, fr, he, hi, id, it, ja, ko, ms, pl, pt, qu, ru, sw, th, tl, tr, uk, vi, zh)
-│   │   ├── generators/       # Pattern generation from command schemas
-│   │   ├── parser/           # Semantic parser with confidence scoring
-│   │   └── explicit/         # Language-agnostic intermediate representation
-│   └── dist/                 # Built bundles (lokascript-semantic.browser.global.js)
-│
-├── vite-plugin/    # Zero-config Vite plugin for automatic bundle generation
-│   └── src/
-│       ├── scanner.ts        # Hyperscript detection in HTML/Vue/Svelte/JSX
-│       ├── aggregator.ts     # Usage collection across files
-│       └── generator.ts      # Minimal bundle generation
-│
-├── hyperscript-adapter/  # Multilingual plugin for original _hyperscript (preprocessor)
-│   └── src/              # See packages/hyperscript-adapter/CLAUDE.md
-│
-├── htmx-adapter/    # Multilingual adapter for upstream htmx v4 (canonicalizing extension)
-│   └── src/         # See packages/htmx-adapter/CLAUDE.md
-│
-├── framework/       # Shared DSL framework (createMultilingualDSL, DomainRegistry, CrossDomainDispatcher);
-│                    #   languages/<code>: each language's grammar, as data
-├── compilation-service/  # Validate, translate, diff, score hyperscript (a library; MCP's backend)
-├── mcp-server/      # MCP server exposing all tools (hyperscript + domain DSLs via @lokascript/domains)
-├── server-bridge/   # Server-side route extraction from HTML
-│
-├── patterns-reference/  # Queryable patterns database with multilingual translations
-├── language-server/     # LSP implementation for LokaScript/hyperscript (24 languages)
-├── behaviors/           # Reusable hyperscript behaviors (draggable, sortable, etc.)
-├── types-browser/       # TypeScript type definitions for browser globals
-│
-├── language-server-hyperscript/ # LSP for original _hyperscript
-├── multilingual-hyperscript/    # Multilingual plugin for original _hyperscript (24 languages)
-│
-└── [other packages: developer-tools, testing-framework (private: the repo's gates), etc.]
+`git ls-files packages | cut -d/ -f2 | sort -u` is the package list. A worktree can hold
+untracked leftover directories from removed packages, so do not trust `ls packages`.
 
-examples/
-├── multilingual/   # Live grammar transformation demo
-└── gallery/        # Feature showcase
-```
+| Package                                          | What it is                                                                                                   |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| `engine`                                         | THE engine (`@hyperfixi/engine`): typed, modular, upstream-faithful. Hyperscript behavior lives here         |
+| `core`                                           | `@hyperfixi/core`: the engine re-exported, plus `/multilingual`, `/ast-utils`, `/reference`, `/lsp-metadata` |
+| `semantic`                                       | Multilingual parser and renderer (24 tokenizers, command schemas, language profiles)                         |
+| `framework`                                      | Shared DSL framework; `src/languages/<code>.ts` is each language's grammar, as data                          |
+| `intent`                                         | LSE: the bracket syntax and protocol JSON (`protocol/README.md`)                                             |
+| `i18n`                                           | Per-language vocabulary and word-order profiles. It does not translate                                       |
+| `hyperscript-adapter`                            | Runs non-English hyperscript on the engine or on upstream (a source transform)                               |
+| `htmx-adapter`                                   | Localized attribute names for upstream htmx v4                                                               |
+| `vite-plugin`                                    | Scans a project and emits an engine bundle with only the modules it uses                                     |
+| `patterns-reference`                             | The patterns database (`data/patterns.db`) and its translations: the corpus the multilingual gates read      |
+| `testing-framework`                              | Private: the repository's multilingual and shipped-source gates                                              |
+| `compilation-service`                            | A library: validate, translate, diff and score hyperscript. It is the MCP server's backend                   |
+| `mcp-server`                                     | MCP server (hyperscript tools, plus the domain DSLs through `@lokascript/domains`)                           |
+| `behaviors`                                      | Reusable behaviors written in hyperscript                                                                    |
+| `language-server`, `language-server-hyperscript` | LSP servers: for LokaScript/hyperscript in 24 languages, and for original \_hyperscript                      |
+| `multilingual-hyperscript`                       | `@hyperscript-tools/multilingual`: original \_hyperscript in 24 languages                                    |
+| `hyperscript-tools-i18n`                         | `@hyperscript-tools/i18n`: build-time translation of hyperscript code samples                                |
+| `speech`                                         | The `speak` command, as an engine module in its own package                                                  |
+| `intent-element`                                 | The `<lse-intent>` element: runs LSE protocol JSON as written, or refuses it                                 |
+| `server-bridge`                                  | Extracts server route contracts from hyperscript/htmx HTML                                                   |
+| `types-browser`                                  | TypeScript definitions for the browser globals                                                               |
+| `developer-tools`, `playground`                  | Private tooling                                                                                              |
+
+The gallery is `examples/index.html` with one directory per category; `examples/multilingual/`
+holds the multilingual demos and `examples/release-smoke/` the post-publish smoke test.
 
 ## Essential Commands
 
-### Cold start (fresh checkout / web session)
+### Cold start
 
-A freshly-cloned container has no workspace symlinks or local bins yet, and the
-package `dist/` trees are unbuilt. Before anything else:
+A fresh checkout has no workspace links and no `dist/` trees. Run `npm install` first.
 
-```bash
-npm install          # alias: npm run bootstrap — links workspaces + installs bins (tsx, vitest…)
-```
+**`npm run build` is not dependency-ordered.** It runs `build --workspaces --if-present`, in
+declaration order, so building one deep package on a cold tree fails with
+`Cannot find module .../framework/dist/index.js` until its dependencies are built.
 
-> **`npm run build` is NOT dependency-ordered.** It maps to
-> `build --workspaces --if-present`, which builds in `package.json` declaration
-> order, not topological order. So building a single deep package on a cold tree
-> (e.g. `npm run build --prefix packages/core`) fails with
-> `Cannot find module .../framework/dist/index.js` until its upstream deps are
-> built first.
->
-> The authoritative topological build order lives in the **`build` job of
-> `.github/workflows/ci.yml`** (guarded against drift by
-> `npm run check:ci-order` → `scripts/check-ci-build-order.cjs`). For the
-> multilingual stack specifically, the ready-made ordered chain is
-> `npm run test:multilingual:build-deps` (intent → framework → semantic → i18n →
-> patterns-reference → engine → hyperscript-adapter; core left the chain in Phase C4,
-> when the harness stopped executing it).
->
-> Some package builds print `DTS Build error` / `tsc --emitDeclarationOnly`
-> failures but **still emit usable JS** — the `.js` bundle is produced before the
-> declaration step. A DTS error alone does not mean the build you need failed;
-> check whether the `dist/` artifact you actually consume exists.
+- The authoritative build order is the `build` job of `.github/workflows/ci.yml`
+  (`npm run check:ci-order` guards it against drift).
+- For the multilingual stack the ordered chain is `npm run test:multilingual:build-deps`
+  (intent, framework, semantic, i18n, patterns-reference, engine, hyperscript-adapter).
+- Some builds print `DTS Build error` and still emit usable JS, because the bundle is written
+  before the declaration step. Check whether the `dist/` file you consume exists.
 
-### Engine and Core
+### Engine and core
 
 ```bash
-# The engine (hyperscript behavior lives here)
 npm run build --prefix packages/engine              # library + dist/hyperfixi-hs.js
-npm run test:upstream --prefix packages/engine      # the gate: upstream's own suite vs known-failures.json
+npm run test:upstream --prefix packages/engine      # the gate: upstream's suite vs known-failures.json (needs a browser)
 npm run test:own --prefix packages/engine           # the engine's additions + regressions
+npm run check:claims --prefix packages/engine       # what each non-upstream module takes from upstream
 npm run typecheck --prefix packages/engine
 
-# Core (the engine re-exported + tooling)
 npm run build --prefix packages/core                # root + subpaths (build the engine first)
 npm run build:browser --prefix packages/core        # dist/hyperfixi.js, copied from the engine
-npm test --prefix packages/core                     # ast-utils, multilingual, dist charset, version
+npm test --prefix packages/core
 npm run verify:reference --prefix packages/core     # reference + LSP data against the engine's grammar
 
-# Browser testing (Playwright) - MUST run from packages/core directory
+# Playwright must run from packages/core
 cd packages/core && npx playwright test --project=quick --project=comprehensive
+cd packages/core && npx playwright test browser-tests/bundle-compatibility.spec.ts
 ```
 
-> **Known issue: vitest hang on exit.** Some suites complete but the Node process stays
-> alive (an esbuild daemon keeps the event loop open). `scripts/vitest-run.sh` (behind every
-> package's `test` / `test:check`) wraps vitest with `timeout` and treats exit code 124 (killed
-> by timeout) as success; CI uses the same pattern. If running vitest directly, use:
-> `timeout 120 vitest run || [ $? -eq 124 ]`
+### Other packages
 
-### i18n Package
+Every package with tests has `npm test --prefix packages/<name>` and, for summary-only output,
+`npm run test:check --prefix packages/<name>`. `npm run test:check` at the root runs them all
+and is the right default for an agent; use `npm test` when debugging.
 
 ```bash
-# Tests
-npm test --prefix packages/i18n                     # Run vitest (900+ tests)
-npx vitest run src/grammar/profiles.test.ts         # Word-order profile tests
-
-# Build
-npm run build:browser --prefix packages/i18n        # Build browser bundle
-
-# TypeScript
-npm run typecheck --prefix packages/i18n
+npm test --prefix packages/semantic -- test/ast-builder.test.ts   # one file
+npm run typecheck --prefix packages/<name>
+npm run build:browser --prefix packages/semantic                  # also packages/i18n
+npm run clean:test                                                # coverage, HTML and Playwright reports
+VITEST_HTML=1 npm test --prefix packages/core                     # HTML test report (off by default)
+cd packages/core && npx playwright test --grep "Command Compatibility"
 ```
 
-### Semantic Package
+**Vitest can hang on exit** (an esbuild daemon keeps the process alive), so `timeout` kills the
+run with exit code 124 after every test has passed. `scripts/vitest-run.sh`, which is behind
+each package's `test` and `test:check`, decides from the reporter summary instead: a failure in
+the summary fails, a passing summary passes even with 124, and no summary at all fails (the run
+hung before finishing). If you run `vitest` directly under `timeout`, read a 124 the same way,
+and never treat a 124 without a summary as green. When the wrapper reports no summary, the run hung or
+the suite outgrew `VITEST_TIMEOUT` (default 120 seconds).
+
+### Gates `test:check` does not cover
+
+These are CI checks that no `test:check` reaches, so a green local run can still fail CI. Run 1
+and 2 when a change touches `packages/semantic/src/generators/command-schemas.ts`, a language
+profile, or R2's curated execution subset. Run 3 on every change: it is cheap. Run 4 when a
+change touches `packages/intent` or `packages/framework`.
 
 ```bash
-# Tests
-npm test --prefix packages/semantic                     # Run vitest (6400+ tests)
-npm test --prefix packages/semantic -- --run            # Single run
-
-# Build
-npm run build --prefix packages/semantic                # Build all bundles
-npm run build:browser --prefix packages/semantic        # Browser bundle
-
-# TypeScript
-npm run typecheck --prefix packages/semantic
-```
-
-### Test Output Management
-
-```bash
-# Clean all test outputs (coverage, HTML reports, playwright reports)
-npm run clean:test
-
-# Generate HTML test reports (optional, disabled by default to reduce disk usage)
-VITEST_HTML=1 npm test --prefix packages/core
-```
-
-### Quick Test Validation (Compact Output)
-
-For agent/CI contexts where verbose output is too large, use `test:check` for summary-only output (~5 lines per package):
-
-```bash
-# All packages — summary only
-npm run test:check
-
-# Per-package compact output
-npm run test:check --prefix packages/core
-npm run test:check --prefix packages/semantic
-npm run test:check --prefix packages/i18n
-```
-
-> **Agent/CI tip:** Use `npm run test:check` for compact pass/fail output.
-> Use `npm test` for full verbose output during debugging.
-
-#### Gates `test:check` does NOT cover
-
-These are required CI checks that no `test:check` invocation reaches, so a green
-local run can still fail CI. They cost full CI round-trips during Arc F follow-ups
-round 2 and on #1034. (A fourth, the adapter's generated syntax table, retired with
-the per-language bundles' own English writer on 2026-10-05: the bundles render with
-semantic's renderer.) Run 1–2 whenever a change touches
-`packages/semantic/src/generators/command-schemas.ts`, a language profile, or R2's
-curated execution subset — run 3 whenever you touch **anything**, because it is
-a dozen cheap scripts that guard the whole repo — and run 4 whenever a change
-touches `packages/intent` or `packages/framework`:
-
-```bash
-# 1. Vocab consistency (V1–V4 cross-surface check)
+# 1. Vocab consistency
 cd packages/testing-framework && npx tsx src/vocab/cli.ts validate
 
 # 2. The R2 curated-subset lock (part of the testing-framework suite)
 npm run test:check --prefix packages/testing-framework
 
-# 3. Everything the `lint-typecheck` JOB runs that no test suite does.
-#    Nine guard scripts + their two self-tests, then oxlint, then the
-#    per-package typechecks and core's scripts/ tsconfig. `bash -e`, so in CI
-#    the FIRST failure hides the rest.
+# 3. What the `lint-typecheck` job runs that no test suite does. The job stops at the
+#    first failure, so run them all locally.
 for s in check-ci-build-order check-bundle-shards check-test-check-list \
          check-ci-test-list check-ci-job-lists validate-versions \
-         check-domains-peer-major check-semantic-boundary \
-         check-published-files; do
+         check-published-files check-domains-peer-major check-semantic-boundary; do
   node scripts/$s.cjs || echo "FAILED: $s"
 done
-for t in check-semantic-boundary check-domains-peer-major; do
+for t in check-domains-peer-major wait-for-registry check-semantic-boundary; do
   node --test scripts/$t.test.cjs || echo "FAILED: $t.test.cjs"
 done
 npm run lint
 npm run typecheck:scripts --prefix packages/core
-# …plus `npm run typecheck --prefix packages/<each>` for the 28 the job lists
-# (grep -oE "npm run typecheck(:[a-z]+)? --prefix packages/[a-z0-9-]+" .github/workflows/ci.yml).
+npm run check:grammar --prefix packages/semantic
+npm run check:mapper-parity --prefix packages/semantic
+npm run check:keywords --prefix packages/vite-plugin
+npm run verify:reference --prefix packages/core
+# plus `npm run typecheck --prefix packages/<each>` for every package the job lists:
+# grep -oE "npm run typecheck --prefix packages/[a-z0-9-]+" .github/workflows/ci.yml
 
-# 4. The domains' round-trip gate (the `domain-gate` JOB): clones lokascript-domains
-#    at the pinned ref, ~30s. DOMAINS_DIR=<checkout> reuses an installed one.
+# 4. The domain gate (the `domain-gate` job). It clones lokascript-domains at the ref
+#    pinned in the script; DOMAINS_DIR=<checkout> reuses an installed one.
 npm run test:domains
 ```
 
-1. **Vocab consistency** fires when a schema gains a `markerOverride` whose word
-   tokenizes as `identifier` rather than keyword/particle. Waive in
-   `packages/testing-framework/vocab-waivers.json`, keyed `V4|<lang>|<marker>`,
-   with a reason. The error aggregates its SITES, so a marker that has shipped
-   for years can become newly reportable the moment a second schema uses it.
-2. **The `lint-typecheck` guards include a RATCHET, not lint.**
-   `check-semantic-boundary` holds a committed baseline and fails on any increase:
-   every place `packages/core/src` imports `@lokascript/*`, per file and per import
-   kind. Reach for its `--update` only when the import is genuinely required, and
-   say why in the PR. It runs BEFORE `npm ci` in the job, which is why it is cheap
-   enough to run on every change. (Its siblings `check-type-escapes` and
-   `check-layering` guarded core's own engine — #1034 once added two avoidable
-   `as unknown as` in `packages/core/src/parser` with every suite green — and
-   retired with it in Phase C6.)
-3. **The R2 subset lock** (`validators/execution-validator.test.ts`) asserts the
-   exact curated pattern list. Expanding `EXECUTION_SUBSET` means updating the
-   count in the test title, the sorted expectation array, AND regenerating the
-   multilingual baseline in the same PR.
-4. **`check-domains-peer-major`** is the cross-repo half of the version story.
-   `@lokascript/domains` (repo `lokascript-domains`) PEERS on framework /
-   semantic / intent, and mcp-server depends on it back — a cycle across two
-   repos. The guard reads the lockfile's domains entry and fails unless the
-   contract packages are peers (not bundled dependencies) at a range the
-   version this repo publishes satisfies. It also runs first thing in
-   `publish.yml` after the bump, and `examples/release-smoke/run.mjs` asserts
-   one installed copy of each contract package. It exists because 3.1.0
-   shipped mcp-server pinning domains `^2.11.1` (framework a hard 2.x dep):
-   every clean install got two framework copies and forked singletons, and
-   nothing on either side could see it. The guard runs AFTER the bump, so a
-   framework MAJOR cannot publish until domains accepts it. For a major that
-   only renumbers the contract (4.0): pack framework/semantic/intent here at the
-   new version, prove domains against them (its `pack-smoke.sh` takes
-   `UPSTREAM_TARBALLS`), release a domains patch peering `^old || ^new`, bump the
-   range here and relock, then publish hyperfixi. A major that changes the
-   contract needs a real domains major, cut after hyperfixi's is on npm.
-5. **The domain gate** (`scripts/domain-gate.sh`, 2026-10-20) is the cross-repo
-   half of the behavior story. The six domain DSLs read on framework's matcher
-   skeleton and its language grammars (`framework/languages`), and no other gate
-   here parses one. (learn, the one that wrote with semantic, moved into
-   lokascript-learn in domains 7.1.0; no domain reads semantic at run time.)
-   It runs lokascript-domains' own round-trip gate (`gate-upstream.sh`) on this
-   tree's intent/framework (semantic is packed too) and fails on a case worse than the domains'
-   baseline; moved parses and better cases are reported, not failed. That pass
-   renders each command and reads it back with the same packages, so a change
-   both sides share moves nothing in it (semantic's ja を → お, measured). A
-   second pass (`domain-gate-read-back.mjs`) reads the sentences the domains'
-   LOCKED packages render (1,476) with this tree's, and fails on one that reads
-   differently: de's source marker `von` → `vonx` in `framework/languages` fails
-   4 sql sentences (and 4 cases in the first pass). A Japanese marker swap there
-   moves nothing: the domains author their ja markers per schema (sql, flow,
-   … derive markers from the grammar for de, pt and ru only); while learn was a
-   domain, semantic's ja を → お failed 13 of its sentences. A deliberate change to what
-   old input means is listed in `scripts/domain-gate-accepted.json`, one entry
-   per sentence with a reason, shrink-only; the domains' relock onto the release
-   clears it. The domains ref is pinned in the script: bump it when the domains
-   relock and regenerate their baseline.
+1. **Vocab consistency** fails when a schema gains a `markerOverride` whose word tokenizes as
+   `identifier` instead of keyword or particle. Waive it in
+   `packages/testing-framework/vocab-waivers.json`, keyed `V4|<lang>|<marker>`, with a reason.
+   The error aggregates its sites, so a marker that has shipped for years becomes reportable
+   the moment a second schema uses it.
+2. **The R2 subset lock** (`validators/execution-validator.test.ts`) asserts the exact curated
+   pattern list. Expanding `EXECUTION_SUBSET` means updating the count in the test title and
+   the sorted expectation array, and regenerating the multilingual baseline, in the same PR.
+3. **`check-semantic-boundary` is a ratchet, not lint.** It holds a committed baseline of every
+   place `packages/core/src` imports `@lokascript/*` and fails on any increase. Use
+   `npm run check:semantic-boundary:update` only when the import is required, and say why in
+   the PR.
+4. **`check-domains-peer-major`** guards the cross-repo version contract.
+   `@lokascript/domains` (repository `lokascript-domains`) peers on framework, semantic and
+   intent, and mcp-server depends on it back. The guard reads the lockfile's domains entry and
+   fails unless those three are peers, not bundled dependencies, at a range this repository's
+   version satisfies; otherwise a clean install gets two framework copies and forked
+   singletons. It also runs in `publish.yml` after the bump, so a framework major cannot
+   publish until domains accepts it:
+   - A major that only renumbers the contract: pack framework, semantic and intent here at
+     the new version, prove domains against them (its `pack-smoke.sh` takes
+     `UPSTREAM_TARBALLS`), release a domains patch peering `^old || ^new`, bump the range here
+     and relock, then publish hyperfixi.
+   - A major that changes the contract needs a real domains major, cut after hyperfixi's is on
+     npm.
+5. **The domain gate** (`scripts/domain-gate.sh`) is the only gate here that parses a domain
+   DSL. The domains read on framework's matcher and its language grammars. The first pass runs
+   lokascript-domains' own round-trip gate on this tree's packed intent, framework and
+   semantic, and fails on a case worse than the domains' baseline (moved parses and better
+   cases are reported, not failed). That pass renders and reads with the same packages, so it
+   cannot see a change both sides share. The second pass (`domain-gate-read-back.mjs`) reads
+   the sentences the domains' locked packages render with this tree's packages and fails on
+   one that reads differently. A deliberate change to what old input means is listed in
+   `scripts/domain-gate-accepted.json`, one entry per sentence with a reason, shrink-only.
+   When the domains relock, bump the pinned ref and regenerate their baseline.
 
-#### Stale-dist auto-rebuild
+### Stale `dist/`
 
-Both `npm test --prefix packages/<X>` and `npm run test:check` auto-rebuild any workspace dependency whose `src/` is newer than its `dist/` (via [scripts/ensure-fresh.sh](scripts/ensure-fresh.sh)). Per-package `pretest` hooks cover the first path; [scripts/test-check-all.sh](scripts/test-check-all.sh) runs `ensure-fresh` upfront for the second (npm pre/post hooks don't fire for `:check` variants). Manual escape hatch: `npm run check:fresh`.
+`npm test --prefix packages/<X>` (through `pretest`) and `npm run test:check` (through
+`scripts/test-check-all.sh`) rebuild any workspace dependency whose `src/` is newer than its
+`dist/`, using `scripts/ensure-fresh.sh`. `npm run check:fresh` does it by hand.
 
-A file a build bakes another package into is rebuilt when that package was built after it, even with its own `src/` unchanged: the adapter's `*.global.js` (semantic), semantic's `browser.global.js` (framework), core's `hyperfixi.js` (the engine's bundle, via `build:browser`). The list is `baked_files` in `ensure-fresh.sh`; add a line when a build starts inlining or copying a workspace package (`grep` the built `dist/` for a string unique to that package to find them).
+- **Direct `npx vitest` and `npx tsx` runs skip these hooks.** After editing an upstream
+  package, rebuild it first; a green suite against a stale `dist/` proves nothing. The
+  multilingual CLI refuses `--regression` and `--save-baseline` when one of its packages has
+  `src/` newer than `dist/`.
+- A file that a build bakes another package into is rebuilt when that package was built after
+  it: semantic's `browser.global.js` (framework), the adapter's `hyperscript-i18n.global.js`
+  (semantic), core's `hyperfixi.js` (the engine). The list is `baked_files` in
+  `ensure-fresh.sh`; add a line when a build starts inlining or copying a workspace package.
+- When you add a dependency between workspace packages, add it to the consumer's `pretest`.
+  Every `ensure-fresh` call lists packages dependency-first and must name packages;
+  `npm run check:ci-order` fails otherwise.
+- **An MCP tool refusing with "serving STALE code" is a guard working.** The MCP server
+  (`.mcp.json` launches `packages/mcp-server/dist/index.js`) resolves its workspace
+  dependencies at startup and cannot reload them, so after a rebuild it would serve old code
+  silently. `packages/mcp-server/src/freshness.ts` detects that and refuses the call. Restart
+  the server (`/mcp`, reconnect); do not debug the tool.
 
-When you add a new internal-dep relationship between workspace packages, add the dep to the consumer's `pretest` in its `package.json` so its `dist/` stays fresh during tests. Every `ensure-fresh` call lists packages **dependency-first** (each is checked after the ones before it were rebuilt), and its arguments must name packages: `npm run check:ci-order` fails on either (`behaviors` once passed a bare `engine`, which named nothing and refreshed nothing).
+### Hand-maintained package lists
 
-##### Keeping the gate's package list honest
+CI and the local gate name packages in hand-written lists. Each list has a guard, run in
+`lint-typecheck` and from the pre-commit hook:
 
-`npm run test:check` walks a hand-maintained list in [scripts/test-check-all.sh](scripts/test-check-all.sh), so **a new package with a `test:check` script is not in the gate until you add it there** (plus the `ensure-fresh` args, if its tests read a workspace dep's `dist/`). Both directions of drift used to go unnoticed: a package deleted from disk but left in the list made the gate exit 1 on a green tree, and nine packages with real suites were never added, so ~390 tests never ran in the gate that claims to run everything.
+| List                                       | Guard                | A package must be listed if and only if                                 |
+| ------------------------------------------ | -------------------- | ----------------------------------------------------------------------- |
+| `build` job step order                     | `check:ci-order`     | a runtime dependency is built before its consumer                       |
+| `unit-tests` / `unit-tests-packages` steps | `check:ci-test-list` | it has a `test:check` script                                            |
+| `scripts/test-check-all.sh`                | `check:test-list`    | it has a `test:check` script                                            |
+| `export-validation` arguments              | `check:ci-job-lists` | it is published, declares an entry point, and the `build` job builds it |
+| `lint-typecheck` typecheck lines           | `check:ci-job-lists` | it has a `typecheck` script                                             |
+| nightly `coverage` job                     | `check:ci-job-lists` | its flag is declared in `codecov.yml` (both directions)                 |
 
-[`npm run check:test-list`](scripts/check-test-check-list.cjs) now fails on either. It's a zero-dep node script, run in CI's `lint-typecheck` job and from the pre-commit hook when a workspace `package.json` or the gate script is staged. Deliberate exclusions go in its `INTENTIONALLY_UNGATED` map, with a reason.
+- A new package with a `test:check` script is not in the local gate until you add it to
+  `scripts/test-check-all.sh` (and to its `ensure-fresh` arguments, if its tests read a
+  workspace dependency's `dist/`).
+- Deliberate exclusions go in `INTENTIONALLY_UNGATED` (`check-test-check-list.cjs`) or
+  `INTENTIONAL_OMISSIONS` (`check-ci-job-lists.cjs`), each with a reason.
+- **A package added to the typecheck list must typecheck on a clean checkout**, not only in
+  your tree. `packages/behaviors` generates `src/generated/`, which is gitignored, so it needs
+  its `pretypecheck` hook.
 
-##### The hand-maintained package lists, and what guards each
+### Bundle sizes
 
-CI addresses packages by name in six places, all hand-written (now five — `lint:domains` left with the domain packages). **Every one is now guarded** — the last four by [`npm run check:ci-job-lists`](scripts/check-ci-job-lists.cjs), and all six by zero-dep node scripts wired into `lint-typecheck` and the pre-commit hook.
+Gzip sizes depend on the platform. `packages/core/src/metadata.ts` carries the values CI
+measures on Linux. `npm run update:sizes --prefix packages/core` tolerates 2% drift; the
+regression gate is `packages/core/scripts/bundle-size-snapshot.mjs --check` (5% against
+`scripts/bundle-snapshots/baseline.json`), and CI also enforces absolute ceilings. **Never run
+`update:sizes:auto` locally and commit the result**: `dist/` is untracked, so your tree may
+hold another branch's build. Take the numbers from the CI job log.
 
-| List                                       | Guard                | Predicate ("must be listed iff…")                                             |
-| ------------------------------------------ | -------------------- | ----------------------------------------------------------------------------- |
-| `build` job step ORDER                     | `check:ci-order`     | a runtime dep is built before its consumer                                    |
-| `unit-tests` / `unit-tests-packages` steps | `check:ci-test-list` | the package has a `test:check` script                                         |
-| `scripts/test-check-all.sh`                | `check:test-list`    | same predicate, local gate                                                    |
-| `export-validation` args                   | `check:ci-job-lists` | published **and** declares an entry point **and** is built by the `build` job |
-| `lint-typecheck` typecheck lines           | `check:ci-job-lists` | the package has a `typecheck` script                                          |
-| nightly `coverage` job                     | `check:ci-job-lists` | its flag is declared in `codecov.yml` (both directions)                       |
-
-(A seventh list, the root `lint:domains` loop, was guarded here until the domain
-packages moved to the `lokascript-domains` repo — the loop left with them.)
-
-When the last four were guarded (2026-08-01), three had drifted: export-validation checked **8** of the 30 packages that qualify (its 9th argument, `aot-compiler`, is private, which the validator skips outright — an argument that had never done anything); the "Typecheck all packages" step ran **11** of 44; and the coverage job uploaded a `language-server` flag `codecov.yml` never declared. (`lint:domains`, since removed with the domain packages, was already correct at 9/9.) Deliberate omissions go in the script's per-list `INTENTIONAL_OMISSIONS` maps, with a reason; all three start empty.
-
-**Adding a package to the typecheck list needs it to typecheck on a clean checkout**, not just in your tree. `packages/behaviors` was the trap: its `src/generated/` is gitignored, so `tsc` there fails on a fresh clone — it needs a `pretypecheck` hook, the same way it already had `prebuild`/`pretest`. This is the same "working tree ≠ clean checkout" class that cost #862/#863 two CI round-trips.
-
-> **Neither hook fires for direct `npx vitest` / `npx tsx` invocations.** That's
-> how the qu "unreproducible baseline" incident happened (roadmap §7g): a sweep
-> executed a stale `dist/` and scored code that differed from the checkout. The
-> multilingual CLI now guards this itself — `--regression` / `--save-baseline`
-> runs REFUSE when any of intent/framework/semantic/i18n/patterns-reference/
-> hyperscript-adapter/engine has `src/` newer than `dist/index.js` (the dist sibling of the patterns.db
-> provenance stamp). If you run vitest directly after editing an upstream
-> package, rebuild it first (`npm run check:fresh` or `npm run build --prefix
-packages/<dep>`); a green suite against a stale dist is vacuously green.
-
-##### The three freshness guards
-
-Same bug class — _executing code that differs from the checkout_ — asked at three
-different moments. They are not redundant; each sees what the others cannot:
-
-| Guard                                                                           | Question                                   | On stale                                |
-| ------------------------------------------------------------------------------- | ------------------------------------------ | --------------------------------------- |
-| [`scripts/ensure-fresh.sh`](scripts/ensure-fresh.sh) (`pretest`, `check:fresh`) | is `dist/` behind `src/`?                  | **rebuilds**                            |
-| `findStaleDists()` in the multilingual CLI                                      | same, for a gate about to run              | **refuses** (never mutates build state) |
-| [`packages/mcp-server/src/freshness.ts`](packages/mcp-server/src/freshness.ts)  | has `dist/` changed **since I loaded it**? | **refuses** the tool call               |
-
-The third exists because the MCP server is the only long-running process here.
-`.mcp.json` launches `mcp-server/dist/index.js`; tsup marks every
-`dependencies`/`peerDependencies` entry external, so `@lokascript/semantic` & co. are
-bare specifiers Node resolves through the workspace symlink **at startup** — and Node's
-ESM cache cannot be invalidated. So a rebuild leaves the server serving pre-change code
-**silently**, which no `src`-vs-`dist` check can detect (a freshly-rebuilt dist looks
-perfectly fresh while the process still holds the previous one).
-
-It detects rather than self-heals, deliberately: re-importing is impossible, and bundling
-the deps would be _worse_ — it would move the staleness from "the process is behind the
-file" to "the file is behind the source too". (`@hyperfixi/developer-tools` is already
-bundled and its dist carries four orphaned generations of the same chunk, because the
-build has no `--clean`.) The MCP protocol has no "restart me" primitive, so the refusal
-text is the only channel to a human. **An MCP tool refusing with "serving STALE code" is
-the guard working — restart the server (`/mcp` → reconnect), don't debug the tool.**
-
-The `patterns.db` half _does_ self-heal: `populate` replaces the file rather than mutating
-it, so a long-lived handle keeps reading the old inode; `getDatabase()` now compares file
-identity (dev+inode+size+mtime, behind a 1s TTL) and reopens.
-
-### Live Testing
+### Live testing
 
 ```bash
-# Start HTTP server (from project root)
-npx http-server . -p 3000 -c-1
-
-# Test pages:
-# http://127.0.0.1:3000/examples/multilingual/index.html        # Grammar demo (i18n)
-# http://127.0.0.1:3000/examples/multilingual/semantic-demo.html # Semantic parser demo (24 languages)
-# http://127.0.0.1:3000/packages/core/compatibility-test.html   # Side-by-side comparison
+npm run dev    # http-server on port 3000, from the repository root
+# http://127.0.0.1:3000/examples/index.html                         the gallery
+# http://127.0.0.1:3000/examples/multilingual/index.html            grammar demo
+# http://127.0.0.1:3000/examples/multilingual/semantic-demo.html    semantic parser demo
+# http://127.0.0.1:3000/packages/core/compatibility-test.html       side-by-side comparison
 ```
 
-## CI/CD Workflows
+## CI
 
-### Consolidated CI Workflow
+All CI is `.github/workflows/ci.yml`, on Node 24. The job comments there hold the reasoning.
 
-As of 2026-01-23, all CI testing has been consolidated into a single `.github/workflows/ci.yml` workflow for efficiency.
+| Job                       | PR  | push main/develop | nightly | Notes                                                                                          |
+| ------------------------- | --- | ----------------- | ------- | ---------------------------------------------------------------------------------------------- |
+| `changes`                 | yes | yes               | no      | Path classifier: `code`, `docsources`, `domaingate`                                            |
+| `build`                   | yes | yes               | yes     | Builds every package once; gated on `code` or `docsources`                                     |
+| `bundles`                 | yes | yes               | yes     | Browser bundles; gated on `code`                                                               |
+| `shipped-sources`         | yes | no                | no      | `test:shipped-sources`; runs whenever `build` ran                                              |
+| `export-validation`       | yes | no                | no      | `exports` resolve to `dist/`; bare-Node import                                                 |
+| `lint-typecheck`          | yes | no                | no      | Guard scripts, oxlint, typechecks, generated-artifact checks                                   |
+| `unit-tests`              | yes | no                | no      | core and semantic                                                                              |
+| `unit-tests-packages`     | yes | no                | no      | every other package                                                                            |
+| `browser-tests`           | yes | no                | no      | Playwright `quick` + `comprehensive`; the engine's `test:upstream`, `test:own`, `check:claims` |
+| `multilingual-validation` | yes | no                | no      | `populate`, vocab consistency, the 24-language regression gate, `test:canonical`               |
+| `bundle-size`             | yes | no                | no      | `update:sizes`, the snapshot gate, absolute ceilings                                           |
+| `domain-gate`             | yes | no                | no      | gated on `domaingate`                                                                          |
+| `coverage`                | no  | no                | yes     | Codecov upload; also `workflow_dispatch`                                                       |
+| `ci-gate`                 | yes | yes               | yes     | `always()`; fails if any job failed or was cancelled (a skip passes)                           |
 
-**Key features:**
+- **Path gating.** `code` is every file outside `**/*.md`, `**/*.txt`, `docs/**`,
+  `docs-internal/**`, `examples/**`, `.claude/**`, `protocol/**`, `.gitignore` and `LICENSE`.
+  `docsources` is `examples/**`, `docs/**` and `packages/core/docs/**`: the trees
+  `shipped-sources` walks. `domaingate` is `packages/intent/**`, `packages/framework/**` and
+  `scripts/domain-gate*`. `build` runs on `code` or `docsources`, `shipped-sources` whenever
+  `build` ran, `domain-gate` on `domaingate`; every other PR job requires `code`.
+- **A diff that matches no filter runs nothing but `changes` and `ci-gate`.** A root-level
+  `*.md` edit, this file included, is one. Skipped required checks report "skipped" and
+  satisfy branch protection.
+- **The push run is only `changes`, `build`, `bundles` and `ci-gate`.** Branch protection is
+  `strict`, so the PR already validated the merged tree.
+- The required checks on `main` are Build All Packages, Lint & Typecheck, Unit Tests, Export
+  Validation, Multilingual Validation, Browser Tests and CI Gate.
+- `changes` is skipped on `schedule` (06:00 UTC) and `workflow_dispatch`, so `build`,
+  `bundles` and `coverage` each carry an explicit `!cancelled()`. A job added to the nightly
+  chain without one is skipped silently while the run reports success.
+- Concurrency cancels in-progress runs per workflow and ref.
+- `browser-tests` runs `comprehensive` on every code PR and deliberately not on a schedule:
+  Playwright pins its browsers, so a browser change arrives as a code PR.
 
-- **Shared build artifacts**: Packages are built once and shared across all jobs (40% faster)
-- **Parallel execution**: jobs run in parallel after build completes
-- **Three-tier job set**: full matrix on `pull_request`; `changes` + `build` + `bundles` (+ the `always()` `ci-gate`) on `push` to main/develop (tree-skew detector); `coverage` on a nightly `schedule` (also `workflow_dispatch`)
-- **Path-gated npm fan-out**: the `changes` job classifies the diff (`code` / `docsources` / `domaingate`); `build` gates on `code` **or** `docsources` and every npm job inherits the gate through `needs: build`. (`docsources` is exactly `examples/**`, `docs/**`, `packages/core/docs/**` — the trees `shipped-sources` walks. All three are excluded from `code`, so without their own filter the one gate that reads them would never run on a diff that only touches them. Note it is **those trees, not markdown generally**: a root-level `*.md` edit — this file included — matches neither filter, so the entire workflow skips and `ci-gate` passes on skips alone.) Doc-only, `protocol/**`-only (the LSE spec: documents since 2026-11-12, when its four reference parsers and their `protocol-conformance` job retired and the fixtures moved to `packages/intent/fixtures`) diffs skip the whole npm stack (~15–20 runner-min each). Skipped required checks report "skipped" and satisfy branch protection (the required `multilingual-validation` check has always relied on this for doc-only PRs). **As of 2026-07-29 `export-validation`, `lint-typecheck`, and `unit-tests` gate on `code` too** — they previously gated on `pull_request` alone, so a docs/examples-only PR ran the entire 27-package unit suite despite the claim above. `shipped-sources` stays ungated by design (it is the gate that walks `examples/` and `docs/`). `domaingate` is `packages/{intent,framework}/**` plus `scripts/domain-gate.sh`: the packages lokascript-domains reads on (semantic left the list with learn, domains 7.1.0), which only `domain-gate` exercises against the domains.
-- **Node 24 LTS**: Active LTS release (EOL April 2028)
-- **Smart failure handling**: the multilingual job is a real fidelity-ratchet gate (no `continue-on-error`). (The perf `benchmarks` job, the one `continue-on-error` trend job, timed core's runtime and left with it in 4.0.)
+Other workflows, both `workflow_dispatch`: `publish.yml` and `pre-publish-check.yml`.
 
-**Jobs:**
+Docs for finished work are deleted under a tag and indexed in `docs-internal/ARCHIVE.md`, not
+moved; `docs-internal/CLAUDE.md` has the procedure.
 
-| #   | Job                       | PR  | push main/develop | nightly | Notes                                                                |
-| --- | ------------------------- | --- | ----------------- | ------- | -------------------------------------------------------------------- |
-| 0   | `changes`                 | ✓   | ✓                 | —       | Path classifier (code, docsources, domaingate)                       |
-| 1   | `build`                   | ✓   | ✓                 | ✓       | Build all packages once; gated on `code` **or** `docsources` paths   |
-| 2   | `bundles`                 | ✓   | ✓                 | ✓       | Browser bundles, 3 shards; gated on `code`                           |
-| 3   | `shipped-sources`         | ✓   | —                 | —       | Shipped sources: engine list, localized, execution; ungated          |
-| 4   | `export-validation`       | ✓   | —                 | —       | Verify package.json exports resolve to dist                          |
-| 5   | `lint-typecheck`          | ✓   | —                 | —       | oxlint + TypeScript checks                                           |
-| 6   | `unit-tests`              | ✓   | —                 | —       | Vitest on Node 24: core + semantic (semantic is the heavyweight)     |
-| 7   | `unit-tests-packages`     | ✓   | —                 | —       | Vitest on Node 24: every other package; split off #6 by #833         |
-| 8   | `coverage`                | —   | —                 | ✓       | Codecov upload; nightly since 2026-07-29 (was push+main)             |
-| 9   | `browser-tests`           | ✓   | —                 | —       | Playwright `quick` + `comprehensive`; PR-only                        |
-| 10  | `multilingual-validation` | ✓   | —                 | —       | 24-language full sweep + regression gate; PR-only                    |
-| 11  | `bundle-size`             | ✓   | —                 | —       | Size report; PR-only (slim post-merge)                               |
-| 14  | `domain-gate`             | ✓   | —                 | —       | round trip + old-input read-back; gated on intent/framework          |
-| 15  | `ci-gate`                 | ✓   | ✓                 | ✓       | `always()` aggregate; fails if any job failed/cancelled (skip is OK) |
+## Multilingual gates
 
-The PR-only jobs already ran against the merged-as-PR code (`strict` branch protection means the PR validated the exact merged tree), so re-running them on the post-merge push would be redundant — the push run keeps only the build tier (`changes`, `build`, `bundles`, and the `always()` `ci-gate`). For the reasoning see the job comments in `.github/workflows/ci.yml`.
-
-`coverage` and `benchmarks` moved off push-to-main on **2026-07-29**: under `strict` protection the post-merge tree is the tree the PR validated, so `coverage` was re-executing the full core + semantic + i18n + language-server suites (430 files) a second time per merge purely for a Codecov datapoint. Neither is a required check (required = Build All Packages, Lint & Typecheck, Unit Tests, Export Validation, Multilingual Validation, Browser Tests), so nightly costs no gate strength. Same change fixed `benchmarks`, which ran `bench:run` (writes no file) and uploaded from a nonexistent `./core/benchmark-results/` — its output had always been discarded; it now runs `bench:ci` and uploads `packages/core/benchmark-results/`.
-
-`browser-tests` runs the `comprehensive` Playwright project alongside `quick` as of
-**2026-08-08**, and deliberately NOT on a schedule. Before that, `quick` was the only
-project CI ever invoked, so the 122 `@comprehensive` specs ran nowhere — `npm run
-test:comprehensive` had been failing on `main` with **four** real bugs behind it (a
-detached `startViewTransition`, untracked reads of unset globals, concurrent effects
-clobbering dependency capture, and `put` stringifying DocumentFragments, which silently
-broke the htmx-compat swap path — #904/#905). The job is already gated on
-`changes.outputs.code`, so the tier runs exactly when something that could break it
-changes and never on a quiet tree; both projects together take ~26s on a job that is not
-on the critical path (`build` is). A nightly was considered and rejected: the only thing a
-time-based run adds is drift from _outside_ the repo, and Playwright pins its browser
-binaries — so a Chromium change arrives via a `@playwright/test` bump, which is a code PR
-this gate already covers.
-
-**Triggers:**
-
-- Push to `main` or `develop` (`build` only — tree-skew detector)
-- Pull requests to `main` or `develop` (full job set)
-- `schedule` nightly at 06:00 UTC, plus `workflow_dispatch` (`coverage`). `changes` is skipped on these events — paths-filter has no diff base — so `build` carries an explicit `!cancelled()` status function; without it the implicit `success()` on a skipped `needs` would skip the whole nightly chain.
-- Concurrency: Cancels in-progress runs on new push (per `${{ github.workflow }}-${{ github.ref }}`; pre-merge and post-merge runs are on different refs so the post-merge run is NOT cancelled)
-
-**Known Issues:**
-
-- None tracked here. Every behavior (curated, optional and experimental) compiles from its hyperscript
-  `source`; every multilingual ratchet signal is at 1.000 in all 24 languages. What the gates do NOT
-  measure (English words left in renders, pronoun case, command shapes outside the command-shape
-  gate's scripts, stale user docs) is the multilingual roadmap: `docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
+Authoritative numbers live in the committed baselines under
+`packages/testing-framework/baselines/` (`multilingual-priority.json` stamps its `timestamp`
+and `commit`). Every corpus signal is at its best value in all 24 languages, so any drop is a
+regression. The open work is what the corpus cannot show:
+`docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
 
 ### Multilingual parse rate ≠ fidelity
 
-The `multilingual-validation` parse rate counts a translation as passing when the
-semantic parser returns a **non-null** node — **not** when that node is a faithful
-translation. A complex pattern can parse non-null while dropping most of the
-source's commands (e.g. an `if/focus/halt` body collapsing to a bare `if`). So a
-"100% / 99%" parse rate means "parses", not "parses correctly".
+The parse rate counts a translation as passing when the semantic parser returns a non-null
+node, not when the node is faithful. The parser degrades instead of returning null, so a
+pattern can "parse" while dropping most of its commands. The harness therefore scores
+structural fidelity (`src/multilingual/fidelity.ts`): the fraction of the English reference
+parse's command actions present in each translation. A pass is degenerate (below 0.5), lossy
+(below 1.0) or faithful (1.0).
 
-The harness computes a structural **fidelity** signal (`packages/testing-framework/src/multilingual/fidelity.ts`):
-the fraction of the English reference parse's command actions present in each
-translation. By fidelity, passes fall into three bands, each tracked per-language in
-the committed baseline:
+### The `--regression` gate's signals
 
-- **degenerate** (fid < 0.5 — lost most of the structure): `degeneratePasses`. **0.**
-- **lossy** (0.5 ≤ fid < 1.0 — parses, clears the floor, but silently drops ≥1
-  command): `lossyPasses`. **0.** (Both bands were burned down across #492–#506;
-  history in `MULTILINGUAL_ROADMAP.md`, archived: see `docs-internal/ARCHIVE.md`.)
-- **faithful** (fid = 1.0). **3792 / 3792.** Cross-language `avgFidelity` = 1.000,
-  `avgPrecision` = 1.000, `avgMultisetRecall` = 1.000, `avgValueRecall` = 1.000,
-  `avgExecutionFidelity` = 1.000, `avgRoleFidelity` = 1.000 (all 23). Since
-  2026-09-23 R1/R3 also score a handler's `eventModifiers` (`from`, `once`,
-  `debounced at`, `throttled at`) as `on.<mod>` pseudo-roles — before that the
-  renderer dropped every one of them with all eleven signals green.
+The reasoning behind each is in [docs/FIDELITY.md](docs/FIDELITY.md); the tolerances are in
+`src/multilingual/cli.ts`. Each fails CI. A baseline that lacks a signal's field yields a zero delta, so an
+un-regenerated baseline never retro-flags.
 
-> **Figures snapshot:** as of the **2026-09-23** baseline (`8067f098`). They drift as work lands
-> — the **authoritative** numbers always live in the committed baseline,
-> `packages/testing-framework/baselines/multilingual-priority.json` (its `timestamp`
-> and `commit` fields stamp each regeneration). Treat the prose here as orientation,
-> not truth. Current plan: `docs-internal/MULTILINGUAL_NEXT_STEPS.md` (per-arc
-> history before 2026-09-30: tag `archived/multilingual-next-steps-2026-09-30`).
+1. **Parse rate**: a per-language drop of more than 2 points. Deliberately coarse.
+2. **Degenerate ratchet**: a faithful baseline pass that became degenerate (tolerance 3).
+3. **Lossy ratchet (R0 recall)**: a faithful baseline pass that became lossy (tolerance 0),
+   plus a per-language `avgFidelity` drop of more than 0.02.
+4. **Precision (R0 precision)**: a per-language `avgPrecision` drop of more than 0.02. It
+   catches a parse or render that adds commands the source never had, which no recall signal
+   sees.
+5. **Multiset recall**: a per-language `avgMultisetRecall` drop of more than 0.02. Signals 2
+   to 4 score the deduplicated action set, so a dropped repeated command (`[bind, bind]` read
+   as `[bind]`) scores 1.0 on them.
+6. **Role fidelity (R1)**: a per-language `avgRoleFidelity` drop of more than 0.02
+   (`action.role:valueType` recall against the English reference), plus the role-set flip
+   ratchet at tolerance 0: a pattern absent from the baseline's `roleLossyPatterns` that now
+   has an incomplete role set. The average cannot see one pattern losing one role. R1 and R3 also score a handler's event
+   modifiers (`from`, `once`, `debounced at`, `throttled at`) as `on.<mod>` pseudo-roles.
+7. **Execution (R2)**: a curated-subset pattern whose jsdom DOM effect matched the reference
+   and now diverges (tolerance 0). The reference is the English source on upstream
+   `hyperscript.org`; each translation runs as written on `@hyperfixi/engine` with the
+   adapter's plugin and `lang` on the page.
+8. **Value recall (R3)**: a per-language `avgValueRecall` drop of more than 0.02. It compares,
+   verbatim and as a multiset, the values that are the same in every language (selectors,
+   sigil references, numbers and time literals, colon-qualified event names, URLs). If every
+   language flags one pattern at once, suspect the English parse first.
+9. **Canonical validity (R4)**: every foreign translation is rendered to English and parsed on
+   the real `hyperscript.org` engine. Invalid (pattern, language) pairs are compared with the
+   allowlist `baselines/foreign-canonical-validity.json`, tolerance 0 in both directions: a new
+   invalid pair fails, and so does a listed pair that now renders valid (prune it with
+   `tools/regen-foreign-baseline.ts` in the same change). Full mode only. Triage with
+   `tools/triage-foreign-residual.ts`. `foreign-canonical-validity.test.ts` reads the same
+   allowlist; the English-side twin is `canonical-validity.test.ts`. R4 excludes pairs whose
+   English source the canonical parser rejects, so a corrupted English reference needs the
+   English-side gate.
+10. **Per-pattern parse (R5)**: a pattern that parsed in the baseline no longer parses at all
+    (tolerance 0). One flip is far below signal 1's tolerance, and the averages do not move at
+    all because a failed parse is skipped before scoring.
 
-The `--regression` gate ratchets on **eleven** signals (each fails CI; each guarded so
-an un-regenerated baseline never retro-flags — a baseline lacking a signal's field
-yields a 0 delta):
+The signals with tolerance 0 are binary flips. The remaining tolerances are cross-machine
+headroom (a baseline generated on macOS, CI on Linux), not run-to-run noise: `populate` is
+deterministic, so do not read a green gate as "within noise".
 
-1. **parse-rate** drop > 2pts. Deliberately coarse — signal 10 is what catches a
-   small number of patterns breaking.
-2. **degenerate ratchet** — a faithful baseline pass that became _degenerate_
-   (tolerance 3).
-3. **correctness ratchet (R0-recall)** — a faithful baseline pass that became _lossy_
-   (**tolerance 0** since 2026-07-25), **plus** a per-language **avgFidelity** drop
-   > 0.02. Catches the silent command-drops the degenerate ratchet misses (a
-   > 1.0 → 0.8 pass). The tolerance was 3, and that cushion was **measured to be the
-   > gate's real blind spot**: reverting #763's `markerLegacy.he` fix — the exact
-   > regression two vitest cases caught and the gate did not — produces exactly ONE
-   > faithful→lossy flip and moves nothing else (even a nonsense he marker override
-   > produced only two). The parser degrades rather than returning null, so signals
-   > 1 and 10 never fire for this class. A faithful→lossy flip is binary and
-   > structural, like R2/R4, so it has no float/collation noise to absorb.
-4. **precision ratchet (R0-precision, the "trust floor")** — a per-language
-   **avgPrecision** drop > 0.02. The mirror of recall: catches a parse/render that
-   _adds_ phantom/spurious commands the source never had (a phantom `toggle` ahead of
-   a real one) — invisible to every recall-based signal above. Multiset-aware, so a
-   _duplicated_ phantom (`[toggle, toggle]`) is seen too.
-5. **multiset-recall ratchet (R0-recall-multiset)** — a per-language
-   **avgMultisetRecall** drop > 0.02. Signals 2–4 all score the **deduped** action
-   Set, so a parse that drops a _repeated_ command scores a perfect 1.0: reference
-   `[bind, bind]` collapses to `{bind}`, which `[bind]` satisfies in full. That is how
-   `bind-two-way` recorded fidelity 1.0 in all 24 languages while every one of them
-   parsed only the first of its two `bind`s (the top-level command-sequence fix that
-   added this signal). Counting duplicates makes the drop visible. All 24 languages
-   sit at 1.0 today — the last sub-1.0 row (qu `behavior-resizable`, whose reorder
-   rendered the inline-if's verb-final `man churanay` after `tukuy`/end and stranded
-   it at the conditional fold) was cleared by the SOV if-seam work in the R1
-   deferred-tail arc (#638).
-   The nine other rows this signal originally flagged (colon-qualified event names
-   `draggable:start` split at the local-variable sigil by every non-en tokenizer, plus
-   two masked co-causes) were fixed in the colon-event-names arc (its handoff is
-   archived: `docs-internal/ARCHIVE.md`).
-6. **role-fidelity ratchet (R1)** — a per-language **avgRoleFidelity** drop > 0.02
-   (`action.role:valueType` recall vs the en reference; catches a parse that keeps the
-   verb but drops/mistypes a role). Note this is a Set too, so it shares signal 5's
-   blind spot for repeated roles.
-   **Plus the role-set flip ratchet (tolerance 0, added 2026-07-31):** a pattern
-   that was role-FAITHFUL in the baseline (absent from its `roleLossyPatterns`)
-   and now has an incomplete role set fails outright. The average above cannot
-   see a single pattern losing one role — ~0.0013 in a ~154-pattern language,
-   15× under its tolerance — and that blind spot was **measured**, not
-   hypothesized: a `required: false` duration role on toggleSchema cost es/pl/vi
-   the second toggle's positional destination on `toggle-aria-expanded`
-   (`next .panel` silently became `me`) and the gate stayed green;
-   `tools/triage-r1.ts` found it by hand. Same binary-flip argument as the
-   lossy/R5 zeros. Guarded by the baseline carrying `roleLossyPatterns`, so an
-   un-regenerated baseline never retro-flags; pre-existing role-lossy patterns
-   are the R1 burn-down list, not regressions.
-7. **execution ratchet (R2)** — a curated-subset pattern whose jsdom DOM effect
-   matched the en reference and now diverges (pass→fail; tolerance 0). Since
-   Phase C2 the reference is the English source on upstream `hyperscript.org`
-   and each translation runs AS WRITTEN on `@hyperfixi/engine` with the
-   adapter's plugin and `lang` on the page — the product's path, not core's
-   `buildAST` (measured before the switch: 49/49 en references and 1,127/1,127
-   translations matched; core's own path differed from upstream on 13 en
-   references).
-8. **value-recall ratchet (R3)** — a per-language **avgValueRecall** drop > 0.02.
-   Signals 1–7 compare actions and role _types_; values are never compared (they are
-   legitimately translated), so a parse with the right action counts and right role
-   types but a silently WRONG role value — ms capturing `trigger` events named
-   `draggable` instead of `draggable:start`, the colon-event-names class — scores
-   perfect on all of them. R3 compares the subset of values that is
-   **language-invariant by construction** (selectors, `:`/`$`/`^` sigil refs,
-   numbers/time literals, colon-qualified event names, URLs — whole-surface
-   code-shaped, no whitespace/interpolation) **verbatim** against the en reference,
-   as an `action.role=value` multiset (a dropped duplicate value is visible).
-   Blind-spot inversion: if the **en reference itself** corrupts a value, every
-   language flags at once — a 24-language R3 firestorm on one pattern means
-   "suspect the en parse first" (useful signal, unlike R0 where en corruption moves
-   nothing). **All 24 languages are at 1.000** as of the 2026-08-27 baseline; the
-   families that used to sit sub-1.0 (symmetric `swap` role-binding flips,
-   connective-swallowed `increment.quantity`, bn duration-glue, SOV `in me`
-   qualifier glue, pl/ru/uk `fetch` URL mis-role, hi `transition` duration drop,
-   bn/qu/tr behavior trigger events) were cleared by the en→foreign render arc.
-
-9. **canonical-validity ratchet (R4)** — every authored foreign translation is rendered
-   to English and parsed on the real `hyperscript.org` engine; the invalid
-   (pattern, language) pairs are diffed against the committed allowlist
-   (`packages/testing-framework/baselines/foreign-canonical-validity.json`). Both
-   directions fail at tolerance 0: a NEW invalid pair is a validity regression, and a
-   stale entry (an allowlisted pair that now renders valid) must be pruned via
-   `tools/regen-foreign-baseline.ts` in the same change that cleared it. Catches the
-   class R0–R3 cannot: a parse that is role-faithful yet renders English the canonical
-   parser rejects (signals 1–8 never parse the rendered surface). Full mode only;
-   triage failures with `tools/triage-foreign-residual.ts`. The same allowlist backs the
-   standalone vitest gate (`foreign-canonical-validity.test.ts`), so the two cannot
-   disagree. **Both allowlists are now empty** — 3174/3174 foreign renders parse on
-   the engine, and the en-side twin (`canonical-validity.test.ts`, vitest-only) is at
-   138/138 (measured 2026-09-23). (It formerly held one entry, `pick-text-range`.)
-
-10. **per-pattern parse ratchet (R5)** — a pattern that parsed in the baseline no
-    longer parses at all, at **tolerance 0**. Not redundant with signal 1: every
-    other signal is structurally incapable of seeing a handful of patterns break.
-    Parse rate is per-language, so at ~154 patterns one flip is a **0.65pt** drop
-    against a 2pt tolerance — it takes ≥4 in ONE language. The five `avg*` signals
-    see **exactly 0.0000**, not merely a small delta, because the orchestrator
-    skips a failed parse _before_ scoring, removing it from numerator and
-    denominator alike (perversely, a _lossy_ pattern degrading to not-parsing
-    **raises** avgFidelity). The degenerate/lossy ratchets only iterate patterns
-    that did parse. R2 covers 49 curated ids (measured 2026-10-03); R4's denominator excludes ~14% of
-    the corpus and is full-mode only. This is not hypothetical — #763's
-    `markerOverride.he` change stopped `לך את back` parsing and the gate would
-    have gone green; two vitest cases caught it instead. The other tolerances are
-    cross-machine headroom for **averages**; a binary pass→fail flip has no such
-    noise to absorb. Reads the per-pattern `patterns` map the baseline already
-    records, so no format change and no retro-flagging.
-
-**The corpus writer is SEMANTIC-ONLY (since 2026-08-28).** Every foreign row is
-`@lokascript/semantic`'s `render(parse_en(en), L)` — the same call MCP
-`translate_code`, `hyperfixi.translate` and `@hyperfixi/core/multilingual`'s `translate` make.
-
-It used to have three modes, because there used to be two renderers. `best`
-(#973) rendered each row with BOTH semantic and `@lokascript/i18n`'s
-`GrammarTransformer` and stored the semantic one unless i18n beat it on a ratchet
-signal; the rows i18n won were a committed shrink-only baseline, ratcheted by an
-`i18n-kept-rows` gate. **That baseline reached zero on 2026-08-28** (229 of 3703
-at the flip → 0 of 3657), the transformer was retired on the strength of it, and
-a per-row chooser with one renderer is not a chooser — so the modes, the
-`PATTERNS_RENDERER` env, the `--renderer` flag, the kept-rows gate and its
-baseline/tools all went with it. `test:canonical` dropped to four gates; the
-en-reference-preservation gate (2026-09-25, below) made it five again, and the
-English-leak gate's corpus half (2026-10-08, below) six.
-
-Two things survive from that machinery and are worth knowing:
-
-- **A markup row's `_=` body is translated only when its own English re-render
-  preserves its content** (`src/sync/markup-attributes.ts`). A truncating parse —
-  `set ^user to attrs.data as JSON`, whose `as JSON` landed in no role and
-  therefore scored "faithful" against its own truncation — would otherwise ship
-  the truncation into 23 languages. That guard is what FOUND the `as JSON` bug
-  (#991) when eleven ratchet signals could not. PLAIN rows have no such guard —
-  they are gated instead (en-reference-preservation, below).
-- **A row the renderer cannot render keeps its ENGLISH**, is counted, and is
-  reported loudly at the end of a `populate` run. It is a floor, not a fallback:
-  0 rows take it today, and a row that does is a translation the corpus is
-  MISSING rather than a worse one it settled for.
-
-**What "retired" deleted, precisely** (#1001): `grammar/transformer.ts` (2,747
-lines) and the transformer half of `grammar.test.ts`. The rest of
-`packages/i18n/src/grammar/` — 8,160 lines across 6 files — stays and always was
-going to: `profiles/index.ts` (1,557) and `types.ts` (655) back i18n's own
-`runtime.ts` and `constants.ts`, and `direct-mappings.ts` (351) is part of the
-browser API. It was never "delete the directory". Seven consumers moved first,
-not the three originally listed: `@hyperscript-tools/i18n` (#999) and the
-vite-plugin's generated bundle (#997) to `semantic.translate`; the classic-i18n
-browser bundle DROPPED its four helpers rather than pay a measured +173 KB
-gzipped to keep them (#998); the corpus writer (#1000); and a vocab test, the
-`examples/multilingual/index.html` demo, and an orphaned Playwright spec (#1001).
-`packages/framework` exports its OWN `GrammarTransformer` — unrelated, untouched.
-
-None of the recall-based signals can see a regression in the **English reference
-itself** — en defines the reference, so a parser change that truncates every language
-identically (as the top-level-sequence bug did) moves nothing. The
-**en-reference-preservation gate** (`test:canonical`, 2026-09-25) closes that for the
-corpus: it renders every translatable unit's English parse back to English and requires
-the source's content, under a short list of NAMED equivalences each pinned on the real
-engine (`halt the event` ≠ `halt event`, so `the` is not one). Its allowlist holds the
-known losses (24 when it landed), shrink-only, each with a triage family — #1167 shipped
-one of them (morph-form-update lost its whole `morph` in 23 languages) with all eleven
-signals green; the parenthesized-role-value fix that closed it was the allowlist's first
-prune, and it moved NO multilingual metric — which is exactly why the gate exists.
-(Exception: R3, whose en-corruption failure mode is the all-languages firestorm above.
-R4 has a related inversion for the RENDERER: a renderer change that corrupts the emitted
-English across languages floods R4 with new invalid pairs at once. A corrupted en
-_reference_ is different — R4's fair denominator silently EXCLUDES pairs whose en raw
-code the canonical parser rejects, so that class still needs the en-side vitest gate.)
-
-The **direct-path shapes** gate (`direct-path-shapes.<n>.test.ts`, 2026-10-03) carries
-core's 33 `*-direct-path.test.ts` files onto the text path before that path retires: their
-287 cases (English source, fixture, events), each translation run as written on the engine
-with the adapter plugin against upstream's English. 283 hold; `KNOWN` lists the other four
-(two English-only `have` cases, two vacuous) and only shrinks — the eight core-only and
-renderer cases it opened with closed when English started writing upstream's spelling for
-core-only forms (`semantic/src/explicit/upstream-spelling.ts`, C2c).
-
-Every gate above reads the **corpus**, and most value shapes are not in it. The
-**value matrix** (`testing-framework/src/multilingual/value-matrix.ts`, 2026-09-27)
-generates them instead: twelve operand kinds (a reference's property among them:
-`event's type`, `the type of event`; a sigil variable, `$n`; and a CSS length, `100px`) × the operators ×
-nine value positions (`put` and `set` values, a `set` in the second command of a
-chain, `if` and `repeat while` conditions, an `if` with no `then` before a command
-that names no target, a loop's count, `increment … by`, what a `get` reads), plus
-two WRITTEN-target positions (what a `set`
-writes, what an `increment` counts) and a derived axis of **colliding names** —
-variables spelled like some language's marker, particle or connective (es `a`, pl
-`w`, de `um`), and English words upstream runs as variables (`input`, `when`, `index`:
-`KEYWORD_NAMES`), which a translation writes verbatim, as a whole value and as an
-operand — and core's operator PHRASES (`is equal to`, `includes`, `is an Element`,
-…) — 5,396 cells. It EXECUTES each one: the English source on upstream
-`hyperscript.org` is the oracle, and 48 lanes must match it — semantic's English
-round trip, each language through the adapter on upstream, and (since 2026-10-01)
-the English source and each language's adapter output on `@hyperfixi/engine`
-(`eng`, `<lang>/eng`: the same text the `/up` lane runs, so a difference between the
-two is a difference between the engines). Core's lanes retired with its engine: the
-`<lang>` lane (its direct path) in Phase C2, when no cell failed `<lang>/eng` while
-passing it, and the `en` lane (its English) in C4, whose only failures were the eight
-accepted `the X of Y as T` cells. Its baseline (`baselines/value-matrix.json`) lists
-every failing (cell, lane) pair, and it only shrinks; ACCEPTED pairs (it's `di`
-ambiguity) stay listed and are reported apart. Since 2026-10-07 it also lists the
-`branch` position's REFUSED pairs (610: an SOV condition that ends in an owner takes the
-branch's `.y`, and `translate()` says so); none silent. The rules that tell a variable
-spelled like a structure word from the word (each with its PR and the test that pins it) are in
-`docs-internal/multilingual/VALUE_READING.md`; a PR that moves one updates its row. A name that is a
-PRONOUN in some language (tr `o` is `it`) skips that language's two lanes: no reader
-can tell them apart. The gate (`value-matrix.<position>.test.ts`, and a position's
-phrase cells in `value-matrix.<position>-phrases.test.ts`: seventeen parallel shards in
-the package's ordinary suite) fails on a new failing pair AND on a listed pair that
-passes. After a fix, prune with `npx tsx tools/regen-value-matrix-baseline.ts` (it
-refuses to add pairs without `--allow-new`). It is the queue for value work: the
-family and lane tables it prints say what to fix next.
-
-Every gate above asks whether a translation MEANS what the source means; the
-**English-leak** gate (`english-leaks.ts`, 2026-10-08, M2) asks whether it READS as the
-language. It counts, per render, English grammar words (derived per source: the tokens
-the engine's own parser matched as words), English event names where the lexicon has a
-word (N2), a nominative `me` beside a marker in the 13 languages where that is wrong
-(N3), and a marker ko, ja, bn or tr attaches to its noun, written apart (`spacing:`, N5). Two shrink-only halves: the corpus (`test:canonical`) and the command-shape cases'
-renders (in those shards; no second translation pass). After a fix, prune with
-`npx tsx tools/regen-english-leaks-baseline.ts`; `--report` is M2's queue (per language,
-per word with its context, per event).
-
-The value matrix generates VALUE shapes; the **command-shape gate**
-(`testing-framework/src/multilingual/command-shapes.ts`) reads the shapes around them
-— a second class ref, a `when` filter, `else if`, `break`, `catch`, a second feature
-after the first `end` — from what authors write: every `_` attribute and script body in
-the vendored upstream suite, and core's reference and hover examples, that the engine
-reads (`command-shapes.cases.json`, harvested by `tools/harvest-command-shapes.ts`; a
-test pins the count and the vendored version, so re-harvest when the suite moves). A
-page's script is read as the host reads it (`parseProgram`), an example as statements.
-Each case runs 24 lanes: `en` is `translate(src, 'en', 'en')`, each language
-`translate(translate(src, 'en', L), L, 'en')`. The oracle is the engine's parse of the
-lane's English against its parse of the source, positions stripped, after named
-EQUIVALENCES (`my.x` is `my x`, `the X of Y` is `Y's X`, `hide` is `hide me`, …), each
-pinned by runs on both engines in `command-shapes.oracle.test.ts`. That file also
-changes every value token of every case and requires the parse to change: an engine
-node that keeps a value only in a closure (as `go to url` and `^x on #el` did) hides a
-loss from the oracle. A pair is `pass`, `refused` (`translate` threw: the caller was
-told) or `silent` (it returned English that parses differently, or that the engine
-rejects). The baseline (`baselines/command-shapes.json`) lists the refused and the
-silent lanes per case, both shrink-only; a case in a LOUD family (a shape semantic does
-not carry yet: `ask`/`answer`, templated selectors, `^x on <el>`, `dom x`) carries its
-reason, and must be refused, never silent (a test holds it). The gate (`command-shapes.<n>.test.ts`, three shards) fails on a pair worse than
-listed (pass → refused or silent, refused → silent) and on one better than listed;
-regenerate with `npx tsx tools/regen-command-shapes-baseline.ts` (it refuses to write a
-worse pair without `--allow-new`). Its tables — by family, by node type, by lane — are
-M1's queue (`docs-internal/MULTILINGUAL_NEXT_STEPS.md`).
-
-The **LSE round-trip gate** (`lse-round-trip.test.ts`, 2026-11-12) holds the boundary of LSE
-(`@lokascript/intent`'s bracket syntax and protocol JSON, which carry commands and simple handlers:
-`protocol/README.md`). It parses the command-shape sources, writes each node in both encodings and
-reads it back: `faithful`, `type-only` (a value's type differs, nothing else), `refused` (the
-writer threw `LossyEncodingError`) or `silent` (written with something missing). `silent` is never
-allowed, and is judged by the scorer, by `structure()`, a field-by-field comparison (the
-scorer does not read every field: a dropped `in me` scope scores faithful), AND by the script the
-read-back node renders to against the one the node renders to, as the engine reads both (the two
-node checks scored 94 JSON cases carried whose `implicit` mark or property path was gone:
-`remove #x` came back `remove #x from me`). Two bracket cases are silent by the syntax being untyped
-(`BRACKET_UNTYPED`, shrink-only). The baseline
-(`baselines/lse-round-trip.json`) lists the type-only and refused cases; the gate fails on a case
-worse than listed and on one better. A parser change that adds a field to a node shows here as new
-refusals until a writer learns the field: regenerate with
-`npx tsx tools/regen-lse-round-trip-baseline.ts` (`--allow-new` for worse cases, `--report` for the
-refusal reasons).
-
-After an _intentional_ fidelity change, regenerate the baseline (`--save-baseline`).
-**The baseline must be regenerated against a freshly `populate`d patterns.db** — a
-baseline generated against a stale/transitional DB will read as drifted.
-`populate` is **deterministic run-to-run**, so the remaining ratchet tolerances (3
-degenerate flips, avgFidelity 0.02) are **conservative cross-machine headroom**
-(Mac-generated baseline vs CI Linux float/collation drift), not absorbers of local
-run-to-run jitter — don't read a green gate as "within noise." The per-pattern
-signals (lossy, R2, R4, R5) are all at 0: a binary flip has no such noise to
-absorb, and the lossy cushion was measured swallowing a real regression. There is no
-corpus fidelity headroom left (every signal is 1.000); the open work is what the corpus
-cannot show — `docs-internal/MULTILINGUAL_NEXT_STEPS.md`.
-
-#### Running the multilingual `--regression` gate locally
-
-The CI `multilingual-validation` job is reproducible locally, but it needs the
-ordered build + a freshly synced patterns DB (the gate **refuses to run** against
-a stale/unstamped `patterns.db` — see the provenance-stamp note in
-`packages/patterns-reference/CLAUDE.md`). From a cold tree:
+### Running the multilingual `--regression` gate locally
 
 ```bash
-npm install                                              # if not already done
 npm run test:multilingual:build-deps                     # ordered build of the multilingual stack
-npm run populate --prefix packages/patterns-reference    # rebuild patterns.db + write its provenance stamp
+npm run populate --prefix packages/patterns-reference    # rebuild patterns.db and its provenance stamp
 cd packages/testing-framework
 npx tsx src/multilingual/cli.ts --full --bundle browser-priority --regression
 ```
 
-The gate exits non-zero on a parse-rate drop >2pts or >3 faithful→degenerate
-flips vs the committed baseline. After an _intentional_ fidelity change, re-run
-with `--save-baseline` (instead of `--regression`) to regenerate
-`packages/testing-framework/baselines/multilingual-priority.json`, and commit the
-new baseline. **Do not commit your locally-regenerated `patterns.db`** — commit
-only the dicts/profiles + baseline. (Note: a frozen copy of `patterns.db` _is_
-tracked — `.gitignore` has an explicit `!packages/patterns-reference/data/patterns.db`
-un-ignore, and CI is built around it via `db:init:force`/`populate`. But contributors
-don't commit regenerations, to avoid binary churn, so the tracked copy can lag the
-current dicts/profiles; CI always re-populates a fresh DB for the gate. If you `git
-checkout -- packages/patterns-reference/data/patterns.db` you revert to that possibly-stale
-committed copy — re-run `npm run populate` before any local gate/probe work.)
+- The gate refuses a `patterns.db` whose stamp is stale (generated from other source than the
+  checkout) and warns on one with no stamp. See `packages/patterns-reference/CLAUDE.md`.
+- **Populate before any corpus gate or probe.** A copy of `patterns.db` is tracked, and it can
+  lag the dictionaries and profiles; CI always repopulates. `git checkout --` on it returns
+  the possibly stale copy.
+- After an intentional fidelity change, run with `--save-baseline` in place of `--regression`,
+  against a freshly populated database, and commit the new
+  `baselines/multilingual-priority.json`.
+- **Do not commit your regenerated `patterns.db`.** Commit the dictionaries, profiles and
+  baseline only. `populate` rewrites the tracked file, so do not `git commit -a` after a gate.
 
-**Other Workflows:**
+### The corpus writer
 
-- `.github/workflows/publish.yml` - Manual npm publishing (workflow_dispatch)
-- `.github/workflows/pre-publish-check.yml` - Pre-publish validation (workflow_dispatch)
+Every foreign row in the corpus is `@lokascript/semantic`'s `render(parse(en), L)`: the same
+call MCP `translate_code` and `@hyperfixi/core/multilingual`'s `translate` make. There is one
+renderer.
 
-> **Release prerequisite.** The version bump has to land on `main` after publishing, and
-> `main` is push-protected. The workflow tries `RELEASE_BUMP_TOKEN` (admin PAT, direct push),
-> then a plain push, then a `release-bump/vX.Y.Z` branch + PR. On v2.6.0 and again on v2.9.1
-> **all** paths failed and the bump was landed by hand (#603, #772). The workflow now fails
-> loudly instead of going green.
->
-> **If a release fails to land the bump, suspect `RELEASE_BUMP_TOKEN` first — it may just need
-> a refresh.** PATs expire, and an expired one is the cheapest explanation for a release that
-> published to npm but left `main` on the old version. Refreshing the secret is the first thing
-> to try before digging into the workflow. (Last refreshed **2026-10-18**: a 90-day fine-grained PAT,
-> so it expires about **2027-01-16**; the dry run's "Verify RELEASE_BUMP_TOKEN can push" step proved
-> it.) Distinguish the two failure shapes, because they need different fixes:
->
-> - **Auth failed / token invalid or expired** → refresh the secret with a new PAT.
-> - **`Permission to … denied to <user>`** → the token authenticated fine and is **not**
->   expired; this is a _scope_ problem. For a fine-grained PAT check that _Repository access_
->   includes this repo and _Permissions → Repository → Contents_ is **Read and write**; for a
->   classic PAT, the `repo` scope. Editing a fine-grained PAT's permissions in place keeps the
->   same token string, so the stored secret stays valid and its `updatedAt` will not change —
->   meaning a working-looking secret can still be under-scoped.
->
-> **`RELEASE_BUMP_TOKEN` is required, not just preferred.** The PR fallback does not finish on
-> its own: PRs opened with `GITHUB_TOKEN` do not trigger CI, so `main`'s six required checks
-> never start, `gh pr merge --auto` never fires, and the PR sits pending until a human pushes
-> an empty commit or closes/reopens it. Enabling _Settings → Actions → General → Workflow
-> permissions → "Allow GitHub Actions to create and approve pull requests"_ lets the PR be
-> **created**; only the token makes a release hands-off.
->
-> Run the workflow with `dry-run=true` to verify the token can push before committing to a
-> release — that step is a no-op push of `main` onto itself, so it exercises the exact path
-> that has broken twice. After any real release, confirm `main`'s version matches npm.
+- A markup row's `_=` body is translated only when its own English re-render preserves its
+  content (`packages/patterns-reference/src/sync/markup-attributes.ts`). Plain rows are gated
+  by en-reference preservation instead.
+- A row the renderer cannot render keeps its English, is counted, and is reported at the end
+  of a `populate` run. That count must stay 0.
+
+### The other gates
+
+Each has a committed baseline that only shrinks, and each fails both on a case worse than
+listed and on a listed case that now passes. Run the regeneration tools from
+`packages/testing-framework` with `npx tsx tools/<name>.ts`.
+
+- **`npm run test:canonical --prefix packages/testing-framework`** runs six gates: the two
+  canonical-validity tests, render fidelity, bare render fidelity, en-reference preservation
+  and the English-leak gate's corpus half.
+- **En-reference preservation.** No recall signal can see a regression in the English
+  reference itself, because English defines the reference. This gate renders every
+  translatable unit's English parse back to English and requires the source's content, under
+  a short list of named equivalences, each pinned on the real engine. Regenerate with
+  `regen-en-reference-baseline.ts`; a new lossy unit must be given a triage family.
+- **Direct-path shapes** (`direct-path-shapes.<n>.test.ts`). Cases with an English source, a
+  fixture and events; each translation runs as written on the engine with the adapter plugin,
+  against upstream's English. `KNOWN` lists the failing cases.
+- **Value matrix** (`value-matrix.ts`; shards `value-matrix.<position>.test.ts` and
+  `<position>-phrases.test.ts`, in the package's ordinary suite). The corpus holds few value
+  shapes, so this gate generates them: operand kinds by operators by value positions, written
+  targets, operator phrases, and colliding names (variables spelled like some language's
+  marker, and English words upstream runs as variables, `KEYWORD_NAMES`). It executes each
+  cell. The English source on upstream `hyperscript.org` is the oracle, and every lane must
+  match it: semantic's English round trip, each language through the adapter on upstream, and
+  the English source and each language's adapter output on `@hyperfixi/engine`. The baseline
+  lists each failing (cell, lane) pair; accepted and refused pairs are listed apart. A name
+  that is a pronoun in some language skips that language's lanes. Prune with
+  `regen-value-matrix-baseline.ts` (it refuses to add pairs without `--allow-new`). The rules
+  that tell a variable from a structure word are in
+  `docs-internal/multilingual/VALUE_READING.md`; a PR that moves one updates its row.
+- **English leaks** (`english-leaks.ts`). Whether a render reads as the language: English
+  grammar words, English event names where the lexicon has a word, a nominative `me` beside a
+  marker where that is wrong, and an attached marker written apart. Two halves: the corpus (in
+  `test:canonical`) and the command-shape renders (in those shards). Prune with
+  `regen-english-leaks-baseline.ts`; `--report` prints the queue.
+- **Command shapes** (`command-shapes.ts`; `command-shapes.<n>.test.ts`). The shapes around
+  values (a `when` filter, `else if`, `catch`, a second feature after `end`), harvested into
+  `command-shapes.cases.json` by `tools/harvest-command-shapes.ts` from the vendored upstream
+  suite and core's reference examples. A test pins the count and the vendored version, so
+  re-harvest when the suite moves. Each case runs one lane per language:
+  `translate(src, 'en', 'en')` for English, `translate(translate(src, 'en', L), L, 'en')` for
+  the others. The oracle compares the engine's parse of
+  that English with its parse of the source, after named equivalences pinned in
+  `command-shapes.oracle.test.ts`. A pair is `pass`, `refused` (`translate` threw) or `silent`
+  (it returned English that parses differently or not at all). A case in a family semantic
+  does not carry yet must be refused, never silent. Regenerate with
+  `regen-command-shapes-baseline.ts` (`--allow-new` to write a worse pair).
+- **LSE round trip** (`lse-round-trip.test.ts`). It parses the command-shape sources, writes
+  each node as bracket syntax and as protocol JSON, and reads it back: `faithful`, `type-only`,
+  `refused` (the writer threw `LossyEncodingError`) or `silent`. `silent` is never allowed,
+  except the bracket cases in `BRACKET_UNTYPED`. It is judged three ways, because the scorer
+  does not read every field: by the scorer, by a field-by-field `structure()` comparison, and
+  by the script the read-back node renders to against the original's, as the engine reads
+  both. A parser change that adds a field to a node
+  shows as new refusals until a writer learns the field. Regenerate with
+  `regen-lse-round-trip-baseline.ts` (`--allow-new` for worse cases, `--report` for the
+  refusal reasons).
+- **Shipped sources** (`npm run test:shipped-sources --prefix packages/testing-framework`).
+  Examples and docs are written in upstream's spelling. Three tests hold that:
+  `shipped-sources-engine` (English sources the engine rejects, an empty shrink-only list),
+  `shipped-sources-localized` (each source under a non-English `lang` must translate to
+  English both engines parse) and `shipped-examples-execution` (the DOM each example handler
+  leaves on the engine, against upstream).
+
+## Releases
+
+`publish.yml` publishes to npm and then has to land the version bump on `main`, which is
+push-protected. It tries `RELEASE_BUMP_TOKEN` (a direct push), then a plain push, then a
+`release-bump/vX.Y.Z` branch and PR, and fails loudly if none lands.
+
+- **`RELEASE_BUMP_TOKEN` is required, not preferred.** A PR opened with `GITHUB_TOKEN` does
+  not trigger CI, so the required checks never start and the PR waits until a human pushes an
+  empty commit or closes and reopens it. The repository setting "Allow GitHub Actions to
+  create and approve pull requests" only lets the fallback PR be created.
+- **Run the workflow with `dry-run=true` first.** Its "Verify RELEASE_BUMP_TOKEN can push"
+  step is a no-op push of `main` onto itself. A real publish must be dispatched on `main`.
+- **If a release publishes but leaves `main` on the old version, suspect the token first.**
+  The secret was last set on 2026-10-18; as a 90-day token it expires about 2027-01-16.
+  - Authentication failed, or the token is invalid or expired: store a new PAT in the secret.
+  - `Permission to … denied to <user>`: the token is valid and under-scoped. A fine-grained
+    PAT needs this repository under _Repository access_ and _Contents: Read and write_; a
+    classic PAT needs `repo`. Editing a fine-grained PAT's permissions keeps the same token
+    string, so the secret's update time does not change.
+- After a real release, confirm that `main`'s version matches npm. The workflow's
+  release-smoke job runs `examples/release-smoke/run.mjs` against the registry.
+- `check-domains-peer-major` runs after the bump (see the gates above).
 
 ## Architecture
 
-> **`packages/engine` is THE engine** (owner decision 2026-10-01; `@hyperfixi/core`'s root
-> re-exports it and core's own engine was deleted in Phase C6, 4.0). Its acceptance oracle is
-> upstream `_hyperscript`'s own Playwright suite, vendored: `npm run test:upstream --prefix
-packages/engine` fails on a new failing test AND on a listed one that now passes
-> (`upstream-suite/known-failures.json`, prune with `test:upstream:update`, then update
-> `UPSTREAM_SUITE` in `packages/core/src/metadata.ts`: `verify:reference` holds the published
-> `packageInfo.upstreamSuite` to that file). It has no
-> `test:check` script — the gate needs a browser and runs in CI's `browser-tests` job —
-> so `npm run test:check` does not cover it. Read `packages/engine/README.md` before
-> changing it; port from upstream's source, and measure before and after. It has two
-> forms upstream lacks (`new X()`, `toggle <element>`: `src/additions.ts`, tested by
-> `npm run test:own`, which also holds `tests/regressions.js`: places the engine differed
-> from upstream and upstream's own tests did not show it); every core-only form was dropped,
-> and **examples and docs are written in upstream's spelling**. Three gates in
-> `packages/testing-framework` hold that: `shipped-sources-engine.test.ts` (the English
-> shipped sources the engine rejects, a shrink-only list, empty since Phase B1),
-> `shipped-sources-localized.test.ts` (each source under a non-English `lang` must translate
-> to English both engines parse) and `shipped-examples-execution.test.ts` (the DOM each
-> example handler leaves on the engine, against upstream). Its script-tag bundle is
-> `packages/engine/dist/hyperfixi-hs.js` (hyperscript only, 34 KB), which core ships as
-> `hyperfixi.js`.
->
-> **Historical design records** (core's engine, before 4.0) were deleted under the tag
-> `archived/cleanup-2026-11-12`: `PARSER_NEXT_STEPS.md`, `COMMAND_ARCHITECTURE_NEXT_STEPS.md` and
-> `ENGINE_MIGRATION_PLAN.md` (one typed AST, the engine/front-end boundary, which
-> `scripts/check-semantic-boundary.cjs` still guards). Docs for finished arcs are deleted under
-> a tag and indexed in `docs-internal/ARCHIVE.md`.
+### The engine
 
-### Engine Modules
+`packages/engine` is the engine; `@hyperfixi/core`'s root re-exports it. Read
+`packages/engine/README.md` before changing it. Port from upstream's source, and measure
+before and after.
 
-A bundle on the engine is the list of grammar modules passed to `register()`; a module adds
-its rules to the grammar (a command, a feature, or an optional expression kind):
+- `npm run test:upstream --prefix packages/engine` fails on a new failing test and on a listed
+  one that now passes (`upstream-suite/known-failures.json`). Prune with
+  `test:upstream:update`, then update `UPSTREAM_SUITE` in `packages/core/src/metadata.ts`
+  (`verify:reference` checks it against that file).
+- **The engine has no `test:check` script**, because its gate needs a browser. Root
+  `npm run test:check` does not cover it; CI's `browser-tests` job does.
+- A bundle is the list of grammar modules passed to `register()`; `register(...everything)`
+  is every module. A module can live in another package (`@hyperfixi/speech`).
+- The forms upstream lacks are in `src/additions.ts` (`new X()`, `toggle <element>`), measured
+  claim by claim by `check:claims`. `npm run test:own` covers them and `tests/regressions.js`:
+  places the engine differed from upstream that upstream's own tests did not show.
+- **Examples and docs are written in upstream's spelling.** The shipped-sources gates hold
+  that.
 
-```typescript
-// packages/engine/src/commands/misc.ts
-export function log(g: Grammar): void {
-  g.commands.log = (p, _keyword, start) => {
-    const values = [expr(p)];
-    while (p.matchOp(',')) values.push(expr(p));
-    return {
-      type: 'logCommand',
-      values,
-      start,
-      end: p.endPos(),
-      run: ctx =>
-        all(
-          values.map(v => v.ev(ctx)),
-          vals => console.log(...vals)
-        ),
-    };
-  };
-}
-```
+### Adding a command
 
-A module can live in another package (`@hyperfixi/speech`'s `speak`): it imports `expr` and the
-`Grammar` / `Cmd` / `Expr` types from `@hyperfixi/engine`. `register(...everything)` is every
-module; the Vite plugin derives its keyword → module map from the engine itself.
+Hyperscript syntax follows upstream: a new command is normally upstream's, ported from its
+source.
 
-### Native Word Order
-
-A translation is `@lokascript/semantic`'s `render(parse(code, 'en'), language)`, in
-each language's own word order (i18n's `GrammarTransformer` did this until its
-retirement, #1001; i18n keeps the vocabulary and the word-order profiles):
-
-- **SVO** (English, Chinese, Spanish): `on click increment #count`
-- **SOV** (Japanese, Korean, Turkish): `#count を クリック で 増加`
-- **VSO** (Arabic): `زِد #count عند النقر`
-
-Key files:
-
-- `packages/semantic/src/explicit/renderer.ts` - the renderer; the public `render(node, language)`
-  is `explicit/verified-render.ts`, which writes a variable spelled like a structure word of the
-  target language in parentheses (`(si)`) where the plain render would be misread, and only
-  there (the reader fuses `(si)` into one name; `docs-internal/multilingual/VALUE_READING.md`,
-  "Name collisions"); for English it first rewrites core-only forms into upstream's spelling
-  (`explicit/upstream-spelling.ts`: the reader accepts `prepend`, `X has .c`, `set @a … on X`;
-  English writes `put … at start of`, `X matches .c`, `set @a of X …`)
-- `packages/framework/src/languages/` - each language's grammar (word order, role markers,
-  script, particles): semantic's profile is it with hyperscript's vocabulary over it
-  (`semantic/src/generators/with-grammar.ts`), and a domain injects it with its own
-- `packages/i18n/src/grammar/profiles/` - Language profiles with word order rules
-- `packages/i18n/src/grammar/types.ts` - Semantic roles, joinTokens for agglutinative suffixes
-
-### Multilingual API
-
-`@hyperfixi/core/multilingual` (not the package root) is three functions over
-`@lokascript/semantic`, on text — `parse`, `render`, `translate` (the owner's 4.0 shape; the
-`MultilingualHyperscript` class was removed in Phase C2, `schemaRoleInferrer` with core's engine
-in C6). Running non-English hyperscript on a page is `@lokascript/hyperscript-adapter`'s job: it
-translates each script as the engine reads it (`api.addSourceTransform`).
-
-```typescript
-import { parse, render, translate } from '@hyperfixi/core/multilingual';
-
-// Parse from any of 24 languages
-const node = await parse('#button の .active を 切り替え', 'ja');
-
-// Translate between any languages
-const arabic = await translate('toggle .active', 'en', 'ar');
-```
-
-A translation that would lose part of the script is REFUSED, never truncated:
-`translate()` throws a `LossyTranslationError` (the partial output, and what it drops), and
-`{ lossy: 'allow' }` opts out. Three checks, in `semantic/src/explicit/lossy.ts`: the parse left
-input unread (`unconsumed-input`), the output reads back with other commands or leaves its own
-reader input unread, or a verbatim value (string, number, selector, sigil name) is missing. MCP
-`translate_code` reports a refusal as `ok: false` + `LOSSY_TRANSLATION` with the partial text under
-`partial`, never `code`. The command-shape gate (above) counts what the checks still miss.
-
-Key files:
-
-- `packages/core/src/multilingual/index.ts` - the three exports
-- `packages/semantic/src/tokenizers/` - 24 language tokenizers
-- `packages/semantic/src/parser/semantic-parser.ts` - Main semantic parser
-- `packages/semantic/CLAUDE.md` - Package-specific documentation
-
-## Key Patterns
-
-### Testing
-
-```bash
-# The engine against upstream's own suite (the gate), and its own tests
-npm run build --prefix packages/engine && npm run test:upstream --prefix packages/engine
-npm run test:own --prefix packages/engine
-
-# Run single test file
-npm test --prefix packages/semantic -- --run test/parser.test.ts
-
-# Playwright for browser tests - MUST run from packages/core directory
-cd packages/core && npx playwright test --grep "Command Compatibility"
-
-# Bundle compatibility matrix - tests all bundles against gallery examples
-cd packages/core && npx playwright test browser-tests/bundle-compatibility.spec.ts
-```
-
-**Bundle Test Matrix:**
-
-The bundle compatibility test suite automatically tests every built bundle against gallery examples to verify which features work with each bundle size. Tests run in "discovery mode" - bundles are tested against examples they're not expected to support, logging any unexpected successes.
-
-- Location: `packages/core/browser-tests/bundle-compatibility.spec.ts`
-- Tests: Toggle, show/hide, input mirroring, counter, modals, fetch, tabs, blocks, event modifiers
-- Bundles: hs (the engine's `hyperfixi-hs.js`, ~34 KB) and browser (`hyperfixi.js`: the same file since C-R4b, under core's name; release-smoke's `--matrix` runs it from core's tarball) — core's own bundles retired in Phase C3
-- Prints ASCII compatibility matrix showing feature support across all bundles
-
-### Using Behaviors (Browser)
-
-Include the behaviors bundle after the engine's `hyperfixi-hs.js` — it defines every
-standard behavior on the host as it loads (`@hyperfixi/behaviors` peers on
-`@hyperfixi/engine` since 2026-10-03; its sources are in upstream's idioms and also run
-on upstream `_hyperscript`, where a no-argument install is spelled `install X()`):
-
-```html
-<script src="hyperfixi-hs.js"></script>
-<script src="resolver.browser.global.js"></script>
-<!-- install Toggleable, Draggable, etc. just work -->
-<button _="install Toggleable(cls: 'highlighted')">Toggle</button>
-```
-
-Behaviors are hyperscript source strings the host defines with `evaluate`, as it would a
-`<script type="text/hyperscript">`. The bundle is 5.7 KB gzipped.
-
-### Dynamic Class Selectors
-
-`.{varName}` resolves a variable as a CSS class name in `toggle`, `add`, and `remove`:
-
-```hyperscript
-behavior MyBehavior(cls)
-  on click toggle .{cls} on me
-end
-```
-
-### Defining a Custom Behavior
-
-A behavior is a global the host defines when it reads a `behavior … end` program. Define it
-before the elements that install it, in a `<script type="text/hyperscript">` or from a
-string:
-
-```javascript
-window.hyperfixi.evaluate(`behavior MyThing on click add .done end`);
-```
-
-(Core's `_hyperscript.behaviors.resolve` hook was core-only; the engine has no lazy
-resolver, and the behaviors bundle defines its eleven sources eagerly.)
-
-### Adding a New Command
-
-Hyperscript syntax follows upstream `_hyperscript`: a new command is normally upstream's,
-ported from upstream's source.
-
-1. Add the rule in a module in `packages/engine/src/commands/` (`g.commands.<keyword> = …`), or
-   beside a related module; export the module from `packages/engine/src/index.ts` and add it to
-   `src/everything.ts`
-2. Run `npm run test:upstream --prefix packages/engine`; for a form upstream's suite does not
-   test, add a test to `packages/engine/tests/regressions.js` that passes on upstream's bundle
-   too (`node upstream-suite/run.mjs --bundle <upstream> --own`)
+1. Add the rule in a module in `packages/engine/src/commands/` (`g.commands.<keyword> = …`);
+   export the module from `src/index.ts` and add it to `src/everything.ts`.
+2. Run `npm run test:upstream --prefix packages/engine`. For a form upstream's suite does not
+   test, add a test to `tests/regressions.js` that also passes on upstream's bundle
+   (`node upstream-suite/run.mjs --bundle <upstream> --own`).
 3. Document it in `packages/core/src/reference/index.ts` and `packages/core/src/lsp-metadata.ts`
-   (keyword + `HOVER_DOCS`), then `npm run verify:reference --prefix packages/core` — it fails
-   until every engine keyword is documented and every example parses on the engine
-4. If it should be available multilingually, sync `packages/semantic/` (schema + 24 profiles; see
-   "Adding Semantic Language Support" for the profile conventions)
+   (keyword and `HOVER_DOCS`). `npm run verify:reference --prefix packages/core` fails until
+   every engine keyword is documented and every example parses on the engine.
+4. To make it available in other languages, add it to `packages/semantic/` (a schema and the
+   24 profiles).
 
-### Adding i18n Language Support
+### Translation
 
-1. Create dictionary in `packages/i18n/src/dictionaries/`
-2. Add language profile in `packages/i18n/src/grammar/profiles/`
-3. Create keyword provider in `packages/i18n/src/parser/`
-4. Export from `packages/i18n/src/browser.ts`
-5. Add tests in `packages/i18n/src/grammar/profiles.test.ts`
+A translation is `@lokascript/semantic`'s `render(parse(code, 'en'), language)`, in each
+language's own word order. `@hyperfixi/core/multilingual` (not the package root) exposes
+`parse`, `render` and `translate` over it. Running non-English hyperscript on a page is
+`@lokascript/hyperscript-adapter`'s job: it translates each script as the engine reads it
+(`api.addSourceTransform`).
 
-### Adding Semantic Language Support
+- **A translation that would lose part of the script is refused, never truncated.**
+  `translate()` throws a `LossyTranslationError` carrying the partial output and what it
+  drops; `{ lossy: 'allow' }` opts out. The checks are in
+  `packages/semantic/src/explicit/lossy.ts`. MCP `translate_code` reports a refusal as
+  `ok: false` with `LOSSY_TRANSLATION` and the partial text under `partial`, never `code`.
+- The public `render` is `explicit/verified-render.ts`. It writes a variable spelled like a
+  structure word of the target language in parentheses (`(si)`), only where the plain render
+  would be misread.
+- The reader accepts some core-only forms (`prepend`, `X has .c`, `set @a … on X`); English
+  output writes upstream's spelling for them (`explicit/upstream-spelling.ts`).
+- A language's grammar (word order, role markers, script, particles) is data in
+  `packages/framework/src/languages/`. Semantic's profile is that grammar with hyperscript's
+  vocabulary over it (`semantic/src/generators/with-grammar.ts`); a domain supplies its own
+  vocabulary.
+- `packages/framework` exports its own `GrammarTransformer`. It is unrelated to translation
+  of hyperscript.
 
-Use the CLI tool to scaffold a new language. It automatically generates all files (the grammar
-in `packages/framework/src/languages/{code}.ts`, the profile over it in semantic) and updates:
+### Adding a language
 
-- `packages/framework/src/languages/index.ts` + framework's `package.json` exports
-- `src/languages/_all.ts` - language registration
-- `src/tokenizers/index.ts` - tokenizer export
-- `src/generators/profiles/index.ts` - profile export
-- `src/generators/language-profiles.ts` - profile mapping
-- `src/patterns/*/index.ts` - pattern indexes
-- `src/patterns/builders.ts` - handcraftedLanguages array
-- `src/language-building-schema.ts` - SUPPORTED_LANGUAGES array
-- `packages/vite-plugin/src/language-keywords.ts` - keyword detection
+Follow "Adding a New Language" in `packages/semantic/CLAUDE.md` (the `add-language`
+scaffold) and in `packages/i18n/CLAUDE.md`. After filling in the semantic profile, run
+`npm run sync-keywords --prefix packages/vite-plugin` (`--dry-run` previews, `--language=xx`
+limits it to one language): `lint-typecheck` runs that package's `check:keywords`.
 
-```bash
-cd packages/semantic
-npm run add-language -- --code=xx --name=LanguageName --native=NativeName \
-  --wordOrder=SVO --direction=ltr --marking=preposition --usesSpaces=true [--script=latin]
-```
+### Behaviors and the Vite plugin
 
-Then follow the post-scaffold steps:
+- Behaviors are hyperscript source strings. `resolver.browser.global.js` from
+  `@hyperfixi/behaviors`, loaded after `hyperfixi-hs.js`, defines every standard behavior
+  eagerly; the engine has no lazy resolver. The sources also run on upstream `_hyperscript`,
+  where an install with no arguments is spelled `install X()`. Define your own before the elements that install
+  it, in a `<script type="text/hyperscript">` or with
+  ``hyperfixi.evaluate(`behavior MyThing on click add .done end`)``.
+- `@hyperfixi/vite-plugin` emits a bundle that registers only the engine modules a project
+  uses. Its keyword-to-module map is derived from the engine, not copied. Options are in
+  `packages/vite-plugin/src/types.ts`; helpers for custom language keywords
+  (`registerCustomKeywords` and others) are exported from its `src/index.ts`.
 
-1. **Fill in the grammar** (role markers, verb, tokenization) in
-   `packages/framework/src/languages/{code}.ts`, then `npm run build --prefix packages/framework`,
-   and the **keyword translations** in `src/generators/profiles/{code}.ts`
-2. **Add character classification** in `src/tokenizers/{code}.ts` (for non-Latin scripts)
-3. **Sync keywords to vite-plugin** (after filling in profile):
+## Debugging
 
-   ```bash
-   npm run sync-keywords --prefix packages/vite-plugin
-   # Options: --dry-run (preview), --language=xx (single language)
-   ```
-
-4. **Run TypeScript checks**:
-
-   ```bash
-   npm run typecheck --prefix packages/semantic
-   npm run typecheck --prefix packages/vite-plugin
-   ```
-
-5. **Run tests**: `npm test --prefix packages/semantic`
-
-### Custom Language Keywords (Vite Plugin)
-
-The vite-plugin exports utilities for customizing language detection:
+`window.hyperfixi` (also `window._hyperscript`) is the engine's `api`, shaped like upstream's.
+A script that fails to parse fires a `hyperscript:parse-error` event and logs a
+`console.error`.
 
 ```javascript
-import {
-  registerCustomKeywords, // Add custom keywords for a language
-  getKeywordsForLanguage, // Get keyword set for a language
-  isNonLatinLanguage, // Check if language uses non-Latin script
-  getAllLanguageCodes, // Get all supported language codes
-  clearCustomKeywords, // Clear custom keywords
-} from '@hyperfixi/vite-plugin';
-
-// Register custom keywords for detection
-registerCustomKeywords('my-lang', {
-  keywords: ['myToggle', 'myAdd', 'myRemove'],
-  isNonLatin: false,
-});
+_hyperscript.parse('on click toggle .active on').errors[0]?.message; // the engine's verdict
+_hyperscript.evaluate('put "hi" into #out'); // run a snippet
+// `breakpoint` pauses in DevTools; `beep! x` logs x with its type and passes it on.
 ```
 
-## Debugging Tools
-
-`window.hyperfixi` (and `window._hyperscript`) in a browser is the engine's `api`, shaped like
-upstream's: a script that fails to parse fires a `hyperscript:parse-error` event and logs a
-`console.error` naming the token where the engine stopped.
-
-```javascript
-// The engine's verdict on a source (no DOM needed):
-_hyperscript.parse('on click toggle .active on').errors[0]?.message;
-
-// Run a snippet against a context:
-_hyperscript.evaluate('put "hi" into #out');
-
-// `breakpoint` pauses in DevTools; `beep! x` logs x with its type, and passes it on:
-// <button _="on click beep! me then breakpoint then toggle .active">
-```
-
-In Node or a test, `import { register, everything, parse } from '@hyperfixi/engine'` and
+In Node, `import { register, everything, parse } from '@hyperfixi/engine'` and
 `register(...everything)` give the same parser; `parse` throws a `ParseError` whose `token`
-carries the offset. (Core's 3.x debugging API — `compileSync(…).meta`, `debugControl`,
-`semanticDebug` — left with core's engine in 4.0.)
-
-## Important Files
-
-| File                                                      | Purpose                                                         |
-| --------------------------------------------------------- | --------------------------------------------------------------- |
-| `packages/engine/src/index.ts`                            | The engine's library entry: functions, node types, every module |
-| `packages/engine/src/parser.ts`, `src/runtime.ts`         | Grammar registry + parse errors; contexts, scopes, execution    |
-| `packages/engine/src/commands/`                           | Command modules                                                 |
-| `packages/engine/upstream-suite/known-failures.json`      | The gate's expected failures (upstream's own suite)             |
-| `packages/core/src/index.ts`                              | `@hyperfixi/core`: the engine re-exported (+ VERSION)           |
-| `packages/core/src/reference/index.ts`, `lsp-metadata.ts` | Command reference + editor keywords, checked against the engine |
-| `packages/core/docs/API.md`                               | API documentation                                               |
-| `packages/semantic/src/explicit/renderer.ts`              | Renders a parse in any of the 24 languages                      |
-| `packages/semantic/src/parser/semantic-parser.ts`         | Semantic parser                                                 |
-| `packages/semantic/src/tokenizers/`                       | 24 language tokenizers                                          |
-| `packages/hyperscript-adapter/src/`                       | Non-English hyperscript on the engine (`addSourceTransform`)    |
-| `packages/i18n/src/browser.ts`                            | Browser bundle exports                                          |
-| `packages/framework/src/api/create-dsl.ts`                | `createMultilingualDSL()` factory                               |
-| `packages/framework/src/api/domain-registry.ts`           | Domain registry + MCP tool generation                           |
-| `packages/framework/src/api/dispatcher.ts`                | `CrossDomainDispatcher` (auto-detect domain)                    |
-| `packages/mcp-server/src/tools/domain-registry-setup.ts`  | Domain registrations for MCP server                             |
-| `packages/compilation-service/src/`                       | Validation, translation, behavior diff, fidelity scoring        |
-
-## Vite Plugin (Recommended)
-
-For Vite projects, use `@hyperfixi/vite-plugin` for automatic minimal bundles:
-
-```javascript
-// vite.config.js
-import { hyperfixi } from '@hyperfixi/vite-plugin';
-
-export default {
-  plugins: [hyperfixi()],
-};
-```
-
-```javascript
-// app.js - just import, plugin handles the rest
-import 'hyperfixi';
-```
-
-The plugin scans your files for hyperscript (`_`, `script` and `data-script` attributes,
-`text/hyperscript` blocks) and emits a bundle on
-`@hyperfixi/engine` that registers only the grammar modules you use (a bundle on the
-engine is the list passed to `register()`; the keyword → module map is derived from the
-engine, not copied). Measured 2026-10-03: 17.9 KB gzipped for three commands, 34.4 KB for
-everything; the engine's fixed core is 13.8 KB, so the 3.x "lite" tier (3.9 KB) is gone and
-so is the 352 KB fallback any `fetch` used to trigger. Non-English scripts run through the
-engine's source transform. Options:
-
-```javascript
-hyperfixi({
-  extraCommands: ['fetch'], // Always register these commands' modules
-  extraBlocks: ['if'], // Always register these blocks' modules
-  positional: true, // Always register the positional / collection expressions
-  extensions: ['socket'], // Register engine extensions (@hyperfixi/engine/ext/<name>); never scanned
-  devFallback: 'everything', // Dev server: the whole engine, for faster rebuilds
-  debug: true, // Verbose logging
-});
-```
+carries the offset. Core's 3.x debugging API (`compileSync(…).meta`, `debugControl`,
+`semanticDebug`) no longer exists.
 
 ## Browser Bundles
 
-Full reference — decision tree, htmx-compat layer (`hx-live`, `sse-connect`/`sse-swap`,
-`ws-connect`/`ws-send`, localized attribute names), lifecycle events, custom bundle
-generator, and semantic regional bundles — lives in
-[docs/BROWSER_BUNDLES.md](docs/BROWSER_BUNDLES.md).
+The full reference is [docs/BROWSER_BUNDLES.md](docs/BROWSER_BUNDLES.md). In short:
 
-Quick selection (sizes gzipped). **The engine's `hyperfixi-hs.js` is the target** (every
-tracked gallery page runs on it since 2026-10-03); core ships the same file as `hyperfixi.js`:
-
-| Bundle                              | Size           | Use case                                                                                                                                                                                                                                   |
-| ----------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `hyperfixi-hs.js`                   | ~34.9 KB       | **The engine** (`@hyperfixi/engine`): hyperscript only, every module, `live`/`when`/`bind` built in; pair with fixi (~1.3 KB) or htmx 4 (~13 KB, + `@lokascript/htmx-adapter` for localized names) for hypermedia attributes               |
-| via `@hyperfixi/vite-plugin`        | 18–34 KB       | **Default for Vite projects** — scans usage and registers only the engine modules it needs (one tier, upstream's grammar; Phase C1 done 2026-10-03)                                                                                        |
-| `hyperfixi.js`                      | ~34.9 KB       | The same file as `hyperfixi-hs.js`, under `@hyperfixi/core`'s name (`@hyperfixi/core/browser`) since C-R4b; core's own full bundle (~352 KB) retired                                                                                       |
-| + `@lokascript/hyperscript-adapter` | +2.3 / ~135 KB | Hyperscript in any of 24 languages on `hyperfixi-hs.js`: the lite adapter beside a semantic bundle, or a per-language adapter bundle; it translates each script as the engine reads it (replaced core's `hyperfixi-multilingual.js`, C-R3) |
-| semantic bundles                    | ~130–300 KB    | `LokaScriptSemantic*` globals; regional subsets (en/es/western/east-asian/priority/all-24) — each also registers English, the language the adapters render to                                                                              |
-
-Rule of thumb: the plugin decides for Vite projects; a script-tag user starts
-with `hyperfixi-hs.js` and adds fixi or htmx 4 when the page needs hypermedia attributes
-(the owner's B2 decision, 2026-10-03). `lite`, `lite-plus`, `minimal` and
-`standard` were retired as public names in the 4.0 cycle; Phase C3 (2026-10-04) retired
-`hyperfixi-hx-v4.js` (`hx-live` is the engine's `live` block, SSE/WebSocket are htmx 4's), then
-`hyperfixi-hx.js` and `hyperfixi-hybrid-complete.js` with core's embedded htmx layer, then
-`hyperfixi-multilingual.js`, `classic-i18n` and `modular` (C-R3): non-English hyperscript runs on
-`hyperfixi-hs.js` with `@lokascript/hyperscript-adapter`; and core's own full `hyperfixi.js` (C-R4b),
-whose name now carries the engine's file.
-
-Multilingual usage (run and translate in any of 24 languages):
-
-```html
-<script src="hyperfixi-hs.js"></script>
-<script src="browser.global.js"></script>
-<!-- @lokascript/semantic -->
-<script src="hyperscript-i18n-lite.global.js"></script>
-<!-- @lokascript/hyperscript-adapter -->
-
-<button lang="ko" _="클릭 할 때 .active 를 토글">토글</button>
-<script>
-  const korean = LokaScriptSemantic.translate('toggle .active', 'en', 'ko');
-</script>
-```
+- A script-tag page starts with the engine's `hyperfixi-hs.js` (`hyperfixi.js` from
+  `@hyperfixi/core/browser` is the same file) and adds fixi or htmx 4 when it needs hypermedia
+  attributes. A Vite project uses `@hyperfixi/vite-plugin`.
+- Non-English hyperscript: load a `@lokascript/semantic` bundle (`browser.global.js` or a
+  regional subset) and `@lokascript/hyperscript-adapter`'s `hyperscript-i18n-lite.global.js`
+  after the engine, or one per-language adapter bundle, and put `lang` on the element or page.
+- Core's older bundles (`lite`, `minimal`, `standard`, `hyperfixi-hx*.js`,
+  `hyperfixi-multilingual.js` and the rest) no longer exist. Do not reference them.
