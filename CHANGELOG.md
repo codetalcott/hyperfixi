@@ -41,6 +41,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   after the event (measured in es, fr, de, ar, zh, he, sw). The five that write it before the
   head (ja, ko, tr, hi, qu) still refuse these: their readers do not take a modifier word and a
   fronted source together.
+- **`@lokascript/intent` read a compact flag as a flag named "true".** The protocol's short form
+  `"primary-key": { "type": "flag", "value": true }` names the flag by its role key;
+  `fromProtocolJSON` named it after the boolean instead, and `"value": false` gave a flag named
+  "false". It now takes the role key.
 - **`@hyperfixi/mcp-server` ran shell commands and read files for a toolset that was off.**
   `LOKASCRIPT_MCP_TOOLSETS` decided what `tools/list` showed and nothing else, so `grail_run`
   ran the commands of a `grail.yaml` in the server's directory, and `scan_inventory` read any
