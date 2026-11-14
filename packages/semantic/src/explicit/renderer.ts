@@ -1054,17 +1054,25 @@ export class SemanticRendererImpl implements ISemanticRenderer {
   ): void {
     const em = node.eventModifiers ?? {};
     if (!node.eventModifiers && !node.headClause) return;
+    // Each word written before the head moves the event one part to the right;
+    // the tail below goes after the event where it is now. (It went after the
+    // event's old index: es `al de #b clic` for `on first click from #b`.)
+    let event = eventPart;
+    const lead = (word: string): void => {
+      parts.unshift(word);
+      if (event >= 0) event++;
+    };
     if (eventPart >= 0 && em.queue) parts[eventPart] += `.queue(${em.queue})`;
     if (em.every) {
       if (language === 'en' && eventPart >= 0) parts[eventPart] = `every ${parts[eventPart]}`;
-      else parts.unshift('every');
+      else lead('every');
     }
     if (em.once && em.onceAsFirst) {
       // `on first click`, the form both engines run once; every other
       // language a leading `first` in its own word (es `primero`, M2 sheet
       // A7), as its leading `once` below.
       if (language === 'en' && eventPart >= 0) parts[eventPart] = `first ${parts[eventPart]}`;
-      else parts.unshift(this.localizeValue('first', language));
+      else lead(this.localizeValue('first', language));
     } else if (em.once) {
       // en: `click.once`, the form core (the English executor) reads — it
       // rejects `on click once`. Every other language: a leading `once`, the
@@ -1072,7 +1080,7 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       // (and where the retired transformer put it); a glued `クリック.once`
       // tokenizes as one word in bn/ja/ko/tr/zh and the handler is lost.
       if (language === 'en' && eventPart >= 0) parts[eventPart] += '.once';
-      else parts.unshift('once');
+      else lead('once');
     }
     const tail: string[] = [];
     if (em.from) {
@@ -1085,7 +1093,7 @@ export class SemanticRendererImpl implements ISemanticRenderer {
       const marker = tryGetProfile(language)?.roleMarkers?.source;
       const word = marker?.primary ?? 'from';
       if (marker?.position === 'after') {
-        parts.unshift(`${noun} ${word}`);
+        lead(`${noun} ${word}`);
       } else {
         tail.push(`${word} ${noun}`);
       }
@@ -1100,8 +1108,8 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     // After the event when the head carries one; else after the head (SOV heads
     // end in their event marker, which the modifiers must follow).
     const at =
-      eventPart >= 0 && tryGetProfile(language)?.roleMarkers?.source?.position !== 'after'
-        ? eventPart + 1
+      event >= 0 && tryGetProfile(language)?.roleMarkers?.source?.position !== 'after'
+        ? event + 1
         : parts.length;
     parts.splice(at, 0, ...tail);
   }
