@@ -110,11 +110,10 @@ describe('Semantic Analysis', () => {
     it('should not error for valid toggle command', () => {
       const result = analyze('toggle .active on #button', 'en');
 
-      // Computed but never asserted.
-      const _schemaError = result.warnings.find(
+      const schemaError = result.warnings.find(
         w => w.code === 'MISSING_REQUIRED_ROLE' || w.code === 'INVALID_ROLE_FOR_COMMAND'
       );
-      // toggle has flexible schema, should be valid
+      expect(schemaError).toBeUndefined();
       expect(result.valid).toBe(true);
     });
 

@@ -190,7 +190,7 @@ describe('R2 execution validator (lock)', () => {
       'en',
       'upstream'
     );
-    expect(res.effects.at(-1)).toMatch(/^order\[.*,b,a\]$/);
+    expect(res.effects[res.effects.length - 1]).toMatch(/^order\[.*,b,a\]$/);
   });
 
   it('en reference executes: on click add .highlight to me', async () => {

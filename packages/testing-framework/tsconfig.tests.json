@@ -1,0 +1,14 @@
+{
+  // The test files and tools/ scripts, which tsconfig.json leaves out. `npm run typecheck` runs both.
+  // rootDir is the repo's packages/ parent: tools/harvest-command-shapes.ts reads core's reference
+  // from source (../../core/src), and nothing is emitted.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "../..",
+    "declaration": false,
+    "declarationMap": false
+  },
+  "include": ["src/**/*", "tools/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

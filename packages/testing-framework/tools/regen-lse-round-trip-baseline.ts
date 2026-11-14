@@ -33,6 +33,12 @@ const DESCRIPTION =
 const allowNew = process.argv.includes('--allow-new');
 const reportOnly = process.argv.includes('--report');
 
+/** `text` up to the first `separator`, or all of it when there is none. */
+const before = (text: string, separator: string): string => {
+  const at = text.indexOf(separator);
+  return at === -1 ? text : text.slice(0, at);
+};
+
 async function main(): Promise<void> {
   const results = await runLseRoundTrip();
   const next = baselineFrom(results, DESCRIPTION);
@@ -54,7 +60,7 @@ async function main(): Promise<void> {
         // A value's field under any action and role is one reason (`toggle.patient.scope`
         // → `value.scope`); a node's field and a read-back message keep their own.
         const key = /^(does not read back|reads back as)/.test(loss)
-          ? loss.split(':')[0].split(' [')[0]
+          ? before(before(loss, ':'), ' [')
           : /^(command|event-handler|conditional|compound|loop|kind)\b/.test(loss)
             ? loss
             : loss.replace(/^.*\.(\w+)$/, 'value.$1');

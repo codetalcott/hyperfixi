@@ -3,6 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { nth } from './test-support';
 import {
   describe as describeTest,
   it as itTest,
@@ -39,7 +40,7 @@ describe('Testing Framework Core', () => {
 
       const results = await runTests({ environment: 'node' });
       expect(results).toHaveLength(1);
-      expect(results[0].suite).toBe('Test Suite');
+      expect(nth(results, 0).suite).toBe('Test Suite');
     });
 
     it('should support nested suites', async () => {
@@ -51,7 +52,7 @@ describe('Testing Framework Core', () => {
 
       const results = await runTests({ environment: 'node' });
       expect(results).toHaveLength(1);
-      expect(results[0].suite).toBe('Inner');
+      expect(nth(results, 0).suite).toBe('Inner');
     });
   });
 
@@ -66,7 +67,7 @@ describe('Testing Framework Core', () => {
       });
 
       const results = await runTests({ environment: 'node' });
-      expect(results[0].test).toBe('my test');
+      expect(nth(results, 0).test).toBe('my test');
     });
   });
 
@@ -96,8 +97,8 @@ describe('Testing Framework Core', () => {
       });
 
       const results = await runTests({ environment: 'node' });
-      expect(results[0].status).toBe('skipped');
-      expect(results[1].status).toBe('passed');
+      expect(nth(results, 0).status).toBe('skipped');
+      expect(nth(results, 1).status).toBe('passed');
     });
   });
 
@@ -133,7 +134,7 @@ describe('Testing Framework Core', () => {
 
       const results = await runTests({ environment: 'node' });
       expect(results).toHaveLength(1);
-      expect(results[0].suite).toBe('Suite 2');
+      expect(nth(results, 0).suite).toBe('Suite 2');
     });
   });
 });
