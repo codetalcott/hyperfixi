@@ -21,31 +21,33 @@ import {
 
 const packages = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 
-const quoted: Array<{ dist: string; file: string; size: string }> = [
+const quoted: Array<{ dist: string; file: string; size: string; path: string }> = [
   ...Object.values(ADAPTER_BUNDLES).map(b => ({ dist: 'hyperscript-adapter', ...b })),
   { dist: 'hyperscript-adapter', ...FULL_ADAPTER_BUNDLE },
   ...Object.values(SEMANTIC_BUNDLES).map(b => ({ dist: 'semantic', ...b })),
   { dist: 'engine', ...ENGINE_BUNDLE },
-];
+].map(b => ({ ...b, path: join(packages, b.dist, 'dist', b.file) }));
 
 describe('quoted bundle sizes', () => {
-  it.each(quoted)('$file is about $size gzipped', ({ dist, file, size }) => {
-    const path = join(packages, dist, 'dist', file);
-    if (!existsSync(path)) return;
-    const quotedKB = Number(/^(\d+) KB$/.exec(size)?.[1]);
-    expect(quotedKB, `${size} is not "<n> KB"`).toBeGreaterThan(0);
-    const actualKB = gzipSync(readFileSync(path)).length / 1024;
-    expect(
-      Math.abs(actualKB - quotedKB) / actualKB,
-      `${file} is ${actualKB.toFixed(1)} KB`
-    ).toBeLessThan(0.1);
+  // A bundle that is not built here is reported as skipped. In CI every one is built, and
+  // the last test fails on a missing file.
+  describe.each(quoted)('$file', ({ file, size, path }) => {
+    it.skipIf(!existsSync(path))(`is about ${size} gzipped`, () => {
+      const quotedKB = Number(/^(\d+) KB$/.exec(size)?.[1]);
+      expect(quotedKB, `${size} is not "<n> KB"`).toBeGreaterThan(0);
+      const actualKB = gzipSync(readFileSync(path)).length / 1024;
+      expect(
+        Math.abs(actualKB - quotedKB) / actualKB,
+        `${file} is ${actualKB.toFixed(1)} KB`
+      ).toBeLessThan(0.1);
+    });
   });
 
-  it('finds the bundles when the packages are built', () => {
-    // In CI every dist is built: a renamed file must fail here, not skip above.
-    if (!process.env.CI) return;
-    for (const { dist, file } of quoted) {
-      expect(existsSync(join(packages, dist, 'dist', file)), `${dist}/dist/${file}`).toBe(true);
+  // In CI every dist is built: a renamed file must fail here, not skip above. Outside CI
+  // a tree may hold only some of the builds, so this is skipped, and says so.
+  it.skipIf(!process.env.CI)('finds the bundles when the packages are built (CI only)', () => {
+    for (const { dist, file, path } of quoted) {
+      expect(existsSync(path), `${dist}/dist/${file}`).toBe(true);
     }
   });
 });

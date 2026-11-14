@@ -217,12 +217,15 @@ describe('diff_behaviors via MCP', () => {
     });
 
     const parsed = JSON.parse(result.content[0].text);
-    // With low confidence threshold, natural language should parse
-    if (parsed.ok) {
-      expect(parsed).toHaveProperty('identical');
-      expect(parsed).toHaveProperty('operations');
-      expect(parsed).toHaveProperty('summary');
-    }
+    // With low confidence threshold, natural language parses. The diff reports the
+    // `on click` handler and the bare command as identical, with no trigger change.
+    expect(parsed.ok).toBe(true);
+    expect(result.isError).toBe(false);
+    expect(parsed.identical).toBe(true);
+    expect(parsed.trigger).toBeNull();
+    expect(parsed.operations).toHaveLength(1);
+    expect(parsed.operations[0].kind).toBe('unchanged');
+    expect(parsed.summary).toBe('No semantic change');
   }, 30000);
 });
 
@@ -270,44 +273,32 @@ describe('All tools accept LLM JSON', () => {
 // =============================================================================
 
 describe('Error wrapping consistency', () => {
-  it('handler catches exceptions and returns isError', async () => {
-    // Pass a value that will cause a type error inside the handler
-    const result = await handleCompilationTool('validate_and_compile', {
-      // Empty args — service.validate({}) should produce diagnostics, not crash
-    });
+  it('validate_and_compile with no input returns a NO_INPUT diagnostic and the repair hint', async () => {
+    const result = await handleCompilationTool('validate_and_compile', {});
 
-    // Whether it fails or succeeds, the response should be well-formed:
-    // content[0] is the JSON result; a second block is appended either as the
-    // repair hint (failure) or the review hint (parsed, but with warnings), so
-    // length is 1 or 2, never more. isError tracks ok, not the hint's presence.
-    expect(result.content).toBeDefined();
-    expect(result.content.length).toBeGreaterThanOrEqual(1);
-    expect(result.content.length).toBeLessThanOrEqual(2);
+    // content[0] is the JSON result; the second block is the repair hint a failure carries.
+    expect(result.isError).toBe(true);
+    expect(result.content).toHaveLength(2);
     expect(result.content[0].type).toBe('text');
-    if (result.content.length === 2) {
-      const hint = result.content[1].text;
-      if (result.isError) {
-        expect(hint).toContain('validate_and_compile');
-      } else {
-        expect(hint).toContain('score_fidelity');
-      }
-    }
-
-    // Text should be valid JSON (wrapped response or error message)
-    const text = result.content[0].text;
-    if (text.startsWith('{')) {
-      expect(() => JSON.parse(text)).not.toThrow();
-    }
+    const parsed = JSON.parse(result.content[0].text);
+    expect(parsed.ok).toBe(false);
+    expect(parsed.diagnostics).toEqual([
+      expect.objectContaining({ severity: 'error', code: 'NO_INPUT' }),
+    ]);
+    expect(result.content[1].text).toContain('validate_and_compile');
+    expect(result.content[1].text).not.toContain('score_fidelity');
   }, 30000);
 
-  it('translate_code with missing params returns error or handles gracefully', async () => {
+  it('translate_code with missing params returns an error', async () => {
     const result = await handleCompilationTool('translate_code', {
       // Missing required code, from, to
     });
 
-    // Should either return an error via service or via exception handling
-    expect(result.content).toBeDefined();
+    expect(result.isError).toBe(true);
     expect(result.content).toHaveLength(1);
+    const parsed = JSON.parse(result.content[0].text);
+    expect(parsed.ok).toBe(false);
+    expect(parsed.diagnostics[0]).toMatchObject({ severity: 'error', code: 'TRANSLATE_ERROR' });
   }, 30000);
 });
 

@@ -259,9 +259,8 @@ describe('get_completions', () => {
 
     const parsed = JSON.parse(getTextContent(result));
     const toggleCompletion = parsed.completions.find((c: any) => c.label === 'toggle');
-    if (toggleCompletion) {
-      expect(toggleCompletion.detail || toggleCompletion.documentation).toBeDefined();
-    }
+    expect(toggleCompletion).toBeDefined();
+    expect(toggleCompletion.detail).toBe('Toggle class/attribute');
   });
 });
 

@@ -1,9 +1,13 @@
 /**
  * Pattern Tools Tests
  *
- * Tests the built-in fallback behavior since patterns-reference may not be available.
+ * @hyperfixi/patterns-reference is a workspace dependency here, so these tests
+ * run against its database and assert that it answered (`source: 'database'`).
+ * The two other cases are staged with a mock of the package: it cannot be
+ * loaded (the built-in list answers and says so), and it loads but a query
+ * throws (an error, never a built-in answer).
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { handlePatternTool, patternTools } from '../tools/patterns.js';
 
 describe('patternTools', () => {
@@ -29,143 +33,128 @@ describe('patternTools', () => {
   });
 });
 
+const call = async (name: string, args: Record<string, unknown>) => {
+  const result = await handlePatternTool(name, args);
+  return { result, parsed: JSON.parse(result.content[0].text) };
+};
+
+/** A call the database must have answered. */
+const fromDatabase = async (name: string, args: Record<string, unknown>) => {
+  const { result, parsed } = await call(name, args);
+  expect(result.isError).toBeUndefined();
+  expect(parsed.source).toBe('database');
+  expect(parsed.fallback).toBeUndefined();
+  return parsed;
+};
+
 describe('get_examples', () => {
   it('returns examples for toggle task', async () => {
-    const result = await handlePatternTool('get_examples', {
-      prompt: 'toggle a class',
-    });
-
-    const parsed = JSON.parse(result.content[0].text);
-    expect(parsed.examples).toBeDefined();
+    const parsed = await fromDatabase('get_examples', { prompt: 'toggle a class' });
     expect(parsed.examples.length).toBeGreaterThan(0);
-    expect(
-      parsed.examples.some((e: any) => e.code?.includes('toggle') || e.task?.includes('toggle'))
-    ).toBe(true);
+    expect(parsed.count).toBe(parsed.examples.length);
+    expect(parsed.examples.some((e: any) => e.code.includes('toggle'))).toBe(true);
+    for (const e of parsed.examples) {
+      expect(['both', 'hyperscript', 'lokascript']).toContain(e.engine);
+    }
   });
 
   it('returns examples for modal task', async () => {
-    const result = await handlePatternTool('get_examples', {
-      prompt: 'show modal',
-    });
-
-    const parsed = JSON.parse(result.content[0].text);
-    expect(parsed.examples).toBeDefined();
-    expect(parsed.examples.length).toBeGreaterThan(0);
+    const parsed = await fromDatabase('get_examples', { prompt: 'show modal' });
+    expect(parsed.examples.some((e: any) => e.code.includes('show #modal'))).toBe(true);
   });
 
   it('respects limit parameter', async () => {
-    const result = await handlePatternTool('get_examples', {
-      prompt: 'click',
-      limit: 2,
-    });
-
-    const parsed = JSON.parse(result.content[0].text);
-    expect(parsed.examples.length).toBeLessThanOrEqual(2);
+    // More than two examples match "click": the limit is what holds it to two.
+    const parsed = await fromDatabase('get_examples', { prompt: 'click', limit: 2 });
+    expect(parsed.examples).toHaveLength(2);
   });
 
-  it('returns common examples for unknown task', async () => {
-    const result = await handlePatternTool('get_examples', {
-      prompt: 'xyzzy frobulate widget',
-    });
+  it('answers from the built-in list, and says so, when the database has no match', async () => {
+    const { result, parsed } = await call('get_examples', { prompt: 'xyzzy frobulate' });
+    expect(result.isError).toBeUndefined();
+    expect(parsed.source).toBe('built-in');
+    expect(parsed.fallback.code).toBe('NO_DATABASE_MATCH');
+    expect(parsed.fallback.reason).toContain('"en"');
+    // No built-in example matches either: the first few, marked as unmatched.
+    expect(parsed.matched).toBe(false);
+    expect(parsed.examples).toHaveLength(5);
+    expect(parsed.count).toBe(5);
+    // It used to say "install @hyperfixi/patterns-reference" with the package installed.
+    expect(parsed.note).not.toContain('Install');
+  });
 
-    const parsed = JSON.parse(result.content[0].text);
-    // Should return fallback examples
-    expect(parsed.examples).toBeDefined();
+  it('counts the examples it returns when the limit exceeds the built-in list', async () => {
+    const { parsed } = await call('get_examples', { prompt: 'xyzzy frobulate', limit: 500 });
+    expect(parsed.source).toBe('built-in');
+    expect(parsed.examples.length).toBeLessThan(500);
+    expect(parsed.count).toBe(parsed.examples.length);
+  });
+
+  it('says its examples are built-in English ones for a language the database has none in', async () => {
+    const { parsed } = await call('get_examples', { prompt: 'toggle', language: 'ja' });
+    expect(parsed.source).toBe('built-in');
+    expect(parsed.fallback.code).toBe('NO_DATABASE_MATCH');
+    expect(parsed.fallback.reason).toContain('"ja"');
+    expect(parsed.matched).toBe(true);
     expect(parsed.examples.length).toBeGreaterThan(0);
-  });
-
-  it('includes note about built-in examples', async () => {
-    const result = await handlePatternTool('get_examples', {
-      prompt: 'toggle',
-    });
-
-    const parsed = JSON.parse(result.content[0].text);
-    // Will have note if using built-in fallback
-    if (parsed.note) {
-      expect(parsed.note).toContain('built-in');
-    }
+    for (const e of parsed.examples) expect(`${e.task} ${e.code}`).toContain('toggle');
   });
 });
 
 describe('search_patterns', () => {
   it('finds patterns by query', async () => {
-    const result = await handlePatternTool('search_patterns', {
-      query: 'toggle',
-    });
-
-    // Handle error case
-    if (result.isError) {
-      expect(result.content[0].text).toBeDefined();
-      return;
-    }
-
-    const parsed = JSON.parse(result.content[0].text);
-    expect(parsed.patterns).toBeDefined();
+    const parsed = await fromDatabase('search_patterns', { query: 'toggle' });
+    expect(parsed.patterns.length).toBeGreaterThan(0);
+    expect(parsed.count).toBe(parsed.patterns.length);
+    expect(parsed.query).toBe('toggle');
+    // Not a particular id: CI's database is initialized, not populated, and
+    // ranks differently. Every hit has to mention the query.
+    for (const p of parsed.patterns) expect(JSON.stringify(p).toLowerCase()).toContain('toggle');
   });
 
   it('filters by category', async () => {
-    const result = await handlePatternTool('search_patterns', {
+    const parsed = await fromDatabase('search_patterns', {
       query: 'class',
       category: 'class-manipulation',
     });
-
-    // Handle error case
-    if (result.isError) {
-      expect(result.content[0].text).toBeDefined();
-      return;
-    }
-
-    const parsed = JSON.parse(result.content[0].text);
-    expect(parsed.patterns).toBeDefined();
-    // If using built-in, all returned should be class-manipulation
-    if (parsed.note?.includes('built-in')) {
-      parsed.patterns.forEach((p: any) => {
-        expect(p.category).toBe('class-manipulation');
-      });
-    }
+    expect(parsed.patterns.length).toBeGreaterThan(0);
+    for (const p of parsed.patterns) expect(p.category).toBe('class-manipulation');
   });
 
   it('respects limit parameter', async () => {
-    const result = await handlePatternTool('search_patterns', {
-      query: 'click',
-      limit: 3,
-    });
-
-    // Handle error case
-    if (result.isError) {
-      expect(result.content[0].text).toBeDefined();
-      return;
-    }
-
-    const parsed = JSON.parse(result.content[0].text);
-    expect(parsed.patterns.length).toBeLessThanOrEqual(3);
+    // More than three patterns match "click": the limit is what holds it to three.
+    const parsed = await fromDatabase('search_patterns', { query: 'click', limit: 3 });
+    expect(parsed.patterns).toHaveLength(3);
   });
 
-  it('returns empty for non-matching query', async () => {
-    const result = await handlePatternTool('search_patterns', {
+  it('returns empty for non-matching query, from the database', async () => {
+    const parsed = await fromDatabase('search_patterns', {
       query: 'xyzzy_nonexistent_pattern_12345',
     });
+    expect(parsed.patterns).toEqual([]);
+    expect(parsed.count).toBe(0);
+  });
 
-    // Handle error case
-    if (result.isError) {
-      expect(result.content[0].text).toBeDefined();
-      return;
-    }
+  it('finds visibility patterns', async () => {
+    const parsed = await fromDatabase('search_patterns', { query: 'show' });
+    expect(parsed.patterns.map((p: any) => p.id)).toContain('show-element');
+  });
 
-    const parsed = JSON.parse(result.content[0].text);
-    expect(parsed.patterns).toBeDefined();
-    expect(parsed.patterns.length).toBe(0);
+  it('finds async patterns', async () => {
+    const parsed = await fromDatabase('search_patterns', { query: 'fetch' });
+    const fetchBasic = parsed.patterns.find((p: any) => p.id === 'fetch-basic');
+    expect(fetchBasic).toMatchObject({ category: 'async' });
+    expect(fetchBasic.code).toContain('fetch');
   });
 });
 
-// The database path, asserted as such: the tests above accept either path, and
-// with a category the database path used to drop the query and the limit and
+// With a category the database path used to drop the query and the limit and
 // report no category at all (`p.feature` on a Pattern, hidden by `any`).
 describe('search_patterns against the pattern database', () => {
   type Found = { title: string; code: string; category: string };
   const search = async (args: Record<string, unknown>): Promise<Found[]> => {
     const parsed = JSON.parse((await handlePatternTool('search_patterns', args)).content[0].text);
-    expect(parsed.note, 'the database answered, not the built-in fallback').toBeUndefined();
+    expect(parsed.source, 'the database answered, not the built-in list').toBe('database');
     return parsed.patterns;
   };
 
@@ -202,49 +191,24 @@ describe('search_patterns against the pattern database', () => {
 });
 
 describe('get_pattern_stats', () => {
-  it('returns statistics', async () => {
-    const result = await handlePatternTool('get_pattern_stats', {});
-
-    // Handle error case
-    if (result.isError) {
-      expect(result.content[0].text).toBeDefined();
-      return;
-    }
-
-    const parsed = JSON.parse(result.content[0].text);
-    expect(parsed).toBeDefined();
+  it("returns the database's statistics", async () => {
+    const parsed = await fromDatabase('get_pattern_stats', {});
+    expect(parsed.patterns.totalPatterns).toBeGreaterThan(100);
+    // English alone in an initialized database, every language in a populated one.
+    expect(parsed.patterns.totalTranslations).toBeGreaterThanOrEqual(parsed.patterns.totalPatterns);
+    expect(parsed.llmExamples).toBeDefined();
+    // The built-in answer's keys are not in a database answer.
+    expect(parsed.categories).toBeUndefined();
+    expect(parsed.builtinExamples).toBeUndefined();
   });
 
-  it('includes supported languages', async () => {
-    const result = await handlePatternTool('get_pattern_stats', {});
-
-    // Handle error case
-    if (result.isError) {
-      expect(result.content[0].text).toBeDefined();
-      return;
-    }
-
-    const parsed = JSON.parse(result.content[0].text);
-    expect(parsed.supportedLanguages).toBeDefined();
-    expect(Array.isArray(parsed.supportedLanguages)).toBe(true);
+  it('lists the languages the database has translations in', async () => {
+    // A hand-written list of 13 stood here while the database held 24.
+    const parsed = await fromDatabase('get_pattern_stats', {});
+    expect(parsed.supportedLanguages).toEqual(Object.keys(parsed.patterns.byLanguage).sort());
+    // 24 in a populated database; CI's initialized one holds English only.
     expect(parsed.supportedLanguages).toContain('en');
-  });
-
-  it('includes category information (built-in)', async () => {
-    const result = await handlePatternTool('get_pattern_stats', {});
-
-    // Handle error case
-    if (result.isError) {
-      expect(result.content[0].text).toBeDefined();
-      return;
-    }
-
-    const parsed = JSON.parse(result.content[0].text);
-    // Built-in fallback includes categories
-    if (parsed.categories) {
-      expect(Array.isArray(parsed.categories)).toBe(true);
-      expect(parsed.categories).toContain('class-manipulation');
-    }
+    expect(parsed.supportedLanguages).not.toContain('explicit');
   });
 });
 
@@ -257,57 +221,115 @@ describe('error handling', () => {
   });
 });
 
-describe('built-in examples coverage', () => {
-  it('includes class manipulation examples', async () => {
-    const result = await handlePatternTool('search_patterns', {
+// The package cannot be loaded (it is an optional peer): the built-in list answers,
+// and every answer says that it did and why.
+describe('without @hyperfixi/patterns-reference', () => {
+  const unavailable = async (name: string, args: Record<string, unknown>) => {
+    vi.doMock('@hyperfixi/patterns-reference', () => {
+      throw new Error('not installed');
+    });
+    const { result, parsed } = await call(name, args);
+    expect(result.isError).toBeUndefined();
+    expect(parsed.source).toBe('built-in');
+    expect(parsed.fallback.code).toBe('PATTERNS_REFERENCE_UNAVAILABLE');
+    // The import's own message follows (here vitest's, about the throwing mock).
+    expect(parsed.fallback.reason).toMatch(
+      /^@hyperfixi\/patterns-reference could not be loaded: \S/
+    );
+    expect(parsed.note).toContain('Install @hyperfixi/patterns-reference');
+    return parsed;
+  };
+  afterEach(() => {
+    vi.doUnmock('@hyperfixi/patterns-reference');
+  });
+
+  it('search_patterns searches the built-in list', async () => {
+    const parsed = await unavailable('search_patterns', { query: 'toggle' });
+    expect(parsed.patterns.map((p: any) => p.code)).toEqual([
+      'on click toggle .active',
+      'on click toggle .open on #nav',
+    ]);
+    expect(parsed.count).toBe(2);
+    expect(parsed.query).toBe('toggle');
+  });
+
+  it('search_patterns narrows the built-in list to a category', async () => {
+    const parsed = await unavailable('search_patterns', {
       query: 'class',
       category: 'class-manipulation',
     });
-
-    // May return error if patterns-reference not properly configured
-    if (result.isError) {
-      expect(result.content[0].text).toBeDefined();
-      return;
-    }
-
-    const parsed = JSON.parse(result.content[0].text);
     expect(parsed.patterns.length).toBeGreaterThan(0);
+    for (const p of parsed.patterns) expect(p.category).toBe('class-manipulation');
   });
 
-  it('includes visibility examples', async () => {
-    const result = await handlePatternTool('search_patterns', {
-      query: 'show',
-    });
-
-    // May return error if patterns-reference not properly configured
-    if (result.isError) {
-      expect(result.content[0].text).toBeDefined();
-      return;
-    }
-
-    const parsed = JSON.parse(result.content[0].text);
-    const hasVisibility = parsed.patterns.some(
-      (p: any) =>
-        p.category === 'visibility' || p.code?.includes('show') || p.code?.includes('hide')
-    );
-    expect(hasVisibility).toBe(true);
+  it('search_patterns keeps to the limit, and counts what it returns', async () => {
+    const parsed = await unavailable('search_patterns', { query: 'click', limit: 3 });
+    expect(parsed.patterns).toHaveLength(3);
+    expect(parsed.count).toBe(3);
   });
 
-  it('includes async examples', async () => {
-    const result = await handlePatternTool('search_patterns', {
-      query: 'fetch',
-    });
+  it('search_patterns returns nothing for a query the built-in list lacks', async () => {
+    const parsed = await unavailable('search_patterns', { query: 'xyzzy_nonexistent' });
+    expect(parsed.patterns).toEqual([]);
+  });
 
-    // May return error if patterns-reference not properly configured
-    if (result.isError) {
-      expect(result.content[0].text).toBeDefined();
-      return;
-    }
+  it('get_examples matches the built-in list', async () => {
+    const parsed = await unavailable('get_examples', { prompt: 'fetch data', limit: 2 });
+    expect(parsed.matched).toBe(true);
+    expect(parsed.examples).toHaveLength(2);
+    expect(parsed.examples[0].code).toContain('fetch');
+  });
 
-    const parsed = JSON.parse(result.content[0].text);
-    const hasAsync = parsed.patterns.some(
-      (p: any) => p.category === 'async' || p.code?.includes('fetch')
-    );
-    expect(hasAsync).toBe(true);
+  it('get_pattern_stats describes the built-in list', async () => {
+    const parsed = await unavailable('get_pattern_stats', {});
+    expect(parsed.builtinExamples).toBeGreaterThan(0);
+    expect(parsed.categories).toContain('class-manipulation');
+    expect(parsed.supportedLanguages).toEqual(['en']);
+    expect(parsed.patterns).toBeUndefined();
+  });
+});
+
+// The package loads, so its database is expected to answer. A query that throws used to
+// be answered from the built-in list, which a caller could not tell from a real result.
+describe('when the pattern database fails', () => {
+  const closed = vi.fn();
+  const failing = async (name: string, args: Record<string, unknown>) => {
+    const boom = () => {
+      throw new Error('unable to open database file');
+    };
+    vi.doMock('@hyperfixi/patterns-reference', () => ({
+      createPatternsReference: () => ({ searchPatterns: boom, getStats: boom, close: closed }),
+      getLLMExamples: boom,
+      getLLMStats: boom,
+    }));
+    const { result, parsed } = await call(name, args);
+    expect(result.isError).toBe(true);
+    expect(parsed.ok).toBe(false);
+    expect(parsed.code).toBe('PATTERN_DATABASE_ERROR');
+    expect(parsed.error).toContain(name);
+    expect(parsed.error).toContain('unable to open database file');
+    // Nothing a caller could read as a result.
+    expect(parsed.patterns).toBeUndefined();
+    expect(parsed.examples).toBeUndefined();
+    expect(parsed.source).toBeUndefined();
+    return parsed;
+  };
+  afterEach(() => {
+    vi.doUnmock('@hyperfixi/patterns-reference');
+    closed.mockClear();
+  });
+
+  it('search_patterns reports the error', async () => {
+    await failing('search_patterns', { query: 'toggle' });
+    expect(closed).toHaveBeenCalledTimes(1);
+  });
+
+  it('get_examples reports the error', async () => {
+    await failing('get_examples', { prompt: 'toggle a class' });
+  });
+
+  it('get_pattern_stats reports the error', async () => {
+    await failing('get_pattern_stats', {});
+    expect(closed).toHaveBeenCalledTimes(1);
   });
 });
