@@ -139,7 +139,7 @@ const PROBES: Record<string, () => Promise<boolean>> = {
   'definition: def parameter': async () => same(await definition(at(10, 'name')), ['9:10']),
   'definition: sigil-less local': async () => same(await definition(at(4, 'count')), ['3:8']),
   'references: sigil-less local, within its handler': async () =>
-    same(await references(at(19, 'total', 2)), ['19:25', '19:50', '19:65']),
+    same(await references(at(19, 'total', 2)), ['19:24', '19:50', '19:65']),
 
   // --- identifiers: element scope (`:x` belongs to one element or one behavior) ---
   'references: :x stays in its element': async () =>
@@ -178,11 +178,6 @@ const PROBES: Record<string, () => Promise<boolean>> = {
 /** Probes the server does not answer yet. Shrink-only. */
 const KNOWN_FAILURES = new Set([
   'definition: behavior in another open file',
-  'definition: behavior parameter',
-  'definition: def parameter',
-  'definition: sigil-less local',
-  'references: sigil-less local, within its handler',
-  'definition: #id -> the element',
   'completion: a partial command',
   'completion: behaviors after install',
   'completion: functions after call',

@@ -41,24 +41,32 @@ the engine's parse error in every mode.
 
 ### Core LSP Features
 
-| Feature                 | Description                                                   | Status  |
-| ----------------------- | ------------------------------------------------------------- | ------- |
-| **Diagnostics**         | Real-time error detection and warnings                        | ✅      |
-| **Completions**         | Event names after `on`, commands after an event, `^` names    | Partial |
-| **Hover**               | Documentation on hover for commands and keywords              | ✅      |
-| **Document Symbols**    | Outline view showing event handlers, behaviors, and functions | ✅      |
-| **Code Actions**        | Quick fixes for common issues                                 | ✅      |
-| **Go to Definition**    | Behavior and function definitions, within one file            | Partial |
-| **Find References**     | Behaviors, functions and sigil variables, within one file     | Partial |
-| **Document Formatting** | Format hyperscript code with consistent indentation           | ✅      |
+| Feature                 | Description                                                                 | Status  |
+| ----------------------- | --------------------------------------------------------------------------- | ------- |
+| **Diagnostics**         | Real-time error detection and warnings                                      | ✅      |
+| **Completions**         | Event names after `on`, commands after an event, `^` names                  | Partial |
+| **Hover**               | Documentation on hover for commands and keywords                            | ✅      |
+| **Document Symbols**    | Outline view showing event handlers, behaviors, and functions               | ✅      |
+| **Code Actions**        | Quick fixes for common issues                                               | ✅      |
+| **Go to Definition**    | Variables, parameters, behaviors, functions, `#id`, events; within one file | Partial |
+| **Find References**     | The same names, each in its scope; within one file                          | Partial |
+| **Document Formatting** | Format hyperscript code with consistent indentation                         | ✅      |
 
 What "Partial" leaves out is listed, probe by probe, in `src/ide-scorecard.test.ts` (its
 `KNOWN_FAILURES`), which runs against the built server. Today (2026-11-16):
 
-- **Identifiers** resolve by name within one file. Behavior and `def` parameters, variables
-  written without a sigil (`set count to 1`), `#id` references and names defined in another file do
-  not resolve. A `:x` is one variable per element (one `_` attribute) or per behavior, and Find
-  References and Rename stay inside it.
+- **Identifiers** resolve within one file, each in its own scope, when `@hyperfixi/engine` is
+  installed and parses the script: a variable written without a sigil (`set count to 1`) and a loop
+  variable belong to their handler or `def`; a parameter to its `def` or behavior (an
+  `install Name(param: …)` site names it too); a `:x` to its element (one `_` attribute) or its
+  behavior; a `$x`, a behavior and a function to the file. A `#name` goes to the element with that
+  `id`, and a sent or triggered event to the handlers that listen for it. Find References and
+  Rename cover the same sites. Three limits:
+  - A script the engine does not parse (one being typed, or one not in English) is read by
+    patterns instead: behaviors, functions and sigil variables only.
+  - Nothing crosses files: a name defined in another file does not resolve, and renaming an `id`
+    or a behavior does not touch other files or a stylesheet.
+  - `element x` and `:x` are listed as two variables.
 - **Completion** does not read the document: it offers no behavior names after `install`, no
   function names after `call`, no variables, and none of the page's ids or classes. A word typed
   part-way through a handler (`on click tog`) is offered only the feature keywords.
@@ -245,7 +253,7 @@ For users who prefer the `hyperscript` namespace:
 ## Dependencies
 
 - `@lokascript/semantic` and `@lokascript/framework` are **required** (regular dependencies): the semantic package registers the 24 languages at startup, and the framework renders the LSE bracket notation shown in hover. They used to be declared as optional peers while being imported statically, so a server installed without them crashed at startup instead of falling back.
-- `@hyperfixi/engine` is an **optional** peer: the engine that runs hyperscript. With it the server surfaces its parse errors (at the position the engine stopped) and gives the AST nodes their source positions for hover, symbols and completions.
+- `@hyperfixi/engine` is an **optional** peer: the engine that runs hyperscript. With it the server surfaces its parse errors (at the position the engine stopped) and gives the AST nodes their source positions for hover, symbols and completions. The symbol table reads its tree too: without the engine, Go to Definition, Find References and Rename know behaviors, functions and sigil variables only.
 - `@hyperfixi/core` is an **optional** peer, for two of its entries: `/ast-utils` (complexity diagnostics, hover, symbols and completions on the interchange) and `/lsp-metadata` (keyword and hover docs). The AST nodes come from `@lokascript/semantic`, which names each command's roles itself. Without either, diagnostics degrade to the pattern-based quote/bracket checks and hover uses built-in fallback docs. (Until 4.0 the parse errors and nodes came from `@hyperfixi/core`'s parser.)
 
 A bundler that wants an English-only, dependency-free server replaces the semantic, framework, engine and core imports with throwing or empty shims at bundle time; the server's capability probes are written for that case.
@@ -275,7 +283,7 @@ how). `--server <command>` scores another LSP server on the same requests.
 
 ## Architecture
 
-The language server entry point is `server.ts` (LSP wiring and the request handlers), with the testable logic in sibling modules — `extraction.ts` (HTML region extraction and position mapping), `simple-diagnostics.ts`, `command-tiers.ts` (the _hyperscript-compatibility allowlists), `symbol-table.ts` (definition/references/rename), `document-symbols.ts`, `completion-context.ts`, `formatting.ts` and `localized-descriptions.ts`. Together they:
+The language server entry point is `server.ts` (LSP wiring and the request handlers), with the testable logic in sibling modules — `extraction.ts` (HTML region extraction and position mapping), `simple-diagnostics.ts`, `command-tiers.ts` (the _hyperscript-compatibility allowlists), `symbol-table.ts` (definition/references/rename) with `tree-symbols.ts` (the names read from the engine's tree), `document-symbols.ts`, `completion-context.ts`, `formatting.ts` and `localized-descriptions.ts`. Together they:
 
 1. **Extracts** hyperscript regions from HTML documents
 2. **Analyzes** code using semantic parsing (multilingual) or pattern-based fallback

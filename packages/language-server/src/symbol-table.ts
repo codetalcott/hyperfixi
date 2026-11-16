@@ -10,13 +10,24 @@
 
 import type { HyperscriptRegion } from './types.js';
 import { escapeRegExp } from './utils.js';
+import { SCOPE_SEP, treeSites } from './tree-symbols.js';
+
+export interface SymbolTableOptions {
+  /**
+   * The engine's `parse`. A region it reads is taken from its tree; one it
+   * throws on (being typed, or not English) is read by the patterns below.
+   */
+  parse?: (code: string) => unknown;
+  /** The page's `id="…"` attributes: where a `#name` is defined. */
+  ids?: Array<{ name: string; line: number; character: number }>;
+}
 
 // =============================================================================
 // Types
 // =============================================================================
 
 export type SymbolKind =
-  'behavior' | 'function' | 'variable' | 'event' | 'caretVar' | 'componentAttr';
+  'behavior' | 'function' | 'variable' | 'event' | 'id' | 'caretVar' | 'componentAttr';
 
 export interface SymbolLocation {
   /** Line in the overall document (0-based). */
@@ -35,10 +46,14 @@ export interface SymbolEntry {
    * - 'local'  — :vars. The engine's element scope: a `:x` belongs to the
    *              element its `_` attribute is on, or to the behavior it is
    *              written in. Two elements' `:x` are two symbols.
+   * - 'handler' — names without a sigil: a variable, parameter or loop
+   *              variable of one handler or `def`, or a behavior's parameter.
+   *              Only the engine's tree can tell these from keywords, so they
+   *              exist only for a region it parsed (see tree-symbols.ts).
    * - 'caret'  — ^vars (DOM-scoped, walks ancestors until a `dom-scope` boundary)
    * - 'attr'   — attrs.X (per-component-instance, read from HTML attributes)
    */
-  scope: 'global' | 'local' | 'caret' | 'attr';
+  scope: 'global' | 'local' | 'handler' | 'caret' | 'attr';
   /** Where this symbol is defined. */
   definitions: SymbolLocation[];
   /** Where this symbol is referenced (excluding definitions). */
@@ -63,7 +78,8 @@ export interface SymbolTable {
  */
 export function buildSymbolTable(
   regions: HyperscriptRegion[],
-  getKeywordVariants?: (eng: string) => string[]
+  getKeywordVariants?: (eng: string) => string[],
+  options: SymbolTableOptions = {}
 ): SymbolTable {
   // Keyed by name, except a `:x`, which is keyed by name and scope (see
   // `elementScopes`): `entry.name` is the name to show and to rename.
@@ -172,7 +188,6 @@ export function buildSymbolTable(
       return b < 0 ? `region ${regionIndex}` : `region ${regionIndex} behavior ${b}`;
     };
   }
-  const SCOPE_SEP = '\u0000';
 
   function toDocLine(region: HyperscriptRegion, localLine: number): number {
     return region.startLine + localLine;
@@ -252,94 +267,120 @@ export function buildSymbolTable(
     const regionCaretDefOffsets = new Set<number>();
     caretDefOffsets.set(region, regionCaretDefOffsets);
 
-    // --- Definitions ---
-
-    // Behavior definitions
-    for (const m of code.matchAll(behaviorDefPat)) {
-      const name = m[2]!;
-      const nameOffset = (m.index ?? 0) + m[0].indexOf(name);
-      const localLine = findLocalLine(code, nameOffset);
-      const localChar = findLocalChar(code, nameOffset);
-      addLocation(
-        getOrCreate(name, 'behavior', 'global'),
-        'def',
-        region,
-        localLine,
-        localChar,
-        name.length
-      );
+    // The engine's tree, when it reads this region; else the patterns.
+    let fromTree = false;
+    if (options.parse && region.type !== 'template') {
+      let sites: ReturnType<typeof treeSites> = null;
+      try {
+        sites = treeSites(options.parse(code), code, regionIndex);
+      } catch {
+        sites = null;
+      }
+      if (sites) {
+        fromTree = true;
+        for (const site of sites) {
+          addLocation(
+            getOrCreate(site.name, site.kind, site.scope, site.key),
+            site.role,
+            region,
+            findLocalLine(code, site.offset),
+            findLocalChar(code, site.offset),
+            site.length
+          );
+        }
+      }
     }
 
-    // Function definitions
-    for (const m of code.matchAll(funcDefPat)) {
-      const name = m[2]!;
-      const nameOffset = (m.index ?? 0) + m[0].indexOf(name);
-      const localLine = findLocalLine(code, nameOffset);
-      const localChar = findLocalChar(code, nameOffset);
-      addLocation(
-        getOrCreate(name, 'function', 'global'),
-        'def',
-        region,
-        localLine,
-        localChar,
-        name.length
-      );
-    }
+    if (!fromTree) {
+      // --- Definitions ---
 
-    // Variable definitions (set :x, default :x, set $x)
-    for (const m of code.matchAll(varDefPat)) {
-      const varName = m[2]!;
-      const varOffset = (m.index ?? 0) + m[0].indexOf(varName);
-      const localLine = findLocalLine(code, varOffset);
-      const localChar = findLocalChar(code, varOffset);
-      addLocation(
-        variable(varName, varOffset),
-        'def',
-        region,
-        localLine,
-        localChar,
-        varName.length
-      );
-      regionDefOffsets.add(varOffset);
-    }
+      // Behavior definitions
+      for (const m of code.matchAll(behaviorDefPat)) {
+        const name = m[2]!;
+        const nameOffset = (m.index ?? 0) + m[0].indexOf(name);
+        const localLine = findLocalLine(code, nameOffset);
+        const localChar = findLocalChar(code, nameOffset);
+        addLocation(
+          getOrCreate(name, 'behavior', 'global'),
+          'def',
+          region,
+          localLine,
+          localChar,
+          name.length
+        );
+      }
 
-    // --- Usages ---
+      // Function definitions
+      for (const m of code.matchAll(funcDefPat)) {
+        const name = m[2]!;
+        const nameOffset = (m.index ?? 0) + m[0].indexOf(name);
+        const localLine = findLocalLine(code, nameOffset);
+        const localChar = findLocalChar(code, nameOffset);
+        addLocation(
+          getOrCreate(name, 'function', 'global'),
+          'def',
+          region,
+          localLine,
+          localChar,
+          name.length
+        );
+      }
 
-    // install Behavior
-    for (const m of code.matchAll(installPat)) {
-      const name = m[2]!;
-      const nameOffset = (m.index ?? 0) + m[0].indexOf(name);
-      const localLine = findLocalLine(code, nameOffset);
-      const localChar = findLocalChar(code, nameOffset);
-      const entry = getOrCreate(name, 'behavior', 'global');
-      addLocation(entry, 'use', region, localLine, localChar, name.length);
-    }
+      // Variable definitions (set :x, default :x, set $x)
+      for (const m of code.matchAll(varDefPat)) {
+        const varName = m[2]!;
+        const varOffset = (m.index ?? 0) + m[0].indexOf(varName);
+        const localLine = findLocalLine(code, varOffset);
+        const localChar = findLocalChar(code, varOffset);
+        addLocation(
+          variable(varName, varOffset),
+          'def',
+          region,
+          localLine,
+          localChar,
+          varName.length
+        );
+        regionDefOffsets.add(varOffset);
+      }
 
-    // call funcName
-    for (const m of code.matchAll(callPat)) {
-      const name = m[2]!;
-      const nameOffset = (m.index ?? 0) + m[0].indexOf(name);
-      const localLine = findLocalLine(code, nameOffset);
-      const localChar = findLocalChar(code, nameOffset);
-      const entry = getOrCreate(name, 'function', 'global');
-      addLocation(entry, 'use', region, localLine, localChar, name.length);
-    }
+      // --- Usages ---
 
-    // Variable references (:x, $x) — skip ones already recorded as definitions
-    for (const m of code.matchAll(varRefPat)) {
-      const varName = m[0];
-      const varOffset = m.index ?? 0;
-      if (regionDefOffsets.has(varOffset)) continue;
-      const localLine = findLocalLine(code, varOffset);
-      const localChar = findLocalChar(code, varOffset);
-      addLocation(
-        variable(varName, varOffset),
-        'use',
-        region,
-        localLine,
-        localChar,
-        varName.length
-      );
+      // install Behavior
+      for (const m of code.matchAll(installPat)) {
+        const name = m[2]!;
+        const nameOffset = (m.index ?? 0) + m[0].indexOf(name);
+        const localLine = findLocalLine(code, nameOffset);
+        const localChar = findLocalChar(code, nameOffset);
+        const entry = getOrCreate(name, 'behavior', 'global');
+        addLocation(entry, 'use', region, localLine, localChar, name.length);
+      }
+
+      // call funcName
+      for (const m of code.matchAll(callPat)) {
+        const name = m[2]!;
+        const nameOffset = (m.index ?? 0) + m[0].indexOf(name);
+        const localLine = findLocalLine(code, nameOffset);
+        const localChar = findLocalChar(code, nameOffset);
+        const entry = getOrCreate(name, 'function', 'global');
+        addLocation(entry, 'use', region, localLine, localChar, name.length);
+      }
+
+      // Variable references (:x, $x) — skip ones already recorded as definitions
+      for (const m of code.matchAll(varRefPat)) {
+        const varName = m[0];
+        const varOffset = m.index ?? 0;
+        if (regionDefOffsets.has(varOffset)) continue;
+        const localLine = findLocalLine(code, varOffset);
+        const localChar = findLocalChar(code, varOffset);
+        addLocation(
+          variable(varName, varOffset),
+          'use',
+          region,
+          localLine,
+          localChar,
+          varName.length
+        );
+      }
     }
 
     // Caret-var writes: `set ^name to ...` — symbol name is stored with the
@@ -437,7 +478,7 @@ export function buildSymbolTable(
       ...installKws,
       ...callKws,
     ]);
-    for (const m of code.matchAll(funcCallPat)) {
+    for (const m of fromTree ? [] : code.matchAll(funcCallPat)) {
       const name = m[1]!;
       if (keywords.has(name.toLowerCase())) continue;
       const nameOffset = m.index ?? 0;
@@ -446,6 +487,34 @@ export function buildSymbolTable(
       const entry = getOrCreate(name, 'function', 'global');
       // Only add as usage if not already a definition at this offset
       addLocation(entry, 'use', region, localLine, localChar, name.length);
+    }
+  }
+
+  // A `#name` is defined where the page gives an element that id.
+  for (const id of options.ids ?? []) {
+    const key = '#' + id.name;
+    const entry = symbols.get(key);
+    if (!entry) continue;
+    entry.definitions.push({ line: id.line, character: id.character, length: id.name.length });
+    locationIndex.push({
+      line: id.line,
+      start: id.character,
+      end: id.character + id.name.length,
+      key,
+    });
+  }
+
+  // Sites the tree reader offers that only mean something beside another:
+  // `on click` is an event nobody in the file sends, and `x.push(…)` is a
+  // call of no `def`. Without the other half they are not symbols.
+  for (const [key, entry] of [...symbols]) {
+    const orphan =
+      (entry.kind === 'event' && entry.usages.length === 0) ||
+      (entry.kind === 'function' && entry.name.includes('.') && entry.definitions.length === 0);
+    if (!orphan) continue;
+    symbols.delete(key);
+    for (let i = locationIndex.length - 1; i >= 0; i--) {
+      if (locationIndex[i]!.key === key) locationIndex.splice(i, 1);
     }
   }
 
@@ -475,13 +544,14 @@ export function getSymbolTable(
   uri: string,
   version: number,
   regions: HyperscriptRegion[],
-  getKeywordVariants?: (eng: string) => string[]
+  getKeywordVariants?: (eng: string) => string[],
+  options?: SymbolTableOptions
 ): SymbolTable {
   const cached = cache.get(uri);
   if (cached && cached.version === version) {
     return cached.table;
   }
-  const table = buildSymbolTable(regions, getKeywordVariants);
+  const table = buildSymbolTable(regions, getKeywordVariants, options);
   cache.set(uri, { version, table });
   return table;
 }

@@ -47,6 +47,7 @@ import { detectLokascriptFeatures } from './command-tiers.js';
 import {
   isHtmlDocument,
   extractHyperscriptRegions,
+  extractElementIds,
   findRegionAtPosition,
   offsetToPosition,
 } from './extraction.js';
@@ -1804,7 +1805,11 @@ function getDocSymbolTable(document: { uri: string; version: number; getText(): 
   const regions = isHtmlDocument(uri, text)
     ? extractHyperscriptRegions(text)
     : [{ code: text, startLine: 0, startChar: 0, endLine: 0, endChar: 0, type: 'script' as const }];
-  return { table: getSymbolTable(uri, document.version, regions, getKeywordVariants), uri };
+  const table = getSymbolTable(uri, document.version, regions, getKeywordVariants, {
+    parse: engineParse ?? undefined,
+    ids: isHtmlDocument(uri, text) ? extractElementIds(text) : [],
+  });
+  return { table, uri };
 }
 
 /** Convert a SymbolLocation to an LSP Location. */

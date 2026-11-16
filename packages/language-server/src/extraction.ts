@@ -236,3 +236,20 @@ export function findCharInLine(code: string, offset: number): number {
   }
   return offset - lastNewline - 1;
 }
+
+/**
+ * The `id="…"` attributes of a page, each at the position of its value: where
+ * a `#name` in hyperscript is defined. A templated value (`id="{{ x }}"`) is
+ * not a name and is skipped.
+ */
+export function extractElementIds(
+  content: string
+): Array<{ name: string; line: number; character: number }> {
+  const ids: Array<{ name: string; line: number; character: number }> = [];
+  const idAttribute = /(?<![\w-])id\s*=\s*(["'])([^"'\s<>{}$%]+)\1/g;
+  for (const match of content.matchAll(idAttribute)) {
+    const valueOffset = (match.index ?? 0) + match[0].length - 1 - match[2]!.length;
+    ids.push({ name: match[2]!, ...offsetToPosition(content, valueOffset) });
+  }
+  return ids;
+}
