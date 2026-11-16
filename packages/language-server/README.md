@@ -41,21 +41,24 @@ the engine's parse error in every mode.
 
 ### Core LSP Features
 
-| Feature                 | Description                                                                  | Status  |
-| ----------------------- | ---------------------------------------------------------------------------- | ------- |
-| **Diagnostics**         | Real-time error detection and warnings                                       | ✅      |
-| **Completions**         | The words the engine's grammar takes at the cursor, and the document's names | Partial |
-| **Hover**               | Documentation on hover for commands and keywords                             | ✅      |
-| **Document Symbols**    | Outline view showing event handlers, behaviors, and functions                | ✅      |
-| **Code Actions**        | Quick fixes for common issues                                                | ✅      |
-| **Go to Definition**    | Variables, parameters, behaviors, functions, `#id`, events; within one file  | Partial |
-| **Find References**     | The same names, each in its scope; within one file                           | Partial |
-| **Document Formatting** | Format hyperscript code with consistent indentation                          | ✅      |
+| Feature                 | Description                                                                           | Status  |
+| ----------------------- | ------------------------------------------------------------------------------------- | ------- |
+| **Diagnostics**         | Real-time error detection and warnings                                                | ✅      |
+| **Completions**         | The words the engine's grammar takes at the cursor, and the document's names          | Partial |
+| **Hover**               | Documentation on hover for commands and keywords                                      | ✅      |
+| **Document Symbols**    | Outline view showing event handlers, behaviors, and functions                         | ✅      |
+| **Code Actions**        | Quick fixes for common issues                                                         | ✅      |
+| **Go to Definition**    | Variables, parameters, behaviors, functions, `#id`, events                            | ✅      |
+| **Find References**     | The same names, each in its scope; behaviors, functions and `$x` across the workspace | ✅      |
+| **Rename**              | The same sites as Find References                                                     | ✅      |
+| **Workspace Symbols**   | Behavior and function definitions in the workspace                                    | ✅      |
+| **Document Formatting** | Format hyperscript code with consistent indentation                                   | ✅      |
 
-What "Partial" leaves out is listed, probe by probe, in `src/ide-scorecard.test.ts` (its
-`KNOWN_FAILURES`), which runs against the built server. Today (2026-11-16):
+`src/ide-scorecard.test.ts` asks the built server what an author expects of identifiers and
+completion, one probe each, and all of them pass (2026-11-16). What follows is how each feature
+works and where it stops; "Partial" marks a feature whose limits an author will meet.
 
-- **Identifiers** resolve within one file, each in its own scope, when `@hyperfixi/engine` is
+- **Identifiers** resolve, each in its own scope, when `@hyperfixi/engine` is
   installed and parses the script: a variable written without a sigil (`set count to 1`) and a loop
   variable belong to their handler or `def`; a parameter to its `def` or behavior (an
   `install Name(param: …)` site names it too); a `:x` to its element (one `_` attribute) or its
@@ -64,8 +67,13 @@ What "Partial" leaves out is listed, probe by probe, in `src/ide-scorecard.test.
   Rename cover the same sites. Three limits:
   - A script the engine does not parse (one being typed, or one not in English) is read by
     patterns instead: behaviors, functions and sigil variables only.
-  - Nothing crosses files: a name defined in another file does not resolve, and renaming an `id`
-    or a behavior does not touch other files or a stylesheet.
+  - Across files, a behavior, a function and a `$x` resolve when something in the workspace
+    defines them. The workspace is its folders' `.html`, `.htm`, `.hs` and `._hs` files (not
+    `node_modules`, build output or hidden folders; at most 2,000 files of up to 1 MB, and the
+    server logs when it stops there). A file changed outside the editor is seen within two
+    seconds. An `id`, an event and every scoped name stay within their file, and so does a name
+    nothing defines (`alert(…)`). Renaming a behavior edits every file that names it, open or
+    not: read the preview.
   - `element x` and `:x` are listed as two variables.
 - **Completion**, when `@hyperfixi/engine` is installed and the language is English, asks the
   engine's grammar what fits at the cursor: the word a command requires (`put x` → `into`), the
@@ -73,7 +81,7 @@ What "Partial" leaves out is listed, probe by probe, in `src/ide-scorecard.test.
   the grammar reads a value it offers the handler's variables and parameters, `me` / `it` /
   `result` / `event`, and functions; after `install`, behaviors; after `on`, DOM events and the
   events the file sends; after `#` and `.`, the page's ids and classes; after `:` and `$`, the
-  variables written that way. Behaviors and functions come from every open file. Limits:
+  variables written that way. Behaviors and functions come from the whole workspace. Limits:
   - The grammar takes a lot (about 69 items per list on the measure below), so the list is
     ordered, not short. Commands are ordered by how often the reference and hover examples in
     `@hyperfixi/core` use them; without core, in the grammar's own order.
@@ -85,7 +93,11 @@ What "Partial" leaves out is listed, probe by probe, in `src/ide-scorecard.test.
     positions before a grammar word): the list holds the word written next 0.996 of the time; once
     its first letter is typed it is first 0.66 of the time and in the first five 0.961. The same
     measure on 7.6.0's server: 0.280, 0.196, 0.280.
-- An unknown behavior or function is not reported.
+- `install Name` where no file in the workspace defines `Name` gets an information notice
+  (`unknown-behavior`), not a warning: a behaviors bundle or a template format the server does not
+  read may define it. It is recomputed when the document that installs it changes, so it can
+  outlast the fix until the next edit. Unknown functions are not reported: any function on the
+  page is callable.
 
 ### Multilingual Support
 
@@ -298,7 +310,7 @@ the list; the file's header says how). `--server <command>` scores another LSP s
 
 ## Architecture
 
-The language server entry point is `server.ts` (LSP wiring and the request handlers), with the testable logic in sibling modules — `extraction.ts` (HTML region extraction and position mapping), `simple-diagnostics.ts`, `command-tiers.ts` (the _hyperscript-compatibility allowlists), `symbol-table.ts` (definition/references/rename) with `tree-symbols.ts` (the names read from the engine's tree), `next-words.ts` (what the engine's grammar takes at a cursor), `document-symbols.ts`, `completion-context.ts`, `formatting.ts` and `localized-descriptions.ts`. Together they:
+The language server entry point is `server.ts` (LSP wiring and the request handlers), with the testable logic in sibling modules — `extraction.ts` (HTML region extraction and position mapping), `simple-diagnostics.ts`, `command-tiers.ts` (the _hyperscript-compatibility allowlists), `symbol-table.ts` (definition/references/rename) with `tree-symbols.ts` (the names read from the engine's tree), `next-words.ts` (what the engine's grammar takes at a cursor), `workspace-index.ts` (the symbol tables of files that are not open), `document-symbols.ts`, `completion-context.ts`, `formatting.ts` and `localized-descriptions.ts`. Together they:
 
 1. **Extracts** hyperscript regions from HTML documents
 2. **Analyzes** code using semantic parsing (multilingual) or pattern-based fallback

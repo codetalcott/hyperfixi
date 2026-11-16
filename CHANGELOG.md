@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`@lokascript/language-server` follows behaviors, functions and `$x` variables across the
+  workspace.** Go to Definition, Find References and Rename stopped at the open file, and a
+  behavior is usually defined in one file and installed from others. The server now indexes the
+  workspace folders' `.html`, `.htm`, `.hs` and `._hs` files (skipping `node_modules`, build
+  output and hidden folders; at most 2,000 files), so those three names resolve wherever they are
+  defined, completion offers the workspace's behaviors after `install`, and `workspace/symbol`
+  lists behavior and function definitions. Rename edits every file that names the behavior, open
+  or not. `install Name` with no definition in the workspace gets an information-level
+  `unknown-behavior` notice. A name nothing defines is not linked across files. The package's
+  scorecard passes all 21 of its probes.
+
 - **`@lokascript/language-server` completes from the engine's grammar and the document's names.**
   Completion offered the same four keywords at most cursor positions. With `@hyperfixi/engine`
   installed and English as the language, the server now asks the engine what fits at the cursor

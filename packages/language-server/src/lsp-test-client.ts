@@ -206,12 +206,13 @@ export class LSPTestClient {
 
   async initialize(
     capabilities: Record<string, unknown> = {},
-    initializationOptions?: Record<string, unknown>
+    initializationOptions?: Record<string, unknown>,
+    rootUri: string | null = null
   ): Promise<JsonRpcResponse> {
     const response = await this.sendRequest('initialize', {
       processId: process.pid,
       capabilities,
-      rootUri: null,
+      rootUri,
       initializationOptions,
     });
     this.sendNotification('initialized', {});
