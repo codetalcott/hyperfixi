@@ -44,6 +44,9 @@ const PAGE = [
   '<button _="on click tog">J</button>', // 26
   '<button _="on click add .">K</button>', // 27
   '<button _="on click call nope() then install Nope">L</button>', // 28
+  '<button _="install Removable(">M</button>', // 29
+  '<button _="install Toggleable(">N</button>', // 30
+  '<button _="install Toggleable">O</button>', // 31
 ];
 const OTHER = [
   '<script type="text/hyperscript">',
@@ -170,21 +173,34 @@ const PROBES: Record<string, () => Promise<boolean>> = {
     return got.includes('.panel') || got.includes('panel');
   },
 
+  // --- the standard behaviors (@hyperfixi/behaviors), which no workspace file defines ---
+  'completion: standard behaviors after install': async () =>
+    offers(typing(22), 'Toggleable', 'Sortable'),
+  "completion: a workspace behavior's parameters inside install(": async () =>
+    same(await completions(typing(29)), ['removeButton']),
+  "completion: a standard behavior's parameters inside install(": async () =>
+    same(await completions(typing(30)), ['cls', 'targetEl']),
+  'hover: a standard behavior': async () => {
+    const response = await client.sendRequest('textDocument/hover', {
+      textDocument: { uri: pageUri },
+      position: at(31, 'Toggleable'),
+    });
+    const value = (response.result as { contents?: { value?: string } } | null)?.contents?.value;
+    return !!value && value.includes('standard behavior') && value.includes('cls');
+  },
+
   // --- diagnostics ---
-  // Not met, on purpose (see KNOWN_FAILURES). A function would get no such
-  // notice either way: any function on the page is callable.
+  // A function gets no such notice: any function on the page is callable.
   'diagnostic: a behavior nothing defines': async () =>
     pageDiagnostics.some(d => d.range.start.line === 28 && d.code === 'unknown-behavior'),
+  'diagnostic: none for a standard behavior, or one another file defines': async () =>
+    !pageDiagnostics.some(
+      d => d.code === 'unknown-behavior' && [20, 29, 30, 31].includes(d.range.start.line)
+    ),
 };
 
 /** Probes the server does not answer yet. Shrink-only: a new expectation starts here. */
-const KNOWN_FAILURES = new Set<string>([
-  // Built in Phase 5 and taken out after a trial in VS Code on this repo's
-  // own examples (2026-11-16): 19 of its 22 notices were for behaviors the
-  // standard bundle defines (Toggleable, Removable, ClickOutside…), which no
-  // file in a workspace does. It comes back when the server can know those.
-  'diagnostic: a behavior nothing defines',
-]);
+const KNOWN_FAILURES = new Set<string>([]);
 
 describe('IDE scorecard', () => {
   beforeAll(async () => {

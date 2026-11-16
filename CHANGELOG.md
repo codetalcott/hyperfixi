@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`@lokascript/language-server` knows the standard behaviors.** `Toggleable`, `Removable`,
+  `ClickOutside` and the rest are defined by `@hyperfixi/behaviors`, not by a file in a
+  workspace, so the server knew nothing about the behaviors pages install most (30 of the 41
+  `install` sites in this repository's examples). With `@hyperfixi/behaviors` installed beside
+  the server (a new optional peer; its `/schemas` entry is read), completion offers them after
+  `install`, `install Name(` offers a behavior's parameters (a workspace behavior's too), and
+  hover on the name shows its description, parameters and events. `install Name` that neither
+  the workspace nor the standard set defines gets an information-level `unknown-behavior`
+  notice; without the package it is not given.
+
 - **`@lokascript/language-server` follows behaviors, functions and `$x` variables across the
   workspace.** Go to Definition, Find References and Rename stopped at the open file, and a
   behavior is usually defined in one file and installed from others. The server now indexes the
