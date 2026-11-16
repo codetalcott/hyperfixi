@@ -1279,4 +1279,61 @@ describe('Symbol table', () => {
     expect(table.symbolAt(2, 10)?.name).toBe('Modal');
     expect(table.symbolAt(0, 2)).toBeUndefined();
   });
+
+  // A `:x` is element-scoped on the engine: one per `_` attribute, one per
+  // behavior. Rename used to rewrite every `:x` in the file.
+  describe('a :x belongs to its element or its behavior', () => {
+    const attr = (code: string, line: number): HyperscriptRegion => ({
+      code,
+      startLine: line,
+      startChar: 0,
+      endLine: line,
+      endChar: code.length,
+      type: 'attribute',
+    });
+    const sites = (table: ReturnType<typeof buildSymbolTable>, line: number, character: number) => {
+      const entry = table.symbolAt(line, character)!;
+      return [...entry.definitions, ...entry.usages].map(l => `${l.line}:${l.character}`).sort();
+    };
+
+    it('keeps two elements apart', () => {
+      const table = buildSymbolTable([
+        attr('on click set :x to 1 then log :x', 0),
+        attr('on click set :x to 2 then log :x', 1),
+      ]);
+      expect(sites(table, 0, 13)).toEqual(['0:13', '0:30']);
+      expect(sites(table, 1, 13)).toEqual(['1:13', '1:30']);
+      expect(table.symbolAt(0, 13)!.name).toBe(':x');
+    });
+
+    it('keeps two behaviors in one script apart, and the script around them', () => {
+      const code = [
+        'behavior A', // 0
+        '  on click', // 1
+        '    if :x set :x to 1 end', // 2
+        '  end', // 3
+        'end', // 4
+        'behavior B', // 5
+        '  on click log :x', // 6
+        'end', // 7
+        'on load log :x', // 8
+      ].join('\n');
+      const table = buildSymbolTable(region(code));
+      expect(sites(table, 2, 7)).toEqual(['2:14', '2:7']);
+      expect(sites(table, 6, 15)).toEqual(['6:15']);
+      expect(sites(table, 8, 12)).toEqual(['8:12']);
+    });
+
+    it('a behavior with no closing line of its own runs to the next behavior', () => {
+      const code = 'behavior A on click log :x end end\nbehavior B on click log :x end end';
+      const table = buildSymbolTable(region(code));
+      expect(sites(table, 0, 24)).toEqual(['0:24']);
+      expect(sites(table, 1, 24)).toEqual(['1:24']);
+    });
+
+    it('a $x is one symbol across elements', () => {
+      const table = buildSymbolTable([attr('on click set $n to 1', 0), attr('on click log $n', 1)]);
+      expect(sites(table, 1, 13)).toEqual(['0:13', '1:13']);
+    });
+  });
 });

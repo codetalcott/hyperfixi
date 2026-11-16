@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`@lokascript/language-server` resolves names by scope, from the engine's parse.** Go to
+  Definition, Find References and Rename now cover a variable written without a sigil
+  (`set count to 1`), a loop variable, a handler argument, a `def` or behavior parameter (and the
+  `install Name(param: …)` sites that name it), a `#name` (defined by the element with that `id`)
+  and a sent or triggered event (defined by its handlers). Each lives in its own scope: a local in
+  its handler or `def`, a parameter in its `def` or behavior. This needs `@hyperfixi/engine`
+  installed (it is an optional peer) and a script the engine parses; a script being typed, or one
+  not in English, is read by the previous patterns. Nothing crosses files yet. The package's
+  scorecard (`src/ide-scorecard.test.ts`) passes 12 of its 20 probes, up from 7.
+
 ### Deprecated
 
 - **102 root exports of `@lokascript/semantic` with no known consumer are marked `@deprecated`**
@@ -26,6 +38,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   open an issue before 8.0.
 
 ### Fixed
+
+- **`@lokascript/language-server` renamed every `:x` in a file when asked to rename one.** A `:x`
+  is element-scoped on the engine: each `_` attribute has its own, and so does each behavior. The
+  server's symbol table keyed variables by name alone, so Rename (and Find References) on one
+  button's `:x` also rewrote another button's and a behavior's. A `:x` is now one symbol per `_`
+  attribute or per behavior; a `$x` is still one symbol across the file. A behavior is found by
+  its closing `end` at the keyword's indentation, so two behaviors written on one line each are
+  told apart only by where the next one starts.
 
 - **`@lokascript/semantic` read a bare English `wait X` as an event wait when X was spelled like
   an event.** `set input to 500 then wait input` came back as `wait for input`: a half-second
