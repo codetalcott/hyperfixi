@@ -138,6 +138,33 @@ try {
   );
 }
 
+// The standard behaviors (`install Toggleable`, `Removable`, …) are defined by
+// @hyperfixi/behaviors, not by any file in a workspace. Its schemas entry is plain data: with it
+// the server knows their names, parameters and descriptions. The specifier is a variable so
+// the package stays optional to the typecheck as well as to the install.
+interface StandardBehavior {
+  name: string;
+  description: string;
+  parameters: Array<{
+    name: string;
+    type: string;
+    optional?: boolean;
+    default?: string | number | boolean;
+    description: string;
+  }>;
+  events: Array<{ name: string; description: string }>;
+}
+let standardBehaviors: Record<string, StandardBehavior> = {};
+try {
+  const schemasEntry = '@hyperfixi/behaviors/schemas';
+  const schemas: any = await import(schemasEntry);
+  standardBehaviors = schemas.ALL_SCHEMAS ?? {};
+} catch {
+  console.error(
+    '[lokascript-ls] @hyperfixi/behaviors not available — the standard behaviors are unknown'
+  );
+}
+
 // Completion asks the engine's grammar what fits at the cursor (next-words.ts). The order of
 // commands comes from how often the reference and hover examples use them, when core is there.
 let completer: Completer | null = null;
@@ -817,6 +844,7 @@ async function validateDocument(document: TextDocument): Promise<void> {
     allDiagnostics = await getDiagnostics(text, globalSettings.language);
   }
 
+  allDiagnostics.push(...unknownBehaviorDiagnostics(document));
   connection.sendDiagnostics({ uri, diagnostics: allDiagnostics });
 }
 
@@ -1136,6 +1164,112 @@ connection.onCompletion((params: TextDocumentPositionParams): CompletionItem[] =
   }
 });
 
+/**
+ * The parameters of a behavior, for `install Name(|`: the workspace's
+ * definition when there is one (its parameter list), else the standard
+ * behavior's of that name.
+ */
+function behaviorParameterCompletions(behavior: string): CompletionItem[] {
+  const suffix = SCOPE_SEP + `behavior ${behavior}`;
+  const names = new Set<string>();
+  for (const { table } of everyTable()) {
+    for (const [key, entry] of table.symbols) {
+      if (key.endsWith(suffix) && entry.definitions.length > 0) names.add(entry.name);
+    }
+  }
+  if (names.size > 0) {
+    return [...names].map(name => ({
+      label: name,
+      kind: CompletionItemKind.Property,
+      detail: `parameter of ${behavior}`,
+      insertText: `${name}: `,
+    }));
+  }
+  return (standardBehaviors[behavior]?.parameters ?? []).map((parameter, index) => ({
+    label: parameter.name,
+    kind: CompletionItemKind.Property,
+    detail: `${parameter.type}${parameter.default !== undefined ? ` = ${parameter.default}` : ''}: ${parameter.description}`,
+    insertText: `${parameter.name}: `,
+    sortText: String(index).padStart(4, '0'),
+  }));
+}
+
+/** Is `name` a behavior some file in the workspace defines? */
+function workspaceDefinesBehavior(name: string): boolean {
+  return everyTable().some(({ table }) => {
+    const match = table.symbols.get(name);
+    return match?.kind === 'behavior' && match.definitions.length > 0;
+  });
+}
+
+/** Hover for a standard behavior's name, where no workspace file defines one by that name. */
+function standardBehaviorHover(
+  document: TextDocument,
+  position: { line: number; character: number }
+): Hover | null {
+  const entry = getDocSymbolTable(document).table.symbolAt(position.line, position.character);
+  if (!entry || entry.kind !== 'behavior') return null;
+  const standard = standardBehaviors[entry.name];
+  if (!standard || workspaceDefinesBehavior(entry.name)) return null;
+  const parameters = standard.parameters.map(
+    p =>
+      `- \`${p.name}\` (${p.type}${p.default !== undefined ? `, default \`${p.default}\`` : ''}): ${p.description}`
+  );
+  const events = standard.events.map(e => `- \`${e.name}\`: ${e.description}`);
+  return {
+    contents: {
+      kind: MarkupKind.Markdown,
+      value: [
+        `**${standard.name}** (standard behavior, \`@hyperfixi/behaviors\`)`,
+        '',
+        standard.description,
+        ...(parameters.length ? ['', 'Parameters:', ...parameters] : []),
+        ...(events.length ? ['', 'Events:', ...events] : []),
+      ].join('\n'),
+    },
+  };
+}
+
+/**
+ * `install Name` where nothing the server reads defines `Name`: no file in
+ * the workspace, and no standard behavior. Only when the standard behaviors
+ * are known: without them most of these notices are for `Toggleable` and its
+ * kin (19 of 22 on this repository's examples, which is why this was once
+ * withdrawn). Information, not a warning: a behavior can still come from a
+ * script the server does not read. Functions get no such check: any function
+ * on the page is callable.
+ */
+function unknownBehaviorDiagnostics(document: TextDocument): Diagnostic[] {
+  if (Object.keys(standardBehaviors).length === 0) return [];
+  try {
+    const { table } = getDocSymbolTable(document);
+    const where =
+      workspaceRoots.length > 0 ? "this workspace's .html and .hs files" : 'the open files';
+    const diagnostics: Diagnostic[] = [];
+    for (const entry of table.symbols.values()) {
+      if (entry.kind !== 'behavior' || entry.usages.length === 0) continue;
+      if (entry.definitions.length > 0 || standardBehaviors[entry.name]) continue;
+      if (workspaceDefinesBehavior(entry.name)) continue;
+      for (const loc of entry.usages) {
+        diagnostics.push({
+          severity: DiagnosticSeverity.Information,
+          range: {
+            start: { line: loc.line, character: loc.character },
+            end: { line: loc.line, character: loc.character + loc.length },
+          },
+          message: `No behavior named "${entry.name}": nothing in ${where} defines it, and it is not a standard behavior. If a script the language server does not read defines it, this can be ignored.`,
+          code: 'unknown-behavior',
+          source: getBranding(resolvedMode),
+        });
+      }
+    }
+    return diagnostics;
+  } catch (error) {
+    connection.console.error(`Unknown-behavior check error: ${error}`);
+    return [];
+  }
+}
+
 /** Names the runtime supplies wherever an expression is read. */
 const PRONOUNS = ['me', 'it', 'result', 'event', 'target', 'detail'];
 /** Keywords after which the next name is being DECLARED or is not a variable. */
@@ -1216,6 +1350,10 @@ function getGrammarCompletions(
 
     // A word: what the grammar takes after the text before it.
     const text = beforeCursor.replace(/[A-Za-z_][\w-]*!?$/, '');
+    // `install Name(…, |`: the behavior's parameters, by name.
+    const installing = /\binstall\s+([A-Za-z_][\w.]*)\s*\((?:[^()]*,)?\s*$/.exec(text);
+    if (installing) return behaviorParameterCompletions(installing[1]!);
+
     const next = completer.nextWords(text);
     if (!next) return null;
 
@@ -1232,11 +1370,22 @@ function getGrammarCompletions(
           if (entry.kind === kind && entry.definitions.length > 0) names.add(entry.name);
         }
       }
-      return [...names].map(name => ({
+      const items: CompletionItem[] = [...names].map(name => ({
         label: name,
         kind: kind === 'behavior' ? CompletionItemKind.Class : CompletionItemKind.Function,
         detail: kind,
       }));
+      if (kind === 'behavior') {
+        for (const standard of Object.values(standardBehaviors)) {
+          if (names.has(standard.name)) continue;
+          items.push({
+            label: standard.name,
+            kind: CompletionItemKind.Class,
+            detail: `standard behavior: ${standard.description}`,
+          });
+        }
+      }
+      return items;
     };
 
     let items: CompletionItem[];
@@ -1643,6 +1792,9 @@ connection.onHover((params: TextDocumentPositionParams): Hover | null => {
     const text = document.getText();
     const uri = document.uri;
     const position = params.position;
+
+    const standard = standardBehaviorHover(document, position);
+    if (standard) return standard;
 
     // For HTML files, check if we're inside a hyperscript region
     if (isHtmlDocument(uri, text)) {

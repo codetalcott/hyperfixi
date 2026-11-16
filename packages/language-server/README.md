@@ -55,9 +55,8 @@ the engine's parse error in every mode.
 | **Document Formatting** | Format hyperscript code with consistent indentation                                   | ✅      |
 
 `src/ide-scorecard.test.ts` asks the built server what an author expects of identifiers and
-completion, one probe each; the one it does not pass is in its `KNOWN_FAILURES`, with the reason
-(2026-11-16). What follows is how each feature works and where it stops; "Partial" marks a
-feature whose limits an author will meet.
+completion, one probe each, and all of them pass (2026-11-16). What follows is how each feature
+works and where it stops; "Partial" marks a feature whose limits an author will meet.
 
 - **Identifiers** resolve, each in its own scope, when `@hyperfixi/engine` is
   installed and parses the script: a variable written without a sigil (`set count to 1`) and a loop
@@ -96,9 +95,17 @@ feature whose limits an author will meet.
     positions before a grammar word): the list holds the word written next 0.995 of the time; once
     its first letter is typed it is first 0.666 of the time and in the first five 0.963. The same
     measure on 7.6.0's server: 0.280, 0.196, 0.280.
-- An unknown behavior or function is not reported. A notice for `install Name` with no definition
-  in the workspace was built and withdrawn: on this repository's examples 19 of its 22 notices
-  were for behaviors the standard bundle defines, which no file in a workspace does.
+- **The standard behaviors** (`Toggleable`, `Removable`, `Draggable` and the rest of
+  `@hyperfixi/behaviors`) are defined by that package, not by a file in the workspace. When it is
+  installed beside the server, completion offers them after `install`, `install Name(` offers
+  the behavior's parameters (the workspace's own behaviors' too), and hover on the name shows its
+  description, parameters and events. Go to Definition has nowhere to go for them.
+- `install Name` where no file in the workspace defines `Name` and no standard behavior has that
+  name gets an information notice (`unknown-behavior`), not a warning: a script the server does
+  not read may define it. It is only given when `@hyperfixi/behaviors` is installed: without the
+  standard names most such notices would be wrong (19 of 22 on this repository's examples). It is
+  recomputed when the installing document changes. Unknown functions are not reported: any
+  function on the page is callable.
 
 ### Multilingual Support
 
@@ -282,6 +289,7 @@ For users who prefer the `hyperscript` namespace:
 
 - `@lokascript/semantic` and `@lokascript/framework` are **required** (regular dependencies): the semantic package registers the 24 languages at startup, and the framework renders the LSE bracket notation shown in hover. They used to be declared as optional peers while being imported statically, so a server installed without them crashed at startup instead of falling back.
 - `@hyperfixi/engine` is an **optional** peer: the engine that runs hyperscript. With it the server surfaces its parse errors (at the position the engine stopped) and gives the AST nodes their source positions for hover, symbols and completions. The symbol table reads its tree too: without the engine, Go to Definition, Find References and Rename know behaviors, functions and sigil variables only.
+- `@hyperfixi/behaviors` is an **optional** peer, for its `/schemas` entry: the standard behaviors' names, parameters and descriptions (completion after `install`, hover, and the `unknown-behavior` notice, which is not given without it).
 - `@hyperfixi/core` is an **optional** peer, for two of its entries: `/ast-utils` (complexity diagnostics, hover, symbols and completions on the interchange) and `/lsp-metadata` (keyword and hover docs). The AST nodes come from `@lokascript/semantic`, which names each command's roles itself. Without either, diagnostics degrade to the pattern-based quote/bracket checks and hover uses built-in fallback docs. (Until 4.0 the parse errors and nodes came from `@hyperfixi/core`'s parser.)
 
 A bundler that wants an English-only, dependency-free server replaces the semantic, framework, engine and core imports with throwing or empty shims at bundle time; the server's capability probes are written for that case.
