@@ -57,8 +57,8 @@ What "Partial" leaves out is listed, probe by probe, in `src/ide-scorecard.test.
 
 - **Identifiers** resolve by name within one file. Behavior and `def` parameters, variables
   written without a sigil (`set count to 1`), `#id` references and names defined in another file do
-  not resolve. Find References and Rename on a `:x` variable cover every `:x` in the file, including
-  ones that belong to another element: check a rename before accepting it.
+  not resolve. A `:x` is one variable per element (one `_` attribute) or per behavior, and Find
+  References and Rename stay inside it.
 - **Completion** does not read the document: it offers no behavior names after `install`, no
   function names after `call`, no variables, and none of the page's ids or classes. A word typed
   part-way through a handler (`on click tog`) is offered only the feature keywords.

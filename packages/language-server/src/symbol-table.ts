@@ -32,7 +32,9 @@ export interface SymbolEntry {
   kind: SymbolKind;
   /**
    * - 'global' — behaviors, functions, $vars
-   * - 'local'  — :vars (per-handler scope)
+   * - 'local'  — :vars. The engine's element scope: a `:x` belongs to the
+   *              element its `_` attribute is on, or to the behavior it is
+   *              written in. Two elements' `:x` are two symbols.
    * - 'caret'  — ^vars (DOM-scoped, walks ancestors until a `dom-scope` boundary)
    * - 'attr'   — attrs.X (per-component-instance, read from HTML attributes)
    */
@@ -63,8 +65,10 @@ export function buildSymbolTable(
   regions: HyperscriptRegion[],
   getKeywordVariants?: (eng: string) => string[]
 ): SymbolTable {
+  // Keyed by name, except a `:x`, which is keyed by name and scope (see
+  // `elementScopes`): `entry.name` is the name to show and to rename.
   const symbols = new Map<string, SymbolEntry>();
-  const locationIndex: Array<{ line: number; start: number; end: number; name: string }> = [];
+  const locationIndex: Array<{ line: number; start: number; end: number; key: string }> = [];
 
   const variants = (eng: string) => (getKeywordVariants ? getKeywordVariants(eng) : [eng]);
 
@@ -74,6 +78,7 @@ export function buildSymbolTable(
   const defaultKws = variants('default');
   const installKws = variants('install');
   const callKws = variants('call');
+  const endKws = variants('end');
 
   // Keyword alternation with UNICODE word boundaries. `\b` is ASCII-only, so
   // `\b設定` could never match and definitions were silently absent in every
@@ -110,14 +115,64 @@ export function buildSymbolTable(
   // discouraged by upstream — attrs is essentially read-only from hyperscript).
   const attrsRefPat = /\battrs\.([A-Za-z_]\w*)/g;
 
-  function getOrCreate(name: string, kind: SymbolKind, scope: SymbolEntry['scope']): SymbolEntry {
-    let entry = symbols.get(name);
+  const keys = new Map<SymbolEntry, string>();
+  function getOrCreate(
+    name: string,
+    kind: SymbolKind,
+    scope: SymbolEntry['scope'],
+    key = name
+  ): SymbolEntry {
+    let entry = symbols.get(key);
     if (!entry) {
       entry = { name, kind, scope, definitions: [], usages: [] };
-      symbols.set(name, entry);
+      symbols.set(key, entry);
+      keys.set(entry, key);
     }
     return entry;
   }
+
+  /**
+   * Where a `:x` at `offset` lives: its behavior, or else its region (one
+   * `_` attribute is one element). A behavior runs from its keyword to the
+   * `end` line at the keyword's own indentation; when no line closes it that
+   * way (a behavior written on one line), to the next behavior or the end of
+   * the region. That fallback can only merge two scopes, which is what this
+   * table did for every `:x` before it had scopes.
+   */
+  function elementScopes(code: string, regionIndex: number): (offset: number) => string {
+    const lines = code.split('\n');
+    const lineStarts: number[] = [];
+    let at = 0;
+    for (const line of lines) {
+      lineStarts.push(at);
+      at += line.length + 1;
+    }
+    const isEnd = (word: string) => endKws.some(k => k.toLowerCase() === word.toLowerCase());
+    const starts = [...code.matchAll(behaviorDefPat)].map(m => m.index ?? 0);
+    const spans = starts.map((start, i) => {
+      let end = starts[i + 1] ?? code.length;
+      const lineNo = findLocalLine(code, start);
+      const indent = code.slice(lineStarts[lineNo]!, start);
+      if (/^\s*$/.test(indent)) {
+        for (let l = lineNo + 1; l < lines.length; l++) {
+          const line = lines[l]!;
+          if (
+            isEnd(line.trim()) &&
+            line.slice(0, line.length - line.trimStart().length) === indent
+          ) {
+            end = Math.min(end, lineStarts[l]! + line.length);
+            break;
+          }
+        }
+      }
+      return { start, end };
+    });
+    return offset => {
+      const b = spans.findIndex(span => offset >= span.start && offset < span.end);
+      return b < 0 ? `region ${regionIndex}` : `region ${regionIndex} behavior ${b}`;
+    };
+  }
+  const SCOPE_SEP = '\u0000';
 
   function toDocLine(region: HyperscriptRegion, localLine: number): number {
     return region.startLine + localLine;
@@ -143,10 +198,9 @@ export function buildSymbolTable(
     // Two patterns can hit the same span (`install Foo(x)` matches both the
     // install and the call-syntax scans). Record it once: duplicate locations
     // become overlapping TextEdits, which VS Code rejects on rename.
+    const key = keys.get(entry)!;
     if (
-      locationIndex.some(
-        l => l.name === entry.name && l.line === loc.line && l.start === loc.character
-      )
+      locationIndex.some(l => l.key === key && l.line === loc.line && l.start === loc.character)
     ) {
       return;
     }
@@ -159,7 +213,7 @@ export function buildSymbolTable(
       line: loc.line,
       start: loc.character,
       end: loc.character + length,
-      name: entry.name,
+      key,
     });
   }
 
@@ -185,8 +239,14 @@ export function buildSymbolTable(
   // matches at the same offset are skipped.
   const caretDefOffsets = new Map<HyperscriptRegion, Set<number>>();
 
-  for (const region of regions) {
+  for (const [regionIndex, region] of regions.entries()) {
     const code = region.code;
+    const scopeAt = elementScopes(code, regionIndex);
+    /** A `$x` is one symbol everywhere; a `:x` is one per element or behavior. */
+    const variable = (varName: string, offset: number): SymbolEntry =>
+      varName.startsWith('$')
+        ? getOrCreate(varName, 'variable', 'global')
+        : getOrCreate(varName, 'variable', 'local', varName + SCOPE_SEP + scopeAt(offset));
     const regionDefOffsets = new Set<number>();
     defVarOffsets.set(region, regionDefOffsets);
     const regionCaretDefOffsets = new Set<number>();
@@ -232,9 +292,8 @@ export function buildSymbolTable(
       const varOffset = (m.index ?? 0) + m[0].indexOf(varName);
       const localLine = findLocalLine(code, varOffset);
       const localChar = findLocalChar(code, varOffset);
-      const scope = varName.startsWith('$') ? 'global' : 'local';
       addLocation(
-        getOrCreate(varName, 'variable', scope),
+        variable(varName, varOffset),
         'def',
         region,
         localLine,
@@ -273,9 +332,14 @@ export function buildSymbolTable(
       if (regionDefOffsets.has(varOffset)) continue;
       const localLine = findLocalLine(code, varOffset);
       const localChar = findLocalChar(code, varOffset);
-      const scope = varName.startsWith('$') ? 'global' : 'local';
-      const entry = getOrCreate(varName, 'variable', scope);
-      addLocation(entry, 'use', region, localLine, localChar, varName.length);
+      addLocation(
+        variable(varName, varOffset),
+        'use',
+        region,
+        localLine,
+        localChar,
+        varName.length
+      );
     }
 
     // Caret-var writes: `set ^name to ...` — symbol name is stored with the
@@ -390,7 +454,7 @@ export function buildSymbolTable(
     symbolAt(line: number, character: number): SymbolEntry | undefined {
       for (const loc of locationIndex) {
         if (loc.line === line && character >= loc.start && character < loc.end) {
-          return symbols.get(loc.name);
+          return symbols.get(loc.key);
         }
       }
       return undefined;

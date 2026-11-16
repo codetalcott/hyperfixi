@@ -27,6 +27,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`@lokascript/language-server` renamed every `:x` in a file when asked to rename one.** A `:x`
+  is element-scoped on the engine: each `_` attribute has its own, and so does each behavior. The
+  server's symbol table keyed variables by name alone, so Rename (and Find References) on one
+  button's `:x` also rewrote another button's and a behavior's. A `:x` is now one symbol per `_`
+  attribute or per behavior; a `$x` is still one symbol across the file. A behavior is found by
+  its closing `end` at the keyword's indentation, so two behaviors written on one line each are
+  told apart only by where the next one starts.
+
 - **`@lokascript/semantic` read a bare English `wait X` as an event wait when X was spelled like
   an event.** `set input to 500 then wait input` came back as `wait for input`: a half-second
   wait became a wait for the `input` event. The engine reads the X of `wait X` as a time
