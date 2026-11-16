@@ -269,6 +269,10 @@ npm test
 npm test -- --coverage
 ```
 
+`npx tsx src/tools/completion-measure.ts` scores the built server's completion on the next word
+of real scripts (recall and precision against the engine's own parser; the file's header says
+how). `--server <command>` scores another LSP server on the same requests.
+
 ## Architecture
 
 The language server entry point is `server.ts` (LSP wiring and the request handlers), with the testable logic in sibling modules — `extraction.ts` (HTML region extraction and position mapping), `simple-diagnostics.ts`, `command-tiers.ts` (the _hyperscript-compatibility allowlists), `symbol-table.ts` (definition/references/rename), `document-symbols.ts`, `completion-context.ts`, `formatting.ts` and `localized-descriptions.ts`. Together they:

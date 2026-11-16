@@ -5,7 +5,7 @@
  */
 
 import { spawn, ChildProcess } from 'child_process';
-import { join } from 'path';
+import { fileURLToPath } from 'url';
 
 // =============================================================================
 // JSON-RPC Protocol Helpers
@@ -67,9 +67,11 @@ export class LSPTestClient {
   configurationResponse: unknown[] | null = null;
   readonly stderr: string[] = [];
 
-  async start(env: NodeJS.ProcessEnv = {}): Promise<void> {
-    const serverPath = join(__dirname, '..', 'dist', 'server.js');
-    this.server = spawn('node', [serverPath, '--stdio'], {
+  /** `command` runs another server (an executable and its arguments) in place of this package's. */
+  async start(env: NodeJS.ProcessEnv = {}, command?: string[]): Promise<void> {
+    const serverPath = fileURLToPath(new URL('../dist/server.js', import.meta.url));
+    const [bin, ...args] = command ?? ['node', serverPath, '--stdio'];
+    this.server = spawn(bin!, args, {
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, ...env },
     });
