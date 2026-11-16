@@ -189,7 +189,10 @@ export class QuechuaKeywordExtractor implements ContextAwareExtractor {
       // whole-token match and split at `_` (`k` `_` `iri's`). The word comes out
       // whole, `'s` and all, for splitReferencePossessive to read apart.
       const possessive = after === "'" && /^s(?!\p{L})/iu.test(input.slice(startPos + len + 1));
-      if (after !== undefined && isQuechuaLetter(after) && !possessive) continue;
+      // A digit continues a name as a letter does: `it2` is a name, not `it` and `2`.
+      if (after !== undefined && (isQuechuaLetter(after) || /[0-9]/.test(after)) && !possessive) {
+        continue;
+      }
 
       // Check all chars are Quechua. An interior `_` is allowed so the dict's
       // underscore compounds (k_iri, hatun_kay — exact keyword entries) can
@@ -246,11 +249,13 @@ export class QuechuaKeywordExtractor implements ContextAwareExtractor {
     let pos = position;
 
     // `_` continues a word between letters or digits, so a snake_case name (`my_func()`) is one
-    // word; it split at `_` before.
+    // word; it split at `_` before. A digit continues a word that has begun (`x1`, `item2`):
+    // it did so only after an `_`, so `x1` split as `x` + `1`, the renderer hid that by
+    // writing `(x1)`, and a hand-written `x1 ta 10 man churanay` could not be read.
     const continuesWord = (at: number): boolean =>
       isQuechuaLetter(input[at]) ||
       (input[at] === '_' && word.length > 0 && /[\p{L}\p{N}]/u.test(input[at + 1] ?? '')) ||
-      (word.includes('_') && /[0-9]/.test(input[at]));
+      (word.length > 0 && /[0-9]/.test(input[at]));
     while (pos < input.length && continuesWord(pos)) {
       // Break for an attached agglutinative case-marker suffix (`-ta`, `-man`,
       // `-pi`, …) at a word boundary. Restricted to the Quechua suffix set — a

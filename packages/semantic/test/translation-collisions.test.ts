@@ -40,9 +40,14 @@ describe('a variable the target language reads as a value word', () => {
     expect(english(render(parse(renamed, 'en')!, 'tl'), 'tl')).toBe(renamed);
   });
 
-  it('checks the rename in the target language: tr splits `ben1` at its digit', () => {
+  // The rename is checked in the target language. tr split `ben1` at its digit
+  // until digit-names.test.ts, and `benValue` was offered instead.
+  it('checks the rename in the target language: `ben1` reads as one name in tr', () => {
     const [finding] = findTranslationCollisions('on click put ben into #out', 'en', 'tr');
-    expect(finding).toMatchObject({ name: 'ben', rename: 'benValue' });
+    expect(finding).toMatchObject({ name: 'ben', rename: 'ben1' });
+    const renamed = 'on click put ben1 into #out';
+    expect(findTranslationCollisions(renamed, 'en', 'tr')).toEqual([]);
+    expect(english(render(parse(renamed, 'en')!, 'tr'), 'tr')).toBe(renamed);
   });
 
   it('finds it in a foreign source too', () => {

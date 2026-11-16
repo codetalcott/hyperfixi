@@ -329,8 +329,9 @@ function freeName(code: string, languages: readonly string[], candidates: readon
 }
 
 /**
- * Renames for `name`, in the order a finding offers them. A digit splits the
- * word in some tokenizers (tr, qu): the candidates are checked, not assumed.
+ * Renames for `name`, in the order a finding offers them. The candidates are
+ * checked in each language, not assumed (tr and qu once split a name at its
+ * digit, and `name1` was no name there).
  */
 function renamesFor(name: string): string[] {
   return [

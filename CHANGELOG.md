@@ -74,6 +74,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Turkish and Quechua could not read a variable name with a digit in it.** Their tokenizers let
+  a digit continue a word only after an `_`, so `x1` was read as `x` and `1` (`x_1` was one word).
+  A translation into either language covered for it by writing the name in parentheses
+  (`(x1) i 10 e ayarla`), which read back as `set (x1) to 10`; but the same script written by
+  hand, `x1 i 10 e ayarla`, was refused with "Could not parse input". A name with a digit is now
+  one word in both languages, as in the other 22: it is written plainly, reads back as written,
+  and reads when written by hand. In Quechua a keyword directly followed by a digit (`it2`) is a
+  name too. Two command-shape lanes that were refused for this (`put select2() into me`, qu and
+  tr) now pass. The name-collision rename for Turkish is `i1` again where it was `iValue`.
+
 - **`@lokascript/language-server` read hyperscript quoted in a page's prose as a script.** Any
   `_="…"` in an HTML file was extracted, so a page documenting hyperscript
   (`<code>_="on click …"</code>`, a `<pre>` with `&lt;` in it) got parse errors for its own text:
