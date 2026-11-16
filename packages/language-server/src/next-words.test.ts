@@ -80,6 +80,23 @@ describe('order', () => {
     expect(words.indexOf('toggle')).toBeLessThan(words.indexOf('halt'));
   });
 
+  // Found in VS Code: after `on click ` the list opened with `queue`,
+  // `throttled`, `debounced`: words of `on` the grammar takes there and no
+  // example ever writes.
+  it('puts a word of the command that no example uses after the commands', () => {
+    const { words } = next('on click ');
+    expect(words.indexOf('put')).toBeLessThan(words.indexOf('queue'));
+    expect(words.indexOf('queue')).toBeLessThan(
+      words.indexOf('is') < 0 ? Infinity : words.indexOf('is')
+    );
+    const afterAdd = next('on click put x ');
+    expect(afterAdd.words[0]).toBe('into');
+  });
+
+  it("does not offer the possessive 's as a word", () => {
+    expect(next('on click put x ').words).not.toContain('s');
+  });
+
   it("without examples keeps the grammar's order", () => {
     const plain = createCompleter(asEngine).nextWords('on click ')!.words;
     expect(plain).toEqual(expect.arrayContaining(['put', 'toggle']));

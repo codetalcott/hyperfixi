@@ -76,7 +76,7 @@ function at(line: number, needle: string, nth = 1): Pos {
 const typing = (line: number): Pos => ({ line, character: PAGE[line]!.indexOf('">') });
 
 const client = new LSPTestClient();
-let pageDiagnostics: Array<{ range: { start: Pos } }> = [];
+let pageDiagnostics: Array<{ range: { start: Pos }; code?: string | number }> = [];
 
 async function locations(method: string, position: Pos): Promise<string[]> {
   const response = await client.sendRequest(method, {
@@ -171,14 +171,19 @@ const PROBES: Record<string, () => Promise<boolean>> = {
   },
 
   // --- diagnostics ---
-  'diagnostic: unknown behavior or function': async () =>
-    pageDiagnostics.some(d => d.range.start.line === 28),
+  // Not met, on purpose (see KNOWN_FAILURES). A function would get no such
+  // notice either way: any function on the page is callable.
+  'diagnostic: a behavior nothing defines': async () =>
+    pageDiagnostics.some(d => d.range.start.line === 28 && d.code === 'unknown-behavior'),
 };
 
-/** Probes the server does not answer yet. Shrink-only. */
-const KNOWN_FAILURES = new Set([
-  'definition: behavior in another open file',
-  'diagnostic: unknown behavior or function',
+/** Probes the server does not answer yet. Shrink-only: a new expectation starts here. */
+const KNOWN_FAILURES = new Set<string>([
+  // Built in Phase 5 and taken out after a trial in VS Code on this repo's
+  // own examples (2026-11-16): 19 of its 22 notices were for behaviors the
+  // standard bundle defines (Toggleable, Removable, ClickOutside…), which no
+  // file in a workspace does. It comes back when the server can know those.
+  'diagnostic: a behavior nothing defines',
 ]);
 
 describe('IDE scorecard', () => {

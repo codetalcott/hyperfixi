@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`@lokascript/language-server` follows behaviors, functions and `$x` variables across the
+  workspace.** Go to Definition, Find References and Rename stopped at the open file, and a
+  behavior is usually defined in one file and installed from others. The server now indexes the
+  workspace folders' `.html`, `.htm`, `.hs` and `._hs` files (skipping `node_modules`, build
+  output and hidden folders; at most 2,000 files), so those three names resolve when exactly one
+  file defines them, completion offers the workspace's behaviors after `install`, and
+  `workspace/symbol` lists behavior and function definitions. Rename edits every file that names
+  the behavior, open or not. Two files that each define a name are treated as two programs and
+  not linked; a name nothing defines is not linked either.
+
 - **`@lokascript/language-server` completes from the engine's grammar and the document's names.**
   Completion offered the same four keywords at most cursor positions. With `@hyperfixi/engine`
   installed and English as the language, the server now asks the engine what fits at the cursor
@@ -53,6 +63,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   open an issue before 8.0.
 
 ### Fixed
+
+- **`@lokascript/language-server` read hyperscript quoted in a page's prose as a script.** Any
+  `_="…"` in an HTML file was extracted, so a page documenting hyperscript
+  (`<code>_="on click …"</code>`, a `<pre>` with `&lt;` in it) got parse errors for its own text:
+  13 across this repository's examples, seen in VS Code. A `_=` is now a script only inside an
+  opening tag.
 
 - **`@lokascript/language-server` renamed every `:x` in a file when asked to rename one.** A `:x`
   is element-scoped on the engine: each `_` attribute has its own, and so does each behavior. The

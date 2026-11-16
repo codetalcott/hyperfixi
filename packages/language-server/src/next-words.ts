@@ -186,13 +186,21 @@ export function createCompleter(engine: CompletionEngine, examples: string[] = [
 
       const ok = (word: string) => accepts(text, word);
       const required = first.expected.filter(w => WORD.test(w) && ok(w));
-      const own = first.tried
+      // `s` is the possessive `'s`, which nobody completes as a word.
+      const tried = first.tried.filter(w => w !== 's');
+      const ownAll = tried
         .filter(w => !structural.has(w) && !generic.has(w) && !CLOSERS.includes(w) && ok(w))
         .reverse();
+      // A word of this command that no example ever uses (`queue`, `throttled`
+      // after `on click`) is taken by the grammar but is not what comes next:
+      // it goes after the commands. With no examples every word keeps its place.
+      const known = frequency.size > 0;
+      const own = known ? ownAll.filter(w => frequency.has(w)) : ownAll;
+      const rare = known ? ownAll.filter(w => !frequency.has(w)) : [];
       const next = [...CLOSERS, ...commands, ...features].filter(ok).sort(byFrequency);
-      const operators = first.tried.filter(w => generic.has(w) && ok(w)).sort(byFrequency);
+      const operators = tried.filter(w => generic.has(w) && ok(w)).sort(byFrequency);
       const front = [...new Set([...required, ...own])];
-      const words = [...new Set([...front, ...next, ...operators])];
+      const words = [...new Set([...front, ...next, ...rare, ...operators])];
 
       const named = read(text + PLACEHOLDER);
       const takesName = named.ok || (named.stoppedAt ?? -1) >= text.length + PLACEHOLDER.length;

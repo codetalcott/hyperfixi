@@ -284,7 +284,9 @@ def helper()`
 
   describe('Definition, References, Rename', () => {
     const testUri = 'file:///test/nav.hs';
-    const text = 'behavior Modal\n  on open show me\nend\ninstall Modal\ninstall Modal(x: 1)';
+    // `Popup` is this file's alone: a behavior another open document also
+    // defines is linked across files (see the workspace tests below).
+    const text = 'behavior Popup\n  on open show me\nend\ninstall Popup\ninstall Popup(x: 1)';
 
     beforeAll(async () => {
       await client.open(testUri, text);
@@ -316,7 +318,7 @@ def helper()`
         textDocument: { uri: testUri },
         position: { line: 4, character: 9 },
       });
-      expect((prepare.result as { placeholder: string }).placeholder).toBe('Modal');
+      expect((prepare.result as { placeholder: string }).placeholder).toBe('Popup');
 
       const rename = await client.sendRequest('textDocument/rename', {
         textDocument: { uri: testUri },
