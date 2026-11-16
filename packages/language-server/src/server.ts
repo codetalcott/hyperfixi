@@ -48,10 +48,13 @@ import {
   isHtmlDocument,
   extractHyperscriptRegions,
   extractElementIds,
+  extractElementClasses,
   findRegionAtPosition,
   offsetToPosition,
 } from './extraction.js';
 import { getWordAtPosition } from './utils.js';
+import { createCompleter, type Completer, type CompletionEngine } from './next-words.js';
+import { namesInScopeAtEnd, treeSites, SCOPE_SEP } from './tree-symbols.js';
 import { formatHyperscript } from './formatting.js';
 import { runSimpleDiagnostics, runDirectiveDiagnostics } from './simple-diagnostics.js';
 import { getSymbolTable } from './symbol-table.js';
@@ -94,6 +97,7 @@ function getOtherLanguages(): string[] {
 
 let interchangeLSP: any = null;
 let engineParse: ((code: string) => unknown) | null = null;
+let engineModule: CompletionEngine | null = null;
 let lspMetadata: any = null;
 
 // The engine that runs hyperscript (@hyperfixi/engine: hyperfixi-hs.js, and hyperfixi.js
@@ -104,6 +108,7 @@ try {
   const engine = await import('@hyperfixi/engine');
   engine.register(...engine.everything);
   engineParse = engine.parse;
+  engineModule = engine as unknown as CompletionEngine;
 } catch {
   console.error('[lokascript-ls] @hyperfixi/engine not available — parse errors disabled');
 }
@@ -126,6 +131,33 @@ try {
   console.error(
     '[lokascript-ls] @hyperfixi/core/lsp-metadata not available - using fallback keywords'
   );
+}
+
+// Completion asks the engine's grammar what fits at the cursor (next-words.ts). The order of
+// commands comes from how often the reference and hover examples use them, when core is there.
+let completer: Completer | null = null;
+if (engineModule) {
+  const examples: string[] = [];
+  for (const doc of Object.values(lspMetadata?.HOVER_DOCS ?? {})) {
+    const example = (doc as { example?: unknown }).example;
+    if (typeof example === 'string') examples.push(example);
+  }
+  try {
+    const reference: any = await import('@hyperfixi/core/reference');
+    for (const command of Object.values(reference.commands ?? {})) {
+      examples.push(...((command as { examples?: string[] }).examples ?? []));
+    }
+    for (const pattern of reference.patterns ?? []) {
+      if (typeof pattern?.code === 'string') examples.push(pattern.code);
+    }
+  } catch {
+    // Without core the grammar's own order stands.
+  }
+  try {
+    completer = createCompleter(engineModule, examples);
+  } catch (error) {
+    console.error(`[lokascript-ls] grammar completion disabled: ${error}`);
+  }
 }
 
 // Try to import framework IR for LSE bracket notation in hover
@@ -1072,7 +1104,10 @@ connection.onCompletion((params: TextDocumentPositionParams): CompletionItem[] =
     const context = inferContext(beforeCursor);
     if (context === 'caret') return getCaretVarCompletions(document);
     if (context === 'attrs-property') return getAttrsCompletions();
-    return getContextualCompletions(context, language);
+    return (
+      getGrammarCompletions(document, beforeCursor, regions.indexOf(found.region), language) ??
+      getContextualCompletions(context, language)
+    );
   } else {
     // Pure hyperscript file
     const offset = document.offsetAt(position);
@@ -1080,9 +1115,178 @@ connection.onCompletion((params: TextDocumentPositionParams): CompletionItem[] =
     const context = inferContext(beforeCursor);
     if (context === 'caret') return getCaretVarCompletions(document);
     if (context === 'attrs-property') return getAttrsCompletions();
-    return getContextualCompletions(context, language);
+    return (
+      getGrammarCompletions(document, beforeCursor, 0, language) ??
+      getContextualCompletions(context, language)
+    );
   }
 });
+
+/** Names the runtime supplies wherever an expression is read. */
+const PRONOUNS = ['me', 'it', 'result', 'event', 'target', 'detail'];
+/** Keywords after which the next name is being DECLARED or is not a variable. */
+const NOT_A_VARIABLE_AFTER = new Set([
+  'def',
+  'behavior',
+  'for',
+  'index',
+  'send',
+  'trigger',
+  'install',
+  'on',
+  'fetch',
+  'go',
+]);
+
+/**
+ * Completions from the engine's grammar and the document's names, or null
+ * when this cursor is not one it can answer (no engine, another language,
+ * or text the engine stops in before the cursor): the caller's keyword
+ * lists stand then.
+ */
+function getGrammarCompletions(
+  document: TextDocument,
+  beforeCursor: string,
+  regionIndex: number,
+  language: string
+): CompletionItem[] | null {
+  if (!completer || !(language === 'en' || language.startsWith('en-'))) return null;
+  try {
+    const pageText = document.getText();
+    const partial = /(^|[^\w)\]])([#.:$])([\w-]*)$/.exec(beforeCursor);
+
+    // `x.…`: a property of a value this server knows nothing about.
+    if (/[\w)\]]\.[\w-]*$/.test(beforeCursor)) return [];
+
+    // `#…`: the page's ids. `.…`: its classes. The sigil is typed already.
+    if (partial && (partial[2] === '#' || partial[2] === '.')) {
+      const sigil = partial[2];
+      const names =
+        sigil === '#'
+          ? [...new Set(extractElementIds(pageText).map(id => id.name))]
+          : extractElementClasses(pageText);
+      return names.map(name => ({
+        label: sigil + name,
+        kind: sigil === '#' ? CompletionItemKind.Reference : CompletionItemKind.Value,
+        detail: sigil === '#' ? 'id on this page' : 'class on this page',
+        filterText: name,
+        insertText: name,
+      }));
+    }
+
+    // `:…` and `$…`: the variables written that way, here and (for `$`) anywhere in the file.
+    if (partial && (partial[2] === ':' || partial[2] === '$')) {
+      const sigil = partial[2];
+      const { table } = getDocSymbolTable(document);
+      const names = new Set<string>();
+      for (const [key, entry] of table.symbols) {
+        if (entry.kind !== 'variable' || !entry.name.startsWith(sigil)) continue;
+        // The name being typed is in the table too, as its own only site.
+        const sitesOfName = entry.definitions.length + entry.usages.length;
+        if (entry.name === sigil + partial[3] && sitesOfName === 1) continue;
+        const scope = key.split(SCOPE_SEP)[1] ?? '';
+        const here =
+          scope === `region ${regionIndex}` ||
+          scope.startsWith(`region ${regionIndex} `) ||
+          scope.startsWith(`behavior ${regionIndex}:`);
+        if (sigil === '$' || here) names.add(entry.name);
+      }
+      return [...names].map(name => ({
+        label: name,
+        kind: CompletionItemKind.Variable,
+        detail: sigil === '$' ? 'global variable' : 'element variable',
+        filterText: name.slice(1),
+        insertText: name.slice(1),
+      }));
+    }
+
+    // A word: what the grammar takes after the text before it.
+    const text = beforeCursor.replace(/[A-Za-z_][\w-]*!?$/, '');
+    const next = completer.nextWords(text);
+    if (!next) return null;
+
+    const docs: Record<string, { description?: string }> = lspMetadata?.HOVER_DOCS ?? {};
+    const keyword = (word: string): CompletionItem => ({
+      label: word,
+      kind: CompletionItemKind.Keyword,
+      detail: docs[word]?.description,
+    });
+    const defined = (kind: 'behavior' | 'function'): CompletionItem[] => {
+      const names = new Set<string>();
+      for (const open of documents.all()) {
+        for (const entry of getDocSymbolTable(open).table.symbols.values()) {
+          if (entry.kind === kind && entry.definitions.length > 0) names.add(entry.name);
+        }
+      }
+      return [...names].map(name => ({
+        label: name,
+        kind: kind === 'behavior' ? CompletionItemKind.Class : CompletionItemKind.Function,
+        detail: kind,
+      }));
+    };
+
+    let items: CompletionItem[];
+    if (next.lastWord === 'install') {
+      items = defined('behavior');
+    } else {
+      const names: CompletionItem[] = [];
+      if (next.lastWord === 'on') {
+        names.push(...getContextualCompletions('event', language));
+        const sent = new Set<string>();
+        for (const entry of getDocSymbolTable(document).table.symbols.values()) {
+          if (entry.kind === 'event') sent.add(entry.name);
+        }
+        // The script being typed does not parse, so the table has nothing
+        // from it: read what does parse before the cursor.
+        const before = completer.treeBefore(text);
+        for (const site of (before && treeSites(before.tree, before.code, 0)) || []) {
+          if (site.kind === 'event' && site.role === 'use') sent.add(site.name);
+        }
+        names.push(
+          ...[...sent].map(name => ({
+            label: name,
+            kind: CompletionItemKind.Event,
+            detail: 'event sent in this file',
+          }))
+        );
+      } else if (next.takesName && !NOT_A_VARIABLE_AFTER.has(next.lastWord ?? '')) {
+        const before = completer.treeBefore(text);
+        const variables = before ? namesInScopeAtEnd(before.tree, before.code) : [];
+        const functions = defined('function');
+        const values: CompletionItem[] = [
+          ...variables.map(name => ({
+            label: name,
+            kind: CompletionItemKind.Variable,
+            detail: 'variable',
+          })),
+          ...PRONOUNS.map(name => ({ label: name, kind: CompletionItemKind.Variable })),
+        ];
+        names.push(
+          ...(next.lastWord === 'call' ? [...functions, ...values] : [...values, ...functions])
+        );
+        // A selector is a value too: the `#`, `.` and `<…/>` starters.
+        names.push(...getContextualCompletions('selector', language));
+      }
+      // What the parser requires; then names, where it reads one (a value
+      // position is for a value before it is for `the` or `first`); then the
+      // rest of the command's own words; then everything else it takes.
+      const required = next.words.slice(0, next.requiredCount).map(keyword);
+      const own = next.words.slice(next.requiredCount, next.ownCount).map(keyword);
+      const rest = next.words.slice(next.ownCount).map(keyword);
+      items = [...required, ...names, ...own, ...rest];
+    }
+
+    // One label once (a variable named like a keyword keeps its first place),
+    // and the order above is the order shown: a client sorts by `sortText`.
+    const seen = new Set<string>();
+    return items
+      .filter(item => !seen.has(item.label) && seen.add(item.label))
+      .map((item, index) => ({ ...item, sortText: String(index).padStart(4, '0') }));
+  } catch (error) {
+    connection.console.error(`Grammar completion error: ${error}`);
+    return null;
+  }
+}
 
 /**
  * Return completion items for template directives (`#if`, `#for`, etc.).

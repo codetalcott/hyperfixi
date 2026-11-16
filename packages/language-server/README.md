@@ -41,16 +41,16 @@ the engine's parse error in every mode.
 
 ### Core LSP Features
 
-| Feature                 | Description                                                                 | Status  |
-| ----------------------- | --------------------------------------------------------------------------- | ------- |
-| **Diagnostics**         | Real-time error detection and warnings                                      | ✅      |
-| **Completions**         | Event names after `on`, commands after an event, `^` names                  | Partial |
-| **Hover**               | Documentation on hover for commands and keywords                            | ✅      |
-| **Document Symbols**    | Outline view showing event handlers, behaviors, and functions               | ✅      |
-| **Code Actions**        | Quick fixes for common issues                                               | ✅      |
-| **Go to Definition**    | Variables, parameters, behaviors, functions, `#id`, events; within one file | Partial |
-| **Find References**     | The same names, each in its scope; within one file                          | Partial |
-| **Document Formatting** | Format hyperscript code with consistent indentation                         | ✅      |
+| Feature                 | Description                                                                  | Status  |
+| ----------------------- | ---------------------------------------------------------------------------- | ------- |
+| **Diagnostics**         | Real-time error detection and warnings                                       | ✅      |
+| **Completions**         | The words the engine's grammar takes at the cursor, and the document's names | Partial |
+| **Hover**               | Documentation on hover for commands and keywords                             | ✅      |
+| **Document Symbols**    | Outline view showing event handlers, behaviors, and functions                | ✅      |
+| **Code Actions**        | Quick fixes for common issues                                                | ✅      |
+| **Go to Definition**    | Variables, parameters, behaviors, functions, `#id`, events; within one file  | Partial |
+| **Find References**     | The same names, each in its scope; within one file                           | Partial |
+| **Document Formatting** | Format hyperscript code with consistent indentation                          | ✅      |
 
 What "Partial" leaves out is listed, probe by probe, in `src/ide-scorecard.test.ts` (its
 `KNOWN_FAILURES`), which runs against the built server. Today (2026-11-16):
@@ -67,9 +67,24 @@ What "Partial" leaves out is listed, probe by probe, in `src/ide-scorecard.test.
   - Nothing crosses files: a name defined in another file does not resolve, and renaming an `id`
     or a behavior does not touch other files or a stylesheet.
   - `element x` and `:x` are listed as two variables.
-- **Completion** does not read the document: it offers no behavior names after `install`, no
-  function names after `call`, no variables, and none of the page's ids or classes. A word typed
-  part-way through a handler (`on click tog`) is offered only the feature keywords.
+- **Completion**, when `@hyperfixi/engine` is installed and the language is English, asks the
+  engine's grammar what fits at the cursor: the word a command requires (`put x` → `into`), the
+  command's own words, then closers and commands, then the operators any expression takes. Where
+  the grammar reads a value it offers the handler's variables and parameters, `me` / `it` /
+  `result` / `event`, and functions; after `install`, behaviors; after `on`, DOM events and the
+  events the file sends; after `#` and `.`, the page's ids and classes; after `:` and `$`, the
+  variables written that way. Behaviors and functions come from every open file. Limits:
+  - The grammar takes a lot (about 69 items per list on the measure below), so the list is
+    ordered, not short. Commands are ordered by how often the reference and hover examples in
+    `@hyperfixi/core` use them; without core, in the grammar's own order.
+  - Nothing is offered after a property dot (`event.`), and no command's arguments are described
+    (there is no signature help).
+  - In another language, or without the engine, completion is the keyword lists it was before:
+    event names after `on`, commands after an event.
+  - Measured on the command-shape sources (2026-11-16, Apple M4, Node 24.15.0; 5,416 cursor
+    positions before a grammar word): the list holds the word written next 0.996 of the time; once
+    its first letter is typed it is first 0.66 of the time and in the first five 0.961. The same
+    measure on 7.6.0's server: 0.280, 0.196, 0.280.
 - An unknown behavior or function is not reported.
 
 ### Multilingual Support
@@ -278,12 +293,12 @@ npm test -- --coverage
 ```
 
 `npx tsx src/tools/completion-measure.ts` scores the built server's completion on the next word
-of real scripts (recall and precision against the engine's own parser; the file's header says
-how). `--server <command>` scores another LSP server on the same requests.
+of real scripts (recall and precision against the engine's own parser, and the word's place in
+the list; the file's header says how). `--server <command>` scores another LSP server on the same requests.
 
 ## Architecture
 
-The language server entry point is `server.ts` (LSP wiring and the request handlers), with the testable logic in sibling modules — `extraction.ts` (HTML region extraction and position mapping), `simple-diagnostics.ts`, `command-tiers.ts` (the _hyperscript-compatibility allowlists), `symbol-table.ts` (definition/references/rename) with `tree-symbols.ts` (the names read from the engine's tree), `document-symbols.ts`, `completion-context.ts`, `formatting.ts` and `localized-descriptions.ts`. Together they:
+The language server entry point is `server.ts` (LSP wiring and the request handlers), with the testable logic in sibling modules — `extraction.ts` (HTML region extraction and position mapping), `simple-diagnostics.ts`, `command-tiers.ts` (the _hyperscript-compatibility allowlists), `symbol-table.ts` (definition/references/rename) with `tree-symbols.ts` (the names read from the engine's tree), `next-words.ts` (what the engine's grammar takes at a cursor), `document-symbols.ts`, `completion-context.ts`, `formatting.ts` and `localized-descriptions.ts`. Together they:
 
 1. **Extracts** hyperscript regions from HTML documents
 2. **Analyzes** code using semantic parsing (multilingual) or pattern-based fallback

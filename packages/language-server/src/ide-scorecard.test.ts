@@ -178,12 +178,6 @@ const PROBES: Record<string, () => Promise<boolean>> = {
 /** Probes the server does not answer yet. Shrink-only. */
 const KNOWN_FAILURES = new Set([
   'definition: behavior in another open file',
-  'completion: a partial command',
-  'completion: behaviors after install',
-  'completion: functions after call',
-  'completion: variables and pronouns in an expression',
-  'completion: the page ids after #',
-  'completion: the page classes after .',
   'diagnostic: unknown behavior or function',
 ]);
 

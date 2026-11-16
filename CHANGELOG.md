@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`@lokascript/language-server` completes from the engine's grammar and the document's names.**
+  Completion offered the same four keywords at most cursor positions. With `@hyperfixi/engine`
+  installed and English as the language, the server now asks the engine what fits at the cursor
+  (it reads the words the parser asks for at the end of the text, and keeps each one the engine
+  then parses there), so the list is the grammar's own: `put x` offers `into`, and offers no
+  command. It adds the names the document defines: variables and parameters in scope where a
+  value is read, behaviors after `install`, functions, the page's ids and classes after `#` and
+  `.`, sent events after `on`. The list is long (the grammar takes about 69 words at an average
+  cursor) and ordered: required words, names, the command's own words, then commands by how often
+  the reference examples use them. On the command-shape sources the word written next is in the
+  list 0.996 of the time (0.280 before), and first 0.66 of the time once its first letter is
+  typed (0.196 before). Other languages, and installs without the engine, keep the previous
+  keyword lists. `src/tools/completion-measure.ts` reports the order as well as recall and
+  precision.
+
 - **`@lokascript/language-server` resolves names by scope, from the engine's parse.** Go to
   Definition, Find References and Rename now cover a variable written without a sigil
   (`set count to 1`), a loop variable, a handler argument, a `def` or behavior parameter (and the
