@@ -253,3 +253,14 @@ export function extractElementIds(
   }
   return ids;
 }
+
+/** The class names a page's `class="…"` attributes use, each once. */
+export function extractElementClasses(content: string): string[] {
+  const classes = new Set<string>();
+  for (const match of content.matchAll(/(?<![\w-])class\s*=\s*(["'])([^"'<>]*)\1/g)) {
+    for (const name of match[2]!.split(/\s+/)) {
+      if (/^[A-Za-z_][\w-]*$/.test(name)) classes.add(name);
+    }
+  }
+  return [...classes];
+}

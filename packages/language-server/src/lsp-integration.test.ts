@@ -121,6 +121,54 @@ describe('LSP Integration', () => {
       expect(labels).toEqual(expect.arrayContaining(['#', '.', '<']));
     });
 
+    // From here the list comes from the engine's grammar (next-words.ts) and
+    // the document's names; ide-scorecard.test.ts has the page-level probes.
+    const labelsAt = async (text: string, version: number) => {
+      await client.change(testUri, version, text);
+      const lines = text.split('\n');
+      const response = await client.sendRequest('textDocument/completion', {
+        textDocument: { uri: testUri },
+        position: { line: lines.length - 1, character: lines[lines.length - 1]!.length },
+      });
+      const items = response.result as Array<{ label: string; sortText?: string }>;
+      return [...items]
+        .sort((x, y) => (x.sortText ?? x.label).localeCompare(y.sortText ?? y.label))
+        .map(i => i.label);
+    };
+
+    it('puts the word a command requires first, and offers no command there', async () => {
+      const labels = await labelsAt('on click put x ', 10);
+      expect(labels.slice(0, 6)).toContain('into');
+      expect(labels).not.toContain('toggle');
+    });
+
+    it('offers the variables written with a sigil after that sigil', async () => {
+      const element = await labelsAt(
+        'on click set :count to 1 then set $total to 2 then log :',
+        11
+      );
+      expect(element).toEqual([':count']);
+      const global = await labelsAt('on click set :count to 1 then set $total to 2 then log $', 12);
+      expect(global).toEqual(['$total']);
+    });
+
+    it("offers the handler's own variables first where a value is read", async () => {
+      const labels = await labelsAt('on click(who) set total to 1 then put ', 13);
+      expect(labels).toEqual(expect.arrayContaining(['total', 'who', 'me', 'it']));
+      expect(labels.indexOf('total')).toBeLessThan(5);
+      expect(labels).not.toContain('toggle');
+    });
+
+    it('offers events sent in the file after `on`, beside the DOM events', async () => {
+      const labels = await labelsAt('on click send saved to me end\non ', 14);
+      expect(labels).toEqual(expect.arrayContaining(['saved', 'click']));
+    });
+
+    it('offers nothing from the page after a property dot', async () => {
+      const labels = await labelsAt('on click log event.', 15);
+      expect(labels.some(l => l.startsWith('.'))).toBe(false);
+    });
+
     it('offers caret-var names from the document after `^`', async () => {
       await client.change(testUri, 4, 'set ^count to 1\nlog ^');
       const response = await client.sendRequest('textDocument/completion', {

@@ -16,7 +16,12 @@
  *   parser matched it there and did not stop at it).
  *
  * Neither number means anything alone: every keyword at every cut is recall
- * 1.0, and one sure word at every cut is precision 1.0.
+ * 1.0, and one sure word at every cut is precision 1.0. And a grammar that
+ * takes sixty words at a cursor makes a long list right, so the list's ORDER
+ * is scored too: the items are sorted as a client sorts them (`sortText`,
+ * else the label), narrowed to those starting with the written word's first
+ * letter, as after one keystroke, and the word's place is counted (`@1`,
+ * `@5`). `@10 untyped` is its place in the whole list.
  *
  * Limits. A word matched in a branch the parser later abandons counts as
  * accepted. Only the first word of an item is scored, and only items that are
@@ -114,6 +119,7 @@ async function main(): Promise<void> {
   let offered = 0;
   let accepted = 0;
   let listed = 0;
+  const placed = { first: 0, five: 0, tenUntyped: 0 };
   const missed = new Map<string, number>();
   const asked = new Map<string, number>();
   const started = Date.now();
@@ -136,12 +142,23 @@ async function main(): Promise<void> {
         textDocument: { uri },
         position: { line: lines.length - 1, character: lines[lines.length - 1]!.length },
       });
-      const result = response.result as
-        | Array<{ label: string; insertText?: string }>
-        | { items: Array<{ label: string; insertText?: string }> }
-        | null
-        | undefined;
+      type Item = { label: string; insertText?: string; sortText?: string };
+      const result = response.result as Item[] | { items: Item[] } | null | undefined;
       const items = Array.isArray(result) ? result : (result?.items ?? []);
+      const order = (item: Item) => item.sortText ?? item.label;
+      const shown = [
+        ...new Set(
+          [...items]
+            .sort((a, b) => (order(a) < order(b) ? -1 : order(a) > order(b) ? 1 : 0))
+            .map(firstWord)
+            .filter((w): w is string => w !== null)
+        ),
+      ];
+      const place = shown.indexOf(word.value);
+      const typedPlace = shown.filter(w => w[0] === word.value[0]).indexOf(word.value);
+      if (typedPlace === 0) placed.first++;
+      if (typedPlace >= 0 && typedPlace < 5) placed.five++;
+      if (place >= 0 && place < 10) placed.tenUntyped++;
       const words = new Set(items.map(firstWord).filter((w): w is string => w !== null));
 
       cuts++;
@@ -167,6 +184,9 @@ async function main(): Promise<void> {
     recall: round(hits / cuts),
     precision: offered ? round(accepted / offered) : null,
     meanListLength: round(listed / cuts),
+    firstAfterOneLetter: round(placed.first / cuts),
+    topFiveAfterOneLetter: round(placed.five / cuts),
+    topTenUntyped: round(placed.tenUntyped / cuts),
     seconds: Math.round((Date.now() - started) / 1000),
     missedMost: [...missed.entries()]
       .sort((a, b) => b[1] - a[1])
@@ -182,6 +202,9 @@ async function main(): Promise<void> {
     console.log(`recall          ${summary.recall}`);
     console.log(`precision       ${summary.precision}`);
     console.log(`mean list       ${summary.meanListLength} items`);
+    console.log(
+      `order           @1 ${summary.firstAfterOneLetter}, @5 ${summary.topFiveAfterOneLetter} after one typed letter; @10 untyped ${summary.topTenUntyped}`
+    );
     console.log(`missed most     ${summary.missedMost.join(', ')}`);
     console.log(`time            ${summary.seconds}s`);
   }

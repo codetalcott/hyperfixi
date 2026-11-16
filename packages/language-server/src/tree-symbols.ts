@@ -419,3 +419,30 @@ export function treeSites(tree: unknown, code: string, regionIndex: number): Tre
   }
   return sites;
 }
+
+/**
+ * The variable names an author can use at the END of `code`: the last
+ * handler's (or `def`'s) own, its behavior's parameters, the `:x` of its
+ * element or behavior, and every `$x`. `tree` is a parse of `code`.
+ */
+export function namesInScopeAtEnd(tree: unknown, code: string): string[] {
+  const sites = treeSites(tree, code, 0);
+  if (!sites || !isNode(tree)) return [];
+  const program = isNode(tree.program) ? tree.program : tree;
+  const scopes = new Set<string>();
+  const last = Array.isArray(program.features) ? program.features.at(-1) : program;
+  if (isNode(last) && last.type === 'behaviorFeature') {
+    scopes.add(`behavior ${String(last.name)}`).add(`behavior 0:${num(last.start) ?? 0}`);
+    const inner = Array.isArray(last.features) ? last.features.at(-1) : undefined;
+    if (isNode(inner)) scopes.add(`local 0:${num(inner.start) ?? 0}`);
+  } else if (isNode(last)) {
+    scopes.add(`local 0:${num(last.start) ?? 0}`).add('region 0');
+  }
+  const names = new Set<string>();
+  for (const site of sites) {
+    if (site.kind !== 'variable') continue;
+    if (site.scope === 'global' || scopes.has(site.key.split(SCOPE_SEP)[1] ?? ''))
+      names.add(site.name);
+  }
+  return [...names];
+}
