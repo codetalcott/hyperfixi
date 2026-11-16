@@ -28,6 +28,7 @@
   "author": "LokaScript Contributors",
   "license": "MIT",
   "dependencies": {
+    "@hyperfixi/engine": "^7.6.0",
     "@lokascript/framework": "^7.6.0",
     "@lokascript/semantic": "^7.6.0",
     "vscode-languageserver": "^10.1.2",
@@ -35,8 +36,7 @@
   },
   "peerDependencies": {
     "@hyperfixi/behaviors": "^7.6.0",
-    "@hyperfixi/core": "^7.6.0",
-    "@hyperfixi/engine": "^7.6.0"
+    "@hyperfixi/core": "^7.6.0"
   },
   "peerDependenciesMeta": {
     "@hyperfixi/behaviors": {
@@ -44,15 +44,11 @@
     },
     "@hyperfixi/core": {
       "optional": true
-    },
-    "@hyperfixi/engine": {
-      "optional": true
     }
   },
   "devDependencies": {
     "@hyperfixi/behaviors": "^7.6.0",
     "@hyperfixi/core": "^7.6.0",
-    "@hyperfixi/engine": "^7.6.0",
     "@types/node": "^26.6.6",
     "@vitest/coverage-v8": "^5.0.5",
     "tsup": "^9.0.0",

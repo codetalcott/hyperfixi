@@ -26,7 +26,7 @@ Since 4.0 the LokaScript runtime is `@hyperfixi/engine`, which follows upstream 
 grammar: the modes share their command keywords, event modifiers and `as` conversions
 (`LOKASCRIPT_ONLY_COMMANDS` in `src/command-tiers.ts` is empty). What the engine has that
 upstream does not is two forms of existing keywords. In the `hyperscript` and `hyperscript-i18n`
-modes, when `@hyperfixi/engine` is installed, each is reported as an error (code
+modes each is reported as an error (code
 `lokascript-only`):
 
 | Feature            | Example          | Alternative for \_hyperscript |
@@ -58,8 +58,7 @@ the engine's parse error in every mode.
 completion, one probe each, and all of them pass (2026-11-16). What follows is how each feature
 works and where it stops; "Partial" marks a feature whose limits an author will meet.
 
-- **Identifiers** resolve, each in its own scope, when `@hyperfixi/engine` is
-  installed and parses the script: a variable written without a sigil (`set count to 1`) and a loop
+- **Identifiers** resolve, each in its own scope, when the engine parses the script: a variable written without a sigil (`set count to 1`) and a loop
   variable belong to their handler or `def`; a parameter to its `def` or behavior (an
   `install Name(param: …)` site names it too); a `:x` to its element (one `_` attribute) or its
   behavior; a `$x`, a behavior and a function to the file. A `#name` goes to the element with that
@@ -77,7 +76,7 @@ works and where it stops; "Partial" marks a feature whose limits an author will 
     name nothing defines (`alert(…)`, a behavior from a bundle). Renaming a behavior edits every
     file that names it, open or not: read the preview.
   - `element x` and `:x` are listed as two variables.
-- **Completion**, when `@hyperfixi/engine` is installed and the language is English, asks the
+- **Completion**, when the language is English, asks the
   engine's grammar what fits at the cursor: the word a command requires (`put x` → `into`), the
   command's own words, then closers and commands, then the operators any expression takes. Where
   the grammar reads a value it offers the handler's variables and parameters, `me` / `it` /
@@ -89,7 +88,7 @@ works and where it stops; "Partial" marks a feature whose limits an author will 
     `@hyperfixi/core` use them; without core, in the grammar's own order.
   - Nothing is offered after a property dot (`event.`), and no command's arguments are described
     (there is no signature help).
-  - In another language, or without the engine, completion is the keyword lists it was before:
+  - In another language, completion is the keyword lists it was before:
     event names after `on`, commands after an event.
   - Measured on the command-shape sources (2026-11-16, Apple M4, Node 24.15.0; 5,416 cursor
     positions before a grammar word): the list holds the word written next 0.995 of the time; once
@@ -288,7 +287,7 @@ For users who prefer the `hyperscript` namespace:
 ## Dependencies
 
 - `@lokascript/semantic` and `@lokascript/framework` are **required** (regular dependencies): the semantic package registers the 24 languages at startup, and the framework renders the LSE bracket notation shown in hover. They used to be declared as optional peers while being imported statically, so a server installed without them crashed at startup instead of falling back.
-- `@hyperfixi/engine` is an **optional** peer: the engine that runs hyperscript. With it the server surfaces its parse errors (at the position the engine stopped) and gives the AST nodes their source positions for hover, symbols and completions. The symbol table reads its tree too: without the engine, Go to Definition, Find References and Rename know behaviors, functions and sigil variables only.
+- `@hyperfixi/engine` is **required** (a regular dependency; an optional peer through 7.6.0): the engine that runs hyperscript. Its parse errors are the diagnostics (at the position the engine stopped), its tree gives hover, symbols and the symbol table their names and positions, and its grammar is what completion asks. As an optional peer it was not installed by `npm install @lokascript/language-server`, so a plain install had none of that.
 - `@hyperfixi/behaviors` is an **optional** peer, for its `/schemas` entry: the standard behaviors' names, parameters and descriptions (completion after `install`, hover, and the `unknown-behavior` notice, which is not given without it).
 - `@hyperfixi/core` is an **optional** peer, for two of its entries: `/ast-utils` (complexity diagnostics, hover, symbols and completions on the interchange) and `/lsp-metadata` (keyword and hover docs). The AST nodes come from `@lokascript/semantic`, which names each command's roles itself. Without either, diagnostics degrade to the pattern-based quote/bracket checks and hover uses built-in fallback docs. (Until 4.0 the parse errors and nodes came from `@hyperfixi/core`'s parser.)
 

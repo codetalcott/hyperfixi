@@ -41,7 +41,7 @@ Upstream `_hyperscript` ships its own VS Code extension and language server (`to
 This is a thin wrapper around `@lokascript/language-server` that defaults to `hyperscript` mode. In this mode:
 
 - Completions use the canonical English keywords only
-- The two forms `@hyperfixi/engine` adds to upstream's grammar (`new X()`, `toggle <element>`) are flagged as errors when the engine is installed. There are no LokaScript-only commands any more (`LOKASCRIPT_ONLY_COMMANDS` in `@lokascript/language-server` is empty): the engine follows upstream's grammar, and code neither engine parses gets the engine's parse error
+- The two forms `@hyperfixi/engine` adds to upstream's grammar (`new X()`, `toggle <element>`) are flagged as errors (the engine is installed with the server; through 7.6.0 it was an optional peer, and without it they were not flagged). There are no LokaScript-only commands any more (`LOKASCRIPT_ONLY_COMMANDS` in `@lokascript/language-server` is empty): the engine follows upstream's grammar, and code neither engine parses gets the engine's parse error
 - No multilingual features are exposed
 
 If you want multilingual support, use `@lokascript/language-server` directly.

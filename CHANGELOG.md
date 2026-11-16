@@ -167,6 +167,16 @@ patient:.active]`, not `… destination:me`), its reader reads a bare `{…}` as
 
 ### Changed
 
+- **`@lokascript/language-server` installs `@hyperfixi/engine`** (a regular dependency; it was an
+  optional peer). Parse errors, scoped identifiers and completion all come from the engine, and
+  `npm install @lokascript/language-server` did not install an optional peer, so a plain install
+  had none of them. **What changes for an existing install without the engine**, and for
+  `@hyperscript-tools/language-server`, which wraps this server: diagnostics are now the engine's
+  parse errors (they were the quote and bracket checks), and in the `hyperscript` and
+  `hyperscript-i18n` modes the two forms the engine adds to upstream's grammar (`new X()`,
+  `toggle <element>`) are reported as errors. `@hyperfixi/core` and `@hyperfixi/behaviors` stay
+  optional peers.
+
 - **Published tarballs no longer carry `src`.** Thirteen packages shipped their TypeScript
   sources beside `dist`, whose sourcemaps already embed the same text (`sourcesContent`):
   `@lokascript/semantic` (373 files, 3.8 MB of a 50.2 MB unpacked tarball), `framework`, `i18n`,
