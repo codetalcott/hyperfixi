@@ -128,16 +128,11 @@ describe('across files, through the server', () => {
     '<button _="install Elsewhere">C</button>', // 2
     '<button _="on click install ">D</button>', // 3
   ].join('\n');
-  let diagnostics: Array<{
-    range: { start: { line: number } };
-    code?: string | number;
-    severity?: number;
-  }> = [];
 
   beforeAll(async () => {
     await client.start();
     await client.initialize({}, undefined, uriOf(root));
-    diagnostics = await client.open(pageUri, PAGE, 'html');
+    await client.open(pageUri, PAGE, 'html');
   });
   afterAll(async () => {
     await client.stop();
@@ -217,10 +212,61 @@ describe('across files, through the server', () => {
     expect(labels).toContain('Removable');
     expect(labels).not.toContain('Vendored');
   });
+});
 
-  it('notes a behavior the workspace does not define, as information, and no other', () => {
-    const unknown = diagnostics.filter(d => d.code === 'unknown-behavior');
-    expect(unknown.map(d => d.range.start.line)).toEqual([2]);
-    expect(unknown[0]!.severity).toBe(3);
+// Found in VS Code on this repo's examples: two pages each define
+// `behavior Draggable`, and a rename in one rewrote the other.
+describe('a name two files define', () => {
+  const root = mkdtempSync(join(tmpdir(), 'ls-two-pages-'));
+  const page = (extra = '') =>
+    [
+      '<script type="text/hyperscript">',
+      'behavior Draggable',
+      '  on click log 1',
+      '  end',
+      'end',
+      '</script>',
+      '<b _="install Draggable">x</b>',
+      extra,
+    ].join('\n');
+  writeFileSync(join(root, 'one.html'), page());
+  writeFileSync(join(root, 'two.html'), page());
+  writeFileSync(join(root, 'user.html'), '<b _="install Draggable">x</b>');
+  const client = new LSPTestClient();
+  const oneUri = uriOf(root, 'one.html');
+  const userUri = uriOf(root, 'user.html');
+
+  beforeAll(async () => {
+    await client.start();
+    await client.initialize({}, undefined, uriOf(root));
+    await client.open(oneUri, page(), 'html');
+    await client.open(userUri, '<b _="install Draggable">x</b>', 'html');
+  });
+  afterAll(async () => {
+    await client.stop();
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  it('is renamed in its own file only', async () => {
+    const rename = await client.sendRequest('textDocument/rename', {
+      textDocument: { uri: oneUri },
+      position: { line: 1, character: 10 },
+      newName: 'Movable',
+    });
+    const changes = (rename.result as { changes: Record<string, unknown[]> }).changes;
+    expect(Object.keys(changes)).toEqual([oneUri]);
+    expect(changes[oneUri]).toHaveLength(2);
+  });
+
+  it('is offered as candidates from a file that only uses it, and not linked', async () => {
+    const at = { textDocument: { uri: userUri }, position: { line: 0, character: 16 } };
+    const definition = await client.sendRequest('textDocument/definition', at);
+    const uris = (definition.result as Array<{ uri: string }>).map(l => l.uri).sort();
+    expect(uris).toEqual([oneUri, uriOf(root, 'two.html')].sort());
+    const references = await client.sendRequest('textDocument/references', {
+      ...at,
+      context: { includeDeclaration: true },
+    });
+    expect((references.result as Array<{ uri: string }>).map(l => l.uri)).toEqual([userUri]);
   });
 });

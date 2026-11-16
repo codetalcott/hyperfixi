@@ -1337,3 +1337,22 @@ describe('Symbol table', () => {
     });
   });
 });
+
+// Found in VS Code on this repo's examples: 13 parse errors were for
+// hyperscript quoted in the pages' prose.
+describe('a `_=` in prose is not a script', () => {
+  it('skips `_="…"` written as text, and keeps the attribute beside it', () => {
+    const html =
+      '<p>Write <code>_="on click toggle .a"</code>.</p>\n<button _="on click hide me">x</button>';
+    expect(extractHyperscriptRegions(html).map(r => r.code)).toEqual(['on click hide me']);
+  });
+
+  it('keeps an attribute after one whose value holds a tag, and on a later line', () => {
+    const html =
+      '<a title="<b>bold</b>"\n   _="on click log 1">x</a> <i _=\'on click log 2\'>y</i>';
+    expect(extractHyperscriptRegions(html).map(r => r.code)).toEqual([
+      'on click log 1',
+      'on click log 2',
+    ]);
+  });
+});

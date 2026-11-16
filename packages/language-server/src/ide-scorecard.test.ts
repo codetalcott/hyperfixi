@@ -171,15 +171,20 @@ const PROBES: Record<string, () => Promise<boolean>> = {
   },
 
   // --- diagnostics ---
-  // A function gets no such notice: any function on the page is callable.
+  // Not met, on purpose (see KNOWN_FAILURES). A function would get no such
+  // notice either way: any function on the page is callable.
   'diagnostic: a behavior nothing defines': async () =>
     pageDiagnostics.some(d => d.range.start.line === 28 && d.code === 'unknown-behavior'),
-  'diagnostic: none for a behavior another file defines': async () =>
-    !pageDiagnostics.some(d => d.range.start.line === 20),
 };
 
 /** Probes the server does not answer yet. Shrink-only: a new expectation starts here. */
-const KNOWN_FAILURES = new Set<string>([]);
+const KNOWN_FAILURES = new Set<string>([
+  // Built in Phase 5 and taken out after a trial in VS Code on this repo's
+  // own examples (2026-11-16): 19 of its 22 notices were for behaviors the
+  // standard bundle defines (Toggleable, Removable, ClickOutside…), which no
+  // file in a workspace does. It comes back when the server can know those.
+  'diagnostic: a behavior nothing defines',
+]);
 
 describe('IDE scorecard', () => {
   beforeAll(async () => {

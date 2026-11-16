@@ -817,53 +817,7 @@ async function validateDocument(document: TextDocument): Promise<void> {
     allDiagnostics = await getDiagnostics(text, globalSettings.language);
   }
 
-  allDiagnostics.push(...unknownBehaviorDiagnostics(document));
   connection.sendDiagnostics({ uri, diagnostics: allDiagnostics });
-}
-
-/**
- * `install Name` where nothing the server reads defines `Name`. Information,
- * not a warning: a behavior can come from a script this server does not read
- * (a behaviors bundle, a template in another format), and the message says
- * where it looked. Functions get no such check: any function on the page
- * is callable.
- */
-function unknownBehaviorDiagnostics(document: TextDocument): Diagnostic[] {
-  try {
-    const { table } = getDocSymbolTable(document);
-    const installed = [...table.symbols.values()].filter(
-      entry =>
-        entry.kind === 'behavior' && entry.usages.length > 0 && entry.definitions.length === 0
-    );
-    if (installed.length === 0) return [];
-    const tables = everyTable();
-    const where =
-      workspaceRoots.length > 0 ? "this workspace's .html and .hs files" : 'the open files';
-    const diagnostics: Diagnostic[] = [];
-    for (const entry of installed) {
-      const defined = tables.some(({ table: other }) => {
-        const match = other.symbols.get(entry.name);
-        return match?.kind === 'behavior' && match.definitions.length > 0;
-      });
-      if (defined) continue;
-      for (const loc of entry.usages) {
-        diagnostics.push({
-          severity: DiagnosticSeverity.Information,
-          range: {
-            start: { line: loc.line, character: loc.character },
-            end: { line: loc.line, character: loc.character + loc.length },
-          },
-          message: `No behavior named "${entry.name}" is defined in ${where}. If a script the language server does not read defines it (a behaviors bundle, another template format), this can be ignored.`,
-          code: 'unknown-behavior',
-          source: getBranding(resolvedMode),
-        });
-      }
-    }
-    return diagnostics;
-  } catch (error) {
-    connection.console.error(`Unknown-behavior check error: ${error}`);
-    return [];
-  }
 }
 
 /** A name-collision diagnostic's data: what its quick fix renames, to what, and where. */
@@ -2117,14 +2071,14 @@ interface Site {
 
 /**
  * Every site of the symbol at a position: this file's, and for a shared name
- * the other files' too. A name nothing in the workspace defines (`alert(…)`,
- * a behavior from a bundle) is not linked across files: there is no telling
- * that two files mean the same thing by it.
+ * the other files' too, when exactly one file in the workspace defines it.
+ * A name nothing defines (`alert(…)`, a behavior from a bundle) is not linked
+ * across files: there is no telling that two files mean the same thing by it.
  */
 function sitesAt(
   document: TextDocument,
   position: { line: number; character: number }
-): { entry: SymbolEntry; sites: Site[] } | null {
+): { entry: SymbolEntry; sites: Site[]; candidates?: Site[] } | null {
   const { table, uri } = getDocSymbolTable(document);
   const entry = table.symbolAt(position.line, position.character);
   if (!entry) return null;
@@ -2136,13 +2090,22 @@ function sitesAt(
   const key = sharedKey(entry);
   if (!key) return { entry, sites: here };
   const elsewhere: Site[] = [];
+  const definers = new Set<string>(entry.definitions.length > 0 ? [uri] : []);
   for (const other of everyTable()) {
     if (other.uri === uri) continue;
     const match = other.table.symbols.get(key);
-    if (match && match.kind === entry.kind) elsewhere.push(...sitesOf(other.uri, match));
+    if (!match || match.kind !== entry.kind) continue;
+    elsewhere.push(...sitesOf(other.uri, match));
+    if (match.definitions.length > 0) definers.add(other.uri);
   }
-  const defined = [...here, ...elsewhere].some(site => site.definition);
-  return { entry, sites: defined ? [...here, ...elsewhere] : here };
+  if (definers.size === 1) return { entry, sites: [...here, ...elsewhere] };
+  // Two files that each define the name are two programs (two pages with
+  // their own `behavior Draggable`): which one another file means cannot be
+  // told, so nothing is linked, and Go to Definition offers the candidates.
+  const candidates = here.some(site => site.definition)
+    ? []
+    : elsewhere.filter(site => site.definition);
+  return { entry, sites: here, candidates };
 }
 
 /** Convert a SymbolLocation to an LSP Location. */
@@ -2169,7 +2132,8 @@ connection.onDefinition((params: TextDocumentPositionParams): Location | Locatio
     if (!document) return null;
 
     const found = sitesAt(document, params.position);
-    const definitions = found?.sites.filter(site => site.definition) ?? [];
+    const own = found?.sites.filter(site => site.definition) ?? [];
+    const definitions = own.length > 0 ? own : (found?.candidates ?? []);
     if (definitions.length === 0) return null;
 
     const locations = definitions.map(site => symbolLocToLocation(site.uri, site.loc));

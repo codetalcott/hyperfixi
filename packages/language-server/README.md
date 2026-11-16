@@ -55,8 +55,9 @@ the engine's parse error in every mode.
 | **Document Formatting** | Format hyperscript code with consistent indentation                                   | ✅      |
 
 `src/ide-scorecard.test.ts` asks the built server what an author expects of identifiers and
-completion, one probe each, and all of them pass (2026-11-16). What follows is how each feature
-works and where it stops; "Partial" marks a feature whose limits an author will meet.
+completion, one probe each; the one it does not pass is in its `KNOWN_FAILURES`, with the reason
+(2026-11-16). What follows is how each feature works and where it stops; "Partial" marks a
+feature whose limits an author will meet.
 
 - **Identifiers** resolve, each in its own scope, when `@hyperfixi/engine` is
   installed and parses the script: a variable written without a sigil (`set count to 1`) and a loop
@@ -67,13 +68,15 @@ works and where it stops; "Partial" marks a feature whose limits an author will 
   Rename cover the same sites. Three limits:
   - A script the engine does not parse (one being typed, or one not in English) is read by
     patterns instead: behaviors, functions and sigil variables only.
-  - Across files, a behavior, a function and a `$x` resolve when something in the workspace
-    defines them. The workspace is its folders' `.html`, `.htm`, `.hs` and `._hs` files (not
-    `node_modules`, build output or hidden folders; at most 2,000 files of up to 1 MB, and the
-    server logs when it stops there). A file changed outside the editor is seen within two
-    seconds. An `id`, an event and every scoped name stay within their file, and so does a name
-    nothing defines (`alert(…)`). Renaming a behavior edits every file that names it, open or
-    not: read the preview.
+  - Across files, a behavior, a function and a `$x` resolve when exactly one file in the
+    workspace defines them. The workspace is its folders' `.html`, `.htm`, `.hs` and `._hs` files
+    (not `node_modules`, build output or hidden folders; at most 2,000 files of up to 1 MB, and
+    the server logs when it stops there). A file changed outside the editor is seen within two
+    seconds. Two files that each define the name are two programs (two pages with their own
+    `behavior Draggable`): nothing is linked between them, and Go to Definition from a third file
+    offers both. An `id`, an event and every scoped name stay within their file, and so does a
+    name nothing defines (`alert(…)`, a behavior from a bundle). Renaming a behavior edits every
+    file that names it, open or not: read the preview.
   - `element x` and `:x` are listed as two variables.
 - **Completion**, when `@hyperfixi/engine` is installed and the language is English, asks the
   engine's grammar what fits at the cursor: the word a command requires (`put x` → `into`), the
@@ -90,14 +93,12 @@ works and where it stops; "Partial" marks a feature whose limits an author will 
   - In another language, or without the engine, completion is the keyword lists it was before:
     event names after `on`, commands after an event.
   - Measured on the command-shape sources (2026-11-16, Apple M4, Node 24.15.0; 5,416 cursor
-    positions before a grammar word): the list holds the word written next 0.996 of the time; once
-    its first letter is typed it is first 0.66 of the time and in the first five 0.961. The same
+    positions before a grammar word): the list holds the word written next 0.995 of the time; once
+    its first letter is typed it is first 0.666 of the time and in the first five 0.963. The same
     measure on 7.6.0's server: 0.280, 0.196, 0.280.
-- `install Name` where no file in the workspace defines `Name` gets an information notice
-  (`unknown-behavior`), not a warning: a behaviors bundle or a template format the server does not
-  read may define it. It is recomputed when the document that installs it changes, so it can
-  outlast the fix until the next edit. Unknown functions are not reported: any function on the
-  page is callable.
+- An unknown behavior or function is not reported. A notice for `install Name` with no definition
+  in the workspace was built and withdrawn: on this repository's examples 19 of its 22 notices
+  were for behaviors the standard bundle defines, which no file in a workspace does.
 
 ### Multilingual Support
 
@@ -111,7 +112,7 @@ In `lokascript` and `hyperscript-i18n` modes the server parses each region with 
 
 The language server understands hyperscript embedded in HTML files:
 
-- `_="..."` attributes (double and single quotes)
+- `_="..."` attributes (double and single quotes), inside a tag: a page's prose that quotes one (`<code>_="…"</code>`) is text
 - `<script type="text/hyperscript">` tags
 - Correct position mapping for diagnostics and navigation
 
