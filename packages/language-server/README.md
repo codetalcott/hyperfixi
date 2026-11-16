@@ -41,16 +41,28 @@ the engine's parse error in every mode.
 
 ### Core LSP Features
 
-| Feature                 | Description                                                   | Status |
-| ----------------------- | ------------------------------------------------------------- | ------ |
-| **Diagnostics**         | Real-time error detection and warnings                        | ✅     |
-| **Completions**         | Context-aware keyword and selector suggestions                | ✅     |
-| **Hover**               | Documentation on hover for commands and keywords              | ✅     |
-| **Document Symbols**    | Outline view showing event handlers, behaviors, and functions | ✅     |
-| **Code Actions**        | Quick fixes for common issues                                 | ✅     |
-| **Go to Definition**    | Jump to behavior and function definitions                     | ✅     |
-| **Find References**     | Find all usages of a symbol                                   | ✅     |
-| **Document Formatting** | Format hyperscript code with consistent indentation           | ✅     |
+| Feature                 | Description                                                   | Status  |
+| ----------------------- | ------------------------------------------------------------- | ------- |
+| **Diagnostics**         | Real-time error detection and warnings                        | ✅      |
+| **Completions**         | Event names after `on`, commands after an event, `^` names    | Partial |
+| **Hover**               | Documentation on hover for commands and keywords              | ✅      |
+| **Document Symbols**    | Outline view showing event handlers, behaviors, and functions | ✅      |
+| **Code Actions**        | Quick fixes for common issues                                 | ✅      |
+| **Go to Definition**    | Behavior and function definitions, within one file            | Partial |
+| **Find References**     | Behaviors, functions and sigil variables, within one file     | Partial |
+| **Document Formatting** | Format hyperscript code with consistent indentation           | ✅      |
+
+What "Partial" leaves out is listed, probe by probe, in `src/ide-scorecard.test.ts` (its
+`KNOWN_FAILURES`), which runs against the built server. Today (2026-11-16):
+
+- **Identifiers** resolve by name within one file. Behavior and `def` parameters, variables
+  written without a sigil (`set count to 1`), `#id` references and names defined in another file do
+  not resolve. Find References and Rename on a `:x` variable cover every `:x` in the file, including
+  ones that belong to another element: check a rename before accepting it.
+- **Completion** does not read the document: it offers no behavior names after `install`, no
+  function names after `call`, no variables, and none of the page's ids or classes. A word typed
+  part-way through a handler (`on click tog`) is offered only the feature keywords.
+- An unknown behavior or function is not reported.
 
 ### Multilingual Support
 
@@ -312,6 +324,7 @@ npm test -- --run src/server.test.ts
 Test categories:
 
 - Unit tests against the shipped modules: HTML document detection, region extraction, position mapping, the symbol table (definition, references, rename), document symbols, completion context, formatting, diagnostics, and the compatibility allowlists
+- `ide-scorecard.test.ts` asks the built server what an author expects of identifiers and completion (definition, references and rename by scope, completion from the document), one probe each, with the probes it does not pass yet in a list that only shrinks
 - `lsp-integration.test.ts` spawns the built `dist/server.js` over stdio and speaks JSON-RPC: diagnostics publishing (including the non-English cases), completions, hover, symbols, definition, references, rename, formatting, code actions, configuration changes in both push and pull form, and the `lokascript/translateWithVerification` request
 
 `npm test` rebuilds this package first (`pretest`), and refreshes any stale sibling `dist/` the integration suite resolves through the workspace.
