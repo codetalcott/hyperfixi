@@ -29,7 +29,7 @@
     "glob": "^13.0.6"
   },
   "devDependencies": {
-    "@lokascript/domains": "^7.1.0",
+    "@lokascript/domains": "^7.2.0",
     "@types/node": "^26.6.6",
     "tsup": "^9.0.0",
     "typescript": "^5.0.0",
