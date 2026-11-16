@@ -91,10 +91,13 @@ describe('findNameCollisions', () => {
     expect(findings).toEqual([]);
   });
 
-  it('suggests a rename a digit does not split (tr, qu)', () => {
+  // tr and qu split a name at its digit until digit-names.test.ts, so `i1` was
+  // passed over for `iValue` there. The candidates are still checked in the
+  // language, and `i1` now reads as one name in every one of them.
+  it('suggests the first rename in tr as anywhere: a digit splits no name', () => {
     const code = render(parse('on click set i to 1 then put i into #out', 'en')!, 'tr');
     const [finding] = findNameCollisions(code, 'tr');
-    expect(finding?.rename).toBe('iValue');
+    expect(finding?.rename).toBe('i1');
   });
 
   it('reports nothing in English, or for a name that collides nowhere', () => {
