@@ -20,7 +20,7 @@ describe('the scope before the query', () => {
     ['hi', 'on click hide <p/> in me', 'क्लिक पर मुझ में स्थित <p/> को छिपाएं'],
     ['bn', 'on click hide <p/> in #list', 'ক্লিকে #list এ থাকা <p/>কে লুকান'],
     ['ja', 'on click hide <p/> in me', 'クリックで 自分 の中の <p/>を 隠す'],
-    ['ko', 'on click add .x to <li/> in #list', '클릭 할 때 #list 안의 <li/>에 .x을 추가'],
+    ['ko', 'on click add .x to <li/> in #list', '클릭 할 때 #list 안의 <li/>에 .x를 추가'],
   ])('%s: %s', (language, source, expected) => {
     expect(translate(source, 'en', language)).toBe(expected);
     expect(translate(expected, language, 'en')).toBe(translate(source, 'en', 'en'));

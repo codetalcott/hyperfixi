@@ -111,7 +111,10 @@ export class TurkishKeywordExtractor implements ContextAwareExtractor {
 
     // An `_`-joined run is one token: a registered keyword (`tuş_bas`, `fare_bas`:
     // keydown, mousedown; was OPEN_ITEMS P51) or a snake_case name (`my_func()`),
-    // which split at `_` before. Digits continue a name's run (`x_1`).
+    // which split at `_` before. Digits continue a name's run (`x_1`), and so a run
+    // with a digit in it is one token too (`x1`, `item2`): it split as `x` + `1`,
+    // which the renderer hid by writing `(x1)` and a hand-written `x1 i 10 e ayarla`
+    // could not be read at all. A run starts with a letter, so `10px` is not one.
     let runEnd = startPos;
     while (
       runEnd < input.length &&
@@ -120,7 +123,7 @@ export class TurkishKeywordExtractor implements ContextAwareExtractor {
       runEnd++;
     }
     const run = input.slice(startPos, runEnd);
-    if (run.includes('_')) {
+    if (run.includes('_') || /[0-9]/.test(run)) {
       const runEntry = this.context.lookupKeyword(run.toLowerCase());
       if (runEntry) {
         return {

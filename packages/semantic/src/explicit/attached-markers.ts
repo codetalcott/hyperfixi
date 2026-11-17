@@ -41,17 +41,71 @@ const KO_PAIRS: ReadonlyArray<readonly [string, string]> = [
   ['으로', '로'],
 ];
 
+/** How a word ends, as ko's particles see it. */
+type KoreanEnding = 'vowel' | 'consonant' | 'rieul';
+
+/** A digit as it is read (영 일 이 삼 사 오 육 칠 팔 구): 1, 7 and 8 end in ㄹ. */
+const KO_DIGIT_ENDINGS: readonly KoreanEnding[] = [
+  'consonant',
+  'rieul',
+  'vowel',
+  'consonant',
+  'vowel',
+  'vowel',
+  'consonant',
+  'rieul',
+  'rieul',
+  'vowel',
+];
+
 /**
- * ko's particle in the form the word's last syllable takes (`나를`, `#out을`):
- * after a Hangul syllable, by its final consonant; after code, as the render
- * chose it (how a selector is read is not the text's).
+ * How a Latin word ends when it is read aloud in Korean. A rule of thumb, from
+ * its spelling: `l`, `m`, `n` and `ng` close a syllable (`total` 토털, `item`
+ * 아이템), with a silent `e` after them or not (`name` 네임, `title` 타이틀; a
+ * two-letter word's `e` is read: `me` 미); so
+ * does a stop right after a vowel (`out` 아웃, `click` 클릭, `tab` 탭), where
+ * one after a consonant takes a vowel of its own (`count` 카운트, `link` 링크).
+ * Everything else ends in a vowel (`x` 엑스, `log` 로그, `active` 액티브). A
+ * word read otherwise (`px` 픽셀) gets the other form, which the reader takes
+ * all the same; what the rule guarantees is one form per word.
+ */
+function latinEnding(word: string): KoreanEnding {
+  const w = word.toLowerCase();
+  const silentE = w.length > 2 && w.endsWith('e') ? w.slice(0, -1) : w;
+  if (/l$/.test(silentE)) return 'rieul';
+  if (/[mn]$/.test(silentE) || w.endsWith('ng')) return 'consonant';
+  if (/[aeiou](ck|[ptkcb])$/.test(w)) return 'consonant';
+  return 'vowel';
+}
+
+/**
+ * How `word` ends: a Hangul syllable by its final consonant, a digit by its
+ * reading, a Latin word by `latinEnding`. Punctuation that closes the word is
+ * looked past (`"안녕"`, `<button/>`, `[n, 2]`). Undefined for anything else.
+ */
+function koreanEnding(word: string): KoreanEnding | undefined {
+  const read = word.replace(/[^\p{L}\p{N}]+$/u, '');
+  const last = read.codePointAt(read.length - 1) ?? 0;
+  if (last >= 0xac00 && last <= 0xd7a3) {
+    const batchim = (last - 0xac00) % 28;
+    return batchim === 0 ? 'vowel' : batchim === 8 ? 'rieul' : 'consonant';
+  }
+  if (last >= 0x30 && last <= 0x39) return KO_DIGIT_ENDINGS[last - 0x30];
+  const latin = /[A-Za-z]+$/.exec(read)?.[0];
+  return latin ? latinEnding(latin) : undefined;
+}
+
+/**
+ * ko's particle in the form the word before it takes (`나를`, `#out을`,
+ * `x1을`, `item2를`): by how the word ends (koreanEnding). The form does not
+ * depend on which command wrote the particle, so a name takes the same one
+ * everywhere in a script. Where the ending is unknown, as the render chose it.
  */
 function koreanParticle(word: string, particle: string): string {
   const pair = KO_PAIRS.find(p => p.includes(particle));
-  const last = word.codePointAt(word.length - 1) ?? 0;
-  if (!pair || last < 0xac00 || last > 0xd7a3) return particle;
-  const batchim = (last - 0xac00) % 28;
-  if (batchim === 0 || (batchim === 8 && pair[0] === '으로')) return pair[1];
+  const ending = pair && koreanEnding(word);
+  if (!pair || !ending) return particle;
+  if (ending === 'vowel' || (ending === 'rieul' && pair[0] === '으로')) return pair[1];
   return pair[0];
 }
 

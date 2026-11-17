@@ -36,6 +36,9 @@ import {
   TextEdit,
   WorkspaceEdit,
   DocumentFormattingParams,
+  SymbolInformation,
+  SymbolKind,
+  WorkspaceSymbolParams,
 } from 'vscode-languageserver/node';
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -47,13 +50,19 @@ import { detectLokascriptFeatures } from './command-tiers.js';
 import {
   isHtmlDocument,
   extractHyperscriptRegions,
+  extractElementIds,
+  extractElementClasses,
   findRegionAtPosition,
   offsetToPosition,
 } from './extraction.js';
 import { getWordAtPosition } from './utils.js';
+import { createCompleter, type Completer, type CompletionEngine } from './next-words.js';
+import { namesInScopeAtEnd, treeSites, SCOPE_SEP } from './tree-symbols.js';
 import { formatHyperscript } from './formatting.js';
 import { runSimpleDiagnostics, runDirectiveDiagnostics } from './simple-diagnostics.js';
-import { getSymbolTable } from './symbol-table.js';
+import { buildSymbolTable, getSymbolTable } from './symbol-table.js';
+import type { SymbolEntry, SymbolLocation, SymbolTable } from './symbol-table.js';
+import { createWorkspaceIndex, type WorkspaceIndex } from './workspace-index.js';
 import { inferContext } from './completion-context.js';
 import { extractDocumentSymbols } from './document-symbols.js';
 
@@ -93,6 +102,7 @@ function getOtherLanguages(): string[] {
 
 let interchangeLSP: any = null;
 let engineParse: ((code: string) => unknown) | null = null;
+let engineModule: CompletionEngine | null = null;
 let lspMetadata: any = null;
 
 // The engine that runs hyperscript (@hyperfixi/engine: hyperfixi-hs.js, and hyperfixi.js
@@ -103,6 +113,7 @@ try {
   const engine = await import('@hyperfixi/engine');
   engine.register(...engine.everything);
   engineParse = engine.parse;
+  engineModule = engine as unknown as CompletionEngine;
 } catch {
   console.error('[lokascript-ls] @hyperfixi/engine not available — parse errors disabled');
 }
@@ -125,6 +136,60 @@ try {
   console.error(
     '[lokascript-ls] @hyperfixi/core/lsp-metadata not available - using fallback keywords'
   );
+}
+
+// The standard behaviors (`install Toggleable`, `Removable`, …) are defined by
+// @hyperfixi/behaviors, not by any file in a workspace. Its schemas entry is plain data: with it
+// the server knows their names, parameters and descriptions. The specifier is a variable so
+// the package stays optional to the typecheck as well as to the install.
+interface StandardBehavior {
+  name: string;
+  description: string;
+  parameters: Array<{
+    name: string;
+    type: string;
+    optional?: boolean;
+    default?: string | number | boolean;
+    description: string;
+  }>;
+  events: Array<{ name: string; description: string }>;
+}
+let standardBehaviors: Record<string, StandardBehavior> = {};
+try {
+  const schemasEntry = '@hyperfixi/behaviors/schemas';
+  const schemas: any = await import(schemasEntry);
+  standardBehaviors = schemas.ALL_SCHEMAS ?? {};
+} catch {
+  console.error(
+    '[lokascript-ls] @hyperfixi/behaviors not available — the standard behaviors are unknown'
+  );
+}
+
+// Completion asks the engine's grammar what fits at the cursor (next-words.ts). The order of
+// commands comes from how often the reference and hover examples use them, when core is there.
+let completer: Completer | null = null;
+if (engineModule) {
+  const examples: string[] = [];
+  for (const doc of Object.values(lspMetadata?.HOVER_DOCS ?? {})) {
+    const example = (doc as { example?: unknown }).example;
+    if (typeof example === 'string') examples.push(example);
+  }
+  try {
+    const reference: any = await import('@hyperfixi/core/reference');
+    for (const command of Object.values(reference.commands ?? {})) {
+      examples.push(...((command as { examples?: string[] }).examples ?? []));
+    }
+    for (const pattern of reference.patterns ?? []) {
+      if (typeof pattern?.code === 'string') examples.push(pattern.code);
+    }
+  } catch {
+    // Without core the grammar's own order stands.
+  }
+  try {
+    completer = createCompleter(engineModule, examples);
+  } catch (error) {
+    console.error(`[lokascript-ls] grammar completion disabled: ${error}`);
+  }
 }
 
 // Try to import framework IR for LSE bracket notation in hover
@@ -652,6 +717,14 @@ async function pullConfiguration(): Promise<void> {
 
 connection.onInitialize((params: InitializeParams): InitializeResult => {
   hasConfigurationCapability = !!params.capabilities.workspace?.configuration;
+  workspaceRoots = params.workspaceFolders?.map(folder => folder.uri) ?? [];
+  if (workspaceRoots.length === 0 && params.rootUri) workspaceRoots = [params.rootUri];
+  workspaceIndex = createWorkspaceIndex({
+    roots: workspaceRoots,
+    build: (uri, text) => symbolTableOf(uri, text),
+    isOpen: uri => !!documents.get(uri),
+    log: message => connection.console.log(`[lokascript-ls] ${message}`),
+  });
   // The VS Code extension passes `{ language }` here; wrappers may pass more.
   globalSettings = mergeSettings(baseSettings(), params.initializationOptions);
   // Resolve mode on initialization
@@ -672,6 +745,7 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
         codeActionKinds: [CodeActionKind.QuickFix],
       },
       definitionProvider: true,
+      workspaceSymbolProvider: true,
       referencesProvider: true,
       renameProvider: { prepareProvider: true },
       documentFormattingProvider: true,
@@ -770,6 +844,7 @@ async function validateDocument(document: TextDocument): Promise<void> {
     allDiagnostics = await getDiagnostics(text, globalSettings.language);
   }
 
+  allDiagnostics.push(...unknownBehaviorDiagnostics(document));
   connection.sendDiagnostics({ uri, diagnostics: allDiagnostics });
 }
 
@@ -1071,7 +1146,10 @@ connection.onCompletion((params: TextDocumentPositionParams): CompletionItem[] =
     const context = inferContext(beforeCursor);
     if (context === 'caret') return getCaretVarCompletions(document);
     if (context === 'attrs-property') return getAttrsCompletions();
-    return getContextualCompletions(context, language);
+    return (
+      getGrammarCompletions(document, beforeCursor, regions.indexOf(found.region), language) ??
+      getContextualCompletions(context, language)
+    );
   } else {
     // Pure hyperscript file
     const offset = document.offsetAt(position);
@@ -1079,9 +1157,299 @@ connection.onCompletion((params: TextDocumentPositionParams): CompletionItem[] =
     const context = inferContext(beforeCursor);
     if (context === 'caret') return getCaretVarCompletions(document);
     if (context === 'attrs-property') return getAttrsCompletions();
-    return getContextualCompletions(context, language);
+    return (
+      getGrammarCompletions(document, beforeCursor, 0, language) ??
+      getContextualCompletions(context, language)
+    );
   }
 });
+
+/**
+ * The parameters of a behavior, for `install Name(|`: the workspace's
+ * definition when there is one (its parameter list), else the standard
+ * behavior's of that name.
+ */
+function behaviorParameterCompletions(behavior: string): CompletionItem[] {
+  const suffix = SCOPE_SEP + `behavior ${behavior}`;
+  const names = new Set<string>();
+  for (const { table } of everyTable()) {
+    for (const [key, entry] of table.symbols) {
+      if (key.endsWith(suffix) && entry.definitions.length > 0) names.add(entry.name);
+    }
+  }
+  if (names.size > 0) {
+    return [...names].map(name => ({
+      label: name,
+      kind: CompletionItemKind.Property,
+      detail: `parameter of ${behavior}`,
+      insertText: `${name}: `,
+    }));
+  }
+  return (standardBehaviors[behavior]?.parameters ?? []).map((parameter, index) => ({
+    label: parameter.name,
+    kind: CompletionItemKind.Property,
+    detail: `${parameter.type}${parameter.default !== undefined ? ` = ${parameter.default}` : ''}: ${parameter.description}`,
+    insertText: `${parameter.name}: `,
+    sortText: String(index).padStart(4, '0'),
+  }));
+}
+
+/** Is `name` a behavior some file in the workspace defines? */
+function workspaceDefinesBehavior(name: string): boolean {
+  return everyTable().some(({ table }) => {
+    const match = table.symbols.get(name);
+    return match?.kind === 'behavior' && match.definitions.length > 0;
+  });
+}
+
+/** Hover for a standard behavior's name, where no workspace file defines one by that name. */
+function standardBehaviorHover(
+  document: TextDocument,
+  position: { line: number; character: number }
+): Hover | null {
+  const entry = getDocSymbolTable(document).table.symbolAt(position.line, position.character);
+  if (!entry || entry.kind !== 'behavior') return null;
+  const standard = standardBehaviors[entry.name];
+  if (!standard || workspaceDefinesBehavior(entry.name)) return null;
+  const parameters = standard.parameters.map(
+    p =>
+      `- \`${p.name}\` (${p.type}${p.default !== undefined ? `, default \`${p.default}\`` : ''}): ${p.description}`
+  );
+  const events = standard.events.map(e => `- \`${e.name}\`: ${e.description}`);
+  return {
+    contents: {
+      kind: MarkupKind.Markdown,
+      value: [
+        `**${standard.name}** (standard behavior, \`@hyperfixi/behaviors\`)`,
+        '',
+        standard.description,
+        ...(parameters.length ? ['', 'Parameters:', ...parameters] : []),
+        ...(events.length ? ['', 'Events:', ...events] : []),
+      ].join('\n'),
+    },
+  };
+}
+
+/**
+ * `install Name` where nothing the server reads defines `Name`: no file in
+ * the workspace, and no standard behavior. Only when the standard behaviors
+ * are known: without them most of these notices are for `Toggleable` and its
+ * kin (19 of 22 on this repository's examples, which is why this was once
+ * withdrawn). Information, not a warning: a behavior can still come from a
+ * script the server does not read. Functions get no such check: any function
+ * on the page is callable.
+ */
+function unknownBehaviorDiagnostics(document: TextDocument): Diagnostic[] {
+  if (Object.keys(standardBehaviors).length === 0) return [];
+  try {
+    const { table } = getDocSymbolTable(document);
+    const where =
+      workspaceRoots.length > 0 ? "this workspace's .html and .hs files" : 'the open files';
+    const diagnostics: Diagnostic[] = [];
+    for (const entry of table.symbols.values()) {
+      if (entry.kind !== 'behavior' || entry.usages.length === 0) continue;
+      if (entry.definitions.length > 0 || standardBehaviors[entry.name]) continue;
+      if (workspaceDefinesBehavior(entry.name)) continue;
+      for (const loc of entry.usages) {
+        diagnostics.push({
+          severity: DiagnosticSeverity.Information,
+          range: {
+            start: { line: loc.line, character: loc.character },
+            end: { line: loc.line, character: loc.character + loc.length },
+          },
+          message: `No behavior named "${entry.name}": nothing in ${where} defines it, and it is not a standard behavior. If a script the language server does not read defines it, this can be ignored.`,
+          code: 'unknown-behavior',
+          source: getBranding(resolvedMode),
+        });
+      }
+    }
+    return diagnostics;
+  } catch (error) {
+    connection.console.error(`Unknown-behavior check error: ${error}`);
+    return [];
+  }
+}
+
+/** Names the runtime supplies wherever an expression is read. */
+const PRONOUNS = ['me', 'it', 'result', 'event', 'target', 'detail'];
+/** Keywords after which the next name is being DECLARED or is not a variable. */
+const NOT_A_VARIABLE_AFTER = new Set([
+  'def',
+  'behavior',
+  'for',
+  'index',
+  'send',
+  'trigger',
+  'install',
+  'on',
+  'fetch',
+  'go',
+]);
+
+/**
+ * Completions from the engine's grammar and the document's names, or null
+ * when this cursor is not one it can answer (no engine, another language,
+ * or text the engine stops in before the cursor): the caller's keyword
+ * lists stand then.
+ */
+function getGrammarCompletions(
+  document: TextDocument,
+  beforeCursor: string,
+  regionIndex: number,
+  language: string
+): CompletionItem[] | null {
+  if (!completer || !(language === 'en' || language.startsWith('en-'))) return null;
+  try {
+    const pageText = document.getText();
+    const partial = /(^|[^\w)\]])([#.:$])([\w-]*)$/.exec(beforeCursor);
+
+    // `x.…`: a property of a value this server knows nothing about.
+    if (/[\w)\]]\.[\w-]*$/.test(beforeCursor)) return [];
+
+    // `#…`: the page's ids. `.…`: its classes. The sigil is typed already.
+    if (partial && (partial[2] === '#' || partial[2] === '.')) {
+      const sigil = partial[2];
+      const names =
+        sigil === '#'
+          ? [...new Set(extractElementIds(pageText).map(id => id.name))]
+          : extractElementClasses(pageText);
+      return names.map(name => ({
+        label: sigil + name,
+        kind: sigil === '#' ? CompletionItemKind.Reference : CompletionItemKind.Value,
+        detail: sigil === '#' ? 'id on this page' : 'class on this page',
+        filterText: name,
+        insertText: name,
+      }));
+    }
+
+    // `:…` and `$…`: the variables written that way, here and (for `$`) anywhere in the file.
+    if (partial && (partial[2] === ':' || partial[2] === '$')) {
+      const sigil = partial[2];
+      const { table } = getDocSymbolTable(document);
+      const names = new Set<string>();
+      for (const [key, entry] of table.symbols) {
+        if (entry.kind !== 'variable' || !entry.name.startsWith(sigil)) continue;
+        // The name being typed is in the table too, as its own only site.
+        const sitesOfName = entry.definitions.length + entry.usages.length;
+        if (entry.name === sigil + partial[3] && sitesOfName === 1) continue;
+        const scope = key.split(SCOPE_SEP)[1] ?? '';
+        const here =
+          scope === `region ${regionIndex}` ||
+          scope.startsWith(`region ${regionIndex} `) ||
+          scope.startsWith(`behavior ${regionIndex}:`);
+        if (sigil === '$' || here) names.add(entry.name);
+      }
+      return [...names].map(name => ({
+        label: name,
+        kind: CompletionItemKind.Variable,
+        detail: sigil === '$' ? 'global variable' : 'element variable',
+        filterText: name.slice(1),
+        insertText: name.slice(1),
+      }));
+    }
+
+    // A word: what the grammar takes after the text before it.
+    const text = beforeCursor.replace(/[A-Za-z_][\w-]*!?$/, '');
+    // `install Name(…, |`: the behavior's parameters, by name.
+    const installing = /\binstall\s+([A-Za-z_][\w.]*)\s*\((?:[^()]*,)?\s*$/.exec(text);
+    if (installing) return behaviorParameterCompletions(installing[1]!);
+
+    const next = completer.nextWords(text);
+    if (!next) return null;
+
+    const docs: Record<string, { description?: string }> = lspMetadata?.HOVER_DOCS ?? {};
+    const keyword = (word: string): CompletionItem => ({
+      label: word,
+      kind: CompletionItemKind.Keyword,
+      detail: docs[word]?.description,
+    });
+    const defined = (kind: 'behavior' | 'function'): CompletionItem[] => {
+      const names = new Set<string>();
+      for (const { table } of everyTable()) {
+        for (const entry of table.symbols.values()) {
+          if (entry.kind === kind && entry.definitions.length > 0) names.add(entry.name);
+        }
+      }
+      const items: CompletionItem[] = [...names].map(name => ({
+        label: name,
+        kind: kind === 'behavior' ? CompletionItemKind.Class : CompletionItemKind.Function,
+        detail: kind,
+      }));
+      if (kind === 'behavior') {
+        for (const standard of Object.values(standardBehaviors)) {
+          if (names.has(standard.name)) continue;
+          items.push({
+            label: standard.name,
+            kind: CompletionItemKind.Class,
+            detail: `standard behavior: ${standard.description}`,
+          });
+        }
+      }
+      return items;
+    };
+
+    let items: CompletionItem[];
+    if (next.lastWord === 'install') {
+      items = defined('behavior');
+    } else {
+      const names: CompletionItem[] = [];
+      if (next.lastWord === 'on') {
+        names.push(...getContextualCompletions('event', language));
+        const sent = new Set<string>();
+        for (const entry of getDocSymbolTable(document).table.symbols.values()) {
+          if (entry.kind === 'event') sent.add(entry.name);
+        }
+        // The script being typed does not parse, so the table has nothing
+        // from it: read what does parse before the cursor.
+        const before = completer.treeBefore(text);
+        for (const site of (before && treeSites(before.tree, before.code, 0)) || []) {
+          if (site.kind === 'event' && site.role === 'use') sent.add(site.name);
+        }
+        names.push(
+          ...[...sent].map(name => ({
+            label: name,
+            kind: CompletionItemKind.Event,
+            detail: 'event sent in this file',
+          }))
+        );
+      } else if (next.takesName && !NOT_A_VARIABLE_AFTER.has(next.lastWord ?? '')) {
+        const before = completer.treeBefore(text);
+        const variables = before ? namesInScopeAtEnd(before.tree, before.code) : [];
+        const functions = defined('function');
+        const values: CompletionItem[] = [
+          ...variables.map(name => ({
+            label: name,
+            kind: CompletionItemKind.Variable,
+            detail: 'variable',
+          })),
+          ...PRONOUNS.map(name => ({ label: name, kind: CompletionItemKind.Variable })),
+        ];
+        names.push(
+          ...(next.lastWord === 'call' ? [...functions, ...values] : [...values, ...functions])
+        );
+        // A selector is a value too: the `#`, `.` and `<…/>` starters.
+        names.push(...getContextualCompletions('selector', language));
+      }
+      // What the parser requires; then names, where it reads one (a value
+      // position is for a value before it is for `the` or `first`); then the
+      // rest of the command's own words; then everything else it takes.
+      const required = next.words.slice(0, next.requiredCount).map(keyword);
+      const own = next.words.slice(next.requiredCount, next.ownCount).map(keyword);
+      const rest = next.words.slice(next.ownCount).map(keyword);
+      items = [...required, ...names, ...own, ...rest];
+    }
+
+    // One label once (a variable named like a keyword keeps its first place),
+    // and the order above is the order shown: a client sorts by `sortText`.
+    const seen = new Set<string>();
+    return items
+      .filter(item => !seen.has(item.label) && seen.add(item.label))
+      .map((item, index) => ({ ...item, sortText: String(index).padStart(4, '0') }));
+  } catch (error) {
+    connection.console.error(`Grammar completion error: ${error}`);
+    return null;
+  }
+}
 
 /**
  * Return completion items for template directives (`#if`, `#for`, etc.).
@@ -1424,6 +1792,9 @@ connection.onHover((params: TextDocumentPositionParams): Hover | null => {
     const text = document.getText();
     const uri = document.uri;
     const position = params.position;
+
+    const standard = standardBehaviorHover(document, position);
+    if (standard) return standard;
 
     // For HTML files, check if we're inside a hyperscript region
     if (isHtmlDocument(uri, text)) {
@@ -1798,13 +2169,95 @@ function getKeywordVariants(eng: string): string[] {
 }
 
 /** Get the cached symbol table for a document, extracting regions as needed. */
-function getDocSymbolTable(document: { uri: string; version: number; getText(): string }) {
-  const text = document.getText();
-  const uri = document.uri;
-  const regions = isHtmlDocument(uri, text)
+/** The regions and page ids a symbol table is built from. */
+function symbolSources(uri: string, text: string) {
+  const html = isHtmlDocument(uri, text);
+  const regions = html
     ? extractHyperscriptRegions(text)
     : [{ code: text, startLine: 0, startChar: 0, endLine: 0, endChar: 0, type: 'script' as const }];
-  return { table: getSymbolTable(uri, document.version, regions, getKeywordVariants), uri };
+  const options = { parse: engineParse ?? undefined, ids: html ? extractElementIds(text) : [] };
+  return { regions, options };
+}
+
+/** A file's symbol table, uncached: the workspace index keeps its own. */
+function symbolTableOf(uri: string, text: string): SymbolTable {
+  const { regions, options } = symbolSources(uri, text);
+  return buildSymbolTable(regions, getKeywordVariants, options);
+}
+
+function getDocSymbolTable(document: { uri: string; version: number; getText(): string }) {
+  const uri = document.uri;
+  const { regions, options } = symbolSources(uri, document.getText());
+  const table = getSymbolTable(uri, document.version, regions, getKeywordVariants, options);
+  return { table, uri };
+}
+
+let workspaceRoots: string[] = [];
+let workspaceIndex: WorkspaceIndex | null = null;
+
+/** Every symbol table the server has: the open documents', then the workspace's other files'. */
+function everyTable(): Array<{ uri: string; table: SymbolTable }> {
+  return [
+    ...documents.all().map(open => getDocSymbolTable(open)),
+    ...(workspaceIndex?.tables() ?? []),
+  ];
+}
+
+/**
+ * A name that means one thing in every file: a behavior, a function, a `$x`.
+ * (An event does too, but a file's table only keeps the events that file
+ * sends, so events are linked within a file.)
+ */
+function sharedKey(entry: SymbolEntry): string | null {
+  if (entry.scope !== 'global') return null;
+  const shared =
+    entry.kind === 'behavior' || entry.kind === 'function' || entry.kind === 'variable';
+  return shared ? entry.name : null;
+}
+
+interface Site {
+  uri: string;
+  loc: SymbolLocation;
+  definition: boolean;
+}
+
+/**
+ * Every site of the symbol at a position: this file's, and for a shared name
+ * the other files' too, when exactly one file in the workspace defines it.
+ * A name nothing defines (`alert(…)`, a behavior from a bundle) is not linked
+ * across files: there is no telling that two files mean the same thing by it.
+ */
+function sitesAt(
+  document: TextDocument,
+  position: { line: number; character: number }
+): { entry: SymbolEntry; sites: Site[]; candidates?: Site[] } | null {
+  const { table, uri } = getDocSymbolTable(document);
+  const entry = table.symbolAt(position.line, position.character);
+  if (!entry) return null;
+  const sitesOf = (at: string, e: SymbolEntry): Site[] => [
+    ...e.definitions.map(loc => ({ uri: at, loc, definition: true })),
+    ...e.usages.map(loc => ({ uri: at, loc, definition: false })),
+  ];
+  const here = sitesOf(uri, entry);
+  const key = sharedKey(entry);
+  if (!key) return { entry, sites: here };
+  const elsewhere: Site[] = [];
+  const definers = new Set<string>(entry.definitions.length > 0 ? [uri] : []);
+  for (const other of everyTable()) {
+    if (other.uri === uri) continue;
+    const match = other.table.symbols.get(key);
+    if (!match || match.kind !== entry.kind) continue;
+    elsewhere.push(...sitesOf(other.uri, match));
+    if (match.definitions.length > 0) definers.add(other.uri);
+  }
+  if (definers.size === 1) return { entry, sites: [...here, ...elsewhere] };
+  // Two files that each define the name are two programs (two pages with
+  // their own `behavior Draggable`): which one another file means cannot be
+  // told, so nothing is linked, and Go to Definition offers the candidates.
+  const candidates = here.some(site => site.definition)
+    ? []
+    : elsewhere.filter(site => site.definition);
+  return { entry, sites: here, candidates };
 }
 
 /** Convert a SymbolLocation to an LSP Location. */
@@ -1830,11 +2283,12 @@ connection.onDefinition((params: TextDocumentPositionParams): Location | Locatio
     const document = documents.get(params.textDocument.uri);
     if (!document) return null;
 
-    const { table, uri } = getDocSymbolTable(document);
-    const entry = table.symbolAt(params.position.line, params.position.character);
-    if (!entry || entry.definitions.length === 0) return null;
+    const found = sitesAt(document, params.position);
+    const own = found?.sites.filter(site => site.definition) ?? [];
+    const definitions = own.length > 0 ? own : (found?.candidates ?? []);
+    if (definitions.length === 0) return null;
 
-    const locations = entry.definitions.map(loc => symbolLocToLocation(uri, loc));
+    const locations = definitions.map(site => symbolLocToLocation(site.uri, site.loc));
     return locations.length === 1 ? locations[0]! : locations;
   } catch (error) {
     connection.console.error(`Go to Definition error: ${error}`);
@@ -1851,18 +2305,40 @@ connection.onReferences((params): Location[] | null => {
     const document = documents.get(params.textDocument.uri);
     if (!document) return null;
 
-    const { table, uri } = getDocSymbolTable(document);
-    const entry = table.symbolAt(params.position.line, params.position.character);
-    if (!entry) return null;
-
-    // Include both definitions and usages
-    const allLocs = [...entry.definitions, ...entry.usages];
-    if (allLocs.length === 0) return null;
-
-    return allLocs.map(loc => symbolLocToLocation(uri, loc));
+    const found = sitesAt(document, params.position);
+    if (!found || found.sites.length === 0) return null;
+    return found.sites.map(site => symbolLocToLocation(site.uri, site.loc));
   } catch (error) {
     connection.console.error(`Find References error: ${error}`);
     return null;
+  }
+});
+
+// =============================================================================
+// Workspace Symbols
+// =============================================================================
+
+connection.onWorkspaceSymbol((params: WorkspaceSymbolParams): SymbolInformation[] => {
+  try {
+    const query = params.query.toLowerCase();
+    const symbols: SymbolInformation[] = [];
+    for (const { uri, table } of everyTable()) {
+      for (const entry of table.symbols.values()) {
+        if (entry.kind !== 'behavior' && entry.kind !== 'function') continue;
+        if (!entry.name.toLowerCase().includes(query)) continue;
+        for (const loc of entry.definitions) {
+          symbols.push({
+            name: entry.name,
+            kind: entry.kind === 'behavior' ? SymbolKind.Class : SymbolKind.Function,
+            location: symbolLocToLocation(uri, loc),
+          });
+        }
+      }
+    }
+    return symbols;
+  } catch (error) {
+    connection.console.error(`Workspace Symbol error: ${error}`);
+    return [];
   }
 });
 
@@ -1908,22 +2384,20 @@ connection.onRenameRequest((params): WorkspaceEdit | null => {
     const document = documents.get(params.textDocument.uri);
     if (!document) return null;
 
-    const { table, uri } = getDocSymbolTable(document);
-    const entry = table.symbolAt(params.position.line, params.position.character);
-    if (!entry) return null;
+    const found = sitesAt(document, params.position);
+    if (!found || found.sites.length === 0) return null;
 
-    const allLocs = [...entry.definitions, ...entry.usages];
-    if (allLocs.length === 0) return null;
-
-    const edits: TextEdit[] = allLocs.map(loc => ({
-      range: {
-        start: { line: loc.line, character: loc.character },
-        end: { line: loc.line, character: loc.character + loc.length },
-      },
-      newText: params.newName,
-    }));
-
-    return { changes: { [uri]: edits } };
+    const changes: Record<string, TextEdit[]> = {};
+    for (const { uri, loc } of found.sites) {
+      (changes[uri] ??= []).push({
+        range: {
+          start: { line: loc.line, character: loc.character },
+          end: { line: loc.line, character: loc.character + loc.length },
+        },
+        newText: params.newName,
+      });
+    }
+    return { changes };
   } catch (error) {
     connection.console.error(`Rename error: ${error}`);
     return null;

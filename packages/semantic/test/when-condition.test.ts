@@ -102,7 +102,7 @@ describe('English reads the condition', () => {
 describe('the condition reads first in a verb-final language, in its own words', () => {
   it.each([
     ['ja', 'それ 一致する .y とき .itemに .xを 追加'],
-    ['ko', '그것 일치 .y 때 .item에 .x을 추가'],
+    ['ko', '그것 일치 .y 때 .item에 .x를 추가'],
     ['es', 'agregar .x a .item cuando ello coincide .y'],
     ['ar', 'أضف .x إلى .item عندما هو يطابق .y'],
   ])('%s', (language, rendered) => {
