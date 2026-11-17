@@ -6,6 +6,7 @@
  */
 
 import type { CallToolResult, Tool } from '@modelcontextprotocol/server';
+import type { Completer, CompletionEngine } from '@hyperfixi/engine/next-words';
 
 // Try to import ast-utils from core
 let astToolkit: any = null;
@@ -23,12 +24,88 @@ try {
 // `parse` returns the tree (it gives the interchange its positions) and throws a
 // ParseError, whose token is where the parse stopped.
 let engineParse: ((code: string) => unknown) | null = null;
+// What the engine's grammar takes at a position (`@hyperfixi/engine/next-words`, the code the
+// language server completes with): the candidates for the word a misspelling was meant to be.
+let completer: Completer | null = null;
 try {
   const engine = await import('@hyperfixi/engine');
   engine.register(...engine.everything);
   engineParse = engine.parse;
+  try {
+    const { createCompleter } = await import('@hyperfixi/engine/next-words');
+    completer = createCompleter(engine as unknown as CompletionEngine);
+  } catch {
+    // An engine before the subpath: the command list's "did you mean" stands.
+  }
 } catch {
   console.error('[mcp:lsp-bridge] @hyperfixi/engine not available — parse errors disabled');
+}
+
+/** Edit distance where two swapped neighbours (`mkae`) are one edit, as a slip of the hand is. */
+function typingDistance(a: string, b: string): number {
+  const d: number[][] = Array.from({ length: a.length + 1 }, (_, i) =>
+    Array.from({ length: b.length + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0))
+  );
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      d[i]![j] =
+        a[i - 1] === b[j - 1]
+          ? d[i - 1]![j - 1]!
+          : 1 + Math.min(d[i - 1]![j]!, d[i]![j - 1]!, d[i - 1]![j - 1]!);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+        d[i]![j] = Math.min(d[i]![j]!, d[i - 2]![j - 2]! + 1);
+      }
+    }
+  }
+  return d[a.length]![b.length]!;
+}
+
+/**
+ * The word a misspelling was meant to be, where the engine stopped at offset `stop`: the
+ * nearest of the words the GRAMMAR takes at that place, not of a list. The token the engine
+ * stopped on is tried first; then the one before it, because a misspelled keyword is often
+ * read as a name and the parse stops one token later (`intsall Removable` stops at
+ * `Removable`). Measured on one-word misspellings (a letter dropped, doubled, or two
+ * swapped) of real scripts, those the engine rejects (2026-11-17, Apple M4, Node 24.15.0):
+ * the diagnostics name the right word for 0.933 of 2,124 (command-shape sources) and 0.849
+ * of 1,112 (upstream's documentation site), and a wrong one for 0.040 and 0.060. With the
+ * command list alone: 0.570 and 0.451, wrong 0.097 and 0.127.
+ */
+export function meantWord(
+  code: string,
+  stop: number
+): { typed: string; start: number; word: string } | null {
+  if (!completer) return null;
+  const nearest = (start: number, typed: string): string | null => {
+    let before = code.slice(0, start);
+    if (before && !/\s$/.test(before)) before += ' ';
+    const next = completer!.nextWords(before);
+    if (!next || next.pastError || next.words.includes(typed)) return null;
+    // One edit in a short word, two in a long one: `form` is not `for`.
+    const limit = Math.min(2, Math.max(1, Math.floor(typed.length / 3)));
+    let best: string | null = null;
+    let bestDistance = limit + 1;
+    for (const word of next.words) {
+      if (Math.abs(word.length - typed.length) > limit) continue;
+      const distance = typingDistance(typed, word);
+      if (distance < bestDistance) {
+        best = word;
+        bestDistance = distance;
+      }
+    }
+    return best;
+  };
+  const at = /^[A-Za-z][\w-]*!?/.exec(code.slice(stop))?.[0];
+  if (at) {
+    const word = nearest(stop, at);
+    if (word) return { typed: at, start: stop, word };
+  }
+  const previous = /([A-Za-z][\w-]*)\s*$/.exec(code.slice(0, stop));
+  if (previous) {
+    const word = nearest(previous.index, previous[1]!);
+    if (word) return { typed: previous[1]!, start: previous.index, word };
+  }
+  return null;
 }
 
 /**
@@ -201,7 +278,7 @@ export const lspBridgeTools: Tool[] = [
   {
     name: 'get_diagnostics',
     description:
-      'Analyze hyperscript code and return LSP-compatible diagnostics with line/column ranges (errors, warnings, hints). English is checked by the engine that runs the code: a parse error is reported at the token where it stopped. Other languages (24 in all) are checked by the semantic parser.',
+      'Analyze hyperscript code and return LSP-compatible diagnostics with line/column ranges (errors, warnings, hints). English is checked by the engine that runs the code: a parse error is reported at the token where it stopped, with a "did you mean" when that token or the one before it is one or two letters from a word the grammar takes there. Other languages (24 in all) are checked by the semantic parser.',
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -366,6 +443,7 @@ async function getDiagnostics(
   // The checks below are heuristics it overrules. (Before 6.2 they ran first, and this tool
   // flagged 6 of 27 English inputs the engine rejects, none with a position.)
   let engine: 'reads' | 'rejects' | 'unavailable' = 'unavailable';
+  let engineStop: number | null = null;
   if (english && engineParse) {
     try {
       engineParse(code);
@@ -374,6 +452,10 @@ async function getDiagnostics(
       engine = 'rejects';
       const message = e instanceof Error ? e.message : String(e);
       const { line = 1, column = 0, length = 1 } = engineErrorPosition(e, code);
+      const token = typeof e === 'object' && e !== null ? Reflect.get(e, 'token') : undefined;
+      const start =
+        typeof token === 'object' && token !== null ? Reflect.get(token, 'start') : null;
+      if (typeof start === 'number') engineStop = start;
       diagnostics.push({
         range: {
           start: { line: line - 1, character: column },
@@ -476,15 +558,35 @@ async function getDiagnostics(
   if (engine === 'rejects') {
     // Only the word the engine stopped on: `toggel` in `on click toggel .active` is a typo,
     // while `and` in `add .a to me and put …` is not `add` (the engine stops later, on `put`'s value).
-    const stop = diagnostics[0]!.range.start;
-    diagnostics.push(
-      ...runSimpleDiagnostics(code, language).filter(
-        d =>
-          d.code === 'possible-typo' &&
-          d.range.start.line === stop.line &&
-          d.range.start.character === stop.character
-      )
-    );
+    // The grammar is asked first: the nearest of the words it takes where the engine stopped,
+    // or one token before. The command list answers only when the grammar has no word.
+    const meant = engineStop === null ? null : meantWord(code, engineStop);
+    if (meant) {
+      const before = code.slice(0, meant.start);
+      const line = before.split('\n').length - 1;
+      const character = meant.start - (before.lastIndexOf('\n') + 1);
+      diagnostics.push({
+        range: {
+          start: { line, character },
+          end: { line, character: character + meant.typed.length },
+        },
+        severity: 2,
+        code: 'possible-typo',
+        source: 'hyperfixi-mcp',
+        message: `The grammar does not read "${meant.typed}" here. Did you mean "${meant.word}"?`,
+        data: { suggestion: meant.word },
+      });
+    } else {
+      const stop = diagnostics[0]!.range.start;
+      diagnostics.push(
+        ...runSimpleDiagnostics(code, language).filter(
+          d =>
+            d.code === 'possible-typo' &&
+            d.range.start.line === stop.line &&
+            d.range.start.character === stop.character
+        )
+      );
+    }
   } else if (engine === 'reads') {
     // Style advice survives (`wait` over setTimeout, `then` between commands); the quote,
     // bracket and typo guesses about code the engine read do not.

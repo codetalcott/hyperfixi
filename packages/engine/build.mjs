@@ -23,6 +23,15 @@ await build({
   outfile: join(here, 'dist/index.js'),
 });
 
+// `@hyperfixi/engine/next-words`: what the grammar takes at a cursor, for editors and tools.
+// It imports nothing (the engine is its argument).
+await build({
+  ...shared,
+  entryPoints: [join(here, 'src/next-words.ts')],
+  format: 'esm',
+  outfile: join(here, 'dist/next-words.js'),
+});
+
 const PRODUCTS = ['hyperfixi-hs'];
 const entries = readdirSync(join(here, 'src/bundles')).filter(f => f.endsWith('.ts'));
 for (const entry of entries) {

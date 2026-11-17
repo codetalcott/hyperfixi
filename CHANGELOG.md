@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`@hyperfixi/engine/next-words`: what the grammar takes at a cursor.** The code the language
+  server completes with (`createCompleter(engine).nextWords(text)`: the words the parser asks
+  for at the end of a text, each kept only if the engine then reads it) moved from
+  `@lokascript/language-server` into the engine package as a subpath, so a second tool can read
+  it. It is in no browser bundle and takes the engine as its argument.
+
+- **MCP `get_diagnostics` names the word a misspelling was meant to be from the grammar.** Its
+  "did you mean" compared the token the engine stopped on with a list of commands, so a
+  misspelled keyword (`itno`, `froom`) got none, and neither did a misspelled command the
+  engine read as a name before stopping one token later (`intsall Removable`). The candidates
+  are now the words the engine's grammar takes at that place, tried at the stop token and at
+  the one before it, with two swapped letters counted as one slip. On one-word misspellings of
+  real scripts that the engine rejects (a letter dropped, doubled, or two swapped; 2026-11-17)
+  the diagnostics name the right word for 0.933 of 2,124 (0.570 before) and, on scripts from
+  upstream's documentation, 0.849 of 1,112 (0.451 before); a wrong word for 0.040 and 0.060
+  (0.097 and 0.127 before). The warning's text changed: `The grammar does not read "toggel"
+here. Did you mean "toggle"?`. Not covered: a misspelling that is a legal name where it
+  stands (about 4% of them: the engine reads the script), and a wrong word that is not a
+  misspelling (`let` for `set`).
+
 - **`@lokascript/language-server` knows the standard behaviors.** `Toggleable`, `Removable`,
   `ClickOutside` and the rest are defined by `@hyperfixi/behaviors`, not by a file in a
   workspace, so the server knew nothing about the behaviors pages install most (30 of the 41

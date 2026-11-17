@@ -126,6 +126,23 @@ engine looks for htmx once, when it has processed the document: load htmx with a
 (plain or `defer`, not `async`) for the hand-off and `hs-include`; swapped-in content is processed
 whenever htmx loads.
 
+### For editors and tools: `@hyperfixi/engine/next-words`
+
+```js
+import * as engine from '@hyperfixi/engine';
+import { createCompleter } from '@hyperfixi/engine/next-words';
+
+engine.register(...engine.everything);
+createCompleter(engine).nextWords('on click put x ').words; // ['into', 'before', 'after', …]
+```
+
+What the grammar takes at the end of a text, best first: the words the parser asks for there,
+each kept only if the engine then reads it. It is tooling, in no browser bundle, and has no
+counterpart upstream; it lives here because it reads the parser's own `match` and `peek`.
+`@lokascript/language-server` completes with it (and measures it: that package's
+`src/tools/completion-measure.ts`), and the MCP server's `get_diagnostics` takes its "did you
+mean" from it. Its tests are the language server's `src/next-words.test.ts`.
+
 ## Layout
 
 | File                                                             | What it holds                                                                                                                                                |
@@ -140,6 +157,7 @@ whenever htmx loads.
 | `src/reactivity.ts`, `src/templates.ts`, `src/live-templates.ts` | Optional: `when` / `live` / `bind`; `render` and template text; live templates                                                                               |
 | `src/commands/*`                                                 | The command modules, one export each (53 keywords in all)                                                                                                    |
 | `src/additions.ts`                                               | The two forms upstream does not have: `new X()` and `toggle <element>`                                                                                       |
+| `src/next-words.ts`                                              | `@hyperfixi/engine/next-words`: what the grammar takes at a cursor (for editors and tools; in no bundle)                                                     |
 | `src/kit.ts`, `src/ext/*`                                        | What an extension module may call; the extensions, each built to `dist/ext/<name>.js` (script tag) and `.esm.js`                                             |
 | `src/bundles/*`                                                  | Browser bundle entries. `hyperfixi-hs` is the script-tag bundle; `full` is the same modules, for the gate; `core`, `minimal`, `common` exist to measure size |
 | `upstream-suite/`                                                | The acceptance gate: upstream's Playwright suite (vendored) against a bundle                                                                                 |

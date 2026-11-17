@@ -121,7 +121,7 @@ describe('LSP Integration', () => {
       expect(labels).toEqual(expect.arrayContaining(['#', '.', '<']));
     });
 
-    // From here the list comes from the engine's grammar (next-words.ts) and
+    // From here the list comes from the engine's grammar (@hyperfixi/engine/next-words) and
     // the document's names; ide-scorecard.test.ts has the page-level probes.
     const labelsAt = async (text: string, version: number) => {
       await client.change(testUri, version, text);

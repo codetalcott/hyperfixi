@@ -332,7 +332,7 @@ p95 and longest time.
 
 ## Architecture
 
-The language server entry point is `server.ts` (LSP wiring and the request handlers), with the testable logic in sibling modules — `extraction.ts` (HTML region extraction and position mapping), `simple-diagnostics.ts`, `command-tiers.ts` (the _hyperscript-compatibility allowlists), `symbol-table.ts` (definition/references/rename) with `tree-symbols.ts` (the names read from the engine's tree), `next-words.ts` (what the engine's grammar takes at a cursor), `workspace-index.ts` (the symbol tables of files that are not open), `document-symbols.ts`, `completion-context.ts`, `formatting.ts` and `localized-descriptions.ts`. Together they:
+The language server entry point is `server.ts` (LSP wiring and the request handlers), with the testable logic in sibling modules — `extraction.ts` (HTML region extraction and position mapping), `simple-diagnostics.ts`, `command-tiers.ts` (the _hyperscript-compatibility allowlists), `symbol-table.ts` (definition/references/rename) with `tree-symbols.ts` (the names read from the engine's tree), `@hyperfixi/engine/next-words` (what the engine's grammar takes at a cursor; it lives in the engine package so the MCP server reads the same code), `workspace-index.ts` (the symbol tables of files that are not open), `document-symbols.ts`, `completion-context.ts`, `formatting.ts` and `localized-descriptions.ts`. Together they:
 
 1. **Extracts** hyperscript regions from HTML documents
 2. **Analyzes** code using semantic parsing (multilingual) or pattern-based fallback
