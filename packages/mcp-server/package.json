@@ -46,7 +46,7 @@
     "@lokascript/framework": "^7.6.0",
     "@lokascript/semantic": "^7.6.0",
     "@modelcontextprotocol/server": "^2.4.0",
-    "glob": "^13.0.6"
+    "glob": "^14.0.2"
   },
   "peerDependencies": {
     "@hyperfixi/core": "^7.6.0",
