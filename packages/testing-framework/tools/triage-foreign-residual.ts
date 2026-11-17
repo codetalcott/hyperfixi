@@ -66,7 +66,15 @@ async function main() {
     for (const lang of langs) {
       const t = byLanguage.get(lang)?.get(pattern);
       if (!t) {
-        rows.push({ pattern, lang, status: 'NO_ROW', complaint: '', source: '', rendered: '', errors: [] });
+        rows.push({
+          pattern,
+          lang,
+          status: 'NO_ROW',
+          complaint: '',
+          source: '',
+          rendered: '',
+          errors: [],
+        });
         continue;
       }
       const row: TriageRow = {
@@ -90,7 +98,7 @@ async function main() {
         }
       } catch (e) {
         row.status = 'RENDER_THREW';
-        row.complaint = String((e as Error).message ?? e).split('\n')[0];
+        row.complaint = String((e as Error).message ?? e).split('\n')[0] ?? '';
       }
       rows.push(row);
     }
@@ -108,12 +116,16 @@ async function main() {
   const clusters = new Map<string, TriageRow[]>();
   for (const r of rows) {
     const clusterKey =
-      r.status === 'INVALID' ? r.complaint.slice(0, 120) : `[${r.status}]${r.complaint ? ' ' + r.complaint.slice(0, 100) : ''}`;
+      r.status === 'INVALID'
+        ? r.complaint.slice(0, 120)
+        : `[${r.status}]${r.complaint ? ' ' + r.complaint.slice(0, 100) : ''}`;
     if (!clusters.has(clusterKey)) clusters.set(clusterKey, []);
     clusters.get(clusterKey)!.push(r);
   }
   console.log('\n=== CLUSTERS (by canonical complaint, largest first) ===');
-  for (const [complaint, group] of [...clusters.entries()].sort((a, b) => b[1].length - a[1].length)) {
+  for (const [complaint, group] of [...clusters.entries()].sort(
+    (a, b) => b[1].length - a[1].length
+  )) {
     console.log(`\n--- ${group.length} × ${complaint}`);
     for (const g of group) console.log(`    ${g.pattern}/${g.lang}`);
   }
