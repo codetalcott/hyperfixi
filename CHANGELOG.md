@@ -120,6 +120,24 @@ here. Did you mean "toggle"?`. Not covered: a misspelling that is a legal name w
 
 ### Fixed
 
+- **MCP `get_command_docs` answers from the reference that is checked against the engine.** It
+  answered from `@lokascript/semantic`'s command schemas (role descriptions written for the
+  multilingual layer) and, without them, from a hand-written table; nothing held either to the
+  engine, while the editor's hover read `@hyperfixi/core`'s reference, which `verify:reference`
+  does hold to it. So the two could differ, and the tool was wrong where the schema models a
+  form the engine does not read: `swap` was documented with a swap strategy (`swap target with
+value` is what the engine reads), `go` without its `to`, and `prepend`, `push`, `copy`,
+  `clone`, `process` and eleven more names as commands, which the engine rejects; `beep!`,
+  `start` and `def` were not found. The syntax line it gave parsed on the engine for 6 of the
+  58 keywords it knew. It now returns the reference's description, syntax and examples (every
+  example is one the engine parses) for each of the engine's 61 command and feature keywords,
+  and the schema's roles under `semantic`. A name that is only an action of the multilingual
+  layer is answered `found: false`, saying the engine has no such command. Changed shape:
+  `roles`, `explicitSyntax`, `jsonSyntax` and the other schema fields moved under `semantic`
+  (the schema's own syntax line is `semantic.roleSyntax`); `examples` and `kind` are new.
+  `search_language_elements` finds commands in the same reference. The hand-written table is
+  gone.
+
 - **Korean writes one object particle after a name, and reads either.** After a code word the
   render kept whichever form a command's schema listed, so one script had `x1를 10에 설정` and
   `x1을 로그`. The particle now takes its form from the word before it: a digit by its reading
