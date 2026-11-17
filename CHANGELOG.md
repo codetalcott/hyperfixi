@@ -29,6 +29,29 @@ here. Did you mean "toggle"?`. Not covered: a misspelling that is a legal name w
   stands (about 4% of them: the engine reads the script), and a wrong word that is not a
   misspelling (`let` for `set`).
 
+- **MCP `get_completions` answers English from the engine's grammar.** It answered from its own
+  keyword lists by a guessed context: on the command-shape sources the word written next was
+  in its answer 0.295 of the time, and 0.621 of the words it offered were ones the engine reads
+  there. For English, with no `context` hint, the answer now comes from the code the language
+  server completes with (`@hyperfixi/engine/next-words`), each word checked by a parse. The
+  grammar takes a great deal (about 66 words at an average position: 49 that start a new
+  statement, 17 operators and units), so the answer has two parts. `completions` lists what is
+  particular to the position: the words the parser requires, the current command's own (`into`
+  after `put x`), the closers that fit, and, where a value is read (`takesValue`), the pronouns
+  and sigils. Each group of words that fits in many places (`commands`, `features`,
+  `operators`, `expressionStarts`) is reported as `"all"`, as a list when few of its members
+  fit, as `{ allExcept }` when most do, and not at all when none does. Nothing is left out:
+  at every one of 5,416 positions (and 2,997 on scripts from upstream's documentation) the
+  answer expanded with the groups is the grammar's full list. Measured through the tool
+  (2026-11-17, Apple M4, Node 24.15.0): the word written next is in the expanded answer 0.994
+  of the time and 0.997 of the offered words are read there (0.958 and 0.992 on the
+  documentation scripts; 0.201 and 0.547 before); an answer is 374 characters of JSON on
+  average, where the full list would be 3,708. Changed with it: after `on click ` the answer
+  says `"commands": "all"` where it listed `toggle`, `add`, …; a word carries no `detail`
+  (`get_command_docs` has the syntax); the word being typed is a prefix (`toggle|` completes
+  `toggle`, where it listed toggle's arguments); past a parse error the answer is empty, with
+  `pastError` and a note. Other languages, and any call with a `context` hint, answer as before.
+
 - **`@lokascript/language-server` knows the standard behaviors.** `Toggleable`, `Removable`,
   `ClickOutside` and the rest are defined by `@hyperfixi/behaviors`, not by a file in a
   workspace, so the server knew nothing about the behaviors pages install most (30 of the 41
