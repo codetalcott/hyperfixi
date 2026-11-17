@@ -137,11 +137,13 @@ createCompleter(engine).nextWords('on click put x ').words; // ['into', 'before'
 ```
 
 What the grammar takes at the end of a text, best first: the words the parser asks for there,
-each kept only if the engine then reads it. It is tooling, in no browser bundle, and has no
+each kept only if the engine then reads it. `createCompleter(engine).groups` names the words
+that fit in many places (`commands`, `features`, `operators`, `expressionStarts`), so a tool
+can say "every command" in place of listing 53. It is tooling, in no browser bundle, and has no
 counterpart upstream; it lives here because it reads the parser's own `match` and `peek`.
 `@lokascript/language-server` completes with it (and measures it: that package's
-`src/tools/completion-measure.ts`), and the MCP server's `get_diagnostics` takes its "did you
-mean" from it. Its tests are the language server's `src/next-words.test.ts`.
+`src/tools/completion-measure.ts`), and the MCP server's `get_diagnostics` and `get_completions`
+answer from it. Its tests are the language server's `src/next-words.test.ts`.
 
 ## Layout
 

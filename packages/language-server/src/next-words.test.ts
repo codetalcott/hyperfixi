@@ -131,6 +131,24 @@ describe('where a command comes next', () => {
   });
 });
 
+describe('the groups', () => {
+  it('names the words that fit in many places, read from the grammar', () => {
+    const { commands, features, operators, expressionStarts } = completer.groups;
+    expect(commands).toEqual(expect.arrayContaining(['toggle', 'put', 'set', 'if', 'repeat']));
+    expect(features).toEqual(expect.arrayContaining(['on', 'def', 'init', 'behavior']));
+    expect(operators).toEqual(expect.arrayContaining(['is', 'matches', 'as', 'px', 'ms']));
+    expect(expressionStarts).toEqual(expect.arrayContaining(['the', 'first', 'not']));
+    // A closer is no operator, and a command is no way to start an expression.
+    for (const closer of ['then', 'end', 'else']) expect(operators).not.toContain(closer);
+    expect(expressionStarts.filter(word => commands.includes(word))).toEqual([]);
+    // After a finished command every command fits; inside one, none.
+    const after = next('on click put 1 into x ').words;
+    expect(commands.filter(word => !after.includes(word))).toEqual([]);
+    const inside = next('on click put x ').words;
+    expect(commands.filter(word => inside.includes(word))).toEqual([]);
+  });
+});
+
 describe('an empty script', () => {
   it('opens with a feature, before any command', () => {
     for (const text of ['', '  \n', '-- handlers\n']) {

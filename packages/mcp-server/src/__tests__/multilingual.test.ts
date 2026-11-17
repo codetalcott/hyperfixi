@@ -53,7 +53,9 @@ describe('get_completions multilingual', () => {
     });
 
     const parsed = JSON.parse(getTextContent(result));
-    expect(parsed.completions.some((c: any) => c.label === 'toggle')).toBe(true);
+    // English is answered by the grammar: every command fits here, said as a group.
+    expect(parsed.commands).toBe('all');
+    expect(parsed.language).toBe('en');
   });
 
   it('includes language in response', async () => {

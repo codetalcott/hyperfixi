@@ -255,9 +255,8 @@ describe('get_completions', () => {
     });
 
     const parsed = JSON.parse(getTextContent(result));
-    const labels = parsed.completions.map((c: any) => c.label);
-    // At start, should include initial keywords like 'on', 'init', 'behavior', 'def'
-    expect(labels.some((l: string) => ['on', 'init', 'behavior', 'def'].includes(l))).toBe(true);
+    // At the start every feature fits (`on`, `init`, `behavior`, `def`): said as a group.
+    expect(parsed.features).toBe('all');
   });
 
   it('returns command completions after event', async () => {
@@ -268,11 +267,8 @@ describe('get_completions', () => {
     });
 
     const parsed = JSON.parse(getTextContent(result));
-    const labels = parsed.completions.map((c: any) => c.label);
-    // Should include commands after event
-    expect(
-      labels.some((l: string) => ['toggle', 'add', 'remove', 'show', 'hide'].includes(l))
-    ).toBe(true);
+    // After an event every command fits (`toggle`, `add`, `remove`, …): said as a group.
+    expect(parsed.commands).toBe('all');
   });
 
   it('returns completions with LSP kind codes', async () => {
@@ -289,17 +285,110 @@ describe('get_completions', () => {
     expect(typeof completion.kind).toBe('number');
   });
 
-  it('includes detail and documentation', async () => {
+  it('with a context hint, answers from the keyword lists, with details', async () => {
     const result = await handleLspBridgeTool('get_completions', {
       code: 'on click ',
       line: 0,
       character: 9,
+      context: 'command',
     });
 
     const parsed = JSON.parse(getTextContent(result));
+    expect(parsed.source).toBeUndefined();
     const toggleCompletion = parsed.completions.find((c: any) => c.label === 'toggle');
     expect(toggleCompletion).toBeDefined();
     expect(toggleCompletion.detail).toBe('Toggle class/attribute');
+  });
+});
+
+// 2026-11-17: for English the answer is the engine's grammar (`@hyperfixi/engine/next-words`,
+// what the language server completes with), where it was keyword lists by a guessed context.
+// It lists what is particular to the position and reports the groups that fit (commands,
+// features, operators, expression starts) as "all", a list, or { allExcept }.
+describe('get_completions from the grammar', () => {
+  const complete = async (code: string, language?: string) => {
+    const lines = code.split('\n');
+    const result = await handleLspBridgeTool('get_completions', {
+      code,
+      line: lines.length - 1,
+      character: lines[lines.length - 1]!.length,
+      ...(language ? { language } : {}),
+    });
+    const parsed = JSON.parse(getTextContent(result));
+    return { ...parsed, labels: parsed.completions.map((c: any) => c.label) as string[] };
+  };
+
+  it("lists a command's own next words, and no group where none fits", async () => {
+    const answer = await complete('on click put x ');
+    expect(answer.source).toBe('grammar');
+    expect(answer.labels).toEqual(['into', 'before', 'after', 'at']);
+    expect(answer.count).toBe(4);
+    expect(answer.commands).toBeUndefined();
+    expect(answer.features).toBeUndefined();
+    // An expression can go on (`x is …`, `x as …`), but not with a word of another command.
+    expect(answer.operators.allExcept).toEqual(expect.arrayContaining(['catch', 'finally']));
+    expect(answer.operators.allExcept).not.toContain('is');
+  });
+
+  it("after an event: every command, said once, and the head's own words listed", async () => {
+    const answer = await complete('on click ');
+    expect(answer.commands).toBe('all');
+    expect(answer.features).toBe('all');
+    expect(answer.labels).toEqual(expect.arrayContaining(['from', 'debounced', 'end']));
+    expect(answer.labels).not.toContain('toggle'); // in `commands`
+    expect(answer.labels).not.toContain('into');
+    expect(answer.takesValue).toBe(false);
+    expect(answer.expressionStarts).toBeUndefined();
+  });
+
+  it('after a finished command: a command, an operator, or a closer', async () => {
+    const answer = await complete('on click log 1 ');
+    expect(answer.labels).toEqual(['then', 'end']);
+    expect(answer.commands).toBe('all');
+    expect(answer.operators).toBe('all');
+  });
+
+  it('takes the word being typed as a prefix, not as context', async () => {
+    const typed = await complete('on click tog');
+    const untyped = await complete('on click ');
+    expect(typed.labels).toEqual(untyped.labels);
+    expect(typed.commands).toBe('all');
+  });
+
+  it('where a value is read: the pronouns and sigils, and how an expression starts', async () => {
+    const answer = await complete('on click set x to ');
+    expect(answer.takesValue).toBe(true);
+    expect(answer.labels).toEqual(expect.arrayContaining(['me', 'it', ':', '$', '#', '.']));
+    expect(answer.expressionStarts).toEqual({ allExcept: ['new'] });
+    expect(answer.features).toBeUndefined();
+    expect(answer.operators).toBeUndefined();
+  });
+
+  it('an empty script opens with a feature, not with `me`', async () => {
+    const answer = await complete('');
+    expect(answer.features).toBe('all');
+    expect(answer.labels).not.toContain('me');
+  });
+
+  it('after the `on` of a handler, event names first', async () => {
+    const { labels } = await complete('on ');
+    expect(labels.slice(0, 3)).toEqual(['click', 'dblclick', 'mouseenter']);
+  });
+
+  it('past a parse error, offers nothing and says why', async () => {
+    const past = await complete('on click set x 5 then ');
+    expect(past.labels).toEqual([]);
+    expect(past.commands).toBeUndefined();
+    expect(past.pastError).toBe(true);
+    expect(past.note).toMatch(/get_diagnostics/);
+    // An unfinished command at the cursor is not past an error.
+    expect((await complete('on click put ')).pastError).toBeUndefined();
+  });
+
+  it('answers another language from its keyword lists, as before', async () => {
+    const { source, labels } = await complete('on click ', 'es');
+    expect(source).toBeUndefined();
+    expect(labels.length).toBeGreaterThan(0);
   });
 });
 
@@ -414,25 +503,26 @@ describe('AST paths: symbols, completions, diagnostics read the interchange', ()
     const result = await handleLspBridgeTool('get_completions', {
       code: 'on click toggle .active',
       line: 0,
-      character: 15, // inside "toggle"
+      character: 16, // after "toggle "
     });
     const labels = JSON.parse(getTextContent(result)).completions.map(
       (c: { label: string }) => c.label
     );
-    expect(labels).toEqual(expect.arrayContaining(['.', '@', 'me']));
-    expect(labels).not.toContain('init'); // the token path's generic list
+    expect(labels).toEqual(expect.arrayContaining(['.', '#', 'me']));
+    expect(labels).not.toContain('init'); // a feature does not start inside a handler's command
   });
 
   it('completions: after `set … to`, the variable sigils are offered', async () => {
     const result = await handleLspBridgeTool('get_completions', {
-      code: 'set x to',
+      code: 'set x to ',
       line: 0,
-      character: 8,
+      character: 9,
     });
-    const labels = JSON.parse(getTextContent(result)).completions.map(
-      (c: { label: string }) => c.label
-    );
-    expect(labels).toEqual(expect.arrayContaining([':', '$', 'the']));
+    const parsed = JSON.parse(getTextContent(result));
+    const labels = parsed.completions.map((c: { label: string }) => c.label);
+    expect(labels).toEqual(expect.arrayContaining([':', '$']));
+    // `the` is one of the words any expression starts with: in the group.
+    expect(parsed.expressionStarts.allExcept).not.toContain('the');
   });
 
   it("diagnostics: the engine's own error is reported, at its position", async () => {
