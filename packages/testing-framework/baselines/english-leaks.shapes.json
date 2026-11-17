@@ -1,8 +1,8 @@
 {
   "description": "English-leak gate, command-shape half (src/multilingual/english-leaks.ts): per command-shape case, the findings of each language's render (translate(src, 'en', L)): an English grammar word, `event:<name>`, `case:<pronoun>` or `spacing:<marker>`. `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts.",
   "renders": 26195,
-  "leaky": 4107,
-  "findings": 7765,
+  "leaky": 4100,
+  "findings": 7751,
   "kinds": {
     "word": {
       "renders": 2921,
@@ -17,8 +17,8 @@
       "findings": 39
     },
     "spacing": {
-      "renders": 1319,
-      "findings": 2797
+      "renders": 1312,
+      "findings": 2783
     }
   },
   "entries": {
@@ -104,7 +104,6 @@
     "0660772f01": {
       "spacing:e spacing:i": "tr",
       "spacing:কে": "bn",
-      "spacing:를 spacing:에": "ko",
       "spacing:を": "ja"
     },
     "069dd1170d": {
@@ -344,7 +343,6 @@
     "16d56382d7": {
       "spacing:e spacing:i spacing:nin": "tr",
       "spacing:কে": "bn",
-      "spacing:를 spacing:에": "ko",
       "spacing:を": "ja"
     },
     "16fb80c097": {
@@ -1045,7 +1043,6 @@
     "4ab926d199": {
       "spacing:e spacing:i spacing:nin": "tr",
       "spacing:কে spacing:তে": "bn",
-      "spacing:를 spacing:에": "ko",
       "spacing:に spacing:を": "ja"
     },
     "4ac868eb40": {
@@ -1622,7 +1619,6 @@
     },
     "717b10577d": {
       "spacing:i spacing:i spacing:nin": "tr",
-      "spacing:를 spacing:를": "ko",
       "spacing:を": "ja"
     },
     "7190d033fa": {
@@ -3088,7 +3084,6 @@
     "d7608763c7": {
       "spacing:e spacing:i spacing:nin": "tr",
       "spacing:কে": "bn",
-      "spacing:를 spacing:에": "ko",
       "spacing:を": "ja"
     },
     "d779d2d4ee": {
@@ -3164,8 +3159,7 @@
     },
     "db537e799b": {
       "spacing:den spacing:i spacing:i": "tr",
-      "spacing:কে": "bn",
-      "spacing:를 spacing:에서 spacing:을": "ko"
+      "spacing:কে": "bn"
     },
     "db6494f862": {
       "spacing:e spacing:i": "tr"
@@ -3421,7 +3415,6 @@
     },
     "ead3935bbd": {
       "spacing:i spacing:nin": "tr",
-      "spacing:를": "ko",
       "spacing:を": "ja"
     },
     "ec97ae1115": {
