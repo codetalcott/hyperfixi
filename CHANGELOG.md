@@ -126,9 +126,9 @@ here. Did you mean "toggle"?`. Not covered: a misspelling that is a legal name w
   engine, while the editor's hover read `@hyperfixi/core`'s reference, which `verify:reference`
   does hold to it. So the two could differ, and the tool was wrong where the schema models a
   form the engine does not read: `swap` was documented with a swap strategy (`swap target with
-value` is what the engine reads), `go` without its `to`, and `prepend`, `push`, `copy`,
-  `clone`, `process` and eleven more names as commands, which the engine rejects; `beep!`,
-  `start` and `def` were not found. The syntax line it gave parsed on the engine for 6 of the
+value` is what the engine reads), `go` without its `to`, and 16 names that are no command
+  keyword of the engine (`prepend`, `push`, `copy`, `clone`, `process`, …: a script that
+  writes `prepend "a" to #b` does not parse); `beep!`, `start` and `def` were not found. The syntax line it gave parsed on the engine for 6 of the
   58 keywords it knew. It now returns the reference's description, syntax and examples (every
   example is one the engine parses) for each of the engine's 61 command and feature keywords,
   and the schema's roles under `semantic`. A name that is only an action of the multilingual
