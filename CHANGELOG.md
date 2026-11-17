@@ -74,6 +74,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Korean writes one object particle after a name, and reads either.** After a code word the
+  render kept whichever form a command's schema listed, so one script had `x1를 10에 설정` and
+  `x1을 로그`. The particle now takes its form from the word before it: a digit by its reading
+  (`x1을`, `item2를`), a Latin word by a spelling rule of thumb (`total을`, `count를`, `#out을`),
+  looking past closing punctuation (`"안녕"을`). The rule has had no native review; a word it
+  misjudges gets the other form, which reads back the same. The reader refused the grammatical
+  `total을 0에 설정`: `set`, `default`, `get` and `bind`, and the hand-written loop, `pick` and
+  positional `put` heads, took `를` only, and now take both.
+
 - **Turkish and Quechua could not read a variable name with a digit in it.** Their tokenizers let
   a digit continue a word only after an `_`, so `x1` was read as `x` and `1` (`x_1` was one word).
   A translation into either language covered for it by writing the name in parentheses

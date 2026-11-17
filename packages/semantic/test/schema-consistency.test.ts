@@ -93,6 +93,11 @@ describe('Schema Consistency', () => {
       'remove.condition': { languages: ['he', 'ja', 'tr'], methodCarrier: null },
       'hide.condition': { languages: ['he', 'ja', 'tr'], methodCarrier: null },
       'show.condition': { languages: ['he', 'ja', 'tr'], methodCarrier: null },
+      // ko's object particle after a consonant (`을`) beside the override's `를`
+      'set.destination': { languages: ['ko'], methodCarrier: null },
+      'bind.destination': { languages: ['ko'], methodCarrier: null },
+      'get.source': { languages: ['ko'], methodCarrier: null },
+      'default.destination': { languages: ['ko'], methodCarrier: null },
       // meaning-bearing — held OUT of the merge; `into|before|after` → `method`
       'put.destination': { languages: ['en'], methodCarrier: 'method' },
     };

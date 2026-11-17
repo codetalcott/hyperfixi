@@ -13,6 +13,7 @@ import {
   PUT_VALUE_TYPES,
 } from '../generators/role-types';
 import { handcrafted } from './handcrafted';
+import { objectMarkerToken } from './object-marker';
 
 /**
  * A handcrafted put's destination takes what the schema's does: a selector, a
@@ -1355,7 +1356,8 @@ function isOfOrOfMe(spec: (typeof PUT_AT_END)[number], value: string | undefined
   return isOfWord(spec, value) || (spec.ofMe !== undefined && eq(value, spec.ofMe));
 }
 
-const eq = (a: string | undefined, b: string): boolean => (a ?? '').toLowerCase() === b.toLowerCase();
+const eq = (a: string | undefined, b: string): boolean =>
+  (a ?? '').toLowerCase() === b.toLowerCase();
 
 /**
  * Whether a word is one of a language's `at end of` connective words (`at`/`end`/
@@ -1425,7 +1427,7 @@ function buildAtEndPutPatterns(language: string): LanguagePattern[] {
     pushWords(spec.end);
     pushWords(spec.of, spec.ofAlts);
     tokens.push({ type: 'role', role: 'destination' });
-    if (spec.objMarker) tokens.push({ type: 'literal', value: spec.objMarker });
+    if (spec.objMarker) tokens.push(objectMarkerToken(spec.objMarker));
     tokens.push(verbToken);
   }
   const atEnd: LanguagePattern[] = [

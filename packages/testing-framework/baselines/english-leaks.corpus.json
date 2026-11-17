@@ -1,8 +1,8 @@
 {
   "description": "English-leak gate, corpus half (src/multilingual/english-leaks.ts): per corpus row, the findings of each language's render (render(parse(en), L)): an English grammar word, `event:<name>` (an English event the lexicon has a word for) or `case:me` / `case:it` (a nominative pronoun beside a marker; `-object`: as an unmarked object) or `spacing:<marker>` (a marker the language attaches, written apart). `*` stands for all 23 languages. Shrink-only: regenerate with tools/regen-english-leaks-baseline.ts after a fresh populate.",
   "renders": 3519,
-  "leaky": 402,
-  "findings": 757,
+  "leaky": 401,
+  "findings": 753,
   "kinds": {
     "word": {
       "renders": 191,
@@ -17,8 +17,8 @@
       "findings": 13
     },
     "spacing": {
-      "renders": 216,
-      "findings": 451
+      "renders": 215,
+      "findings": 447
     }
   },
   "entries": {
@@ -279,7 +279,7 @@
     "input-clear": {
       "spacing:e spacing:i spacing:nin": "tr",
       "spacing:কে": "bn",
-      "spacing:를 spacing:에 spacing:의": "ko",
+      "spacing:의": "ko",
       "spacing:の spacing:を": "ja"
     },
     "input-mirror": {
@@ -412,8 +412,7 @@
     },
     "repeat-until-event": {
       "spacing:da spacing:i spacing:i spacing:nin": "tr",
-      "spacing:কে": "bn",
-      "spacing:를 spacing:을": "ko"
+      "spacing:কে": "bn"
     },
     "repeat-while": {
       "spacing:i spacing:nin": "tr"
