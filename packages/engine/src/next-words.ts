@@ -62,6 +62,19 @@ export interface NextWords {
 export interface Completer {
   nextWords(text: string): NextWords | null;
   /**
+   * The words that fit in many places for the same reason, so that an answer
+   * can say "every command" in place of listing them: the keywords that start
+   * a command, those that start a feature, the operators and units tried
+   * after any finished expression, and the words any expression can start
+   * with (`the`, `first`, `not`). Read from the grammar, not listed.
+   */
+  groups: {
+    commands: string[];
+    features: string[];
+    operators: string[];
+    expressionStarts: string[];
+  };
+  /**
    * A parse of as much of `text` as parses: `text` itself, or `text` cut back
    * to an earlier keyword. The tree an unfinished script does not have.
    */
@@ -213,6 +226,15 @@ export function createCompleter(engine: CompletionEngine, examples: string[] = [
   }
 
   return {
+    groups: {
+      commands,
+      features,
+      operators: [...generic].filter(w => !CLOSERS.includes(w) && WORD.test(w) && w !== 's'),
+      expressionStarts: [...starters].filter(
+        w => !structural.has(w) && !generic.has(w) && !CLOSERS.includes(w) && WORD.test(w)
+      ),
+    },
+
     nextWords(whole: string): NextWords | null {
       if (!tables) return null;
       const text = whole.slice(lastFeatureStart(whole));

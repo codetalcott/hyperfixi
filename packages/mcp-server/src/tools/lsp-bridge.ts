@@ -303,7 +303,7 @@ export const lspBridgeTools: Tool[] = [
   {
     name: 'get_completions',
     description:
-      'Get context-aware code completions for hyperscript at a given position. Returns keywords in specified language.',
+      "Get the words that fit at a position in hyperscript code. For English the engine's own grammar answers, each word checked by a parse. `completions` lists what is particular to the position: the words the parser requires, the current command's own (`into` after `put x`), the closers that fit (`then`, `end`, `else`), and, where a value is read (`takesValue`), the pronouns and sigils. The words that fit in many places are reported by group, not listed each time: `commands`, `features`, `operators` (and units), `expressionStarts` (`the`, `first`, `not`). A group is 'all' when every member fits, a list when few do, { allExcept: [...] } when most do, and absent when none does; get_command_docs describes a command. Past a parse error the answer is empty and says so. For other languages, or with a context hint, keyword lists in that language.",
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -923,6 +923,101 @@ function runSimpleDiagnostics(code: string, language: string = 'en'): Diagnostic
 // Code Completions
 // ============================================================================
 
+/** How much of a group fits: every member, these members, or every member but these. */
+type GroupFit = 'all' | string[] | { allExcept: string[] };
+
+/**
+ * What the engine's grammar takes at (line, character); null when the grammar cannot be
+ * asked. The grammar takes a great deal: a new command after almost any finished one (53
+ * keywords), an operator or a unit after almost any expression (about 60). Listing them at
+ * every call buries the few words that are particular to the place, so the answer has two
+ * parts. `completions`: what is particular: the words the parser requires, the current
+ * command's own, the closers that fit (`then`, `end`, `else`), and, where a value is read
+ * (`takesValue`), the pronouns and sigils. Then each group, `"all"` when every member fits,
+ * the members when few do, `{ allExcept }` when most do, absent when none does: `commands`,
+ * `features`, `operators` (and units), `expressionStarts` (`the`, `first`, `not`). Nothing
+ * is left out: the full list is `completions` plus the groups.
+ * Past a parse error (one before the cursor) nothing fits, and the answer says so. After the
+ * `on` that opens a handler, event names come first. The script's own names are not listed
+ * (the tool sees one script, and its caller wrote it).
+ */
+function grammarCompletions(
+  code: string,
+  line: number,
+  character: number
+): {
+  completions: CompletionItem[];
+  takesValue: boolean;
+  commands?: GroupFit;
+  features?: GroupFit;
+  operators?: GroupFit;
+  expressionStarts?: GroupFit;
+  pastError?: true;
+  note?: string;
+} | null {
+  if (!completer) return null;
+  const lines = code.split('\n');
+  const before = [...lines.slice(0, line), (lines[line] ?? '').slice(0, character)].join('\n');
+  // The word being typed is what the caller filters by, not part of what came before.
+  const next = completer.nextWords(before.replace(/[A-Za-z_][\w-]*!?$/, ''));
+  if (!next) return null;
+  if (next.pastError) {
+    return {
+      completions: [],
+      takesValue: false,
+      pastError: true,
+      note: 'The code has a parse error before this position, so nothing is known to fit here. get_diagnostics says where it is.',
+    };
+  }
+  const { groups } = completer;
+  const grouped = new Set([
+    ...groups.commands,
+    ...groups.features,
+    ...groups.operators,
+    ...groups.expressionStarts,
+  ]);
+  const fits = new Set(next.words);
+  const fit = (members: string[]): GroupFit | undefined => {
+    const taken = members.filter(word => fits.has(word));
+    if (taken.length === 0) return undefined;
+    if (taken.length === members.length) return 'all';
+    const missing = members.filter(word => !fits.has(word));
+    return missing.length < taken.length ? { allExcept: missing } : taken;
+  };
+  const keyword = (word: string): CompletionItem => ({ label: word, kind: 14 });
+  const particular = (words: string[]) => words.filter(word => !grouped.has(word)).map(keyword);
+
+  const completions: CompletionItem[] = [];
+  if (next.lastWord === 'on') {
+    completions.push(...getContextualCompletions(code, line, character, 'en', 'event'));
+  }
+  completions.push(...particular(next.words.slice(0, next.ownCount)));
+  // (An empty script reads a name too, as a call; it opens with a feature.)
+  if (next.takesName && next.lastWord !== 'on' && !next.atStart) {
+    // How a value starts that is not a word of the grammar: the pronouns and the sigils.
+    // (`the`, `first`, `closest` are the grammar's, and come from it.)
+    completions.push(
+      ...getContextualCompletions(code, line, character, 'en', 'expression').filter(
+        item => item.kind === 6
+      ),
+      ...getContextualCompletions(code, line, character, 'en', 'selector')
+    );
+  }
+  completions.push(...particular(next.words.slice(next.ownCount)));
+  const commands = fit(groups.commands);
+  const features = fit(groups.features);
+  const operators = fit(groups.operators);
+  const expressionStarts = fit(groups.expressionStarts);
+  return {
+    completions,
+    takesValue: next.takesName,
+    ...(commands ? { commands } : {}),
+    ...(features ? { features } : {}),
+    ...(operators ? { operators } : {}),
+    ...(expressionStarts ? { expressionStarts } : {}),
+  };
+}
+
 async function getCompletions(
   code: string,
   line: number,
@@ -930,6 +1025,27 @@ async function getCompletions(
   language: string,
   context?: string
 ): Promise<CallToolResult> {
+  // English, with the engine there: what its grammar takes at the cursor, the answer the
+  // language server gives (`@hyperfixi/engine/next-words`). A `context` hint asks for the
+  // keyword lists below instead.
+  if (completer && !context && (language === 'en' || language.startsWith('en-'))) {
+    const grammar = grammarCompletions(code, line, character);
+    if (grammar) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(
+              { ...grammar, count: grammar.completions.length, language, source: 'grammar' },
+              null,
+              2
+            ),
+          },
+        ],
+      };
+    }
+  }
+
   const completions: CompletionItem[] = [];
 
   // Try AST-based completions first: the node at the cursor decides them

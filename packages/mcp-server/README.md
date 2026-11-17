@@ -159,11 +159,11 @@ Nothing in the engine emits a debug snapshot: the snapshot tools reason over one
 
 ### `editor` (3)
 
-| Tool                   | Description                                             |
-| ---------------------- | ------------------------------------------------------- |
-| `get_completions`      | Context-aware code completions (multilingual)           |
-| `get_hover_info`       | Hover documentation for hyperscript elements            |
-| `get_document_symbols` | Document outline (event handlers, behaviors, functions) |
+| Tool                   | Description                                                                                                |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `get_completions`      | The words that fit at a position: from the engine's grammar for English, keyword lists for other languages |
+| `get_hover_info`       | Hover documentation for hyperscript elements                                                               |
+| `get_document_symbols` | Document outline (event handlers, behaviors, functions)                                                    |
 
 ### `analysis` (9)
 
