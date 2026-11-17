@@ -1,7 +1,8 @@
 /**
  * How good is a language server's completion at the next WORD of hyperscript?
  *
- *   npx tsx src/tools/completion-measure.ts [--json] [--limit N] [--server <cmd> <args…>]
+ *   npx tsx src/tools/completion-measure.ts [--json] [--limit N] [--corpus <file>]
+ *     [--detail <file>] [--server <cmd> <args…>]
  *
  * The corpus is the command-shape cases (testing-framework): scripts authors
  * wrote, harvested from upstream's own test suite and the reference examples.
@@ -28,9 +29,12 @@
  * a word (an offered `#id` or `.class` is neither right nor wrong here). The
  * page holds nothing after the cut. `--server` measures another LSP server
  * with the same requests; without it, this package's built `dist/server.js`.
+ * `--corpus` reads other sources: a JSON file `{ "name": …, "cases": [{ "source": … }] }`.
+ * `--detail` writes every offered word the engine rejected (with the text
+ * before it) and every request's time to a JSON file, for triage.
  */
 
-import { readFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import * as engine from '@hyperfixi/engine';
 import { LSPTestClient } from '../lsp-test-client.js';
@@ -43,13 +47,29 @@ const ownArgs = serverAt >= 0 ? argv.slice(0, serverAt) : argv;
 const limitAt = ownArgs.indexOf('--limit');
 const limit = limitAt >= 0 ? Number(ownArgs[limitAt + 1]) : Infinity;
 
-const casesPath = fileURLToPath(
-  new URL('../../../testing-framework/src/multilingual/command-shapes.cases.json', import.meta.url)
-);
-const corpus = JSON.parse(readFileSync(casesPath, 'utf8')) as {
-  upstream: string;
-  cases: Array<{ id: string; source: string; family: string }>;
+const option = (name: string): string | undefined => {
+  const at = ownArgs.indexOf(name);
+  return at >= 0 ? ownArgs[at + 1] : undefined;
 };
+const corpusFile = option('--corpus');
+const detailFile = option('--detail');
+
+const casesPath =
+  corpusFile ??
+  fileURLToPath(
+    new URL(
+      '../../../testing-framework/src/multilingual/command-shapes.cases.json',
+      import.meta.url
+    )
+  );
+const corpus = JSON.parse(readFileSync(casesPath, 'utf8')) as {
+  upstream?: string;
+  name?: string;
+  cases: Array<{ source: string }>;
+};
+const corpusName = corpusFile
+  ? (corpus.name ?? corpusFile)
+  : `command-shape cases (upstream ${corpus.upstream})`;
 
 engine.register(...engine.everything);
 
@@ -122,6 +142,8 @@ async function main(): Promise<void> {
   const placed = { first: 0, five: 0, tenUntyped: 0 };
   const missed = new Map<string, number>();
   const asked = new Map<string, number>();
+  const rejected: Array<{ before: string; word: string }> = [];
+  const times: number[] = [];
   const started = Date.now();
 
   for (const testCase of corpus.cases.slice(0, limit)) {
@@ -138,10 +160,12 @@ async function main(): Promise<void> {
         textDocument: { uri, version: ++version },
         contentChanges: [{ text: OPEN + before + CLOSE }],
       });
+      const asking = performance.now();
       const response = await client.sendRequest('textDocument/completion', {
         textDocument: { uri },
         position: { line: lines.length - 1, character: lines[lines.length - 1]!.length },
       });
+      times.push(performance.now() - asking);
       type Item = { label: string; insertText?: string; sortText?: string };
       const result = response.result as Item[] | { items: Item[] } | null | undefined;
       const items = Array.isArray(result) ? result : (result?.items ?? []);
@@ -169,15 +193,18 @@ async function main(): Promise<void> {
       for (const candidate of words) {
         offered++;
         if (candidate === word.value || accepts(before, candidate)) accepted++;
+        else if (detailFile) rejected.push({ before, word: candidate });
       }
     }
   }
   await client.stop();
 
   const round = (n: number) => Math.round(n * 1000) / 1000;
+  const sorted = [...times].sort((a, b) => a - b);
+  if (detailFile) writeFileSync(detailFile, JSON.stringify({ rejected, times }));
   const summary = {
     server: serverCommand ? serverCommand.join(' ') : '@lokascript/language-server dist/server.js',
-    corpus: `command-shape cases (upstream ${corpus.upstream})`,
+    corpus: corpusName,
     sources,
     unparsed,
     cuts,
@@ -188,6 +215,11 @@ async function main(): Promise<void> {
     topFiveAfterOneLetter: round(placed.five / cuts),
     topTenUntyped: round(placed.tenUntyped / cuts),
     seconds: Math.round((Date.now() - started) / 1000),
+    requestMs: {
+      p50: round(sorted[Math.floor(sorted.length * 0.5)] ?? 0),
+      p95: round(sorted[Math.floor(sorted.length * 0.95)] ?? 0),
+      max: round(sorted[sorted.length - 1] ?? 0),
+    },
     missedMost: [...missed.entries()]
       .sort((a, b) => b[1] - a[1])
       .slice(0, 15)
@@ -206,7 +238,9 @@ async function main(): Promise<void> {
       `order           @1 ${summary.firstAfterOneLetter}, @5 ${summary.topFiveAfterOneLetter} after one typed letter; @10 untyped ${summary.topTenUntyped}`
     );
     console.log(`missed most     ${summary.missedMost.join(', ')}`);
-    console.log(`time            ${summary.seconds}s`);
+    console.log(
+      `time            ${summary.seconds}s; a request p50 ${summary.requestMs.p50} ms, p95 ${summary.requestMs.p95} ms, max ${summary.requestMs.max} ms`
+    );
   }
   process.exit(0);
 }

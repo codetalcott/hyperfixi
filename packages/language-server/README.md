@@ -314,7 +314,10 @@ npm test -- --coverage
 
 `npx tsx src/tools/completion-measure.ts` scores the built server's completion on the next word
 of real scripts (recall and precision against the engine's own parser, and the word's place in
-the list; the file's header says how). `--server <command>` scores another LSP server on the same requests.
+the list; the file's header says how). `--server <command>` scores another LSP server on the same
+requests, `--corpus <file>` reads other scripts (`{ "cases": [{ "source": … }] }`), and
+`--detail <file>` writes every offered word the engine rejected and each request's time. The
+summary reports a request's p50, p95 and longest time.
 
 ## Architecture
 
