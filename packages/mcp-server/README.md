@@ -75,22 +75,22 @@ Or if installed globally, with two [toolsets](#toolsets) listed besides the core
 
 What a default connection lists: the deterministic checks an agent cannot do for itself.
 
-| Tool                       | Description                                                                |
-| -------------------------- | -------------------------------------------------------------------------- |
-| `validate_and_compile`     | Parse to semantic IR with diagnostics; natural language also on the engine |
-| `get_diagnostics`          | LSP-compatible diagnostics with positions; a fix for a misspelled command  |
-| `get_code_fixes`           | Concrete fixes for each diagnostic code validate_and_compile emits         |
-| `get_command_docs`         | Documentation for a specific hyperscript command                           |
-| `get_expression_docs`      | Documentation for expression types                                         |
-| `search_patterns`          | Search the pattern database by keyword or category                         |
-| `translate_code`           | Translation in each language's word order, verified against the source     |
-| `translate_to_english`     | Normalize non-English hyperscript to English + explicit syntax             |
-| `get_keyword_translations` | Translations of a keyword across languages                                 |
-| `list_supported_languages` | List all 24 languages with metadata                                        |
-| `score_fidelity`           | Score a candidate against a reference: recall/precision/role/value signals |
-| `diff_behaviors`           | Compare two inputs for semantic equivalence                                |
-| `detect_domain`            | Auto-detect which domain DSL handles an input                              |
-| `compile_auto`             | Auto-detect the domain and compile in one shot                             |
+| Tool                       | Description                                                                                              |
+| -------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `validate_and_compile`     | Parse to semantic IR with diagnostics; natural language also on the engine                               |
+| `get_diagnostics`          | LSP-compatible diagnostics with positions; a fix for a misspelled command                                |
+| `get_code_fixes`           | Concrete fixes for each diagnostic code validate_and_compile emits                                       |
+| `get_command_docs`         | A command's or feature's description, syntax and examples, from the reference checked against the engine |
+| `get_expression_docs`      | Documentation for expression types                                                                       |
+| `search_patterns`          | Search the pattern database by keyword or category                                                       |
+| `translate_code`           | Translation in each language's word order, verified against the source                                   |
+| `translate_to_english`     | Normalize non-English hyperscript to English + explicit syntax                                           |
+| `get_keyword_translations` | Translations of a keyword across languages                                                               |
+| `list_supported_languages` | List all 24 languages with metadata                                                                      |
+| `score_fidelity`           | Score a candidate against a reference: recall/precision/role/value signals                               |
+| `diff_behaviors`           | Compare two inputs for semantic equivalence                                                              |
+| `detect_domain`            | Auto-detect which domain DSL handles an input                                                            |
+| `compile_auto`             | Auto-detect the domain and compile in one shot                                                           |
 
 ## Toolsets
 
