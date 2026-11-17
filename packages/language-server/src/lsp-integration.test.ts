@@ -164,6 +164,28 @@ describe('LSP Integration', () => {
       expect(labels).toEqual(expect.arrayContaining(['saved', 'click']));
     });
 
+    it("at a value: the command's own words, then `me` and `it`, then `the`, then other names", async () => {
+      const repeat = await labelsAt('on click repeat ', 30);
+      expect(repeat.indexOf('while')).toBeLessThan(repeat.indexOf('me'));
+      const put = await labelsAt('on click set :n to 1 then put ', 31);
+      expect(put.slice(0, 3)).toEqual(expect.arrayContaining([':n', 'me', 'it']));
+      expect(put.indexOf('the')).toBeLessThan(put.indexOf('result'));
+      expect(put.indexOf('the')).toBeLessThan(put.indexOf('target'));
+    });
+
+    it('opens an empty script with a feature, and names after every word', async () => {
+      const labels = await labelsAt('', 32);
+      expect(['on', 'def', 'init', 'behavior']).toContain(labels[0]);
+      expect(labels.indexOf('on')).toBeLessThan(labels.indexOf('me'));
+      expect(labels.indexOf('toggle')).toBeLessThan(labels.indexOf('me'));
+    });
+
+    it('offers no word past a parse error, and still completes at an unfinished command', async () => {
+      expect(await labelsAt('on click set x 5 then ', 33)).toEqual([]);
+      expect(await labelsAt('on click set x 5 then p', 34)).toEqual([]);
+      expect(await labelsAt('on click set x to ', 35)).toContain('me');
+    });
+
     it('offers nothing from the page after a property dot', async () => {
       const labels = await labelsAt('on click log event.', 15);
       expect(labels.some(l => l.startsWith('.'))).toBe(false);

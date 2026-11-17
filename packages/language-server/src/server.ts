@@ -1288,9 +1288,9 @@ const NOT_A_VARIABLE_AFTER = new Set([
 
 /**
  * Completions from the engine's grammar and the document's names, or null
- * when this cursor is not one it can answer (no engine, another language,
- * or text the engine stops in before the cursor): the caller's keyword
- * lists stand then.
+ * when this cursor is not one it can answer (no engine, another language):
+ * the caller's keyword lists stand then. Past a parse error the answer is
+ * no words.
  */
 function getGrammarCompletions(
   document: TextDocument,
@@ -1356,6 +1356,9 @@ function getGrammarCompletions(
 
     const next = completer.nextWords(text);
     if (!next) return null;
+    // Past a parse error nothing is known to fit: no words (the keyword lists
+    // would offer ones the grammar rejects there).
+    if (next.pastError) return [];
 
     const docs: Record<string, { description?: string }> = lspMetadata?.HOVER_DOCS ?? {};
     const keyword = (word: string): CompletionItem => ({
@@ -1430,13 +1433,29 @@ function getGrammarCompletions(
         // A selector is a value too: the `#`, `.` and `<…/>` starters.
         names.push(...getContextualCompletions('selector', language));
       }
-      // What the parser requires; then names, where it reads one (a value
-      // position is for a value before it is for `the` or `first`); then the
-      // rest of the command's own words; then everything else it takes.
-      const required = next.words.slice(0, next.requiredCount).map(keyword);
-      const own = next.words.slice(next.requiredCount, next.ownCount).map(keyword);
+      // What the parser requires and the command's own words (`forever` after
+      // `repeat`); then names, where it reads one; then everything else it takes.
+      const specific = next.words.slice(0, next.specificCount).map(keyword);
+      const own = next.words.slice(next.specificCount, next.ownCount).map(keyword);
       const rest = next.words.slice(next.ownCount).map(keyword);
-      items = [...required, ...names, ...own, ...rest];
+      if (next.atStart) {
+        // An empty script opens with a feature: names after every word.
+        items = [...specific, ...own, ...rest, ...names];
+      } else {
+        // The script's own variables, `me` and `it` are what is written at a
+        // value most; then how any expression starts (`the`, `first`); then
+        // the other names.
+        const lead = (item: CompletionItem) =>
+          item.kind === CompletionItemKind.Variable &&
+          (item.detail === 'variable' || item.label === 'me' || item.label === 'it');
+        items = [
+          ...specific,
+          ...names.filter(lead),
+          ...own,
+          ...names.filter(item => !lead(item)),
+          ...rest,
+        ];
+      }
     }
 
     // One label once (a variable named like a keyword keeps its first place),
