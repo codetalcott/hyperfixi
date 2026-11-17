@@ -56,7 +56,11 @@ import {
   offsetToPosition,
 } from './extraction.js';
 import { getWordAtPosition } from './utils.js';
-import { createCompleter, type Completer, type CompletionEngine } from './next-words.js';
+import {
+  createCompleter,
+  type Completer,
+  type CompletionEngine,
+} from '@hyperfixi/engine/next-words';
 import { namesInScopeAtEnd, treeSites, SCOPE_SEP } from './tree-symbols.js';
 import { formatHyperscript } from './formatting.js';
 import { runSimpleDiagnostics, runDirectiveDiagnostics } from './simple-diagnostics.js';
@@ -165,7 +169,7 @@ try {
   );
 }
 
-// Completion asks the engine's grammar what fits at the cursor (next-words.ts). The order of
+// Completion asks the engine's grammar what fits at the cursor (@hyperfixi/engine/next-words). The order of
 // commands comes from how often the reference and hover examples use them, when core is there.
 let completer: Completer | null = null;
 if (engineModule) {

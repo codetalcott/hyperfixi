@@ -129,7 +129,7 @@ describe('get_diagnostics', () => {
     });
     // A "did you mean" for the word it stopped on, and only that one.
     expect(ds.filter(d => d.code === 'possible-typo').map(d => d.message)).toEqual([
-      'Unknown command "toggel". Did you mean "toggle"?',
+      'The grammar does not read "toggel" here. Did you mean "toggle"?',
     ]);
   });
 
@@ -170,6 +170,45 @@ describe('get_diagnostics', () => {
     const ds = await diagnose('on "refresh" put "Refreshed" into #output');
     expect(ds.filter(d => d.severity === 1)).toEqual([]);
     expect(ds.some(d => d.code === 'semantic-error' && d.severity === 2)).toBe(true);
+  });
+
+  // 2026-11-17: the "did you mean" compared the stop token with a list of commands. The
+  // candidates are now the words the engine's grammar takes at that place.
+  const typo = async (code: string) =>
+    (await diagnose(code))
+      .filter(d => d.code === 'possible-typo')
+      .map(d => [
+        d.data.suggestion,
+        code.split('\n')[d.range.start.line]!.slice(d.range.start.character, d.range.end.character),
+      ]);
+
+  it('names a misspelled keyword, not only a misspelled command', async () => {
+    expect(await typo('on click put "a" itno #out')).toEqual([['into', 'itno']]);
+    expect(await typo("on click halt the event's bublbing")).toEqual([['bubbling', 'bublbing']]);
+    expect(await typo('on click transition *width froom 0px to 100px')).toEqual([
+      ['from', 'froom'],
+    ]);
+  });
+
+  it('looks one token back: a misspelled word read as a name stops the parse after it', async () => {
+    // The engine stops at `NoSuchBehavior`, at `notify`, at `set`.
+    expect(await typo('intsall NoSuchBehavior')).toEqual([['install', 'intsall']]);
+    expect(await typo('on click\n  sned notify to #out')).toEqual([['send', 'sned']]);
+    expect(await typo('iint set $x to 1')).toEqual([['init', 'iint']]);
+  });
+
+  it('counts two swapped letters as one slip', async () => {
+    expect(await typo('on click mkae a <p/>')).toEqual([['make', 'mkae']]);
+    expect(await typo('on click epmty #list')).toEqual([['empty', 'epmty']]);
+  });
+
+  it('offers only a word the grammar takes there', async () => {
+    // `for` is a command and one edit from `form`, and no command fits after `.active`.
+    const after = await typo('on click if x add .a to me else remove .active form me end');
+    expect(after.map(([word]) => word)).not.toContain('for');
+    // A name that is no misspelling gets no suggestion.
+    expect(await typo('on click put total itno')).toEqual([['into', 'itno']]);
+    expect(await typo('on click frobnicate the widget')).toEqual([]);
   });
 
   it('warns no possible-typo off English (its command list is English)', async () => {

@@ -6,7 +6,7 @@
 
 import { describe, it, expect } from 'vitest';
 import * as engine from '@hyperfixi/engine';
-import { createCompleter, type CompletionEngine } from './next-words.js';
+import { createCompleter, type CompletionEngine } from '@hyperfixi/engine/next-words';
 import { namesInScopeAtEnd } from './tree-symbols.js';
 
 engine.register(...engine.everything);

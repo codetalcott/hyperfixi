@@ -11,6 +11,11 @@
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
+    "./next-words": {
+      "types": "./dist/next-words.d.ts",
+      "import": "./dist/next-words.js",
+      "default": "./dist/next-words.js"
+    },
     "./browser": "./dist/hyperfixi-hs.js",
     "./dist/hyperfixi-hs.js": "./dist/hyperfixi-hs.js",
     "./ext/*": {

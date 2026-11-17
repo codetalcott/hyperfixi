@@ -22,11 +22,15 @@
  * or `otherwise`) the commands come first and what closes comes last; an
  * empty script opens with a feature. Past a parse error nothing is offered.
  *
- * Measured by `src/tools/completion-measure.ts`. The spike this came from:
- * hyperfixi PR #1682's plan, Phase 3.
+ * `@hyperfixi/engine/next-words`: tooling, not part of any browser bundle. It
+ * takes the engine as an argument (the module the caller registered its
+ * grammar on) and imports nothing, so it adds no second copy of the parser.
+ * Used by `@lokascript/language-server` (completion; measured by its
+ * `src/tools/completion-measure.ts`) and the MCP server's `get_diagnostics`
+ * (the word a misspelling was meant to be).
  */
 
-/** The parts of `@hyperfixi/engine` this reads. */
+/** The parts of `@hyperfixi/engine` this reads: pass the module itself. */
 export interface CompletionEngine {
   parse(code: string): unknown;
   Parser: { prototype: unknown };
