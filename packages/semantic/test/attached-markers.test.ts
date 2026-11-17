@@ -14,9 +14,9 @@ describe('a marker written onto its word', () => {
     ['ja', 'on click put "x" into #out', 'クリックで "x"を #outに 置く'],
     ['ja', 'on click take .a from #b', 'クリックで #bから .aを 取る'],
     ['ja', 'on click hide #m with *opacity', 'クリックで #mを *opacityで 隠す'],
-    ['ko', 'on click put "x" into #out', '클릭 할 때 "x"을 #out에 넣다'],
-    ['ko', 'on click send foo to #b', '클릭 할 때 #b에게 foo을 보내다'],
-    ['ko', 'on click take .a from #b', '클릭 할 때 #b에서 .a을 가져오다'],
+    ['ko', 'on click put "x" into #out', '클릭 할 때 "x"를 #out에 넣다'],
+    ['ko', 'on click send foo to #b', '클릭 할 때 #b에게 foo를 보내다'],
+    ['ko', 'on click take .a from #b', '클릭 할 때 #b에서 .a를 가져오다'],
     ['bn', 'on click put "x" into #out', 'ক্লিকে "x"কে #outএ রাখুন'],
     ['bn', 'on click add .x to #b', 'ক্লিকে #bতে .xকে যোগ'],
   ])('%s: %s', (language, source, expected) => {
@@ -25,7 +25,7 @@ describe('a marker written onto its word', () => {
   });
 
   it("ko takes each particle's form from a Hangul word's last syllable", () => {
-    // 결과 and 나 end in a vowel (를), 그것 in a consonant (을); after code, the render's choice.
+    // 결과 and 나 end in a vowel (를), 그것 in a consonant (을); after code, below.
     expect(translate('on click put result into #out', 'en', 'ko')).toBe(
       '클릭 할 때 결과를 #out에 넣다'
     );
@@ -38,6 +38,61 @@ describe('a marker written onto its word', () => {
     expect(attachMarker(ko, '파일', '으로')).toBe('파일로'); // ㄹ takes 로
     expect(attachMarker(ko, '값', '로')).toBe('값으로');
     expect(attachMarker(ko, '나', '으로')).toBe('나로');
+  });
+
+  // One name took two particles in one script (`x1를 10에 설정 그다음 x1을 로그`):
+  // after code the form was whichever a command's schema listed.
+  it('ko takes the form from how a code word ends, the same in every command', () => {
+    expect(translate('set x1 to 10 then log x1', 'en', 'ko')).toBe(
+      'x1을 10에 설정 그다음 x1을 로그'
+    );
+    expect(translate('set item2 to 10 then log item2', 'en', 'ko')).toBe(
+      'item2를 10에 설정 그다음 item2를 로그'
+    );
+    const ko = tryGetProfile('ko')!;
+    const object = (word: string) => attachMarker(ko, word, '을')!.slice(word.length);
+    // A digit by its reading: 영 일 이 삼 사 오 육 칠 팔 구.
+    expect([...'0123456789'].map(d => object('n' + d)).join('')).toBe('을을를을를를을을을를');
+    // A Latin word by its spelling: l, m, n, ng and a stop after a vowel close the syllable.
+    for (const word of [
+      'total',
+      'item',
+      'span',
+      'string',
+      '#out',
+      'click',
+      'tab',
+      'name',
+      'title',
+    ]) {
+      expect(object(word), word).toBe('을');
+    }
+    for (const word of ['x', 'count', 'value', 'log', '.active', 'id', 'error', 'me', 'link']) {
+      expect(object(word), word).toBe('를');
+    }
+    // Closing punctuation is looked past, to the word or the Hangul inside.
+    expect(object('"안녕"')).toBe('을');
+    expect(object('"나"')).toBe('를');
+    expect(object('<button/>')).toBe('을');
+    expect(object('foo()')).toBe('를');
+    // ㄹ takes 로: 일, 칠, 팔 and a final l.
+    expect(attachMarker(ko, 'x1', '으로')).toBe('x1로');
+    expect(attachMarker(ko, 'x3', '로')).toBe('x3으로');
+    expect(attachMarker(ko, 'total', '으로')).toBe('total로');
+    // The form given is not the answer: either one comes out the same.
+    expect(attachMarker(ko, 'count', '를')).toBe(attachMarker(ko, 'count', '을'));
+  });
+
+  it('ko reads either form of the object particle after any word', () => {
+    for (const [korean, english] of [
+      ['total을 0에 설정', 'set total to 0'],
+      ['total를 0에 설정', 'set total to 0'],
+      ['count을 0에 설정', 'set count to 0'],
+      ['arr[0]을 "yes"에 기본값', 'default arr[0] to "yes"'],
+      ['JSONString을 얻다', 'get JSONString'],
+    ]) {
+      expect(translate(korean, 'ko', 'en'), korean).toBe(english);
+    }
   });
 
   it('leaves apart a marker of the role after it (bn `x এ <p/>`, a loop in English order)', () => {
@@ -114,7 +169,10 @@ describe("ja's handler head: the on word written onto the event", () => {
       'on click fetch /test as Number then put it into my.innerHTML',
       'クリックで "/test" フェッチ Number それから それを 私の innerHTMLに 置く',
     ],
-    ['on click toggle .a end on keyup toggle .b end', 'クリックで .aを 切り替え\n終わり\nキーアップで .bを 切り替え\n終わり'],
+    [
+      'on click toggle .a end on keyup toggle .b end',
+      'クリックで .aを 切り替え\n終わり\nキーアップで .bを 切り替え\n終わり',
+    ],
   ])('%s', (source, expected) => {
     expect(translate(source, 'en', 'ja')).toBe(expected);
     expect(translate(expected, 'ja', 'en')).toBe(translate(source, 'en', 'en'));
@@ -125,9 +183,9 @@ describe("ja's handler head: the on word written onto the event", () => {
     expect(translate('#b から クリック を で .aを 切り替え', 'ja', 'en')).toBe(
       'on click from #b toggle .a'
     );
-    expect(translate('クリック を で .aを 切り替え キーアップ を で .bを 切り替え', 'ja', 'en')).toBe(
-      'on click toggle .a\nend\non keyup toggle .b\nend'
-    );
+    expect(
+      translate('クリック を で .aを 切り替え キーアップ を で .bを 切り替え', 'ja', 'en')
+    ).toBe('on click toggle .a\nend\non keyup toggle .b\nend');
     expect(translate('クリックで .aを 切り替え キーアップで .bを 切り替え', 'ja', 'en')).toBe(
       'on click toggle .a\nend\non keyup toggle .b\nend'
     );
@@ -160,14 +218,20 @@ describe("bn's handler head: the locative written onto the event", () => {
     ['on submit toggle .a', 'জমাতে .aকে টগল করুন'],
     ['on change put "x" into #out', 'পরিবর্তনে "x"কে #outএ রাখুন'],
     // A Bengali value takes it too, in its form; every pattern reads it back.
-    ['on click set x to false then default x to true', 'ক্লিকে xকে মিথ্যাতে সেট তারপর xকে সত্যে ডিফল্ট'],
+    [
+      'on click set x to false then default x to true',
+      'ক্লিকে xকে মিথ্যাতে সেট তারপর xকে সত্যে ডিফল্ট',
+    ],
     ['on click from #b toggle .a', '#b থেকে ক্লিকে .aকে টগল করুন'],
     ['on keyup toggle .a', 'keyupতে .aকে টগল করুন'],
     ['on click or keyup toggle .a', 'ক্লিক অথবা keyupতে .aকে টগল করুন'],
     ['on myEvent(detail) toggle .a', 'myEvent(detail)তে .aকে টগল করুন'],
     ['on click debounced at 200ms toggle .a', 'ক্লিকে debounced at 200ms .aকে টগল করুন'],
     ['on click js console.log(1) end', 'ক্লিকে জেএস console.log(1) শেষ'],
-    ['on click toggle .a end on keyup toggle .b end', 'ক্লিকে .aকে টগল করুন\nশেষ\nkeyupতে .bকে টগল করুন\nশেষ'],
+    [
+      'on click toggle .a end on keyup toggle .b end',
+      'ক্লিকে .aকে টগল করুন\nশেষ\nkeyupতে .bকে টগল করুন\nশেষ',
+    ],
   ])('%s', (source, expected) => {
     expect(translate(source, 'en', 'bn')).toBe(expected);
     expect(translate(expected, 'bn', 'en')).toBe(translate(source, 'en', 'en'));
@@ -212,7 +276,10 @@ describe("tr's handler head: the locative written onto the event", () => {
     ['on click debounced at 200ms toggle .a', 'tıklamada debounced at 200ms .a i değiştir'],
     ['on click js console.log(1) end', 'tıklamada js console.log(1) son'],
     ['on click put result into #out', 'tıklamada sonucu #out e koy'],
-    ['on click toggle .a end on keyup toggle .b end', 'tıklamada .a i değiştir\nson\nkeyup da .b i değiştir\nson'],
+    [
+      'on click toggle .a end on keyup toggle .b end',
+      'tıklamada .a i değiştir\nson\nkeyup da .b i değiştir\nson',
+    ],
   ])('%s', (source, expected) => {
     expect(translate(source, 'en', 'tr')).toBe(expected);
     expect(translate(expected, 'tr', 'en')).toBe(translate(source, 'en', 'en'));

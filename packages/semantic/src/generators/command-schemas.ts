@@ -848,6 +848,9 @@ export const setSchema: CommandSchema = {
         // patterns only) could not parse set at all.
         zh: '把',
       },
+      // ko's object particle is 을 after a consonant, 를 after a vowel: the reader
+      // takes both, and the render picks by the word (attached-markers.ts).
+      markerVariants: { ko: ['을'] },
       // Accept the unmarked natural form alongside the transformer's 把 form
       // (same treatment as go's destination).
       markerOptional: { zh: true },
@@ -1038,6 +1041,9 @@ export const bindSchema: CommandSchema = {
         qu: 'ta',
         hi: 'को',
       },
+      // ko's object particle is 을 after a consonant, 를 after a vowel: the reader
+      // takes both, and the render picks by the word (attached-markers.ts).
+      markerVariants: { ko: ['을'] },
     },
     {
       role: 'source',
@@ -1761,6 +1767,9 @@ export const getCommandSchema: CommandSchema = {
         bn: 'কে', // Bengali SOV: #element কে পান (patient marker)
         qu: 'ta', // Quechua SOV: #element ta taripay (patient marker)
       },
+      // ko's object particle is 을 after a consonant, 를 after a vowel: the reader
+      // takes both, and the render picks by the word (attached-markers.ts).
+      markerVariants: { ko: ['을'] },
     },
   ],
 };
@@ -3001,6 +3010,9 @@ export const defaultSchema: CommandSchema = {
         zh: '把',
         he: 'את',
       },
+      // ko's object particle is 을 after a consonant, 를 after a vowel: the reader
+      // takes both, and the render picks by the word (attached-markers.ts).
+      markerVariants: { ko: ['을'] },
     },
     {
       role: 'patient',
