@@ -16,7 +16,7 @@ export const patternTools: Tool[] = [
   {
     name: 'get_examples',
     description:
-      'Get hyperscript code examples matching a natural language task description (e.g., "toggle a class on click"). Returns code verified to run on at least one engine, each tagged with `engine` (both = upstream _hyperscript and hyperfixi, hyperscript = upstream only, lokascript = hyperfixi only), plus quality scores. Best for generating new code by example.',
+      'Get hyperscript code examples matching a natural language task description (e.g., "toggle a class on click"). Returns code verified to run on at least one engine, each tagged with `engine` (both = upstream _hyperscript and hyperfixi, hyperscript = upstream only, lokascript = hyperfixi only), plus quality scores. Best for generating new code by example. `source` says where the answer came from: "database", or "built-in" (a short English list) with `fallback` saying why: the database has no example for the prompt in that language, or @hyperfixi/patterns-reference could not be loaded. A database failure is an error (ok: false, PATTERN_DATABASE_ERROR), never a built-in answer.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -41,7 +41,7 @@ export const patternTools: Tool[] = [
   {
     name: 'search_patterns',
     description:
-      'Search the pattern database by keyword, optionally within one category (events, dom-manipulation, class-manipulation, visibility, forms, async, etc.). Unlike get_examples which takes task descriptions, this searches pattern names and content.',
+      'Search the pattern database by keyword, optionally within one category (events, dom-manipulation, class-manipulation, visibility, forms, async, etc.). Unlike get_examples which takes task descriptions, this searches pattern names and content. `source` is "database"; if @hyperfixi/patterns-reference cannot be loaded the search runs over a short built-in list instead and says so (`source: "built-in"`, with `fallback` giving the reason). A database failure is an error (ok: false, PATTERN_DATABASE_ERROR), never a built-in answer.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -64,7 +64,8 @@ export const patternTools: Tool[] = [
   },
   {
     name: 'get_pattern_stats',
-    description: 'Get statistics about available patterns and languages',
+    description:
+      'Get statistics about available patterns and languages. `source` is "database", or "built-in" (with `fallback` giving the reason) when @hyperfixi/patterns-reference cannot be loaded; a database failure is an error (ok: false, PATTERN_DATABASE_ERROR).',
     inputSchema: {
       type: 'object',
       properties: {},
@@ -76,17 +77,67 @@ export const patternTools: Tool[] = [
 // Tool Handlers
 // =============================================================================
 
+type ToolResult = { content: Array<{ type: string; text: string }>; isError?: boolean };
+
+/** Why an answer came from the built-in list and not from the pattern database. */
+interface Fallback {
+  code: 'PATTERNS_REFERENCE_UNAVAILABLE' | 'NO_DATABASE_MATCH';
+  reason: string;
+}
+
+const PATTERN_TOOL_NAMES = new Set(patternTools.map(t => t.name));
+
+const messageOf = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
+
+/**
+ * The package loaded, so its database is expected to answer: a query that throws (no
+ * database file, a missing table, a failed native binding) is reported as an error. It
+ * used to be answered from the built-in list, which a caller could not tell from a
+ * real result.
+ */
+function databaseError(name: string, error: unknown): ToolResult {
+  return {
+    content: [
+      {
+        type: 'text',
+        text: JSON.stringify(
+          {
+            ok: false,
+            code: 'PATTERN_DATABASE_ERROR',
+            error: `${name}: the pattern database could not answer: ${messageOf(error)}`,
+            hint: 'The database ships in @hyperfixi/patterns-reference (data/patterns.db; LSP_DB_PATH or HYPERSCRIPT_LSP_DB overrides the path). Check the override, or reinstall the package.',
+          },
+          null,
+          2
+        ),
+      },
+    ],
+    isError: true,
+  };
+}
+
 export async function handlePatternTool(
   name: string,
   args: Record<string, unknown>
-): Promise<{ content: Array<{ type: string; text: string }>; isError?: boolean }> {
-  // Try to import patterns-reference
+): Promise<ToolResult> {
+  if (!PATTERN_TOOL_NAMES.has(name)) {
+    return {
+      content: [{ type: 'text', text: `Unknown pattern tool: ${name}` }],
+      isError: true,
+    };
+  }
+
+  // patterns-reference is an optional peer. Without it the tools answer from the
+  // built-in list, and say so: a degraded mode, named in the result.
   let patternsRef: any;
   try {
     patternsRef = await import('@hyperfixi/patterns-reference');
-  } catch {
-    // Fall back to built-in examples if package not available
-    return handleWithBuiltinExamples(name, args);
+  } catch (error) {
+    return handleWithBuiltinExamples(name, args, {
+      code: 'PATTERNS_REFERENCE_UNAVAILABLE',
+      reason: `@hyperfixi/patterns-reference could not be loaded: ${messageOf(error)}`,
+    });
   }
 
   switch (name) {
@@ -99,7 +150,10 @@ export async function handlePatternTool(
         const examples = await patternsRef.getLLMExamples(prompt, language, limit);
 
         if (!examples || examples.length === 0) {
-          return handleWithBuiltinExamples(name, args);
+          return handleWithBuiltinExamples(name, args, {
+            code: 'NO_DATABASE_MATCH',
+            reason: `The pattern database has no "${language}" example matching the prompt.`,
+          });
         }
 
         return {
@@ -119,6 +173,7 @@ export async function handlePatternTool(
                   })),
                   count: examples.length,
                   language,
+                  source: 'database',
                 },
                 null,
                 2
@@ -126,9 +181,8 @@ export async function handlePatternTool(
             },
           ],
         };
-      } catch {
-        // Database error (e.g., table doesn't exist) - fall back to built-in
-        return handleWithBuiltinExamples(name, args);
+      } catch (error) {
+        return databaseError(name, error);
       }
     }
 
@@ -163,6 +217,7 @@ export async function handlePatternTool(
                   })),
                   count: patterns.length,
                   query,
+                  source: 'database',
                 },
                 null,
                 2
@@ -170,9 +225,8 @@ export async function handlePatternTool(
             },
           ],
         };
-      } catch {
-        // Database error - fall back to built-in
-        return handleWithBuiltinExamples(name, args);
+      } catch (error) {
+        return databaseError(name, error);
       }
     }
 
@@ -197,21 +251,10 @@ export async function handlePatternTool(
                 {
                   patterns: stats,
                   llmExamples: llmStats,
-                  supportedLanguages: [
-                    'en',
-                    'es',
-                    'pt',
-                    'fr',
-                    'de',
-                    'ja',
-                    'zh',
-                    'ko',
-                    'ar',
-                    'tr',
-                    'id',
-                    'sw',
-                    'qu',
-                  ],
+                  // The languages the database holds translations in (a hand-written
+                  // list of 13 stood here while the database held 24).
+                  supportedLanguages: Object.keys(stats.byLanguage).sort(),
+                  source: 'database',
                 },
                 null,
                 2
@@ -219,9 +262,8 @@ export async function handlePatternTool(
             },
           ],
         };
-      } catch {
-        // Database error - fall back to built-in
-        return handleWithBuiltinExamples(name, args);
+      } catch (error) {
+        return databaseError(name, error);
       }
     }
 
@@ -234,7 +276,7 @@ export async function handlePatternTool(
 }
 
 // =============================================================================
-// Built-in Examples (fallback when patterns-reference isn't available)
+// Built-in Examples (when patterns-reference cannot be loaded, or has no example)
 // =============================================================================
 
 const BUILTIN_EXAMPLES = [
@@ -362,10 +404,20 @@ const BUILTIN_EXAMPLES = [
   },
 ];
 
+/** Every built-in answer names itself and carries why the database did not answer. */
 function handleWithBuiltinExamples(
   name: string,
-  args: Record<string, unknown>
-): { content: Array<{ type: string; text: string }>; isError?: boolean } {
+  args: Record<string, unknown>,
+  fallback: Fallback
+): ToolResult {
+  const origin = {
+    source: 'built-in',
+    fallback,
+    note:
+      fallback.code === 'NO_DATABASE_MATCH'
+        ? 'Built-in English examples: the pattern database had no match (see fallback).'
+        : 'Built-in list, not the pattern database (see fallback). Install @hyperfixi/patterns-reference for the database: patterns, their translations in 24 languages, and LLM examples.',
+  };
   switch (name) {
     case 'get_examples': {
       const prompt = (args.prompt as string).toLowerCase();
@@ -383,16 +435,18 @@ function handleWithBuiltinExamples(
       ).slice(0, limit);
 
       if (matches.length === 0) {
-        // Return top examples as fallback
+        // No built-in example matches either: the first few, marked as unmatched
+        const common = BUILTIN_EXAMPLES.slice(0, limit);
         return {
           content: [
             {
               type: 'text',
               text: JSON.stringify(
                 {
-                  examples: BUILTIN_EXAMPLES.slice(0, limit),
-                  count: limit,
-                  note: 'No exact matches found, showing common examples',
+                  examples: common,
+                  count: common.length,
+                  matched: false,
+                  ...origin,
                 },
                 null,
                 2
@@ -410,7 +464,8 @@ function handleWithBuiltinExamples(
               {
                 examples: matches,
                 count: matches.length,
-                note: 'Using built-in examples (install @hyperfixi/patterns-reference for 400+ examples)',
+                matched: true,
+                ...origin,
               },
               null,
               2
@@ -429,9 +484,11 @@ function handleWithBuiltinExamples(
       if (category) {
         matches = matches.filter(ex => ex.category === category);
       }
-      matches = matches.filter(
-        ex => ex.task.toLowerCase().includes(query) || ex.code.toLowerCase().includes(query)
-      );
+      matches = matches
+        .filter(
+          ex => ex.task.toLowerCase().includes(query) || ex.code.toLowerCase().includes(query)
+        )
+        .slice(0, limit);
 
       return {
         content: [
@@ -439,9 +496,10 @@ function handleWithBuiltinExamples(
             type: 'text',
             text: JSON.stringify(
               {
-                patterns: matches.slice(0, limit),
+                patterns: matches,
                 count: matches.length,
-                note: 'Using built-in patterns (install @hyperfixi/patterns-reference for 100+ patterns)',
+                query: args.query,
+                ...origin,
               },
               null,
               2
@@ -461,7 +519,7 @@ function handleWithBuiltinExamples(
                 builtinExamples: BUILTIN_EXAMPLES.length,
                 categories: [...new Set(BUILTIN_EXAMPLES.map(ex => ex.category))],
                 supportedLanguages: ['en'],
-                note: 'Install @hyperfixi/patterns-reference for the full pattern database: patterns, their translations in 24 languages, and LLM examples',
+                ...origin,
               },
               null,
               2
