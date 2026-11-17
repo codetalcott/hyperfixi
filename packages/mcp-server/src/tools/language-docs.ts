@@ -5,7 +5,11 @@
  * commands, expressions, keywords, features, and special symbols.
  *
  * Data sources:
- * - Commands: commandSchemas from @lokascript/semantic (45 commands with full schema data)
+ * - Commands and features: `@hyperfixi/core/reference` and `HOVER_DOCS` of
+ *   `@hyperfixi/core/lsp-metadata`, which `npm run verify:reference` holds to the engine
+ *   (every engine keyword documented, every example parsed on it). The editor's hover reads
+ *   the same data. `commandSchemas` of @lokascript/semantic adds how the multilingual layer
+ *   models a command (its roles), under `semantic`.
  * - Expressions: static EXPRESSION_CATALOG (~35 entries covering all expression categories)
  * - Keywords: KNOWN_PROFILES from @lokascript/semantic (25 languages)
  * - Features/Symbols: static catalogs
@@ -21,7 +25,97 @@ let semanticPackage: any = null;
 try {
   semanticPackage = await import('@lokascript/semantic');
 } catch {
-  // semantic not available - will use BUILTIN_COMMANDS fallback
+  // semantic not available: command docs carry no `semantic` part
+}
+
+// The engine's commands and features, as the editor documents them.
+interface ReferenceCommand {
+  name: string;
+  description: string;
+  syntax: string;
+  category: string;
+  examples: string[];
+}
+interface HoverDoc {
+  title: string;
+  description: string;
+  example: string;
+  category: string;
+}
+let referenceCommands: Record<string, ReferenceCommand> | null = null;
+let hoverDocs: Record<string, HoverDoc> = {};
+try {
+  referenceCommands = (await import('@hyperfixi/core/reference')).commands;
+  hoverDocs = (await import('@hyperfixi/core/lsp-metadata')).HOVER_DOCS;
+} catch {
+  console.error('[mcp:language-docs] @hyperfixi/core not available: no command docs');
+}
+
+/**
+ * What the engine reads under `name`: a command from the reference, or a feature (`on`,
+ * `def`, `init`, …) or a command the reference has no entry for, from the hover docs.
+ */
+function engineDocs(name: string): {
+  kind: 'command' | 'feature';
+  description: string;
+  syntax?: string;
+  category: string;
+  examples: string[];
+} | null {
+  const ref = referenceCommands?.[name];
+  if (ref) {
+    return {
+      kind: 'command',
+      description: ref.description,
+      syntax: ref.syntax,
+      category: ref.category,
+      examples: ref.examples,
+    };
+  }
+  const hover = hoverDocs[name];
+  if (hover && (hover.category === 'command' || hover.category === 'feature')) {
+    return {
+      kind: hover.category,
+      description: hover.description,
+      category: hover.category,
+      examples: [hover.example],
+    };
+  }
+  return null;
+}
+
+/** Every command and feature keyword the engine's docs know. */
+function engineKeywords(): string[] {
+  const hover = Object.entries(hoverDocs)
+    .filter(([, doc]) => doc.category === 'command' || doc.category === 'feature')
+    .map(([name]) => name);
+  return [...new Set([...Object.keys(referenceCommands ?? {}), ...hover])];
+}
+
+/** How the multilingual layer models a command: its roles, and the explicit and JSON forms. */
+function semanticModel(name: string): Record<string, unknown> | undefined {
+  const schema = semanticPackage?.commandSchemas?.[name];
+  if (!schema) return undefined;
+  return {
+    description: schema.description,
+    roleSyntax: generateSyntaxString(schema),
+    explicitSyntax: generateExplicitExample(schema),
+    jsonSyntax: generateJsonExample(schema),
+    category: schema.category,
+    primaryRole: schema.primaryRole,
+    hasBody: schema.hasBody || false,
+    roles: schema.roles.map((r: any) => ({
+      role: r.role,
+      description: r.description,
+      required: r.required,
+      expectedTypes: r.expectedTypes,
+      default: r.default,
+    })),
+    errorCodes: schema.errorCodes || [],
+    preconditions: schema.preconditions || [],
+    recoveryHints: schema.recoveryHints || {},
+    notes: schema.notes,
+  };
 }
 
 // =============================================================================
@@ -32,7 +126,7 @@ export const languageDocsTools: Tool[] = [
   {
     name: 'get_command_docs',
     description:
-      'Get documentation for a specific hyperscript command. Returns syntax, description, and usage details.',
+      "Get documentation for a hyperscript command or feature (`toggle`, `fetch`, `on`, `def`): its description, syntax and examples, from the reference the editor reads, which is checked against the engine (every keyword documented, every example parsed). `semantic` adds how the multilingual layer models the command (its roles). A name the engine does not read is answered found: false, with the engine's keywords.",
     inputSchema: {
       type: 'object',
       properties: {
@@ -1037,103 +1131,6 @@ const BEST_PRACTICES: BestPractice[] = [
 ];
 
 // =============================================================================
-// Built-in Command Fallback (used when @lokascript/semantic is unavailable)
-// =============================================================================
-
-const BUILTIN_COMMANDS: Record<string, any> = {
-  toggle: {
-    name: 'toggle',
-    description: 'Toggle a class, attribute, or visibility on elements',
-    syntax: 'toggle <class-ref | attribute-ref | visibility> [on <target>]',
-  },
-  add: {
-    name: 'add',
-    description: 'Add a class or attribute to elements',
-    syntax: 'add <class-ref | attribute-ref> [to <target>]',
-  },
-  remove: {
-    name: 'remove',
-    description: 'Remove a class, attribute, or element',
-    syntax: 'remove <class-ref | attribute-ref | element> [from <target>]',
-  },
-  set: {
-    name: 'set',
-    description: 'Set a property or variable value',
-    syntax: 'set <target> to <value>',
-  },
-  put: {
-    name: 'put',
-    description: 'Put content into an element',
-    syntax: 'put <value> into|before|after|at start of|at end of <target>',
-  },
-  fetch: {
-    name: 'fetch',
-    description: 'Fetch data from a URL',
-    syntax: 'fetch <url> [as <type>] [with <options>]',
-  },
-  wait: {
-    name: 'wait',
-    description: 'Wait for a time duration or event',
-    syntax: 'wait <time> | wait for <event>',
-  },
-  hide: {
-    name: 'hide',
-    description: 'Hide an element',
-    syntax: 'hide [<target>] [with <strategy>]',
-  },
-  show: {
-    name: 'show',
-    description: 'Show a hidden element',
-    syntax: 'show [<target>] [with <strategy>]',
-  },
-  send: {
-    name: 'send',
-    description: 'Send/trigger a custom event',
-    syntax: 'send <event-name> [to <target>] [with <details>]',
-  },
-  beep: {
-    name: 'beep',
-    description: 'Debug output — logs a value with type info to the console',
-    syntax: 'beep [<expression>]',
-  },
-  ask: {
-    name: 'ask',
-    description: 'Prompt the user for a value; the reply is `it`',
-    syntax: 'ask <message>',
-  },
-  answer: {
-    name: 'answer',
-    description: 'Show a message, or confirm with two choices; the chosen one is `it`',
-    syntax: 'answer <message> [with <a> or <b>]',
-  },
-  break: {
-    name: 'break',
-    description: 'Exit the current repeat/for/while loop',
-    syntax: 'break',
-  },
-  copy: {
-    name: 'copy',
-    description: 'Copy a value to the clipboard',
-    syntax: 'copy <expression>',
-  },
-  exit: {
-    name: 'exit',
-    description: 'Exit the current event handler immediately',
-    syntax: 'exit',
-  },
-  pick: {
-    name: 'pick',
-    description: 'Pick a random item from a collection',
-    syntax: 'pick <expression>',
-  },
-  render: {
-    name: 'render',
-    description: 'Render a template with variable substitution',
-    syntax: 'render <template> [with <variables>]',
-  },
-};
-
-// =============================================================================
 // Tool Handlers
 // =============================================================================
 
@@ -1182,114 +1179,58 @@ function handleGetCommandDocs(args: Record<string, unknown>): {
   content: Array<{ type: string; text: string }>;
   isError?: boolean;
 } {
-  const commandName = (args.command as string).toLowerCase();
+  const asked = String(args.command ?? '').trim();
+  // Keywords are lower case but for a few (`viewTransition` is no keyword; `beep!` is).
+  const commandName = engineDocs(asked) ? asked : asked.toLowerCase();
+  const json = (value: unknown) => ({
+    content: [{ type: 'text', text: JSON.stringify(value, null, 2) }],
+  });
 
-  // Priority 1: Use commandSchemas from @lokascript/semantic
-  if (semanticPackage?.commandSchemas) {
-    const schema = semanticPackage.commandSchemas[commandName];
-
-    if (schema) {
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(
-              {
-                found: true,
-                command: schema.action,
-                description: schema.description,
-                syntax: generateSyntaxString(schema),
-                explicitSyntax: generateExplicitExample(schema),
-                jsonSyntax: generateJsonExample(schema),
-                category: schema.category,
-                primaryRole: schema.primaryRole,
-                hasBody: schema.hasBody || false,
-                roles: schema.roles.map((r: any) => ({
-                  role: r.role,
-                  description: r.description,
-                  required: r.required,
-                  expectedTypes: r.expectedTypes,
-                  default: r.default,
-                })),
-                errorCodes: schema.errorCodes || [],
-                preconditions: schema.preconditions || [],
-                recoveryHints: schema.recoveryHints || {},
-                notes: schema.notes,
-              },
-              null,
-              2
-            ),
-          },
-        ],
-      };
-    }
-
-    // Command not found — provide all available commands and suggestions
-    const allCommands = Object.keys(semanticPackage.commandSchemas).filter(
-      (c: string) => c !== 'compound'
-    );
-    const suggestions = allCommands
-      .filter((c: string) => c.includes(commandName) || commandName.includes(c))
-      .slice(0, 5);
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify(
-            {
-              found: false,
-              command: commandName,
-              message: `Command "${commandName}" not found`,
-              suggestions: suggestions.length > 0 ? suggestions : undefined,
-              availableCommands: allCommands,
-            },
-            null,
-            2
-          ),
-        },
-      ],
-    };
+  const docs = engineDocs(commandName);
+  const semantic = semanticModel(commandName);
+  if (docs) {
+    return json({
+      found: true,
+      command: commandName,
+      kind: docs.kind,
+      description: docs.description,
+      ...(docs.syntax ? { syntax: docs.syntax } : {}),
+      category: docs.category,
+      examples: docs.examples,
+      // How the multilingual layer models it (roles for the explicit and JSON forms). The
+      // syntax to write is `syntax` and `examples` above.
+      ...(semantic ? { semantic } : {}),
+    });
   }
 
-  // Priority 2: Built-in fallback
-  const command = BUILTIN_COMMANDS[commandName];
-  if (command) {
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify(
-            {
-              found: true,
-              ...command,
-              note: 'Using built-in docs. @lokascript/semantic not available for full documentation.',
-            },
-            null,
-            2
-          ),
-        },
-      ],
-    };
+  const keywords = engineKeywords();
+  const suggestions = keywords
+    .filter(c => c.includes(commandName) || commandName.includes(c))
+    .slice(0, 5);
+  if (semantic) {
+    // An action of the multilingual layer that is no keyword of the engine (`prepend`,
+    // `push`, `copy`): written in a script as it stands, the engine rejects it.
+    return json({
+      found: false,
+      command: commandName,
+      message:
+        `"${commandName}" is not a command of the engine (upstream _hyperscript's grammar): ` +
+        'a script that writes it does not parse. The multilingual layer has an action of ' +
+        'that name, described under `semantic`.',
+      suggestions: suggestions.length > 0 ? suggestions : undefined,
+      semantic,
+      availableCommands: keywords,
+    });
   }
-
-  return {
-    content: [
-      {
-        type: 'text',
-        text: JSON.stringify(
-          {
-            found: false,
-            command: commandName,
-            message: `Command "${commandName}" not found`,
-            availableCommands: Object.keys(BUILTIN_COMMANDS),
-          },
-          null,
-          2
-        ),
-      },
-    ],
-  };
+  return json({
+    found: false,
+    command: commandName,
+    message: referenceCommands
+      ? `Command "${commandName}" not found`
+      : `Command "${commandName}" not found: @hyperfixi/core, which holds the command reference, is not installed`,
+    suggestions: suggestions.length > 0 ? suggestions : undefined,
+    availableCommands: keywords,
+  });
 }
 
 // =============================================================================
@@ -1388,37 +1329,22 @@ function handleSearchLanguageElements(args: Record<string, unknown>): {
 
   // Search commands
   if (searchTypes.includes('command')) {
-    if (semanticPackage?.commandSchemas) {
-      for (const [action, schema] of Object.entries(semanticPackage.commandSchemas) as [
-        string,
-        any,
-      ][]) {
-        if (action === 'compound') continue;
-        if (
-          action.includes(query) ||
-          schema.description?.toLowerCase().includes(query) ||
-          schema.category?.includes(query)
-        ) {
-          results.push({
-            type: 'command',
-            name: action,
-            description: schema.description,
-            syntax: generateSyntaxString(schema),
-            category: schema.category,
-          });
-        }
-      }
-    } else {
-      // Fallback to BUILTIN_COMMANDS
-      for (const [cmdName, cmd] of Object.entries(BUILTIN_COMMANDS)) {
-        if (cmdName.includes(query) || cmd.description?.toLowerCase().includes(query)) {
-          results.push({
-            type: 'command',
-            name: cmd.name,
-            description: cmd.description,
-            syntax: cmd.syntax,
-          });
-        }
+    // The engine's commands, from the same reference get_command_docs answers from.
+    for (const name of engineKeywords()) {
+      const docs = engineDocs(name);
+      if (!docs || docs.kind !== 'command') continue;
+      if (
+        name.toLowerCase().includes(query) ||
+        docs.description.toLowerCase().includes(query) ||
+        docs.category.includes(query)
+      ) {
+        results.push({
+          type: 'command',
+          name,
+          description: docs.description,
+          ...(docs.syntax ? { syntax: docs.syntax } : {}),
+          category: docs.category,
+        });
       }
     }
   }
