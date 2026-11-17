@@ -44,6 +44,7 @@ describe('Dispatch routing guards', () => {
   it('no prefix guard swallows a sampling tool name', () => {
     const lines = INDEX_SRC.split('\n');
     const offenders: string[] = [];
+    const examined: string[] = [];
 
     lines.forEach((line, i) => {
       const match = line.match(/name\.startsWith\('([^']+)'\)/);
@@ -52,6 +53,7 @@ describe('Dispatch routing guards', () => {
 
       const shadowed = SAMPLING_NAMES.filter(n => n.startsWith(prefix));
       if (shadowed.length === 0) return;
+      examined.push(prefix);
 
       // The guard may claim such a name only if it excludes the sampling set.
       // Look at the enclosing condition, not just this line.
@@ -64,6 +66,8 @@ describe('Dispatch routing guards', () => {
       }
     });
 
+    // The scan found the guard it exists for: with none found it would pass on nothing.
+    expect(examined).toContain('analyze_');
     expect(offenders).toEqual([]);
   });
 

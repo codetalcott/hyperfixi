@@ -1,8 +1,9 @@
 /**
  * Phase 7: Fallback Behavior Tests
  *
- * Tests that analysis tools return useful data even when ast-toolkit is unavailable.
- * These tests verify the graceful degradation behavior added in Phase 7.
+ * The analysis tools' keyword scans. analyze_complexity and analyze_metrics use theirs only
+ * for code @lokascript/semantic cannot read (every input here that parses is measured from
+ * its parse, and the tests say so); recognize_intent has no other path.
  */
 import { describe, it, expect } from 'vitest';
 import { handleAnalysisTool, analysisTools } from '../tools/analysis.js';
@@ -50,177 +51,140 @@ describe('Analysis tools input validation', () => {
 // Fallback Behavior Tests
 // =============================================================================
 
+const analyze = async (name: string, args: Record<string, unknown>) => {
+  const result = await handleAnalysisTool(name, args);
+  expect(result.isError).toBeUndefined();
+  return JSON.parse(getTextContent(result));
+};
+
+const SIMPLE_NOTE = 'Simple analysis (@lokascript/semantic could not read the code)';
+
 describe('analyze_complexity fallback', () => {
-  it('returns simple metrics for valid code', async () => {
-    const result = await handleAnalysisTool('analyze_complexity', {
-      code: 'on click toggle .active',
-    });
-
-    // Should not be an error - should use fallback
-    const parsed = JSON.parse(getTextContent(result));
-
-    // Either ast-toolkit result or fallback result
-    if (parsed.note) {
-      // Fallback result
-      expect(parsed.note).toContain('Simple analysis');
-      expect(parsed).toHaveProperty('commandCount');
-      expect(parsed).toHaveProperty('estimatedComplexity');
-    } else {
-      // ast-toolkit result
-      expect(parsed).toHaveProperty('cyclomatic');
-    }
+  it('measures code that parses from its parse, with no fallback note', async () => {
+    const parsed = await analyze('analyze_complexity', { code: 'on click toggle .active' });
+    expect(parsed.note).toBeUndefined();
+    expect(parsed.cyclomatic).toBe(1);
+    expect(parsed).not.toHaveProperty('commandCount');
+    expect(parsed).not.toHaveProperty('estimatedComplexity');
   });
 
-  it('counts commands in code', async () => {
-    const result = await handleAnalysisTool('analyze_complexity', {
-      code: 'on click toggle .active then add .highlight',
-    });
-
-    const parsed = JSON.parse(getTextContent(result));
-
-    if (parsed.note) {
-      // Fallback result
-      expect(parsed.commandCount).toBeGreaterThanOrEqual(2);
-      expect(parsed.commands).toContain('toggle');
-      expect(parsed.commands).toContain('add');
-    }
+  it('returns simple metrics for code that does not parse', async () => {
+    const parsed = await analyze('analyze_complexity', { code: '123 toggle .active' });
+    expect(parsed.note).toBe(SIMPLE_NOTE);
+    expect(parsed.commandCount).toBe(1);
+    expect(parsed.estimatedComplexity).toBe(1);
+    expect(parsed).not.toHaveProperty('cyclomatic');
   });
 
-  it('counts conditionals in code', async () => {
-    const result = await handleAnalysisTool('analyze_complexity', {
+  it('counts commands in code that does not parse', async () => {
+    const parsed = await analyze('analyze_complexity', {
+      code: '123 toggle .active add .highlight',
+    });
+    expect(parsed.note).toBe(SIMPLE_NOTE);
+    expect(parsed.commandCount).toBe(2);
+    expect(parsed.commands).toEqual(['toggle', 'add']);
+  });
+
+  it('counts conditionals in code that does not parse', async () => {
+    const parsed = await analyze('analyze_complexity', {
+      code: '123 wait 1s unless x toggle .a',
+    });
+    expect(parsed.note).toBe(SIMPLE_NOTE);
+    expect(parsed.conditionalCount).toBe(1);
+    expect(parsed.estimatedComplexity).toBe(2);
+  });
+
+  it('counts the if of code that parses as one decision', async () => {
+    const parsed = await analyze('analyze_complexity', {
       code: 'on click if .active toggle .active else add .active end',
     });
-
-    const parsed = JSON.parse(getTextContent(result));
-
-    if (parsed.note) {
-      // Fallback result - should detect if/else
-      expect(parsed.conditionalCount).toBeGreaterThanOrEqual(1);
-      expect(parsed.estimatedComplexity).toBeGreaterThan(1);
-    }
+    expect(parsed.note).toBeUndefined();
+    expect(parsed.cyclomatic).toBe(2);
   });
 });
 
 describe('analyze_metrics fallback', () => {
-  it('returns simple metrics for valid code', async () => {
-    const result = await handleAnalysisTool('analyze_metrics', {
-      code: 'on click toggle .active',
-    });
+  it('measures code that parses from its parse', async () => {
+    const parsed = await analyze('analyze_metrics', { code: 'on click toggle .active' });
+    expect(parsed.note).toBeUndefined();
+    expect(parsed.complexity.cyclomatic).toBe(1);
+    expect(parsed).not.toHaveProperty('lines');
+  });
 
-    const parsed = JSON.parse(getTextContent(result));
-
-    // Either ast-toolkit result or fallback result
-    if (parsed.note) {
-      expect(parsed.note).toContain('Simple analysis');
-      expect(parsed).toHaveProperty('lines');
-      expect(parsed).toHaveProperty('commandCount');
-    } else {
-      expect(parsed).toHaveProperty('complexity');
-    }
+  it('returns simple metrics for code that does not parse', async () => {
+    const parsed = await analyze('analyze_metrics', { code: '123 toggle .active' });
+    expect(parsed.note).toBe(SIMPLE_NOTE);
+    expect(parsed.lines).toBe(1);
+    expect(parsed.commandCount).toBe(1);
+    expect(parsed).not.toHaveProperty('complexity');
   });
 });
 
 describe('explain_code fallback', () => {
-  it('returns pattern-based explanation for valid code', async () => {
-    const result = await handleAnalysisTool('explain_code', {
+  it('explains code that parses from its parse', async () => {
+    const parsed = await analyze('explain_code', {
       code: 'on click toggle .active',
       audience: 'beginner',
     });
-
-    const parsed = JSON.parse(getTextContent(result));
-    expect(parsed).toHaveProperty('overview');
-
-    // Should mention the event and command
-    if (parsed.overview) {
-      expect(parsed.overview.toLowerCase()).toMatch(/click|toggle/);
-    }
+    expect(parsed.overview).toBe('`on click` runs `toggle .active`.');
+    expect(parsed.note).toBeUndefined();
   });
 
-  it('detects event handlers in explanation', async () => {
-    const result = await handleAnalysisTool('explain_code', {
-      code: 'on submit validate form',
-    });
-
-    const parsed = JSON.parse(getTextContent(result));
-    expect(parsed.overview).toContain('submit');
+  it('names the event of a handler whose body does not parse, and says what it left out', async () => {
+    const parsed = await analyze('explain_code', { code: 'on submit validate form' });
+    expect(parsed.overview).toBe('`on submit` runs nothing it could parse.');
+    expect(parsed.note).toContain('"validate form"');
   });
 
   it('detects fetch commands in explanation', async () => {
-    const result = await handleAnalysisTool('explain_code', {
-      code: 'on click fetch /api/data',
-    });
+    const parsed = await analyze('explain_code', { code: 'on click fetch /api/data' });
+    expect(parsed.overview).toBe('`on click` runs `fetch "/api/data"`.');
+  });
 
-    const parsed = JSON.parse(getTextContent(result));
-    expect(parsed.overview).toMatch(/fetch|data/i);
+  it("scans keywords, in a beginner's words, for code that does not parse", async () => {
+    const parsed = await analyze('explain_code', {
+      code: '123 toggle .active',
+      audience: 'beginner',
+    });
+    expect(parsed.note).toMatch(/keyword scan/);
+    expect(parsed.overview).toBe('It switches on/off .active.');
   });
 });
 
+// recognize_intent is a keyword match and nothing else: @hyperfixi/core/ast-utils exports no
+// recognizeIntent, so every answer carries the note.
 describe('recognize_intent fallback', () => {
+  const intentsOf = async (code: string) => {
+    const parsed = await analyze('recognize_intent', { code });
+    expect(parsed.note).toBe('Pattern-based analysis');
+    return parsed;
+  };
+
   it('returns pattern-based intent for event handling code', async () => {
-    const result = await handleAnalysisTool('recognize_intent', {
-      code: 'on click toggle .active',
-    });
-
-    const parsed = JSON.parse(getTextContent(result));
-
-    // Either ast-toolkit result or fallback result
-    if (parsed.note) {
-      // Fallback result
-      expect(parsed.note).toContain('Pattern-based analysis');
-      expect(parsed.allIntents).toContain('event-handling');
-      expect(parsed.allIntents).toContain('dom-manipulation');
-    } else {
-      // ast-toolkit result - may use different property name
-      expect(parsed.intent || parsed.primaryIntent).toBeDefined();
-    }
+    const parsed = await intentsOf('on click toggle .active');
+    expect(parsed.primaryIntent).toBe('event-handling');
+    expect(parsed.allIntents).toEqual(['event-handling', 'dom-manipulation']);
   });
 
   it('detects data fetching intent', async () => {
-    const result = await handleAnalysisTool('recognize_intent', {
-      code: 'on click fetch /api/users then put result into #list',
-    });
-
-    const parsed = JSON.parse(getTextContent(result));
-
-    if (parsed.note) {
-      expect(parsed.allIntents).toContain('data-fetching');
-    }
+    const parsed = await intentsOf('on click fetch /api/users then put result into #list');
+    expect(parsed.allIntents).toContain('data-fetching');
   });
 
   it('detects form handling intent', async () => {
-    const result = await handleAnalysisTool('recognize_intent', {
-      code: 'on submit validate form then send data',
-    });
-
-    const parsed = JSON.parse(getTextContent(result));
-
-    if (parsed.note) {
-      expect(parsed.allIntents).toContain('form-handling');
-    }
+    const parsed = await intentsOf('on submit validate form then send data');
+    expect(parsed.allIntents).toContain('form-handling');
   });
 
   it('detects state management intent', async () => {
-    const result = await handleAnalysisTool('recognize_intent', {
-      code: 'on click set :count to :count + 1',
-    });
-
-    const parsed = JSON.parse(getTextContent(result));
-
-    if (parsed.note) {
-      expect(parsed.allIntents).toContain('state-management');
-    }
+    const parsed = await intentsOf('on click set :count to :count + 1');
+    expect(parsed.allIntents).toContain('state-management');
   });
 
   it('returns general-interactivity for unknown patterns', async () => {
-    const result = await handleAnalysisTool('recognize_intent', {
-      code: 'call myCustomFunction()',
-    });
-
-    const parsed = JSON.parse(getTextContent(result));
-
-    if (parsed.note) {
-      expect(parsed.primaryIntent).toBe('general-interactivity');
-    }
+    const parsed = await intentsOf('call myCustomFunction()');
+    expect(parsed.primaryIntent).toBe('general-interactivity');
+    expect(parsed.allIntents).toEqual(['general-interactivity']);
   });
 });
 
