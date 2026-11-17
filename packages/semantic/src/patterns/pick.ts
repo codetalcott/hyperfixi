@@ -49,6 +49,7 @@ import {
   type SemanticValue,
 } from '../types';
 import { tryGetProfile } from '../registry';
+import { objectMarkerToken } from './object-marker';
 
 /**
  * The language's own `pick` verb, with the English literal riding as an
@@ -225,7 +226,7 @@ function makePickVerbFinalPattern(language: string, spec: PickVerbFinalSpec): La
         {
           type: 'group',
           optional: true,
-          tokens: [{ type: 'literal', value: spec.patientMarker }],
+          tokens: [objectMarkerToken(spec.patientMarker)],
         },
         pickVerbToken(language),
       ],

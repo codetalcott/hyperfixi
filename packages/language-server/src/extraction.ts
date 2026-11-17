@@ -22,6 +22,42 @@ export function isHtmlDocument(uri: string, content: string): boolean {
 }
 
 /**
+ * Is `index` inside an opening tag (`<button … _="…">`), as an attribute is?
+ * A page that documents hyperscript writes `_="…"` in its prose too
+ * (`<code>_="on click …"</code>`), and that is text, not a script.
+ *
+ * Walks forward from a `<name` before `index`: inside a tag when no `>`
+ * outside quotes comes first. The nearest `<name` can itself sit in an
+ * earlier attribute's value (`<a title="<b>" _="…">`), so a few are tried.
+ */
+function insideTag(content: string, index: number): boolean {
+  let from = index;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    let open = content.lastIndexOf('<', from - 1);
+    while (open >= 0 && !/[A-Za-z]/.test(content[open + 1] ?? '')) {
+      open = content.lastIndexOf('<', open - 1);
+    }
+    if (open < 0) return false;
+    let quote: string | null = null;
+    let closed = false;
+    for (let i = open + 1; i < index; i++) {
+      const ch = content[i]!;
+      if (quote) {
+        if (ch === quote) quote = null;
+      } else if (ch === '"' || ch === "'") {
+        quote = ch;
+      } else if (ch === '>') {
+        closed = true;
+        break;
+      }
+    }
+    if (!closed && !quote) return true;
+    from = open;
+  }
+  return false;
+}
+
+/**
  * Extracts hyperscript regions from HTML content.
  * Returns regions for _="..." and _='...' attributes and <script type="text/hyperscript"> tags.
  */
@@ -36,6 +72,7 @@ export function extractHyperscriptRegions(content: string): HyperscriptRegion[] 
   let match;
 
   while ((match = doubleQuoteRegex.exec(fullContent)) !== null) {
+    if (!insideTag(fullContent, match.index)) continue;
     const code = match[1].replace(/\\"/g, '"'); // Unescape quotes
     const startOffset = match.index + 3; // After _="
     const endOffset = match.index + match[0].length - 1; // Before final "
@@ -58,6 +95,7 @@ export function extractHyperscriptRegions(content: string): HyperscriptRegion[] 
   const singleQuoteRegex = /_='([^'\\]*(?:\\.[^'\\]*)*)'/g;
 
   while ((match = singleQuoteRegex.exec(fullContent)) !== null) {
+    if (!insideTag(fullContent, match.index)) continue;
     const code = match[1].replace(/\\'/g, "'"); // Unescape quotes
     const startOffset = match.index + 3; // After _='
     const endOffset = match.index + match[0].length - 1; // Before final '
@@ -235,4 +273,32 @@ export function findCharInLine(code: string, offset: number): number {
     if (code[i] === '\n') lastNewline = i;
   }
   return offset - lastNewline - 1;
+}
+
+/**
+ * The `id="…"` attributes of a page, each at the position of its value: where
+ * a `#name` in hyperscript is defined. A templated value (`id="{{ x }}"`) is
+ * not a name and is skipped.
+ */
+export function extractElementIds(
+  content: string
+): Array<{ name: string; line: number; character: number }> {
+  const ids: Array<{ name: string; line: number; character: number }> = [];
+  const idAttribute = /(?<![\w-])id\s*=\s*(["'])([^"'\s<>{}$%]+)\1/g;
+  for (const match of content.matchAll(idAttribute)) {
+    const valueOffset = (match.index ?? 0) + match[0].length - 1 - match[2]!.length;
+    ids.push({ name: match[2]!, ...offsetToPosition(content, valueOffset) });
+  }
+  return ids;
+}
+
+/** The class names a page's `class="…"` attributes use, each once. */
+export function extractElementClasses(content: string): string[] {
+  const classes = new Set<string>();
+  for (const match of content.matchAll(/(?<![\w-])class\s*=\s*(["'])([^"'<>]*)\1/g)) {
+    for (const name of match[2]!.split(/\s+/)) {
+      if (/^[A-Za-z_][\w-]*$/.test(name)) classes.add(name);
+    }
+  }
+  return [...classes];
 }

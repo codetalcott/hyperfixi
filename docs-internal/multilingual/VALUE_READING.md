@@ -102,7 +102,7 @@ there, and in the places already taken, leaves the program's reading unchanged �
 the input it leaves unconsumed (the English cannot show a dropped token) — so a rename of those
 places keeps the program's meaning, and the es `y` of `si a y b` (if a and b) or a tr accusative
 `i` after a variable `i` is left alone. The rename collides with nothing and is unused in the code;
-a digit splits a word in tr and qu, so it is checked, not assumed (tr `i` → `iValue`). The
+each candidate is checked in the language, not assumed (tr and qu split a word at a digit until `digit-names.test.ts`, and tr `i` was renamed `iValue`; it is `i1` now, as elsewhere). The
 language server warns at each place (`name-collision`), with one quick fix renaming all of them;
 MCP `validate_and_compile` warns (`NAME_COLLISION`; `validate_hyperscript` did until 7.0 removed it). The value matrix now derives its colliding
 names from `nameCollision`, which found one it lacked, fr `ou` (`or`): its six cells pass every

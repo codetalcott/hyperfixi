@@ -8,11 +8,7 @@
  */
 
 import type { ExpectedType, LanguagePattern } from '../types';
-import {
-  SET_DESTINATION_TYPES,
-  SET_SCOPE_TYPES,
-  SET_VALUE_TYPES,
-} from '../generators/role-types';
+import { SET_DESTINATION_TYPES, SET_SCOPE_TYPES, SET_VALUE_TYPES } from '../generators/role-types';
 import { handcrafted } from './handcrafted';
 
 /**

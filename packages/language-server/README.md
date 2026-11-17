@@ -26,7 +26,7 @@ Since 4.0 the LokaScript runtime is `@hyperfixi/engine`, which follows upstream 
 grammar: the modes share their command keywords, event modifiers and `as` conversions
 (`LOKASCRIPT_ONLY_COMMANDS` in `src/command-tiers.ts` is empty). What the engine has that
 upstream does not is two forms of existing keywords. In the `hyperscript` and `hyperscript-i18n`
-modes, when `@hyperfixi/engine` is installed, each is reported as an error (code
+modes each is reported as an error (code
 `lokascript-only`):
 
 | Feature            | Example          | Alternative for \_hyperscript |
@@ -41,16 +41,70 @@ the engine's parse error in every mode.
 
 ### Core LSP Features
 
-| Feature                 | Description                                                   | Status |
-| ----------------------- | ------------------------------------------------------------- | ------ |
-| **Diagnostics**         | Real-time error detection and warnings                        | ✅     |
-| **Completions**         | Context-aware keyword and selector suggestions                | ✅     |
-| **Hover**               | Documentation on hover for commands and keywords              | ✅     |
-| **Document Symbols**    | Outline view showing event handlers, behaviors, and functions | ✅     |
-| **Code Actions**        | Quick fixes for common issues                                 | ✅     |
-| **Go to Definition**    | Jump to behavior and function definitions                     | ✅     |
-| **Find References**     | Find all usages of a symbol                                   | ✅     |
-| **Document Formatting** | Format hyperscript code with consistent indentation           | ✅     |
+| Feature                 | Description                                                                           | Status  |
+| ----------------------- | ------------------------------------------------------------------------------------- | ------- |
+| **Diagnostics**         | Real-time error detection and warnings                                                | ✅      |
+| **Completions**         | The words the engine's grammar takes at the cursor, and the document's names          | Partial |
+| **Hover**               | Documentation on hover for commands and keywords                                      | ✅      |
+| **Document Symbols**    | Outline view showing event handlers, behaviors, and functions                         | ✅      |
+| **Code Actions**        | Quick fixes for common issues                                                         | ✅      |
+| **Go to Definition**    | Variables, parameters, behaviors, functions, `#id`, events                            | ✅      |
+| **Find References**     | The same names, each in its scope; behaviors, functions and `$x` across the workspace | ✅      |
+| **Rename**              | The same sites as Find References                                                     | ✅      |
+| **Workspace Symbols**   | Behavior and function definitions in the workspace                                    | ✅      |
+| **Document Formatting** | Format hyperscript code with consistent indentation                                   | ✅      |
+
+`src/ide-scorecard.test.ts` asks the built server what an author expects of identifiers and
+completion, one probe each, and all of them pass (2026-11-16). What follows is how each feature
+works and where it stops; "Partial" marks a feature whose limits an author will meet.
+
+- **Identifiers** resolve, each in its own scope, when the engine parses the script: a variable written without a sigil (`set count to 1`) and a loop
+  variable belong to their handler or `def`; a parameter to its `def` or behavior (an
+  `install Name(param: …)` site names it too); a `:x` to its element (one `_` attribute) or its
+  behavior; a `$x`, a behavior and a function to the file. A `#name` goes to the element with that
+  `id`, and a sent or triggered event to the handlers that listen for it. Find References and
+  Rename cover the same sites. Three limits:
+  - A script the engine does not parse (one being typed, or one not in English) is read by
+    patterns instead: behaviors, functions and sigil variables only.
+  - Across files, a behavior, a function and a `$x` resolve when exactly one file in the
+    workspace defines them. The workspace is its folders' `.html`, `.htm`, `.hs` and `._hs` files
+    (not `node_modules`, build output or hidden folders; at most 2,000 files of up to 1 MB, and
+    the server logs when it stops there). A file changed outside the editor is seen within two
+    seconds. Two files that each define the name are two programs (two pages with their own
+    `behavior Draggable`): nothing is linked between them, and Go to Definition from a third file
+    offers both. An `id`, an event and every scoped name stay within their file, and so does a
+    name nothing defines (`alert(…)`, a behavior from a bundle). Renaming a behavior edits every
+    file that names it, open or not: read the preview.
+  - `element x` and `:x` are listed as two variables.
+- **Completion**, when the language is English, asks the
+  engine's grammar what fits at the cursor: the word a command requires (`put x` → `into`), the
+  command's own words, then closers and commands, then the operators any expression takes. Where
+  the grammar reads a value it offers the handler's variables and parameters, `me` / `it` /
+  `result` / `event`, and functions; after `install`, behaviors; after `on`, DOM events and the
+  events the file sends; after `#` and `.`, the page's ids and classes; after `:` and `$`, the
+  variables written that way. Behaviors and functions come from the whole workspace. Limits:
+  - The grammar takes a lot (about 69 items per list on the measure below), so the list is
+    ordered, not short. Commands are ordered by how often the reference and hover examples in
+    `@hyperfixi/core` use them; without core, in the grammar's own order.
+  - Nothing is offered after a property dot (`event.`), and no command's arguments are described
+    (there is no signature help).
+  - In another language, completion is the keyword lists it was before:
+    event names after `on`, commands after an event.
+  - Measured on the command-shape sources (2026-11-16, Apple M4, Node 24.15.0; 5,416 cursor
+    positions before a grammar word): the list holds the word written next 0.995 of the time; once
+    its first letter is typed it is first 0.666 of the time and in the first five 0.963. The same
+    measure on 7.6.0's server: 0.280, 0.196, 0.280.
+- **The standard behaviors** (`Toggleable`, `Removable`, `Draggable` and the rest of
+  `@hyperfixi/behaviors`) are defined by that package, not by a file in the workspace. When it is
+  installed beside the server, completion offers them after `install`, `install Name(` offers
+  the behavior's parameters (the workspace's own behaviors' too), and hover on the name shows its
+  description, parameters and events. Go to Definition has nowhere to go for them.
+- `install Name` where no file in the workspace defines `Name` and no standard behavior has that
+  name gets an information notice (`unknown-behavior`), not a warning: a script the server does
+  not read may define it. It is only given when `@hyperfixi/behaviors` is installed: without the
+  standard names most such notices would be wrong (19 of 22 on this repository's examples). It is
+  recomputed when the installing document changes. Unknown functions are not reported: any
+  function on the page is callable.
 
 ### Multilingual Support
 
@@ -64,7 +118,7 @@ In `lokascript` and `hyperscript-i18n` modes the server parses each region with 
 
 The language server understands hyperscript embedded in HTML files:
 
-- `_="..."` attributes (double and single quotes)
+- `_="..."` attributes (double and single quotes), inside a tag: a page's prose that quotes one (`<code>_="…"</code>`) is text
 - `<script type="text/hyperscript">` tags
 - Correct position mapping for diagnostics and navigation
 
@@ -233,7 +287,8 @@ For users who prefer the `hyperscript` namespace:
 ## Dependencies
 
 - `@lokascript/semantic` and `@lokascript/framework` are **required** (regular dependencies): the semantic package registers the 24 languages at startup, and the framework renders the LSE bracket notation shown in hover. They used to be declared as optional peers while being imported statically, so a server installed without them crashed at startup instead of falling back.
-- `@hyperfixi/engine` is an **optional** peer: the engine that runs hyperscript. With it the server surfaces its parse errors (at the position the engine stopped) and gives the AST nodes their source positions for hover, symbols and completions.
+- `@hyperfixi/engine` is **required** (a regular dependency; an optional peer through 7.6.0): the engine that runs hyperscript. Its parse errors are the diagnostics (at the position the engine stopped), its tree gives hover, symbols and the symbol table their names and positions, and its grammar is what completion asks. As an optional peer it was not installed by `npm install @lokascript/language-server`, so a plain install had none of that.
+- `@hyperfixi/behaviors` is an **optional** peer, for its `/schemas` entry: the standard behaviors' names, parameters and descriptions (completion after `install`, hover, and the `unknown-behavior` notice, which is not given without it).
 - `@hyperfixi/core` is an **optional** peer, for two of its entries: `/ast-utils` (complexity diagnostics, hover, symbols and completions on the interchange) and `/lsp-metadata` (keyword and hover docs). The AST nodes come from `@lokascript/semantic`, which names each command's roles itself. Without either, diagnostics degrade to the pattern-based quote/bracket checks and hover uses built-in fallback docs. (Until 4.0 the parse errors and nodes came from `@hyperfixi/core`'s parser.)
 
 A bundler that wants an English-only, dependency-free server replaces the semantic, framework, engine and core imports with throwing or empty shims at bundle time; the server's capability probes are written for that case.
@@ -257,9 +312,13 @@ npm test
 npm test -- --coverage
 ```
 
+`npx tsx src/tools/completion-measure.ts` scores the built server's completion on the next word
+of real scripts (recall and precision against the engine's own parser, and the word's place in
+the list; the file's header says how). `--server <command>` scores another LSP server on the same requests.
+
 ## Architecture
 
-The language server entry point is `server.ts` (LSP wiring and the request handlers), with the testable logic in sibling modules — `extraction.ts` (HTML region extraction and position mapping), `simple-diagnostics.ts`, `command-tiers.ts` (the _hyperscript-compatibility allowlists), `symbol-table.ts` (definition/references/rename), `document-symbols.ts`, `completion-context.ts`, `formatting.ts` and `localized-descriptions.ts`. Together they:
+The language server entry point is `server.ts` (LSP wiring and the request handlers), with the testable logic in sibling modules — `extraction.ts` (HTML region extraction and position mapping), `simple-diagnostics.ts`, `command-tiers.ts` (the _hyperscript-compatibility allowlists), `symbol-table.ts` (definition/references/rename) with `tree-symbols.ts` (the names read from the engine's tree), `next-words.ts` (what the engine's grammar takes at a cursor), `workspace-index.ts` (the symbol tables of files that are not open), `document-symbols.ts`, `completion-context.ts`, `formatting.ts` and `localized-descriptions.ts`. Together they:
 
 1. **Extracts** hyperscript regions from HTML documents
 2. **Analyzes** code using semantic parsing (multilingual) or pattern-based fallback
@@ -312,6 +371,7 @@ npm test -- --run src/server.test.ts
 Test categories:
 
 - Unit tests against the shipped modules: HTML document detection, region extraction, position mapping, the symbol table (definition, references, rename), document symbols, completion context, formatting, diagnostics, and the compatibility allowlists
+- `ide-scorecard.test.ts` asks the built server what an author expects of identifiers and completion (definition, references and rename by scope, completion from the document), one probe each, with the probes it does not pass yet in a list that only shrinks
 - `lsp-integration.test.ts` spawns the built `dist/server.js` over stdio and speaks JSON-RPC: diagnostics publishing (including the non-English cases), completions, hover, symbols, definition, references, rename, formatting, code actions, configuration changes in both push and pull form, and the `lokascript/translateWithVerification` request
 
 `npm test` rebuilds this package first (`pretest`), and refreshes any stale sibling `dist/` the integration suite resolves through the workspace.

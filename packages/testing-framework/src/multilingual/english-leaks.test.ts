@@ -420,7 +420,12 @@ describe('M2 exit targets', () => {
     for (let i = 0; i < 20; i++) {
       const byLanguage = new Map<string, LeakFinding[] | null>();
       for (const [language, kinds] of Object.entries(perLanguage)) {
-        byLanguage.set(language, kinds === 'none' ? null : i < kinds.length ? [f(kinds[i])] : []);
+        if (kinds === 'none') {
+          byLanguage.set(language, null);
+          continue;
+        }
+        const kind = kinds[i];
+        byLanguage.set(language, kind === undefined ? [] : [f(kind)]);
       }
       out.set(`row${i}`, byLanguage);
     }

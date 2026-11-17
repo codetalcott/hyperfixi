@@ -17,14 +17,15 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { initMatrixEngines, type MatrixCell, type MatrixEngines } from './value-matrix';
 
-const cell = (id: string, source: string): MatrixCell => ({
+const cell = (id: string, expression: string, source: string): MatrixCell => ({
   id,
   position: 'put',
+  expression,
   group: 'operand',
   source,
 });
 
-const read = cell('reads', 'on click put n into #out');
+const read = cell('reads', 'n', 'on click put n into #out');
 
 describe('value matrix: runs are isolated', () => {
   let engines: MatrixEngines;
@@ -39,7 +40,7 @@ describe('value matrix: runs are isolated', () => {
     const before = await engines.runCell(read);
     // A cell whose oracle writes nothing runs no lane, so this one puts.
     const writes = await engines.runCell(
-      cell('writes', 'on click increment n then put n into #out')
+      cell('writes', 'n', 'on click increment n then put n into #out')
     );
     const after = await engines.runCell(read);
     expect(writes.lanes.eng).toBe('7');
@@ -50,7 +51,7 @@ describe('value matrix: runs are isolated', () => {
 
   it('a run that removes the body leaves the next its fixture', async () => {
     const before = await engines.runCell(read);
-    await engines.runCell(cell('removes', 'on click remove document.body'));
+    await engines.runCell(cell('removes', 'document.body', 'on click remove document.body'));
     const after = await engines.runCell(read);
     expect(before.lanes.eng).toBe('6');
     expect(after.lanes).toEqual(before.lanes);

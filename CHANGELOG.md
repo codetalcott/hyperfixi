@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`@lokascript/language-server` knows the standard behaviors.** `Toggleable`, `Removable`,
+  `ClickOutside` and the rest are defined by `@hyperfixi/behaviors`, not by a file in a
+  workspace, so the server knew nothing about the behaviors pages install most (30 of the 41
+  `install` sites in this repository's examples). With `@hyperfixi/behaviors` installed beside
+  the server (a new optional peer; its `/schemas` entry is read), completion offers them after
+  `install`, `install Name(` offers a behavior's parameters (a workspace behavior's too), and
+  hover on the name shows its description, parameters and events. `install Name` that neither
+  the workspace nor the standard set defines gets an information-level `unknown-behavior`
+  notice; without the package it is not given.
+
+- **`@lokascript/language-server` follows behaviors, functions and `$x` variables across the
+  workspace.** Go to Definition, Find References and Rename stopped at the open file, and a
+  behavior is usually defined in one file and installed from others. The server now indexes the
+  workspace folders' `.html`, `.htm`, `.hs` and `._hs` files (skipping `node_modules`, build
+  output and hidden folders; at most 2,000 files), so those three names resolve when exactly one
+  file defines them, completion offers the workspace's behaviors after `install`, and
+  `workspace/symbol` lists behavior and function definitions. Rename edits every file that names
+  the behavior, open or not. Two files that each define a name are treated as two programs and
+  not linked; a name nothing defines is not linked either.
+
+- **`@lokascript/language-server` completes from the engine's grammar and the document's names.**
+  Completion offered the same four keywords at most cursor positions. With `@hyperfixi/engine`
+  installed and English as the language, the server now asks the engine what fits at the cursor
+  (it reads the words the parser asks for at the end of the text, and keeps each one the engine
+  then parses there), so the list is the grammar's own: `put x` offers `into`, and offers no
+  command. It adds the names the document defines: variables and parameters in scope where a
+  value is read, behaviors after `install`, functions, the page's ids and classes after `#` and
+  `.`, sent events after `on`. The list is long (the grammar takes about 69 words at an average
+  cursor) and ordered: required words, names, the command's own words, then commands by how often
+  the reference examples use them. On the command-shape sources the word written next is in the
+  list 0.996 of the time (0.280 before), and first 0.66 of the time once its first letter is
+  typed (0.196 before). Other languages, and installs without the engine, keep the previous
+  keyword lists. `src/tools/completion-measure.ts` reports the order as well as recall and
+  precision.
+
+- **`@lokascript/language-server` resolves names by scope, from the engine's parse.** Go to
+  Definition, Find References and Rename now cover a variable written without a sigil
+  (`set count to 1`), a loop variable, a handler argument, a `def` or behavior parameter (and the
+  `install Name(param: …)` sites that name it), a `#name` (defined by the element with that `id`)
+  and a sent or triggered event (defined by its handlers). Each lives in its own scope: a local in
+  its handler or `def`, a parameter in its `def` or behavior. This needs `@hyperfixi/engine`
+  installed (it is an optional peer) and a script the engine parses; a script being typed, or one
+  not in English, is read by the previous patterns. Nothing crosses files yet. The package's
+  scorecard (`src/ide-scorecard.test.ts`) passes 12 of its 20 probes, up from 7.
+
 ### Deprecated
 
 - **102 root exports of `@lokascript/semantic` with no known consumer are marked `@deprecated`**
@@ -27,6 +74,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Korean writes one object particle after a name, and reads either.** After a code word the
+  render kept whichever form a command's schema listed, so one script had `x1를 10에 설정` and
+  `x1을 로그`. The particle now takes its form from the word before it: a digit by its reading
+  (`x1을`, `item2를`), a Latin word by a spelling rule of thumb (`total을`, `count를`, `#out을`),
+  looking past closing punctuation (`"안녕"을`). The rule has had no native review; a word it
+  misjudges gets the other form, which reads back the same. The reader refused the grammatical
+  `total을 0에 설정`: `set`, `default`, `get` and `bind`, and the hand-written loop, `pick` and
+  positional `put` heads, took `를` only, and now take both.
+
+- **Turkish and Quechua could not read a variable name with a digit in it.** Their tokenizers let
+  a digit continue a word only after an `_`, so `x1` was read as `x` and `1` (`x_1` was one word).
+  A translation into either language covered for it by writing the name in parentheses
+  (`(x1) i 10 e ayarla`), which read back as `set (x1) to 10`; but the same script written by
+  hand, `x1 i 10 e ayarla`, was refused with "Could not parse input". A name with a digit is now
+  one word in both languages, as in the other 22: it is written plainly, reads back as written,
+  and reads when written by hand. In Quechua a keyword directly followed by a digit (`it2`) is a
+  name too. Two command-shape lanes that were refused for this (`put select2() into me`, qu and
+  tr) now pass. The name-collision rename for Turkish is `i1` again where it was `iValue`.
+
+- **`@lokascript/language-server` read hyperscript quoted in a page's prose as a script.** Any
+  `_="…"` in an HTML file was extracted, so a page documenting hyperscript
+  (`<code>_="on click …"</code>`, a `<pre>` with `&lt;` in it) got parse errors for its own text:
+  13 across this repository's examples, seen in VS Code. A `_=` is now a script only inside an
+  opening tag.
+
+- **`@lokascript/language-server` renamed every `:x` in a file when asked to rename one.** A `:x`
+  is element-scoped on the engine: each `_` attribute has its own, and so does each behavior. The
+  server's symbol table keyed variables by name alone, so Rename (and Find References) on one
+  button's `:x` also rewrote another button's and a behavior's. A `:x` is now one symbol per `_`
+  attribute or per behavior; a `$x` is still one symbol across the file. A behavior is found by
+  its closing `end` at the keyword's indentation, so two behaviors written on one line each are
+  told apart only by where the next one starts.
+
 - **`@lokascript/semantic` read a bare English `wait X` as an event wait when X was spelled like
   an event.** `set input to 500 then wait input` came back as `wait for input`: a half-second
   wait became a wait for the `input` event. The engine reads the X of `wait X` as a time
@@ -41,6 +121,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   after the event (measured in es, fr, de, ar, zh, he, sw). The five that write it before the
   head (ja, ko, tr, hi, qu) still refuse these: their readers do not take a modifier word and a
   fronted source together.
+- **`@lokascript/intent` read a compact flag as a flag named "true".** The protocol's short form
+  `"primary-key": { "type": "flag", "value": true }` names the flag by its role key;
+  `fromProtocolJSON` named it after the boolean instead, and `"value": false` gave a flag named
+  "false". It now takes the role key.
 - **`@hyperfixi/mcp-server` ran shell commands and read files for a toolset that was off.**
   `LOKASCRIPT_MCP_TOOLSETS` decided what `tools/list` showed and nothing else, so `grail_run`
   ran the commands of a `grail.yaml` in the server's directory, and `scan_inventory` read any
@@ -101,6 +185,16 @@ patient:.active]`, not `… destination:me`), its reader reads a bare `{…}` as
   this release.
 
 ### Changed
+
+- **`@lokascript/language-server` installs `@hyperfixi/engine`** (a regular dependency; it was an
+  optional peer). Parse errors, scoped identifiers and completion all come from the engine, and
+  `npm install @lokascript/language-server` did not install an optional peer, so a plain install
+  had none of them. **What changes for an existing install without the engine**, and for
+  `@hyperscript-tools/language-server`, which wraps this server: diagnostics are now the engine's
+  parse errors (they were the quote and bracket checks), and in the `hyperscript` and
+  `hyperscript-i18n` modes the two forms the engine adds to upstream's grammar (`new X()`,
+  `toggle <element>`) are reported as errors. `@hyperfixi/core` and `@hyperfixi/behaviors` stay
+  optional peers.
 
 - **Published tarballs no longer carry `src`.** Thirteen packages shipped their TypeScript
   sources beside `dist`, whose sourcemaps already embed the same text (`sourcesContent`):
