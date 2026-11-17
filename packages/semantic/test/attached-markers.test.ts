@@ -90,6 +90,12 @@ describe('a marker written onto its word', () => {
       ['count을 0에 설정', 'set count to 0'],
       ['arr[0]을 "yes"에 기본값', 'default arr[0] to "yes"'],
       ['JSONString을 얻다', 'get JSONString'],
+      // The handcrafted loop heads list 를 and read both.
+      [
+        '클릭 할 때 까지 이벤트 pointerup을 반복 문서 에서 1s 대기 끝',
+        'on click repeat until event pointerup from document wait 1s end',
+      ],
+      ['3번을 반복 x를 로그 끝', 'repeat 3 times log x end'],
     ]) {
       expect(translate(korean, 'ko', 'en'), korean).toBe(english);
     }
