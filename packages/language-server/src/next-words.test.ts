@@ -68,8 +68,98 @@ describe('the words the grammar takes', () => {
     expect(next('on click put x ').lastWord).toBeNull();
   });
 
-  it('answers nothing after an error the cursor is past', () => {
-    expect(completer.nextWords('on click set x 5 then ')).toBeNull();
+  it('past an error the cursor is behind, says so and offers no word', () => {
+    const past = next('on click set x 5 then ');
+    expect(past.pastError).toBe(true);
+    expect(past.words).toEqual([]);
+    // An unfinished command AT the cursor is not past an error.
+    expect(next('on click put ').pastError).toBe(false);
+    expect(next('on click put ').words.length).toBeGreaterThan(0);
+  });
+});
+
+describe('where a command comes next', () => {
+  const before = (words: string[], a: string, b: string) => {
+    expect(words, a).toContain(a);
+    expect(words, b).toContain(b);
+    expect(words.indexOf(a), `${a} before ${b}`).toBeLessThan(words.indexOf(b));
+  };
+
+  it("in a feature's head: commands, then the head's own words, then `end`", () => {
+    for (const head of ['on click ', 'behavior B\n  on click ']) {
+      const { words } = next(head);
+      before(words, 'put', 'from');
+      before(words, 'toggle', 'debounced');
+      before(words, 'from', 'end');
+      expect(words.indexOf('end')).toBeGreaterThan(words.indexOf('halt'));
+    }
+    const def = next('def f() ').words;
+    before(def, 'put', 'end');
+  });
+
+  it('after `then`, `else` and `otherwise`: commands, and what closes last', () => {
+    for (const text of [
+      'on click put 1 into x then ',
+      'on click if x then ',
+      'on click if x put 1 into y else ',
+      'on click if x put 1 into y otherwise ',
+    ]) {
+      const { words } = next(text);
+      expect(words[0], text).not.toBe('end');
+      before(words, 'put', 'end');
+      before(words, 'halt', 'end');
+    }
+  });
+
+  it('after a finished command `end` and `then` stay near the front', () => {
+    const { words } = next('on click put 1 into x ');
+    before(words, 'end', 'halt');
+    before(words, 'then', 'halt');
+    before(words, 'end', 'is');
+  });
+
+  it('offers no `catch` or `finally` before the first command, and both after one', () => {
+    for (const head of ['on click ', 'def f() ', 'on click queue all ']) {
+      const { words } = next(head);
+      expect(words, head).toContain('put');
+      expect(words, head).not.toContain('catch');
+      expect(words, head).not.toContain('finally');
+    }
+    for (const text of ['on click put 1 into x ', 'on click throwBar() ']) {
+      expect(next(text).words, text).toEqual(expect.arrayContaining(['catch', 'finally']));
+    }
+  });
+});
+
+describe('an empty script', () => {
+  it('opens with a feature, before any command', () => {
+    for (const text of ['', '  \n', '-- handlers\n']) {
+      const result = next(text);
+      expect(result.atStart, JSON.stringify(text)).toBe(true);
+      expect(result.pastError).toBe(false);
+      const { words } = result;
+      expect(['on', 'def', 'init', 'behavior']).toContain(words[0]);
+      for (const feature of ['on', 'def', 'init', 'behavior']) {
+        expect(words.indexOf(feature), feature).toBeLessThan(words.indexOf('toggle'));
+      }
+    }
+    expect(next('on click ').atStart).toBe(false);
+  });
+});
+
+describe("a command's own words and the words any expression starts with", () => {
+  it('counts the own words that come before a name', () => {
+    // Without examples every own word keeps its place (none is "never used").
+    const plain = createCompleter(asEngine);
+    const repeat = plain.nextWords('on click repeat ')!;
+    const specific = repeat.words.slice(0, repeat.specificCount);
+    expect(specific).toEqual(expect.arrayContaining(['while', 'until', 'forever']));
+    expect(specific).not.toContain('the');
+    expect(specific).not.toContain('first');
+    // `put` has no word of its own before its value: only expression starts.
+    const put = plain.nextWords('on click put ')!;
+    expect(put.words.slice(0, put.specificCount)).toEqual([]);
+    expect(put.words.slice(0, put.ownCount)).toEqual(expect.arrayContaining(['the', 'first']));
   });
 });
 

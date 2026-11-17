@@ -37,12 +37,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   command. It adds the names the document defines: variables and parameters in scope where a
   value is read, behaviors after `install`, functions, the page's ids and classes after `#` and
   `.`, sent events after `on`. The list is long (the grammar takes about 69 words at an average
-  cursor) and ordered: required words, names, the command's own words, then commands by how often
-  the reference examples use them. On the command-shape sources the word written next is in the
-  list 0.996 of the time (0.280 before), and first 0.66 of the time once its first letter is
-  typed (0.196 before). Other languages, and installs without the engine, keep the previous
-  keyword lists. `src/tools/completion-measure.ts` reports the order as well as recall and
-  precision.
+  cursor) and ordered: required words, the command's own words, names (the script's variables,
+  `me` and `it` first), then commands by how often the reference examples use them. Where a
+  command comes next (a handler's head, after `then` or `else`) commands come first and `end`
+  last; an empty script opens with the features; past a parse error no word is offered. On the
+  command-shape sources the word written next is in the list 0.994 of the time (0.280 before),
+  first 0.73 of the time once its first letter is typed (0.196 before), and in the first ten
+  with nothing typed 0.77 of the time. Other languages, and installs without the
+  engine, keep the previous keyword lists. `src/tools/completion-measure.ts` reports the order as
+  well as recall and precision.
 
 - **`@lokascript/language-server` resolves names by scope, from the engine's parse.** Go to
   Definition, Find References and Rename now cover a variable written without a sigil

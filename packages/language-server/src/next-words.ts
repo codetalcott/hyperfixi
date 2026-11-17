@@ -18,6 +18,9 @@
  * the order is most of the value: a word the parser REQUIRES, then the words
  * of the command being written, then closers and commands by how often the
  * reference examples use them, then the operators any expression takes.
+ * Where a command is what comes next (a feature's head, after `then`, `else`
+ * or `otherwise`) the commands come first and what closes comes last; an
+ * empty script opens with a feature. Past a parse error nothing is offered.
  *
  * Measured by `src/tools/completion-measure.ts`. The spike this came from:
  * hyperfixi PR #1682's plan, Phase 3.
@@ -40,6 +43,16 @@ export interface NextWords {
   takesName: boolean;
   /** The keyword just before the cursor, when nothing but space follows it. */
   lastWord: string | null;
+  /**
+   * How many of `words`, from the front, come before a name where one is read:
+   * the required words and the command's own that are not how any expression
+   * starts (`forever` after `repeat`, not `the` or `first`).
+   */
+  specificCount: number;
+  /** Nothing is written yet (or only comments): a feature comes first, not a value. */
+  atStart: boolean;
+  /** The parser stopped before the cursor: nothing is known to fit, and `words` is empty. */
+  pastError: boolean;
 }
 
 export interface Completer {
@@ -78,6 +91,8 @@ interface Reading {
 
 const WORD = /^[A-Za-z]/;
 const CLOSERS = ['then', 'end', 'else', 'otherwise'];
+/** After these a command was promised: one comes first, and what closes comes last. */
+const PROMISES_COMMAND = new Set(['then', 'else', 'otherwise']);
 /** A name no script uses, to ask whether the grammar reads a name here. */
 const PLACEHOLDER = 'zqxjName';
 
@@ -148,6 +163,23 @@ export function createCompleter(engine: CompletionEngine, examples: string[] = [
   // The words tried after ANY finished expression: operators and units, which
   // are no particular command's. Asked of the parser, not listed.
   const generic = new Set(read('on click log x ', true).tried.filter(w => !structural.has(w)));
+  // The words tried where ANY expression starts (`the`, `first`, `not`): no command's own.
+  const starters = new Set(read('on click log ', true).tried);
+
+  /**
+   * Is the end of a parsed `tree` in a feature's head, before any command of
+   * its body (`on click |`, `def f() |`, a behavior's last handler)?
+   */
+  function inHead(tree: unknown): boolean {
+    type Feature = { body?: unknown[]; features?: Feature[] };
+    let features = (tree as { program?: { features?: Feature[] } } | null)?.program?.features;
+    let last: Feature | undefined;
+    while (features?.length) {
+      last = features[features.length - 1];
+      features = last?.features;
+    }
+    return !!last && Array.isArray(last.body) && last.body.length === 0;
+  }
 
   const frequency = new Map<string, number>();
   for (const example of examples) {
@@ -181,8 +213,20 @@ export function createCompleter(engine: CompletionEngine, examples: string[] = [
       if (!tables) return null;
       const text = whole.slice(lastFeatureStart(whole));
       const first = read(text, true);
-      // The parser stopped before the cursor: what follows an error is unknown.
-      if (!first.ok && (first.stoppedAt ?? -1) < text.trimEnd().length) return null;
+      // The parser stopped before the cursor: what follows an error is unknown,
+      // and nothing is offered (a keyword list would offer what the grammar rejects).
+      if (!first.ok && (first.stoppedAt ?? -1) < text.trimEnd().length) {
+        return {
+          words: [],
+          requiredCount: 0,
+          ownCount: 0,
+          specificCount: 0,
+          takesName: false,
+          lastWord: null,
+          atStart: false,
+          pastError: true,
+        };
+      }
 
       const ok = (word: string) => accepts(text, word);
       const required = first.expected.filter(w => WORD.test(w) && ok(w));
@@ -197,10 +241,7 @@ export function createCompleter(engine: CompletionEngine, examples: string[] = [
       const known = frequency.size > 0;
       const own = known ? ownAll.filter(w => frequency.has(w)) : ownAll;
       const rare = known ? ownAll.filter(w => !frequency.has(w)) : [];
-      const next = [...CLOSERS, ...commands, ...features].filter(ok).sort(byFrequency);
       const operators = tried.filter(w => generic.has(w) && ok(w)).sort(byFrequency);
-      const front = [...new Set([...required, ...own])];
-      const words = [...new Set([...front, ...next, ...rare, ...operators])];
 
       const named = read(text + PLACEHOLDER);
       const takesName = named.ok || (named.stoppedAt ?? -1) >= text.length + PLACEHOLDER.length;
@@ -211,12 +252,59 @@ export function createCompleter(engine: CompletionEngine, examples: string[] = [
         const word = first.matched.get(lastStart)!;
         if (text.slice(lastStart + word.length).trim() === '') lastWord = word;
       }
+
+      const head = first.ok && inHead(first.tree);
+      const following = [...CLOSERS, ...commands, ...features].filter(ok).sort(byFrequency);
+
+      // The command's own words that are not how any expression starts come
+      // before a name; `the` and `first` after it.
+      const specific = own.filter(w => !starters.has(w));
+      const plain = own.filter(w => starters.has(w));
+      const requiredSet = new Set(required);
+
+      const program = (first.tree as { program?: { features?: unknown[] } } | null)?.program;
+      // The engine does not read an empty script: it stops at the end with no word matched.
+      const atStart =
+        first.matched.size === 0 &&
+        (first.ok
+          ? (program?.features?.length ?? 1) === 0
+          : text.replace(/--.*$/gm, '').trim() === '');
+
+      let words: string[];
+      let ownCount: number;
+      let specificCount = new Set([...required, ...specific]).size;
+      if (atStart) {
+        // An empty script: a feature first, then the commands a script may open with.
+        const opening = [
+          ...following.filter(w => features.includes(w)),
+          ...following.filter(w => !features.includes(w)),
+        ];
+        words = [...new Set([...required, ...opening, ...own, ...rare, ...operators])];
+        ownCount = specificCount = requiredSet.size;
+      } else if (head || PROMISES_COMMAND.has(lastWord ?? '')) {
+        // A command comes next: before the head's own optional words (`from`,
+        // `debounced`), and what closes (`end`: an empty handler) last.
+        const closing = following.filter(w => CLOSERS.includes(w));
+        const opening = following.filter(w => !CLOSERS.includes(w));
+        words = [...new Set([...required, ...opening, ...own, ...rare, ...closing, ...operators])];
+        ownCount = specificCount = requiredSet.size;
+      } else {
+        const front = [...new Set([...required, ...specific, ...plain])];
+        words = [...new Set([...front, ...following, ...rare, ...operators])];
+        ownCount = front.length;
+      }
+      // Nothing to catch or to finish before a feature's first command: the
+      // grammar reads `on click catch e`, and nobody means it.
+      if (head) words = words.filter(w => w !== 'catch' && w !== 'finally');
       return {
         words,
-        requiredCount: new Set(required).size,
-        ownCount: front.length,
+        requiredCount: requiredSet.size,
+        ownCount,
+        specificCount,
         takesName,
         lastWord,
+        atStart,
+        pastError: false,
       };
     },
 

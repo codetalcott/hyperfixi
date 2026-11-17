@@ -85,15 +85,24 @@ works and where it stops; "Partial" marks a feature whose limits an author will 
   variables written that way. Behaviors and functions come from the whole workspace. Limits:
   - The grammar takes a lot (about 69 items per list on the measure below), so the list is
     ordered, not short. Commands are ordered by how often the reference and hover examples in
-    `@hyperfixi/core` use them; without core, in the grammar's own order.
+    `@hyperfixi/core` use them; without core, in the grammar's own order. Where a command comes
+    next (after `on click `, `then`, `else`) the commands come first and `end` last; an empty
+    script opens with the features (`on`, `def`, `init`); where a value is read, the command's
+    own words (`while` after `repeat`), then the script's variables, `me` and `it`, then `the`
+    and the other ways an expression starts.
+  - Past a parse error (text the engine stops in before the cursor) no word is offered: what
+    fits there is unknown. An unfinished command at the cursor is completed as usual.
   - Nothing is offered after a property dot (`event.`), and no command's arguments are described
     (there is no signature help).
   - In another language, completion is the keyword lists it was before:
     event names after `on`, commands after an event.
-  - Measured on the command-shape sources (2026-11-16, Apple M4, Node 24.15.0; 5,416 cursor
-    positions before a grammar word): the list holds the word written next 0.995 of the time; once
-    its first letter is typed it is first 0.666 of the time and in the first five 0.963. The same
-    measure on 7.6.0's server: 0.280, 0.196, 0.280.
+  - Measured on the command-shape sources (2026-11-17, Apple M4, Node 24.15.0; 5,416 cursor
+    positions before a grammar word): the list holds the word written next 0.994 of the time; once
+    its first letter is typed it is first 0.729 of the time and in the first five 0.973; with
+    nothing typed it is in the first ten 0.774 of the time. The first three on 7.6.0's server:
+    0.280, 0.196, 0.280. The order rules were chosen on these sources; on scripts they
+    were not chosen on (559 from upstream `_hyperscript`'s documentation site, 2,997 positions,
+    not in this repository) the four numbers are 0.958, 0.672, 0.941 and 0.681.
 - **The standard behaviors** (`Toggleable`, `Removable`, `Draggable` and the rest of
   `@hyperfixi/behaviors`) are defined by that package, not by a file in the workspace. When it is
   installed beside the server, completion offers them after `install`, `install Name(` offers
@@ -316,8 +325,10 @@ npm test -- --coverage
 of real scripts (recall and precision against the engine's own parser, and the word's place in
 the list; the file's header says how). `--server <command>` scores another LSP server on the same
 requests, `--corpus <file>` reads other scripts (`{ "cases": [{ "source": … }] }`), and
-`--detail <file>` writes every offered word the engine rejected and each request's time. The
-summary reports a request's p50, p95 and longest time.
+`--detail <file>` writes every offered word the engine rejected, each request's time, and where
+the order lost: which word stood ahead of the written one among those with its first letter, and
+what led the list where the written word was past tenth. The summary reports a request's p50,
+p95 and longest time.
 
 ## Architecture
 

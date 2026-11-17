@@ -31,7 +31,9 @@
  * with the same requests; without it, this package's built `dist/server.js`.
  * `--corpus` reads other sources: a JSON file `{ "name": …, "cases": [{ "source": … }] }`.
  * `--detail` writes every offered word the engine rejected (with the text
- * before it) and every request's time to a JSON file, for triage.
+ * before it), every request's time, and where the order lost (the word that
+ * stood ahead of the written one; what led a list the written word was past
+ * tenth in) to a JSON file, for triage.
  */
 
 import { readFileSync, writeFileSync } from 'fs';
@@ -143,6 +145,16 @@ async function main(): Promise<void> {
   const missed = new Map<string, number>();
   const asked = new Map<string, number>();
   const rejected: Array<{ before: string; word: string }> = [];
+  // With --detail: which word stood first among those with the written word's
+  // first letter, and what led the list where the written word was past tenth.
+  const beaten = new Map<string, number>();
+  const late = new Map<string, number>();
+  const count = (map: Map<string, number>, key: string) => map.set(key, (map.get(key) ?? 0) + 1);
+  const top = (map: Map<string, number>) =>
+    [...map.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 60)
+      .map(([key, n]) => `${n} ${key}`);
   const times: number[] = [];
   const started = Date.now();
 
@@ -183,6 +195,15 @@ async function main(): Promise<void> {
       if (typedPlace === 0) placed.first++;
       if (typedPlace >= 0 && typedPlace < 5) placed.five++;
       if (place >= 0 && place < 10) placed.tenUntyped++;
+      if (detailFile) {
+        const sameLetter = shown.filter(w => w[0] === word.value[0]);
+        if (typedPlace > 0) count(beaten, `${sameLetter[0]} before ${word.value}`);
+        if (place >= 10) {
+          const previous = before.trimEnd().split(/\s+/).pop() ?? '';
+          const after = /^[A-Za-z]+$/.test(previous) ? previous : '(a value)';
+          count(late, `${word.value} after ${after}: behind ${shown.slice(0, 3).join(' ')}`);
+        }
+      }
       const words = new Set(items.map(firstWord).filter((w): w is string => w !== null));
 
       cuts++;
@@ -201,7 +222,12 @@ async function main(): Promise<void> {
 
   const round = (n: number) => Math.round(n * 1000) / 1000;
   const sorted = [...times].sort((a, b) => a - b);
-  if (detailFile) writeFileSync(detailFile, JSON.stringify({ rejected, times }));
+  if (detailFile) {
+    writeFileSync(
+      detailFile,
+      JSON.stringify({ rejected, times, beaten: top(beaten), late: top(late) })
+    );
+  }
   const summary = {
     server: serverCommand ? serverCommand.join(' ') : '@lokascript/language-server dist/server.js',
     corpus: corpusName,
