@@ -53,3 +53,30 @@ describe('ProtocolNodeJSON', () => {
     expect(wrong).toHaveLength(6);
   });
 });
+
+// protocol/docs/llm-guide.md, "Value shorthand forms": the role key names a
+// compact flag. It was read as a flag named "true".
+describe('a compact flag', () => {
+  const column: ProtocolNodeJSON = {
+    action: 'column',
+    roles: {
+      'primary-key': { type: 'flag', value: true },
+      nullable: { type: 'flag', value: false },
+      named: { type: 'flag', name: 'unique', enabled: true },
+      older: { type: 'flag', value: 'indexed' },
+    },
+  };
+
+  it('takes its name from the role key', () => {
+    expect(validateProtocolJSON(column)).toEqual([]);
+    const roles = fromProtocolJSON(column).roles;
+    expect(roles.get('primary-key')).toEqual({ type: 'flag', name: 'primary-key', enabled: true });
+    expect(roles.get('nullable')).toEqual({ type: 'flag', name: 'nullable', enabled: false });
+  });
+
+  it('keeps a name it carries', () => {
+    const roles = fromProtocolJSON(column).roles;
+    expect(roles.get('named')).toEqual({ type: 'flag', name: 'unique', enabled: true });
+    expect(roles.get('older')).toEqual({ type: 'flag', name: 'indexed', enabled: true });
+  });
+});

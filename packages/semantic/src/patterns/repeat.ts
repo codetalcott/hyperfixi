@@ -30,6 +30,7 @@
 
 import type { LanguagePattern, PatternToken } from '../types';
 import { NATIVE_COUNT_WORDS } from './count-words';
+import { objectMarkerToken } from './object-marker';
 import {
   COUNT_TYPES,
   ELEMENT_TARGET_TYPES,
@@ -130,7 +131,7 @@ function repeatTimesHeadSOV(
       tokens: [
         { type: 'role', role: 'quantity', expectedTypes: COUNT_TYPES },
         countWordToken(language, countWord),
-        { type: 'literal', value: marker },
+        objectMarkerToken(marker),
         // The render writes the language's verb (it wrote English `repeat`
         // until PR 131); `repeat` matches the verb's normalized form, so every
         // conjugation the profile lists reads, and English `repeat` too.
@@ -583,7 +584,7 @@ function repeatUntilHeadSOV(
         { type: 'literal', value: spec.untilWord },
         { type: 'literal', value: spec.eventWord },
         { type: 'role', role: 'event', expectedTypes: EVENT_NAME_TYPES },
-        { type: 'literal', value: spec.objMarker },
+        objectMarkerToken(spec.objMarker),
         repeatVerb(language),
         {
           type: 'group',
@@ -630,7 +631,7 @@ function repeatUntilHeadSOVVerbFinal(
         { type: 'literal', value: spec.untilWord },
         { type: 'literal', value: spec.eventWord },
         { type: 'role', role: 'event', expectedTypes: EVENT_NAME_TYPES },
-        { type: 'literal', value: spec.objMarker },
+        objectMarkerToken(spec.objMarker),
         {
           type: 'role',
           role: 'source',
@@ -719,7 +720,7 @@ function sovForBindingHead(
         {
           type: 'group',
           optional: true,
-          tokens: [{ type: 'literal', value: spec.objMarker }],
+          tokens: [objectMarkerToken(spec.objMarker)],
         },
         { type: 'literal', value: spec.forVerb },
       ],

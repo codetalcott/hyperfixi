@@ -6,6 +6,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { CoreTestRunner, ParallelTestRunner, createTestRunner, measurePerformance } from './runner';
 import type { TestSuite, TestCase, TestConfig, TestContext } from './types';
+import { nth } from './test-support';
 
 // Mock jsdom
 vi.mock('jsdom', () => ({
@@ -118,9 +119,9 @@ describe('CoreTestRunner', () => {
       const results = await runner.run([suite], config);
 
       expect(results).toHaveLength(2);
-      expect(results[0].suite).toBe('Test Suite');
-      expect(results[0].test).toBe('test 1');
-      expect(results[1].test).toBe('test 2');
+      expect(nth(results, 0).suite).toBe('Test Suite');
+      expect(nth(results, 0).test).toBe('test 1');
+      expect(nth(results, 1).test).toBe('test 2');
     });
 
     it('should handle empty suite list', async () => {
@@ -173,7 +174,7 @@ describe('CoreTestRunner', () => {
       const results = await runner.runSuite(suite, config);
 
       expect(results).toHaveLength(1);
-      expect(results[0].status).toBe('skipped');
+      expect(nth(results, 0).status).toBe('skipped');
     });
 
     it('should run nested suites', async () => {
@@ -208,8 +209,8 @@ describe('CoreTestRunner', () => {
       const results = await runner.runSuite(parentSuite, config);
 
       expect(results).toHaveLength(2);
-      expect(results[0].suite).toBe('Parent Suite');
-      expect(results[1].suite).toBe('Nested Suite');
+      expect(nth(results, 0).suite).toBe('Parent Suite');
+      expect(nth(results, 1).suite).toBe('Nested Suite');
     });
 
     it('should run setup and teardown functions', async () => {
@@ -279,8 +280,8 @@ describe('CoreTestRunner', () => {
       const results = await runner.runSuite(suite, config);
 
       expect(results).toHaveLength(1);
-      expect(results[0].status).toBe('failed');
-      expect(results[0].error?.message).toBe('Setup failed');
+      expect(nth(results, 0).status).toBe('failed');
+      expect(nth(results, 0).error?.message).toBe('Setup failed');
     });
   });
 
@@ -729,7 +730,7 @@ describe('Environment Setup', () => {
     const results = await runner.run([suite], config);
 
     expect(results).toHaveLength(1);
-    expect(results[0].status).toBe('passed');
+    expect(nth(results, 0).status).toBe('passed');
   });
 
   it('should setup browser environment with playwright', async () => {

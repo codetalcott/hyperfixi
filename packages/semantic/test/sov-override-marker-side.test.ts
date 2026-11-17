@@ -53,7 +53,7 @@ describe('a verb-final language puts the override marker after its value', () =>
   it.each([
     ['ja', 'opacityを 0に 300ms 遷移'],
     ['bn', 'opacityকে 0তে 300ms সংক্রমণ'],
-    ['ko', 'opacity을 0에 300ms 트랜지션'],
+    ['ko', 'opacity를 0에 300ms 트랜지션'],
     ['qu', 'opacity ta 0 man 300ms pasay'],
   ] as const)('%s renders `%s`', (language, expected) => {
     // Pre-fix: `opacity を に 0 300ms 遷移` — `を に` adjacent, the goal marker

@@ -341,7 +341,7 @@ export function fromProtocolJSON(json: ProtocolNodeJSON): SemanticNode {
     );
   }
   const roles = new Map<SemanticRole, SemanticValue>(
-    Object.entries(json.roles ?? {}).map(([role, val]) => [role, valueFromProtocol(val)])
+    Object.entries(json.roles ?? {}).map(([role, val]) => [role, valueFromProtocol(val, role)])
   );
 
   const annotations = json.annotations?.map(a =>
@@ -463,8 +463,12 @@ function applyV12Metadata(
   };
 }
 
-function valueFromProtocol(value: ProtocolValueJSON): SemanticValue {
-  const read = bareValueFromProtocol(value);
+/**
+ * @param role the key the value sits under: the name of a compact flag
+ *   (`"primary-key": { "type": "flag", "value": true }`), which carries none.
+ */
+function valueFromProtocol(value: ProtocolValueJSON, role?: string): SemanticValue {
+  const read = bareValueFromProtocol(value, role);
   const marks: { implicit?: true; quoted?: true; interpolates?: true } = {};
   if (value.implicit === true) marks.implicit = true;
   if (read.type === 'literal') {
@@ -474,7 +478,7 @@ function valueFromProtocol(value: ProtocolValueJSON): SemanticValue {
   return Object.keys(marks).length > 0 ? ({ ...read, ...marks } as SemanticValue) : read;
 }
 
-function bareValueFromProtocol(value: ProtocolValueJSON): SemanticValue {
+function bareValueFromProtocol(value: ProtocolValueJSON, role?: string): SemanticValue {
   switch (value.type) {
     case 'selector':
       return createSelector(String(value.value ?? ''), value.selectorKind);
@@ -489,7 +493,9 @@ function bareValueFromProtocol(value: ProtocolValueJSON): SemanticValue {
       return createExpression(value.raw ?? String(value.value ?? ''));
     case 'flag':
       return createFlag(
-        value.name ?? String(value.value ?? ''),
+        // A boolean `value` is whether the flag is on, and was read as its
+        // name too: a flag called "true".
+        value.name ?? (typeof value.value === 'boolean' ? (role ?? '') : String(value.value ?? '')),
         value.enabled ?? (typeof value.value === 'boolean' ? value.value : true)
       );
     case 'property-path':
