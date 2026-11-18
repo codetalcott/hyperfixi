@@ -153,8 +153,10 @@ describe('get_diagnostics', () => {
   it('suggests no typo for a word the engine did not stop on', async () => {
     // `and` is not a misspelled `add`: the engine stops on `"Loading"`.
     const ds = await diagnose('on click add .busy to me and put "Loading" into #output');
-    expect(ds.map(d => d.code)).toEqual(['parse-error']);
+    // No possible-typo; the rewrite is the multilingual reader's (`and` → `then`).
+    expect(ds.map(d => d.code)).toEqual(['parse-error', 'engine-reads-rewrite']);
     expect(ds[0]).toMatchObject({ source: 'engine', range: { start: { line: 0, character: 33 } } });
+    expect(ds[1].data.suggestion).toBe('on click add .busy to me then put "Loading" into #output');
   });
 
   it("gives no error on English the engine reads (a possessive 's is not an open quote)", async () => {
@@ -241,6 +243,51 @@ describe('get_diagnostics', () => {
     // list lacks `halt` and `close`, and called them misspelled `wait` and `else`.
     expect(await typo('for click halt')).toEqual([]);
     expect(await typo('for click close #d')).toEqual([]);
+  });
+
+  // 2026-11-18: the multilingual reader's English, in upstream's spelling, mends idioms the
+  // engine does not read. On the agent bench it rewrote 5 of the 16 wrong phrasings the engine
+  // rejects, and all 5 then behaved as the task asks.
+  const rewrite = async (code: string) =>
+    (await diagnose(code))
+      .filter(d => d.code === 'engine-reads-rewrite')
+      .map(d => d.data.suggestion);
+
+  it('offers a rewrite the engine reads, from the multilingual reader', async () => {
+    expect(await rewrite('on click put "Saved" in #output')).toEqual([
+      'on click put "Saved" into #output',
+    ]);
+    expect(await rewrite('on click toggle class .active on me')).toEqual([
+      'on click toggle .active on me',
+    ]);
+    expect(await rewrite('on click add .busy to me and put "Loading" into #output')).toEqual([
+      'on click add .busy to me then put "Loading" into #output',
+    ]);
+    // Nothing to rewrite in what the engine reads.
+    expect(await rewrite('on click put "Saved" into #output')).toEqual([]);
+  });
+
+  it('makes the rewrite an edit of the whole script', async () => {
+    const code = 'on click\n  put "Saved" in #output';
+    const parsed = JSON.parse(
+      getTextContent(await handleLspBridgeTool('get_diagnostics', { code }))
+    );
+    const index = parsed.diagnostics.findIndex((d: any) => d.code === 'engine-reads-rewrite');
+    const action = parsed.codeActions.find((a: any) => a.diagnosticIndex === index);
+    expect(action.fixes[0].edit).toEqual({
+      type: 'replace',
+      range: { start: 0, end: code.length },
+      text: 'on click put "Saved" into #output',
+    });
+  });
+
+  it('offers no rewrite that adds a command the script lacks', async () => {
+    // The reader takes `in click` for `wait click`: `wait click then add .foo to #bar`.
+    expect(await rewrite('in click add .foo to #bar')).toEqual([]);
+  });
+
+  it('offers no rewrite the reader would make by dropping part of the script', async () => {
+    expect(await rewrite('on click set @aria-expanded on #panel to "true"')).toEqual([]);
   });
 
   it('warns no possible-typo off English (its command list is English)', async () => {

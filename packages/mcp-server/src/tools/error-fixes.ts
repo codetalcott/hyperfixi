@@ -445,6 +445,17 @@ export const ErrorFixes: Record<string, CodeFix[]> = {
     },
   ],
 
+  ENGINE_READS_REWRITE: [
+    {
+      code: 'apply-rewrite',
+      title: 'Rewrite as: ${suggestion}',
+      kind: 'quickfix',
+      description:
+        "Replace the script with the rewrite the engine reads (the multilingual reader's English)",
+      priority: 90,
+    },
+  ],
+
   'SYNTAX.UNKNOWN_COMMAND': [
     {
       code: 'check-spelling',
@@ -663,6 +674,7 @@ export function getFixesForDiagnostic(diagnosticCode: string): CodeFix[] {
     'missing-then': 'SYNTAX.MISSING_THEN',
     'missing-role': 'MISSING.ARGUMENT',
     'possible-typo': 'VALIDATION.TYPO_DETECTED',
+    'engine-reads-rewrite': 'ENGINE_READS_REWRITE',
     'prefer-wait': 'DEPRECATION.PREFER_WAIT',
   };
 

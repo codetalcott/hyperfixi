@@ -29,6 +29,21 @@ here. Did you mean "toggle"?`. Not covered: a misspelling that is a legal name w
   stands (about 4% of them: the engine reads the script), and a wrong word that is not a
   misspelling (`let` for `set`).
 
+- **MCP `get_diagnostics` offers a rewrite the engine reads, for English it rejects.** The
+  multilingual reader reads some English the engine does not, and renders it back to English
+  in upstream's spelling. The new `engine-reads-rewrite` diagnostic (information, with a code
+  action that replaces the script) offers that rendering when the engine reads it and it adds
+  no command or feature the script lacks. Examples: `put "Saved" in #output` → `into`,
+  `add .highlight on #item` → `to`, `and` between commands → `then`, `toggle class .active` →
+  `toggle .active`. On the agent bench's 16 wrong phrasings that the engine rejects, it rewrote
+  5, and all 5 then behaved as the task asks. On scripts made from real ones by deleting,
+  replacing, swapping, misspelling or misplacing one word, it offered a rewrite with the
+  original's tree for 0.047 of 40,404 (command-shape sources) and 0.034 of 21,189 (upstream's
+  documentation site), and one with another tree for 0.009 and 0.006 (2026-11-18, Apple M1).
+  Without the check on added commands the wrong rate was 0.026 and 0.020: the reader takes
+  `in click` for `wait click`. The rewrite is the reader's rendering, not an edit of the original's
+  layout: commands on separate lines can come back joined by `then`.
+
 - **MCP `get_completions` answers English from the engine's grammar.** It answered from its own
   keyword lists by a guessed context: on the command-shape sources the word written next was
   in its answer 0.295 of the time, and 0.621 of the words it offered were ones the engine reads

@@ -24,6 +24,7 @@ try {
 // `parse` returns the tree (it gives the interchange its positions) and throws a
 // ParseError, whose token is where the parse stopped.
 let engineParse: ((code: string) => unknown) | null = null;
+let engineTokenize: ((code: string) => Array<{ type: string; value: string }>) | null = null;
 // What the engine's grammar takes at a position (`@hyperfixi/engine/next-words`, the code the
 // language server completes with): the candidates for the word a misspelling was meant to be.
 let completer: Completer | null = null;
@@ -31,6 +32,7 @@ try {
   const engine = await import('@hyperfixi/engine');
   engine.register(...engine.everything);
   engineParse = engine.parse;
+  engineTokenize = engine.tokenize;
   try {
     const { createCompleter } = await import('@hyperfixi/engine/next-words');
     completer = createCompleter(engine as unknown as CompletionEngine);
@@ -147,6 +149,54 @@ export function meantWord(
     if (word) return { typed: previous[1]!, start: previous.index, word };
   }
   return null;
+}
+
+/**
+ * English the engine rejects, rewritten: the multilingual reader's reading of it rendered back
+ * to English in upstream's spelling (`translate(code, 'en', 'en')`, which refuses a reading
+ * that would drop part of the script). Offered only when the engine reads the rewrite and it
+ * holds no command or feature keyword the script lacks: the reader takes `in click` for
+ * `wait click`. It mends idioms the engine does not read: `put "x" in #out` (`into`),
+ * `add .a on #b` (`to`), `and` between commands (`then`), `toggle class .a` (`toggle .a`).
+ *
+ * Measured on scripts the engine rejects, made from real ones by deleting, replacing, swapping,
+ * misspelling or misplacing one word (2026-11-18, Apple M1, Node 24.18.0): a rewrite with the
+ * original's tree for 0.047 of 40,404 (command-shape sources) and 0.034 of 21,189 (upstream's
+ * documentation site), and one with another tree for 0.009 and 0.006. Without the keyword
+ * check: wrong 0.026 and 0.020. On the agent bench's 16 wrong phrasings the engine rejects, it
+ * rewrites 5, and all 5 then behave as the task asks.
+ */
+function engineReadsRewrite(code: string): string | null {
+  if (typeof semanticPackage?.translate !== 'function' || !engineParse || !engineTokenize) {
+    return null;
+  }
+  let rewrite: unknown;
+  try {
+    rewrite = semanticPackage.translate(code, 'en', 'en');
+  } catch {
+    return null; // a lossy reading is refused, and so is input the reader cannot read
+  }
+  if (typeof rewrite !== 'string' || rewrite.trim() === code.trim()) return null;
+  try {
+    engineParse(rewrite);
+  } catch {
+    return null;
+  }
+  if (completer) {
+    const { commands, features } = completer.groups;
+    const heads = new Set([...commands, ...features]);
+    const words = (src: string) =>
+      engineTokenize!(src)
+        .filter(t => t.type !== 'STRING' && !/WHITESPACE|COMMENT/.test(t.type))
+        .map(t => t.value);
+    try {
+      const had = new Set(words(code));
+      if (words(rewrite).some(word => heads.has(word) && !had.has(word))) return null;
+    } catch {
+      return null; // the tokenizer can throw on what the engine rejects (an open string)
+    }
+  }
+  return rewrite;
 }
 
 /**
@@ -319,7 +369,7 @@ export const lspBridgeTools: Tool[] = [
   {
     name: 'get_diagnostics',
     description:
-      'Analyze hyperscript code and return LSP-compatible diagnostics with line/column ranges (errors, warnings, hints). English is checked by the engine that runs the code: a parse error is reported at the token where it stopped, with a "did you mean" when that token or the one before it is one or two letters from a word the grammar takes there. Other languages (24 in all) are checked by the semantic parser.',
+      'Analyze hyperscript code and return LSP-compatible diagnostics with line/column ranges (errors, warnings, hints). English is checked by the engine that runs the code: a parse error is reported at the token where it stopped, with a "did you mean" when that token or the one before it is one or two letters from a word the grammar takes there, and, when the multilingual reader can read the script, a rewrite of it that the engine reads (engine-reads-rewrite). Other languages (24 in all) are checked by the semantic parser.',
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -633,6 +683,21 @@ async function getDiagnostics(
             !(completer && known(completer).has(typed(d)))
         )
       );
+    }
+    const rewrite = engineReadsRewrite(code);
+    if (rewrite) {
+      const lines = code.split('\n');
+      diagnostics.push({
+        range: {
+          start: { line: 0, character: 0 },
+          end: { line: lines.length - 1, character: lines[lines.length - 1]!.length },
+        },
+        severity: 3, // Information
+        code: 'engine-reads-rewrite',
+        source: 'hyperfixi-mcp',
+        message: `The engine reads this rewrite of the script: ${rewrite}`,
+        data: { suggestion: rewrite },
+      });
     }
   } else if (engine === 'reads') {
     // Style advice survives (`wait` over setTimeout, `then` between commands); the quote,
