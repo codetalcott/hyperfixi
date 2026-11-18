@@ -211,6 +211,25 @@ describe('get_diagnostics', () => {
     expect(await typo('on click frobnicate the widget')).toEqual([]);
   });
 
+  // 2026-11-17: on the agent bench's wrong phrasings the nearest word named a wrong word 3
+  // times, all for a real word in the wrong place. A preposition put for another got a wrong
+  // suggestion 27% of the time, a right one 8%.
+  it('offers no word for a word the grammar knows: it is misplaced, not misspelled', async () => {
+    // `in` and `of` are one edit from the command `if`; both want `on`.
+    expect(await typo('on click toggle .open in #panel')).toEqual([]);
+    expect(await typo('on click toggle .open of #panel')).toEqual([]);
+    // A short word that is no word of the grammar is still a misspelling.
+    expect(await typo('on click ad .done to me')).toEqual([['add', 'ad']]);
+    expect(await typo('on click put "a" ito #out')).toEqual([['into', 'ito']]);
+    expect(await typo('on click toggle .active ot #menu')).toEqual([['on', 'ot']]);
+  });
+
+  it('does not read the name inside a reference as a misspelled word', async () => {
+    // The engine stops at `#message`; the token before it is `@hidden`, not `hide` misspelled.
+    expect(await typo('on click toggle @hidden #message')).toEqual([]);
+    expect(await typo('on click remove @hidden #menu')).toEqual([]);
+  });
+
   it('warns no possible-typo off English (its command list is English)', async () => {
     const ds = await diagnose(
       "على النقر أضف [@aria-selected='false'] إلى .tab ثم أضف [@aria-selected='true'] إليّ",

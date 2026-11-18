@@ -27,6 +27,10 @@ let engineParse: ((code: string) => unknown) | null = null;
 // What the engine's grammar takes at a position (`@hyperfixi/engine/next-words`, the code the
 // language server completes with): the candidates for the word a misspelling was meant to be.
 let completer: Completer | null = null;
+// The words the grammar takes in many places (commands, features, operators, the words an
+// expression starts with): one of these where the engine stopped is in the wrong place, not
+// misspelled.
+let knownWords = new Set<string>();
 try {
   const engine = await import('@hyperfixi/engine');
   engine.register(...engine.everything);
@@ -34,6 +38,8 @@ try {
   try {
     const { createCompleter } = await import('@hyperfixi/engine/next-words');
     completer = createCompleter(engine as unknown as CompletionEngine);
+    const { commands, features, operators, expressionStarts } = completer.groups;
+    knownWords = new Set([...commands, ...features, ...operators, ...expressionStarts]);
   } catch {
     // An engine before the subpath: the command list's "did you mean" stands.
   }
@@ -65,11 +71,24 @@ function typingDistance(a: string, b: string): number {
  * nearest of the words the GRAMMAR takes at that place, not of a list. The token the engine
  * stopped on is tried first; then the one before it, because a misspelled keyword is often
  * read as a name and the parse stops one token later (`intsall Removable` stops at
- * `Removable`). Measured on one-word misspellings (a letter dropped, doubled, or two
- * swapped) of real scripts, those the engine rejects (2026-11-17, Apple M4, Node 24.15.0):
- * the diagnostics name the right word for 0.933 of 2,124 (command-shape sources) and 0.849
- * of 1,112 (upstream's documentation site), and a wrong one for 0.040 and 0.060. With the
- * command list alone: 0.570 and 0.451, wrong 0.097 and 0.127.
+ * `Removable`). A word the grammar knows gets no suggestion: it is misplaced, not misspelled.
+ *
+ * Measured on scripts the engine rejects, made from real ones (2026-11-17, Apple M1, Node
+ * 24.18.0; command-shape sources, then upstream's documentation site):
+ * - one word of 4+ letters misspelled (a letter dropped, doubled, or two swapped): the
+ *   diagnostics name the right word for 0.943 of 2,124 and 0.864 of 1,112, and a wrong one
+ *   for 0.030 and 0.044. Before the known-word and reference rules: 0.933 and 0.849, wrong
+ *   0.040 and 0.060. With the command list alone (Apple M4): 0.570 and 0.451, wrong 0.097
+ *   and 0.127;
+ * - one word of 2–3 letters misspelled: the suggestion is right for 0.809 of 3,111 and
+ *   0.796 of 1,718, and wrong for 0.057 and 0.093 (before: 0.853 and 0.810, wrong 0.082
+ *   and 0.120);
+ * - a preposition put for another (`in` for `on`): a wrong suggestion for 0.127 of 20,469
+ *   and 0.137 of 10,334 (before: 0.267 and 0.284). Most of what remains is a word the groups
+ *   do not hold, `to` → "go".
+ *
+ * Still wrong on the agent bench: `if #box has class .danger` → "as". `has`, core's old
+ * form, is no word of the grammar.
  */
 export function meantWord(
   code: string,
@@ -77,6 +96,9 @@ export function meantWord(
 ): { typed: string; start: number; word: string } | null {
   if (!completer) return null;
   const nearest = (start: number, typed: string): string | null => {
+    // A word the grammar knows is no misspelling: `toggle .open in #panel` is one edit from
+    // the command `if`, and wants `on`. The nearest spelling is no fix for a misplaced word.
+    if (knownWords.has(typed)) return null;
     let before = code.slice(0, start);
     if (before && !/\s$/.test(before)) before += ' ';
     const next = completer!.nextWords(before);
@@ -100,7 +122,9 @@ export function meantWord(
     const word = nearest(stop, at);
     if (word) return { typed: at, start: stop, word };
   }
-  const previous = /([A-Za-z][\w-]*)\s*$/.exec(code.slice(0, stop));
+  // Not the name inside a reference (`@hidden`, `.open`, `#menu`, `$x`, `:x`, `*width`, `^x`):
+  // `toggle @hidden of #message` holds no misspelled `hide`.
+  const previous = /(?<![\w.#@$:*^-])([A-Za-z][\w-]*)\s*$/.exec(code.slice(0, stop));
   if (previous) {
     const word = nearest(previous.index, previous[1]!);
     if (word) return { typed: previous[1]!, start: previous.index, word };
