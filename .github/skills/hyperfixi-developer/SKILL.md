@@ -126,7 +126,7 @@ With the `analysis` toolset, `explain_code` lists each step in the order it runs
 | Tool                   | When to Use                                          |
 | ---------------------- | ---------------------------------------------------- |
 | `validate_and_compile` | **Always use before returning code**                 |
-| `get_diagnostics`      | Errors with line/column positions, typo fixes        |
+| `get_diagnostics`      | Errors with positions, typo fixes, a rewrite         |
 | `get_code_fixes`       | Fixes for the code of each diagnostic                |
 | `get_command_docs`     | Documentation for a specific command and its roles   |
 | `get_expression_docs`  | Documentation for expression types                   |

@@ -78,7 +78,7 @@ What a default connection lists: the deterministic checks an agent cannot do for
 | Tool                       | Description                                                                                              |
 | -------------------------- | -------------------------------------------------------------------------------------------------------- |
 | `validate_and_compile`     | Parse to semantic IR with diagnostics; natural language also on the engine                               |
-| `get_diagnostics`          | LSP-compatible diagnostics with positions; a fix for a misspelled command                                |
+| `get_diagnostics`          | LSP-compatible diagnostics with positions; a fix for a misspelled word, and a rewrite the engine reads   |
 | `get_code_fixes`           | Concrete fixes for each diagnostic code validate_and_compile emits                                       |
 | `get_command_docs`         | A command's or feature's description, syntax and examples, from the reference checked against the engine |
 | `get_expression_docs`      | Documentation for expression types                                                                       |
