@@ -230,6 +230,19 @@ describe('get_diagnostics', () => {
     expect(await typo('on click remove @hidden #menu')).toEqual([]);
   });
 
+  it('knows the words a command takes after its head, not only the groups', async () => {
+    // `to` is no command, feature or operator, but `add .foo` takes it: `to click` is a
+    // misplaced `on`, one edit from the command `go`.
+    expect(await typo('to click add .foo')).toEqual([]);
+  });
+
+  it("gives the command list's guess no say over a word the grammar knows", async () => {
+    // `for click` reads `click` as a loop variable, so the engine stops on the command; the
+    // list lacks `halt` and `close`, and called them misspelled `wait` and `else`.
+    expect(await typo('for click halt')).toEqual([]);
+    expect(await typo('for click close #d')).toEqual([]);
+  });
+
   it('warns no possible-typo off English (its command list is English)', async () => {
     const ds = await diagnose(
       "على النقر أضف [@aria-selected='false'] إلى .tab ثم أضف [@aria-selected='true'] إليّ",

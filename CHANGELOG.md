@@ -125,15 +125,18 @@ here. Did you mean "toggle"?`. Not covered: a misspelling that is a legal name w
   misspelling, so a real word in the wrong place got the nearest word one letter away:
   `toggle .open in #panel` → "Did you mean "if"?", where the fix is `on`. One preposition put
   for another got a wrong suggestion 0.267 of the time and a right one 0.077 (command-shape
-  sources; 0.284 and 0.072 on upstream's documentation site). A word the grammar knows (a
-  command, a feature, an operator, a word an expression starts with) now gets none. The word
-  before the stop is no longer read out of a reference: `toggle @hidden #message` was "Did you
-  mean "hide"?". A misplaced preposition now gets a wrong suggestion 0.127 and 0.137 of the
-  time. On a misspelled word of 4+ letters the right word is named 0.943 and 0.864 of the time
-  (0.933 and 0.849 before). On one of 2–3 letters the suggestion is right 0.809 and 0.796 of
-  the time (0.853 and 0.810 before) (2026-11-17, Apple M1). Still wrong: `if #box has class .danger` → "as" (`has`, core's old
-  form, is no word of the grammar), and a misplaced word the grammar's groups do not hold
-  (`to` → "go").
+  sources; 0.284 and 0.072 on upstream's documentation site). A word the grammar knows now
+  gets none: a command, a feature, an operator, a word an expression starts with, or a word a
+  command takes after its head (`to`, `into`, `from`, `by`). That holds for the old command
+  list too, which lacks commands such as `halt` and `close` (`for click halt` was "Did you
+  mean "wait"?"). The word before the stop is no longer read out of a reference:
+  `toggle @hidden #message` was "Did you mean "hide"?". A misplaced preposition now gets a
+  wrong suggestion 0.014 and 0.019 of the time. On a misspelled word of 4+ letters the right
+  word is named 0.947 and 0.877 of the time (0.933 and 0.849 before), a wrong one 0.022 and
+  0.026 (0.040 and 0.060). On one of 2–3 letters the suggestion is right 0.801 and 0.790 of
+  the time (0.853 and 0.810 before) (2026-11-17, Apple M1). Still wrong:
+  `if #box has class .danger` → "as" (`has`, core's old form, is no word of the grammar), and
+  a name one edit from a word the grammar takes where the engine stopped (`on my id` → "if").
 
 - **MCP `get_command_docs` answers from the reference that is checked against the engine.** It
   answered from `@lokascript/semantic`'s command schemas (role descriptions written for the

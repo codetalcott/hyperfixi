@@ -27,10 +27,6 @@ let engineParse: ((code: string) => unknown) | null = null;
 // What the engine's grammar takes at a position (`@hyperfixi/engine/next-words`, the code the
 // language server completes with): the candidates for the word a misspelling was meant to be.
 let completer: Completer | null = null;
-// The words the grammar takes in many places (commands, features, operators, the words an
-// expression starts with): one of these where the engine stopped is in the wrong place, not
-// misspelled.
-let knownWords = new Set<string>();
 try {
   const engine = await import('@hyperfixi/engine');
   engine.register(...engine.everything);
@@ -38,13 +34,34 @@ try {
   try {
     const { createCompleter } = await import('@hyperfixi/engine/next-words');
     completer = createCompleter(engine as unknown as CompletionEngine);
-    const { commands, features, operators, expressionStarts } = completer.groups;
-    knownWords = new Set([...commands, ...features, ...operators, ...expressionStarts]);
   } catch {
     // An engine before the subpath: the command list's "did you mean" stands.
   }
 } catch {
   console.error('[mcp:lsp-bridge] @hyperfixi/engine not available — parse errors disabled');
+}
+
+/**
+ * The words the grammar knows: its groups (commands, features, operators, the words an
+ * expression starts with) and every word it offers after a command's or a feature's head,
+ * with and without a value (`to`, `into`, `from`, `by`, `then`). One of these where the engine
+ * stopped is in the wrong place, not misspelled. Asked once, on first use: 126 questions,
+ * 0.13 s (Apple M1).
+ */
+let knownWords: Set<string> | null = null;
+function known(c: Completer): Set<string> {
+  if (knownWords) return knownWords;
+  const { commands, features, operators, expressionStarts } = c.groups;
+  const words = new Set([...commands, ...features, ...operators, ...expressionStarts]);
+  const heads = [
+    ...commands.flatMap(command => [`on click ${command} `, `on click ${command} x `]),
+    ...features.flatMap(feature => [`${feature} `, `${feature} x `]),
+  ];
+  for (const head of heads) {
+    const next = c.nextWords(head);
+    if (next && !next.pastError) for (const word of next.words) words.add(word);
+  }
+  return (knownWords = words);
 }
 
 /** Edit distance where two swapped neighbours (`mkae`) are one edit, as a slip of the hand is. */
@@ -76,16 +93,16 @@ function typingDistance(a: string, b: string): number {
  * Measured on scripts the engine rejects, made from real ones (2026-11-17, Apple M1, Node
  * 24.18.0; command-shape sources, then upstream's documentation site):
  * - one word of 4+ letters misspelled (a letter dropped, doubled, or two swapped): the
- *   diagnostics name the right word for 0.943 of 2,124 and 0.864 of 1,112, and a wrong one
- *   for 0.030 and 0.044. Before the known-word and reference rules: 0.933 and 0.849, wrong
+ *   diagnostics name the right word for 0.947 of 2,124 and 0.877 of 1,112, and a wrong one
+ *   for 0.022 and 0.026. Before the known-word and reference rules: 0.933 and 0.849, wrong
  *   0.040 and 0.060. With the command list alone (Apple M4): 0.570 and 0.451, wrong 0.097
  *   and 0.127;
- * - one word of 2–3 letters misspelled: the suggestion is right for 0.809 of 3,111 and
- *   0.796 of 1,718, and wrong for 0.057 and 0.093 (before: 0.853 and 0.810, wrong 0.082
+ * - one word of 2–3 letters misspelled: the suggestion is right for 0.801 of 3,111 and
+ *   0.790 of 1,718, and wrong for 0.047 and 0.080 (before: 0.853 and 0.810, wrong 0.082
  *   and 0.120);
- * - a preposition put for another (`in` for `on`): a wrong suggestion for 0.127 of 20,469
- *   and 0.137 of 10,334 (before: 0.267 and 0.284). Most of what remains is a word the groups
- *   do not hold, `to` → "go".
+ * - a preposition put for another (`in` for `on`): a wrong suggestion for 0.014 of 20,469
+ *   and 0.019 of 10,334 (before: 0.267 and 0.284). What remains is a name one edit from a
+ *   word the grammar takes where the engine stopped (`on my id` → "if", `in load` → "log").
  *
  * Still wrong on the agent bench: `if #box has class .danger` → "as". `has`, core's old
  * form, is no word of the grammar.
@@ -98,7 +115,7 @@ export function meantWord(
   const nearest = (start: number, typed: string): string | null => {
     // A word the grammar knows is no misspelling: `toggle .open in #panel` is one edit from
     // the command `if`, and wants `on`. The nearest spelling is no fix for a misplaced word.
-    if (knownWords.has(typed)) return null;
+    if (known(completer!).has(typed)) return null;
     let before = code.slice(0, start);
     if (before && !/\s$/.test(before)) before += ' ';
     const next = completer!.nextWords(before);
@@ -601,13 +618,19 @@ async function getDiagnostics(
         data: { suggestion: meant.word },
       });
     } else {
+      // Nor for a word the grammar knows: the list lacks commands (`halt`, `close`, `ask`), so
+      // `for click halt` got "Did you mean "wait"?".
       const stop = diagnostics[0]!.range.start;
+      const lines = code.split('\n');
+      const typed = (d: Diagnostic) =>
+        lines[d.range.start.line]!.slice(d.range.start.character, d.range.end.character);
       diagnostics.push(
         ...runSimpleDiagnostics(code, language).filter(
           d =>
             d.code === 'possible-typo' &&
             d.range.start.line === stop.line &&
-            d.range.start.character === stop.character
+            d.range.start.character === stop.character &&
+            !(completer && known(completer).has(typed(d)))
         )
       );
     }
