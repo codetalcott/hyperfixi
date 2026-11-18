@@ -55,7 +55,8 @@ export const ErrorFixes: Record<string, CodeFix[]> = {
       description:
         'The engine reads upstream _hyperscript and stops at the first token it cannot read. ' +
         'A misspelled command or keyword is the usual cause: get_diagnostics suggests the ' +
-        'nearest word the grammar takes there, and get_command_docs shows its syntax.',
+        'nearest word the grammar takes there (none for a word the grammar knows, which is ' +
+        'misplaced, not misspelled), and get_command_docs shows its syntax.',
       priority: 100,
       isPreferred: true,
     },
