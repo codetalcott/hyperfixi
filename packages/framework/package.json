@@ -236,7 +236,7 @@
     "@vitest/coverage-v8": "^5.0.5",
     "tsup": "^9.0.0",
     "typescript": "^5.0.0",
-    "vitest": "^5.0.5"
+    "vitest": "^5.1.1"
   },
   "files": [
     "dist",
