@@ -61,8 +61,8 @@
     "directory": "packages/engine"
   },
   "devDependencies": {
-    "@playwright/test": "^1.64.1",
-    "esbuild": "^0.28.2",
+    "@playwright/test": "^1.65.1",
+    "esbuild": "^0.25.12",
     "jsdom": "^31.0.1",
     "tsx": "^4.23.15",
     "typescript": "^5.8.3"
